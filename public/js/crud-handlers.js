@@ -2,10 +2,18 @@
    CRUD HANDLERS FOR ALL ENTITIES
    ========================================================= */
 
-// Use globals from dashboard.js (loaded before this script)
-const fetchJson = window.fetchJson;
-const openModal = window.openModal;
-const formatCurrency = window.formatCurrency;
+// Wrapper functions to use dashboard.js globals (loaded before this script)
+function fetchJson(...args) {
+  return window.fetchJson(...args);
+}
+
+function openModal(...args) {
+  return window.openModal(...args);
+}
+
+function formatCurrency(...args) {
+  return window.formatCurrency(...args);
+}
 
 // Global state
 let state = {
