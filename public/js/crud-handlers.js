@@ -2,18 +2,15 @@
    CRUD HANDLERS FOR ALL ENTITIES
    ========================================================= */
 
-// Wrapper functions to use dashboard.js globals (loaded before this script)
-function fetchJson(...args) {
-  return window.fetchJson(...args);
-}
+// Capture globals from dashboard.js (loaded before this script)
+const _fetchJson = window.fetchJson;
+const _openModal = window.openModal;
+const _formatCurrency = window.formatCurrency;
 
-function openModal(...args) {
-  return window.openModal(...args);
-}
-
-function formatCurrency(...args) {
-  return window.formatCurrency(...args);
-}
+// Use captured references
+const fetchJson = _fetchJson;
+const openModal = _openModal;
+const formatCurrency = _formatCurrency;
 
 // Global state
 let state = {
