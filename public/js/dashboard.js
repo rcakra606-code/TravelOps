@@ -80,6 +80,17 @@ window.addEventListener('DOMContentLoaded', () => {
   showSection(s);
   refreshUser();
   startAutoRefresh();
+  
+  // Wire logout link to clear session and redirect
+  const logoutLink = document.getElementById('logoutLink');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.href = '/login.html';
+    });
+  }
 });
 
 /* === Enhanced Modal Handler === */

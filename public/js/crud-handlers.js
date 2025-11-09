@@ -2,6 +2,22 @@
    CRUD HANDLERS FOR ALL ENTITIES
    ========================================================= */
 
+// Wait for dashboard.js globals to be available
+function waitForGlobals() {
+  return new Promise((resolve) => {
+    if (window.fetchJson && window.openModal && window.closeModal) {
+      resolve();
+    } else {
+      const check = setInterval(() => {
+        if (window.fetchJson && window.openModal && window.closeModal) {
+          clearInterval(check);
+          resolve();
+        }
+      }, 50);
+    }
+  });
+}
+
 // Helper functions with fallback
 const fetchJson = (...args) => {
   if (!window.fetchJson) {
@@ -1562,6 +1578,10 @@ function renderTelecomTable() {
 async function init() {
   console.log('🔄 Initializing CRUD handlers...');
   
+  // Wait for dashboard.js globals to load
+  await waitForGlobals();
+  console.log('✅ Dashboard globals ready');
+  
   try {
     await Promise.all([
       loadRegions(),
@@ -1730,5 +1750,105 @@ document.addEventListener('DOMContentLoaded', () => {
     const btn = document.getElementById(btnId);
     if (btn) btn.addEventListener('click', () => exportCsv(entity));
   });
+  
+  // Wire download template buttons
+  const templateMap = {
+    downloadSalesTemplate: 'sales',
+    downloadToursTemplate: 'tours',
+    downloadDocsTemplate: 'documents',
+    downloadTargetsTemplate: 'targets'
+  };
+  Object.entries(templateMap).forEach(([btnId, entity]) => {
+    const btn = document.getElementById(btnId);
+    if (btn) btn.addEventListener('click', () => downloadTemplate(entity));
+  });
+  
+  // Wire import CSV buttons
+  const importMap = {
+    importSalesBtn: { entity: 'sales', fileInput: 'importSalesFile' },
+    importToursBtn: { entity: 'tours', fileInput: 'importToursFile' },
+    importDocsBtn: { entity: 'documents', fileInput: 'importDocsFile' },
+    importTargetsBtn: { entity: 'targets', fileInput: 'importTargetsFile' }
+  };
+  Object.entries(importMap).forEach(([btnId, config]) => {
+    const btn = document.getElementById(btnId);
+    const fileInput = document.getElementById(config.fileInput);
+    if (btn && fileInput) {
+      btn.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleImportCsv(config.entity, e));
+    }
+  });
 });
 
+// === DOWNLOAD CSV TEMPLATE ===
+function downloadTemplate(entity) {
+  const templates = {
+    sales: 'transaction_date,invoice_no,staff_name,status,sales_amount,profit_amount,notes',
+    tours: 'registration_date,lead_passenger,all_passengers,tour_code,region_id,departure_date,booking_code,tour_price,sales_amount,profit_amount,staff_name,jumlah_peserta,phone_number,email,status,link_pelunasan_tour',
+    documents: 'receive_date,send_date,guest_name,passport_country,process_type,booking_code,invoice_number,phone_number,estimated_done,staff_name,tour_code,notes',
+    targets: 'month,year,staff_name,target_sales,target_profit'
+  };
+  
+  const csv = templates[entity] || '';
+  if (!csv) {
+    alert('Template tidak tersedia');
+    return;
+  }
+  
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${entity}-template.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// === IMPORT CSV ===
+async function handleImportCsv(entity, event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (lines.length < 2) {
+      alert('File CSV kosong atau tidak valid');
+      return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim());
+    const rows = lines.slice(1);
+    
+    let successCount = 0;
+    let errorCount = 0;
+    
+    for (const row of rows) {
+      try {
+        const values = row.split(',').map(v => v.trim());
+        const data = {};
+        headers.forEach((h, i) => {
+          if (values[i]) data[h] = values[i];
+        });
+        
+        await fetchJson(`/api/${entity}`, { method: 'POST', body: data });
+        successCount++;
+      } catch (err) {
+        console.error('Import row error:', err);
+        errorCount++;
+      }
+    }
+    
+    alert(`Import selesai:\n✅ Berhasil: ${successCount}\n❌ Gagal: ${errorCount}`);
+    
+    await loadData(entity);
+    renderTable(entity);
+    
+    // Clear file input
+    event.target.value = '';
+  } catch (err) {
+    alert('Gagal membaca file CSV: ' + err.message);
+  }
+}
