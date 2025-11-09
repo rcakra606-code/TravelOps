@@ -66,6 +66,8 @@ export async function createApp() {
   app.use(limiter);
   app.use(bodyParser.json());
   app.use(express.static('public'));
+  // Avoid favicon 404s in environments without an icon
+  app.get('/favicon.ico', (req,res)=>res.status(204).end());
 
   app.get('/', (req,res) => res.redirect('/login.html'));
 
@@ -100,8 +102,25 @@ export async function createApp() {
     }
     const { username, password } = req.body;
     const now = Date.now();
-    const user = await db.get('SELECT * FROM users WHERE username=?', [username]);
-    if (!user) return res.status(401).json({ error: 'User tidak ditemukan' });
+    let user = await db.get('SELECT * FROM users WHERE username=?', [username]);
+    if (!user) {
+      // If no admin exists yet (fresh DB or mis-seeded), auto-create default admin
+      try {
+        const ac = await db.get("SELECT COUNT(*) AS c FROM users WHERE type='admin'");
+        const adminCount = Number((ac && (ac.c ?? ac.count)) ?? 0);
+        if (adminCount === 0) {
+          const seedUser = process.env.ADMIN_USERNAME || 'admin';
+          const seedPass = process.env.ADMIN_PASSWORD || 'Admin1234!';
+          const hashed = await bcrypt.hash(seedPass, 10);
+          const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)', [seedUser, hashed, 'Administrator', 'admin@example.com', 'admin']);
+          await logActivity(seedUser, 'ADMIN_SEED_CREATE', 'users', r.lastID, 'Auto-seeded admin (no admins present)');
+          return res.status(409).json({ error: 'Admin otomatis dibuat. Silakan login ulang dengan kredensial admin default.', username: seedUser });
+        }
+      } catch (e) {
+        logger.error({ err: e }, 'Auto-seed admin check failed');
+      }
+      return res.status(401).json({ error: 'User tidak ditemukan' });
+    }
     if (user.type !== 'admin' && user.locked_until) {
       const lockedUntilMs = Date.parse(user.locked_until);
       if (!isNaN(lockedUntilMs) && lockedUntilMs > now) {
