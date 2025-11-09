@@ -2,10 +2,9 @@
    CRUD HANDLERS FOR ALL ENTITIES
    ========================================================= */
 
-// Use globals from dashboard.js (loaded before this script)
-const fetchJson = window.fetchJson;
-const openModal = window.openModal;
-const formatCurrency = window.formatCurrency;
+// NOTE: Do NOT re-declare globals exported by dashboard.js (fetchJson, openModal, formatCurrency)
+// Doing so with const causes "Identifier 'fetchJson' has already been declared" errors.
+// We simply reference the existing global functions directly.
 
 // Global state
 let state = {
@@ -272,7 +271,8 @@ function openFilterModal(entity) {
 function resetFilters(entity) {
   state.filters[entity] = {};
   state.pagination[entity].page = 1;
-  closeModal();
+  // Use global closeModal from dashboard.js; this local helper was shadowing
+  if (window.closeModal) window.closeModal();
   renderTable(entity);
 }
 
@@ -289,16 +289,7 @@ function applyFilterFromModal(entity, formData) {
 }
 
 // Align closeModal with dashboard.js implementation to avoid inline style conflicts
-function closeModal() {
-  if (window.closeModal) {
-    return window.closeModal();
-  }
-  const modal = document.getElementById('modal');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.style.removeProperty('display');
-  }
-}
+// Removed local closeModal wrapper to avoid shadowing dashboard.js implementation.
 
 /* === DATA LOADING === */
 async function loadRegions() {
@@ -1541,9 +1532,8 @@ function renderTelecomTable() {
 async function init() {
   console.log('🔄 Initializing CRUD handlers...');
   
-  // Wait for dashboard.js globals to load
-  await waitForGlobals();
-  console.log('✅ Dashboard globals ready');
+  // Globals are already available (dashboard.js loads first as a plain script)
+  console.log('✅ Dashboard globals assumed ready');
   
   try {
     await Promise.all([
