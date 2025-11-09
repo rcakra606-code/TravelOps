@@ -309,9 +309,16 @@ function applyFilterFromModal(entity, formData) {
   renderTable(entity);
 }
 
+// Align closeModal with dashboard.js implementation to avoid inline style conflicts
 function closeModal() {
+  if (window.closeModal) {
+    return window.closeModal();
+  }
   const modal = document.getElementById('modal');
-  if (modal) modal.style.display = 'none';
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.removeProperty('display');
+  }
 }
 
 /* === DATA LOADING === */
