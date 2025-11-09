@@ -118,9 +118,9 @@ function renderPagination(entity, totalItems) {
   }
   
   let html = '<div class="pagination-controls">';
-  html += `<button onclick="window.crudHandlers.goToPage('${entity}', ${pg.page - 1})" ${pg.page === 1 ? 'disabled' : ''}>‹ Prev</button>`;
+  html += `<button data-pagination-entity="${entity}" data-pagination-page="${pg.page - 1}" ${pg.page === 1 ? 'disabled' : ''}>‹ Prev</button>`;
   html += `<span class="page-info">Page ${pg.page} of ${totalPages} (${totalItems} items)</span>`;
-  html += `<button onclick="window.crudHandlers.goToPage('${entity}', ${pg.page + 1})" ${pg.page === totalPages ? 'disabled' : ''}>Next ›</button>`;
+  html += `<button data-pagination-entity="${entity}" data-pagination-page="${pg.page + 1}" ${pg.page === totalPages ? 'disabled' : ''}>Next ›</button>`;
   html += '</div>';
   
   container.innerHTML = html;
@@ -261,7 +261,7 @@ function openFilterModal(entity) {
         ${specificFilters}
       </div>
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button type="button" class="btn" onclick="window.crudHandlers.resetFilters('${entity}')">Reset Filters</button>
+        <button type="button" class="btn" data-reset-filters="${entity}">Reset Filters</button>
       </div>
     `,
     context: { entity, action: 'filter' }
@@ -1278,12 +1278,12 @@ function renderSalesTable() {
     const owned = item.staff_name && item.staff_name === current.name;
     let actions = '';
     if (isBasic && !owned) {
-      actions += `<button class=\"btn-action view\" onclick=\"openViewItem('sales',${item.id})\">View</button>`;
+      actions += `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"sales\" data-id=\"${item.id}\">View</button>`;
     } else {
-      actions += `<button class=\"btn-action edit\" onclick=\"editSales(${item.id})\">Edit</button>`;
+      actions += `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"sales\" data-id=\"${item.id}\">Edit</button>`;
     }
     if (!isBasic) {
-      actions += ` <button class=\"btn-action delete\" onclick=\"deleteItem('sales', ${item.id})\">Delete</button>`;
+      actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"sales\" data-id=\"${item.id}\">Delete</button>`;
     }
     return `
     <tr>
@@ -1319,12 +1319,12 @@ function renderToursTable() {
     const owned = item.staff_name && item.staff_name === current.name;
     let actions = '';
     if (isBasic && !owned) {
-      actions += `<button class=\"btn-action view\" onclick=\"openViewItem('tours',${item.id})\">View</button>`;
+      actions += `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"tours\" data-id=\"${item.id}\">View</button>`;
     } else {
-      actions += `<button class=\"btn-action edit\" onclick=\"editTour(${item.id})\">Edit</button>`;
+      actions += `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"tours\" data-id=\"${item.id}\">Edit</button>`;
     }
     if (!isBasic) {
-      actions += ` <button class=\"btn-action delete\" onclick=\"deleteItem('tours', ${item.id})\">Delete</button>`;
+      actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"tours\" data-id=\"${item.id}\">Delete</button>`;
     }
     return `
       <tr>
@@ -1367,9 +1367,9 @@ function renderDocsTable() {
       <td>${item.staff_name || '-'}</td>
       <td>${(() => {
         const owned = item.staff_name && item.staff_name === current.name;
-  if (isBasic && !owned) return `<button class=\"btn-action view\" onclick=\"openViewItem('documents',${item.id})\">View</button>`;
-        let a = `<button class=\"btn-action edit\" onclick=\"editDoc(${item.id})\">Edit</button>`;
-        if (!isBasic) a += ` <button class=\"btn-action delete\" onclick=\"deleteItem('documents', ${item.id})\">Delete</button>`;
+        if (isBasic && !owned) return `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"documents\" data-id=\"${item.id}\">View</button>`;
+        let a = `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"documents\" data-id=\"${item.id}\">Edit</button>`;
+        if (!isBasic) a += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"documents\" data-id=\"${item.id}\">Delete</button>`;
         return a;
       })()}</td>
     </tr>
@@ -1404,9 +1404,9 @@ function renderTargetsTable() {
       <td>${formatCurrency(item.target_profit)}</td>
       <td>${(() => {
         const owned = item.staff_name && item.staff_name === current.name;
-  if (isBasic && !owned) return `<button class=\"btn-action view\" onclick=\"openViewItem('targets',${item.id})\">View</button>`;
-        let a = `<button class=\"btn-action edit\" onclick=\"editTarget(${item.id})\">Edit</button>`;
-        if (!isBasic) a += ` <button class=\"btn-action delete\" onclick=\"deleteItem('targets', ${item.id})\">Delete</button>`;
+        if (isBasic && !owned) return `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"targets\" data-id=\"${item.id}\">View</button>`;
+        let a = `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"targets\" data-id=\"${item.id}\">Edit</button>`;
+        if (!isBasic) a += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"targets\" data-id=\"${item.id}\">Delete</button>`;
         return a;
       })()}</td>
     </tr>
@@ -1433,8 +1433,8 @@ function renderRegionsTable() {
       <td>${item.id}</td>
       <td>${item.region_name || '-'}</td>
       <td>
-        <button class="btn-action edit" onclick="editRegion(${item.id})">Edit</button>
-        <button class="btn-action delete" onclick="deleteItem('regions', ${item.id})">Delete</button>
+        <button class="btn-action edit" data-action="edit" data-entity="regions" data-id="${item.id}">Edit</button>
+        <button class="btn-action delete" data-action="delete" data-entity="regions" data-id="${item.id}">Delete</button>
       </td>
     </tr>
   `).join('');
@@ -1469,10 +1469,10 @@ function renderUsersTable() {
           ? '<span class="badge badge-warning">Semi Admin</span>'
           : '<span class="badge badge-info">Basic</span>') : '-'}</td>
       <td>
-        <button class="btn-action edit" onclick="editUser(${item.id})">Edit</button>
-        <button class="btn-action delete" onclick="deleteItem('users', ${item.id})">Delete</button>
-        ${isAdmin ? `<button class=\"btn-action reset\" onclick=\"window.crudHandlers.openResetUserModal('${item.username}')\">Reset</button>` : ''}
-        ${isAdmin && locked ? `<button class=\"btn-action unlock\" onclick=\"window.crudHandlers.unlockUser('${item.username}')\">Unlock</button>` : ''}
+        <button class="btn-action edit" data-action="edit" data-entity="users" data-id="${item.id}">Edit</button>
+        <button class="btn-action delete" data-action="delete" data-entity="users" data-id="${item.id}">Delete</button>
+        ${isAdmin ? `<button class=\"btn-action reset\" data-action=\"reset-user\" data-username=\"${item.username}\">Reset</button>` : ''}
+        ${isAdmin && locked ? `<button class=\"btn-action unlock\" data-action=\"unlock-user\" data-username=\"${item.username}\">Unlock</button>` : ''}
       </td>
     </tr>
     `;
@@ -1501,12 +1501,12 @@ function renderTelecomTable() {
     const owned = item.staff_name && item.staff_name === current.name;
     let actions = '';
     if (isBasic && !owned) {
-      actions += `<button class=\"btn-action view\" onclick=\"openViewItem('telecom',${item.id})\">View</button>`;
+      actions += `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"telecom\" data-id=\"${item.id}\">View</button>`;
     } else {
-      actions += `<button class=\"btn-action edit\" onclick=\"editTelecom(${item.id})\">Edit</button>`;
+      actions += `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"telecom\" data-id=\"${item.id}\">Edit</button>`;
     }
     if (!isBasic) {
-      actions += ` <button class=\"btn-action delete\" onclick=\"deleteItem('telecom', ${item.id})\">Delete</button>`;
+      actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"telecom\" data-id=\"${item.id}\">Delete</button>`;
     }
     return `
       <tr>
@@ -1582,6 +1582,64 @@ async function init() {
         updateSortIndicators(entity);
       });
       updateAllSortIndicators();
+      
+      // Delegated click handlers for pagination and action buttons
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+
+        // Handle pagination
+        const pagEntity = btn.dataset.paginationEntity;
+        if (pagEntity) {
+          const page = parseInt(btn.dataset.paginationPage, 10);
+          if (!isNaN(page)) goToPage(pagEntity, page);
+          return;
+        }
+
+        // Reset filters from modal
+        if (btn.dataset.resetFilters) {
+          resetFilters(btn.dataset.resetFilters);
+          return;
+        }
+
+        // CRUD action buttons
+        const action = btn.dataset.action;
+        if (!action) return;
+        const entity = btn.dataset.entity;
+        const id = btn.dataset.id ? parseInt(btn.dataset.id, 10) : null;
+
+        try {
+          switch (action) {
+            case 'view':
+              if (entity && id != null) openViewItem(entity, id);
+              break;
+            case 'edit':
+              if (entity && id != null) {
+                switch (entity) {
+                  case 'sales': window.crudHandlers.openEditSalesModal(id); break;
+                  case 'tours': window.crudHandlers.openEditTourModal(id); break;
+                  case 'documents': window.crudHandlers.openEditDocModal(id); break;
+                  case 'targets': window.crudHandlers.openEditTargetModal(id); break;
+                  case 'regions': window.crudHandlers.openEditRegionModal(id); break;
+                  case 'users': window.crudHandlers.openEditUserModal(id); break;
+                  case 'telecom': window.crudHandlers.openEditTelecomModal(id); break;
+                }
+              }
+              break;
+            case 'delete':
+              if (entity && id != null) deleteItem(entity, id);
+              break;
+            case 'reset-user':
+              if (btn.dataset.username) window.crudHandlers.openResetUserModal(btn.dataset.username);
+              break;
+            case 'unlock-user':
+              if (btn.dataset.username) window.crudHandlers.unlockUser(btn.dataset.username);
+              break;
+          }
+        } catch (err) {
+          console.error('Action handler error:', err);
+        }
+      });
   } catch (err) {
     console.error('❌ Error initializing CRUD handlers:', err);
   }
