@@ -1,28 +1,21 @@
 import pino from 'pino';
 
-const level = process.env.LOG_LEVEL || 'info';
-const pretty = process.env.NODE_ENV !== 'production';
-
+// Base logger
 export const logger = pino({
-  level,
-  transport: pretty ? {
+  level: process.env.LOG_LEVEL || 'info',
+  transport: process.env.NODE_ENV !== 'production' ? {
     target: 'pino-pretty',
-    options: { colorize: true, translateTime: 'SYS:standard' }
-  } : undefined,
-  base: { env: process.env.NODE_ENV || 'development' }
+    options: { colorize: true }
+  } : undefined
 });
 
+// Minimal request logger middleware without extra deps
 export function requestLogger(req, res, next) {
-  const start = process.hrtime.bigint();
+  const start = Date.now();
+  const { method, url } = req;
   res.on('finish', () => {
-    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
-    logger.info({
-      method: req.method,
-      url: req.originalUrl,
-      status: res.statusCode,
-      duration_ms: durationMs.toFixed(2),
-      ip: req.ip
-    }, 'request');
+    const duration = Date.now() - start;
+    logger.info({ method, url, statusCode: res.statusCode, duration_ms: duration, ip: req.ip }, 'http');
   });
   next();
 }
