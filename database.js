@@ -45,7 +45,13 @@ async function initSqlite() {
 }
 
 async function initPostgres() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL, ssl: process.env.PGSSL === 'true' ? { rejectUnauthorized: false } : false });
+  // Default to SSL enabled for hosted Postgres providers like Neon.
+  // If PGSSL is explicitly set, honor it; otherwise enable SSL by default.
+  const sslEnabled = process.env.PGSSL ? process.env.PGSSL === 'true' : true;
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: sslEnabled ? { rejectUnauthorized: false } : false
+  });
 
   // Wrapper providing run/get/all similar to sqlite
   const db = {
