@@ -148,7 +148,7 @@
         <h3>Sales</h3>
         <div>
           <button id="addSalesBtn" class="btn primary">+ Tambah Sales</button>
-          <button onclick="window.crudHandlers.openFilterModal('sales')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="sales" class="btn">🔍 Filter</button>
           <button id="exportSales" class="btn">Export CSV</button>
           <button id="downloadSalesTemplate" class="btn">Download Template</button>
           <input id="importSalesFile" type="file" accept=".csv" class="hidden"/>
@@ -156,7 +156,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="salesPageSize" onchange="window.crudHandlers.changePageSize('sales', this.value)" style="margin-left:auto">
+        <select id="salesPageSize" data-pagesize-entity="sales" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -180,7 +180,7 @@
         <h3>Tours</h3>
         <div>
           <button id="addTourBtn" class="btn primary">+ Tambah Tour</button>
-          <button onclick="window.crudHandlers.openFilterModal('tours')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="tours" class="btn">🔍 Filter</button>
           <button id="exportTours" class="btn">Export CSV</button>
           <button id="downloadToursTemplate" class="btn">Download Template</button>
           <input id="importToursFile" type="file" accept=".csv" class="hidden"/>
@@ -189,7 +189,7 @@
       </div>
             <div class="searchbar">
         <input id="toursSearch" placeholder="Cari code / staff / region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
-        <select id="toursPageSize" onchange="window.crudHandlers.changePageSize('tours', this.value)">
+        <select id="toursPageSize" data-pagesize-entity="tours">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -214,7 +214,7 @@
         <h3>Documents</h3>
         <div>
           <button id="addDocBtn" class="btn primary">+ Tambah Document</button>
-          <button onclick="window.crudHandlers.openFilterModal('documents')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="documents" class="btn">🔍 Filter</button>
           <button id="exportDocs" class="btn">Export CSV</button>
           <button id="downloadDocsTemplate" class="btn">Download Template</button>
           <input id="importDocsFile" type="file" accept=".csv" class="hidden"/>
@@ -222,7 +222,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="docsPageSize" onchange="window.crudHandlers.changePageSize('documents', this.value)" style="margin-left:auto">
+        <select id="docsPageSize" data-pagesize-entity="documents" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -245,7 +245,7 @@
         <h3>Targets</h3>
         <div>
           <button id="addTargetBtn" class="btn primary">+ Tambah Target</button>
-          <button onclick="window.crudHandlers.openFilterModal('targets')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="targets" class="btn">🔍 Filter</button>
           <button id="exportTargets" class="btn">Export CSV</button>
           <button id="downloadTargetsTemplate" class="btn">Download Template</button>
           <input id="importTargetsFile" type="file" accept=".csv" class="hidden"/>
@@ -253,7 +253,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="targetsPageSize" onchange="window.crudHandlers.changePageSize('targets', this.value)" style="margin-left:auto">
+        <select id="targetsPageSize" data-pagesize-entity="targets" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -278,11 +278,11 @@
         <h3>Regions</h3>
         <div>
           <button id="addRegionBtn" class="btn primary">+ Tambah Region</button>
-          <button onclick="window.crudHandlers.openFilterModal('regions')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="regions" class="btn">🔍 Filter</button>
         </div>
       </div>
       <div class="searchbar">
-        <select id="regionsPageSize" onchange="window.crudHandlers.changePageSize('regions', this.value)" style="margin-left:auto">
+        <select id="regionsPageSize" data-pagesize-entity="regions" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -323,11 +323,11 @@
         <h3>Users</h3>
         <div>
           <button id="addUserBtn" class="btn primary">+ Tambah User</button>
-          <button onclick="window.crudHandlers.openFilterModal('users')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="users" class="btn">🔍 Filter</button>
         </div>
       </div>
       <div class="searchbar">
-        <select id="usersPageSize" onchange="window.crudHandlers.changePageSize('users', this.value)" style="margin-left:auto">
+        <select id="usersPageSize" data-pagesize-entity="users" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -349,12 +349,12 @@
         <h3>Telecom</h3>
         <div>
           <button id="addTelecomBtn" class="btn primary">+ Tambah Telecom</button>
-          <button onclick="window.crudHandlers.openFilterModal('telecom')" class="btn">🔍 Filter</button>
+          <button data-filter-entity="telecom" class="btn">🔍 Filter</button>
           <button id="exportTelecom" class="btn">Export CSV</button>
         </div>
       </div>
       <div class="searchbar">
-        <select id="telecomPageSize" onchange="window.crudHandlers.changePageSize('telecom', this.value)" style="margin-left:auto">
+        <select id="telecomPageSize" data-pagesize-entity="telecom" style="margin-left:auto">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>

@@ -1737,6 +1737,21 @@ function exportCsv(entity) {
 
 // Wire export buttons after init renders
 document.addEventListener('DOMContentLoaded', () => {
+  // Wire filter buttons (data-filter-entity)
+  document.querySelectorAll('[data-filter-entity]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.crudHandlers.openFilterModal(btn.dataset.filterEntity);
+    });
+  });
+  
+  // Wire page size selects (data-pagesize-entity)
+  document.querySelectorAll('[data-pagesize-entity]').forEach(select => {
+    select.addEventListener('change', () => {
+      window.crudHandlers.changePageSize(select.dataset.pagesizeEntity, select.value);
+    });
+  });
+  
+  // Export CSV buttons
   const map = {
     exportSales: 'sales',
     exportTours: 'tours',
