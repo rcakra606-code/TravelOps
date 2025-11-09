@@ -75,7 +75,8 @@ async function initPostgres() {
 
 async function createSchema(db) {
   const isPg = db.dialect === 'postgres';
-  const idCol = isPg ? 'GENERATED ALWAYS AS IDENTITY PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+  // In Postgres, a data type is required before IDENTITY; use INT for IDs
+  const idCol = isPg ? 'INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
   const text = (t) => isPg ? 'TEXT' : 'TEXT';
   const num = (n) => isPg ? 'NUMERIC' : 'REAL';
   const ts = isPg ? 'TIMESTAMPTZ' : 'TEXT';
