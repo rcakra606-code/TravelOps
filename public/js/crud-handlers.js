@@ -1480,9 +1480,11 @@ function renderUsersTable() {
   const current = getCurrentUser();
   const isAdmin = current.type === 'admin';
 
-  tbody.innerHTML = paginated.map(item => `
+  tbody.innerHTML = paginated.map(item => {
+    const locked = item.locked_until && new Date(item.locked_until) > new Date();
+    return `
     <tr>
-      <td>${item.username || '-'}</td>
+      <td>${item.username || '-'}${locked ? ' <span class="badge badge-danger" title="Locked until '+item.locked_until+'">Locked</span>' : ''}</td>
       <td>${item.name || '-'}</td>
       <td>${item.type ? (item.type === 'admin'
         ? '<span class="badge badge-primary">Admin</span>'
@@ -1493,9 +1495,11 @@ function renderUsersTable() {
         <button class="btn-action edit" onclick="editUser(${item.id})">Edit</button>
         <button class="btn-action delete" onclick="deleteItem('users', ${item.id})">Delete</button>
         ${isAdmin ? `<button class=\"btn-action reset\" onclick=\"window.crudHandlers.openResetUserModal('${item.username}')\">Reset</button>` : ''}
+        ${isAdmin && locked ? `<button class=\"btn-action unlock\" onclick=\"window.crudHandlers.unlockUser('${item.username}')\">Unlock</button>` : ''}
       </td>
     </tr>
-  `).join('');
+    `;
+  }).join('');
   
   renderPagination('users', filtered.length);
 }
@@ -1636,6 +1640,7 @@ window.crudHandlers = {
   openAddUserModal,
   openEditUserModal,
   openResetUserModal,
+  unlockUser,
   openAddTelecomModal,
   openEditTelecomModal,
   deleteItem,
@@ -1668,6 +1673,19 @@ function openViewItem(entity, id) {
   });
 }
 window.openViewItem = openViewItem;
+
+// === UNLOCK USER (Admin) ===
+async function unlockUser(username) {
+  if (!confirm(`Unlock account for ${username}?`)) return;
+  try {
+    await fetchJson(`/api/users/${username}/unlock`, { method: 'POST' });
+    alert('User unlocked');
+    await loadUsers();
+    renderTable('users');
+  } catch (err) {
+    alert('Gagal unlock user: ' + (err.message || 'Unknown error'));
+  }
+}
 
 // === EXPORT FILTERED DATA TO CSV ===
 function exportCsv(entity) {

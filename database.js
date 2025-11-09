@@ -30,7 +30,10 @@ async function initSqlite() {
   // Ensure data directory exists
   const dataDir = path.resolve(__dirname, 'data');
   if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
-  const dbPath = path.join(dataDir, 'travelops.db');
+  // Allow overriding sqlite file for tests via SQLITE_FILE
+  const dbPath = process.env.SQLITE_FILE
+    ? path.resolve(process.cwd(), process.env.SQLITE_FILE)
+    : path.join(dataDir, 'travelops.db');
 
   // Dynamically import sqlite3 only in SQLite mode to avoid native module on Render
   const sqlite3 = (await import('sqlite3')).default;

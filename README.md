@@ -100,8 +100,44 @@ Tables and the default admin user auto-create on first start.
 - POST /api/users/:username/unlock (admin)
 - GET /healthz
 
-## 12) Next Steps (Optional Enhancements)
-- Admin UI button to unlock users (endpoint exists)
+## 12) Testing
+Integration tests use Jest + supertest with isolated SQLite DB files per suite.
+
+Run tests:
+```powershell
+npm test
+```
+
+How it works:
+- Each test file sets `process.env.SQLITE_FILE` before creating the app via `createApp()`.
+- The database schema & default admin are auto-created in that temp file.
+- Tests close the DB (sqlite close or pg pool end) before deleting the file (prevents file locks on Windows).
+
+Add a new test:
+```js
+// tests/example.test.mjs
+process.env.SQLITE_FILE = 'test_example.db';
+process.env.NODE_ENV = 'test';
+import { createApp } from '../createApp.js';
+import request from 'supertest';
+import fs from 'fs';
+let app, db;
+beforeAll(async () => {
+	if (fs.existsSync('test_example.db')) fs.rmSync('test_example.db');
+	({ app, db } = await createApp());
+});
+afterAll(async () => { if (db?.close) await db.close(); if (fs.existsSync('test_example.db')) fs.rmSync('test_example.db'); });
+test('health', async () => { const r = await request(app).get('/healthz'); expect(r.statusCode).toBe(200); });
+```
+
+## 13) Completed Enhancements (from roadmap)
+- Admin UI button to unlock users
 - Centralized error handler & standardized error JSON
-- Content Security Policy (CSP) tuning for stricter XSS mitigation
-- Integration tests (Jest + supertest) for auth and CRUD
+- CSP tightened (Helmet directives)
+- Integration tests (Jest + supertest) for auth & CRUD (green)
+
+## 14) Future Ideas
+- Add unit tests for metrics calculations
+- Add pagination & server-side filtering endpoints (UI currently handles client-side)
+- Implement refresh token rotation + revoke list
+- Add audit export (CSV/JSON) for activity logs

@@ -1,6 +1,0 @@
-0000000000000000000000000000000000000000 8e9756ff710af7e276c535f9fc1763dd7741d142 rcakra606-code <rcakra606@gmail.com> 1762661993 +0700	commit (initial): Initial commit: production-ready TravelOps
-8e9756ff710af7e276c535f9fc1763dd7741d142 8e9756ff710af7e276c535f9fc1763dd7741d142 rcakra606-code <rcakra606@gmail.com> 1762662288 +0700	Branch: renamed refs/heads/master to refs/heads/main
-8e9756ff710af7e276c535f9fc1763dd7741d142 3d1acc3fcccccad09bf95cb04158036c9ac515d2 rcakra606-code <rcakra606@gmail.com> 1762662782 +0700	commit: Save local changes before rebase
-3d1acc3fcccccad09bf95cb04158036c9ac515d2 9e4b8d25649b005c8bd3f6c2a791606d933f55da rcakra606-code <rcakra606@gmail.com> 1762662814 +0700	rebase (pick): Initial commit: production-ready TravelOps
-9e4b8d25649b005c8bd3f6c2a791606d933f55da 8e9756ff710af7e276c535f9fc1763dd7741d142 rcakra606-code <rcakra606@gmail.com> 1762662829 +0700	rebase (abort): returning to refs/heads/main
-8e9756ff710af7e276c535f9fc1763dd7741d142 b78913c622f44e95345d4e1397794212bcaccea2 rcakra606-code <rcakra606@gmail.com> 1762663758 +0700	commit: Ignore local SQLite DB and finalize production files
