@@ -486,9 +486,9 @@
   </div>
 </div>
 
-<!-- Load dashboard module first to export globals, then CRUD handlers can use them -->
-<script type="module" src="/js/dashboard.js"></script>
-<script type="module" src="/js/crud-handlers.js"></script>
+<!-- Load dashboard first (plain script exports globals immediately), then CRUD handlers -->
+<script src="/js/dashboard.js"></script>
+<script defer src="/js/crud-handlers.js"></script>
 
 <!-- Removed logout confirmation modal; using direct navigation to /logout.html -->
 

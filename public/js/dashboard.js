@@ -24,11 +24,54 @@ async function fetchJson(url, opts = {}) {
   if (res.status === 401 || res.status === 403) {
     alert('Sesi login telah berakhir. Silakan login kembali.');
     localStorage.clear();
+    sessionStorage.clear();
     location.href = '/login.html';
     return;
   }
   if (!res.ok) throw new Error(await res.text());
   try { return await res.json(); } catch { return null; }
+}
+
+// Auto-refresh token to keep session alive during activity (token expires after 15min idle)
+let tokenRefreshInterval = null;
+let lastActivityTime = Date.now();
+
+function startTokenRefresh() {
+  // Update activity time on user interactions
+  ['click', 'keydown', 'mousemove', 'scroll'].forEach(event => {
+    document.addEventListener(event, () => {
+      lastActivityTime = Date.now();
+    }, { passive: true, once: false });
+  });
+  
+  // Refresh token every 10 minutes if user has been active in last 2 minutes
+  if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
+  tokenRefreshInterval = setInterval(async () => {
+    const idleTime = Date.now() - lastActivityTime;
+    const twoMinutes = 2 * 60 * 1000;
+    
+    if (idleTime < twoMinutes) {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        
+        const response = await fetch(api('/api/refresh'), {
+          method: 'POST',
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.token) {
+            localStorage.setItem('token', data.token);
+            console.log('🔄 Token refreshed');
+          }
+        }
+      } catch (err) {
+        console.error('Token refresh failed:', err);
+      }
+    }
+  }, 10 * 60 * 1000); // Every 10 minutes
 }
 
 // Export globally for other scripts
@@ -80,12 +123,14 @@ window.addEventListener('DOMContentLoaded', () => {
   showSection(s);
   refreshUser();
   startAutoRefresh();
+  startTokenRefresh(); // Start token auto-refresh on activity
   
   // Wire logout link to clear session and redirect
   const logoutLink = document.getElementById('logoutLink');
   if (logoutLink) {
     logoutLink.addEventListener('click', (e) => {
       e.preventDefault();
+      if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
       localStorage.clear();
       sessionStorage.clear();
       window.location.href = '/login.html';
