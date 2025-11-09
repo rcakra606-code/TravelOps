@@ -21,8 +21,13 @@ Copy-Item .env.example .env
 # Ensure DATABASE_URL is empty to use SQLite locally
 npm run dev
 ```
-Open http://localhost:3000 (auto-fallback to 3001+ if 3000 is busy).  
-Login default admin: admin / admin (change immediately under Profile).
+Open http://localhost:3000 (auto-fallback to 3001+ if 3000 is busy).
+
+Default admin login:
+- Username: admin
+- Password: Admin1234!
+
+Tip: You can change the initial admin via env vars `ADMIN_USERNAME` and `ADMIN_PASSWORD` before first run. If you forget the password, see Troubleshooting below.
 
 ## 3) Using Neon (Postgres) Locally
 1. Create a Neon project and a database, copy the connection string.
@@ -58,7 +63,7 @@ Tables and the default admin user auto-create on first start.
 5. Start Command: `npm start`
 6. Health Check Path: `/healthz`
 7. Add environment variables from section (4) in the Render dashboard. Use your Neon connection string with `?sslmode=require`.
-8. Deploy. When up, go to the URL → login as `admin` / `admin` → change password immediately.
+8. Deploy. When up, go to the URL → login as `admin` / `Admin1234!` → change password immediately.
 
 ## 6) Roles & Ownership
 - basic: can view all tables (except users); can edit only own rows (staff_name) in staff-owned tables; cannot delete.
@@ -86,6 +91,12 @@ Tables and the default admin user auto-create on first start.
 - CORS errors → set precise origins in `CORS_ORIGIN` (scheme + host + port).
 - Lockout → inspect `users.failed_attempts` and `locked_until`.
 - Health check: `GET /healthz` returns JSON `{ status: 'ok', dialect: 'sqlite'|'postgres', ... }`.
+
+Login issues:
+- 401 Unauthorized: wrong username/password. Default is admin / Admin1234! (unless overridden by env).
+- 423 Locked: account is temporarily locked after 3 failed attempts (non-admin). Ask an admin to use the Unlock button on Users, or wait `LOCKOUT_MINUTES`.
+- Forgot admin password (SQLite): stop the server and delete `data/travelops.db` (this resets the DB and re-seeds admin). Or, start the app, login as an admin, and call POST `/api/admin/seed` with a new password.
+- Forgot admin password (Postgres): call POST `/api/admin/seed` as an existing admin; if locked out entirely, update the `users` table directly in the DB.
 
 ## 11) API (partial)
 - POST /api/login  { username, password } → token
