@@ -130,10 +130,59 @@ window.addEventListener('DOMContentLoaded', () => {
   if (logoutLink) {
     logoutLink.addEventListener('click', (e) => {
       e.preventDefault();
+      
+      // Confirmation dialog
+      if (!confirm('Apakah Anda yakin ingin keluar?')) {
+        return;
+      }
+      
+      // Clear token refresh interval
       if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/login.html';
+      
+      // Show goodbye message
+      const user = getUser();
+      const userName = user.name || user.username || 'User';
+      
+      // Create temporary overlay with goodbye message
+      const overlay = document.createElement('div');
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+        animation: fadeIn 0.3s ease;
+      `;
+      
+      const message = document.createElement('div');
+      message.style.cssText = `
+        background: white;
+        padding: 40px;
+        border-radius: 16px;
+        text-align: center;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        animation: slideIn 0.4s ease;
+      `;
+      message.innerHTML = `
+        <div style="font-size: 48px; margin-bottom: 16px;">👋</div>
+        <h2 style="margin: 0 0 8px 0; color: #111827;">Sampai Jumpa, ${userName}!</h2>
+        <p style="margin: 0; color: #6b7280;">Terima kasih telah menggunakan TravelOps</p>
+      `;
+      
+      overlay.appendChild(message);
+      document.body.appendChild(overlay);
+      
+      // Clear session and redirect after brief delay
+      setTimeout(() => {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login.html';
+      }, 1500);
     });
   }
 });
