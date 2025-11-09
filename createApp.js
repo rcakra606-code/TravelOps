@@ -119,7 +119,7 @@ export async function createApp() {
       } catch (e) {
         logger.error({ err: e }, 'Auto-seed admin check failed');
       }
-      return res.status(401).json({ error: 'User tidak ditemukan' });
+      return res.status(401).json({ error: 'User tidak ditemukan', hint: 'Pastikan username benar. Default admin biasanya "admin" kecuali diubah via ADMIN_USERNAME.' });
     }
     if (user.type !== 'admin' && user.locked_until) {
       const lockedUntilMs = Date.parse(user.locked_until);
@@ -234,6 +234,18 @@ export async function createApp() {
   app.post('/api/admin/seed', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const username = req.body.username || process.env.ADMIN_USERNAME || 'admin'; const name = req.body.name || 'Administrator'; const email = req.body.email || 'admin@example.com'; const password = req.body.password || process.env.ADMIN_PASSWORD || 'Admin1234!'; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); const existing = await db.get('SELECT * FROM users WHERE username=?',[username]); if (existing){ await db.run('UPDATE users SET password=?, name=?, email=?, type=? WHERE id=?',[hashed, name, email,'admin', existing.id]); await logActivity(req.user.username,'ADMIN_SEED_UPDATE','users',existing.id,`Updated admin user ${username}`); return res.json({ ok:true, updated:true }); } else { const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)',[username, hashed, name, email,'admin']); await logActivity(req.user.username,'ADMIN_SEED_CREATE','users',r.lastID,`Created admin user ${username}`); return res.json({ ok:true, created:true, id:r.lastID }); } });
 
   app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
+
+  // Optional debug: list admin usernames (only if explicitly enabled via env)
+  if (process.env.EXPOSE_ADMIN_USERNAMES === 'true') {
+    app.get('/api/debug/admin-usernames', async (req,res)=>{
+      try {
+        const rows = await db.all("SELECT username FROM users WHERE type='admin'");
+        res.json({ admins: rows.map(r=>r.username) });
+      } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch admin usernames' });
+      }
+    });
+  }
 
   // Central error handler
   app.use((err, req, res, next)=>{ logger.error({ err: err.message, stack: err.stack }, 'Unhandled error'); if (res.headersSent) return next(err); res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' }); });
