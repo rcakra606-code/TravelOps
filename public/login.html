@@ -6,6 +6,7 @@
   <title>Login | TravelOps</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="/js/login.js" defer></script>
   <style>
     :root {
       --primary: #2563eb;
@@ -351,73 +352,6 @@
     </div>
   </div>
 
-  <script>
-    const loginForm = document.getElementById('loginForm');
-    const errorMsg = document.getElementById('errorMsg');
-    const loginContainer = document.querySelector('.login-container');
-
-    // Check if already logged in
-    const token = localStorage.getItem('token');
-    if (token) {
-      window.location.href = '/single-dashboard.html';
-    }
-
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      // Hide error message
-      errorMsg.style.display = 'none';
-      
-      // Add loading state
-      loginContainer.classList.add('loading');
-      
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value.trim();
-      
-      try {
-        const res = await fetch('/api/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
-        });
-        
-        if (!res.ok) {
-          const error = await res.json();
-          throw new Error(error.error || 'Login gagal');
-        }
-        
-        const user = await res.json();
-        localStorage.setItem('user', JSON.stringify(user));
-        localStorage.setItem('token', user.token);
-        
-        // Show success animation
-        loginContainer.style.transform = 'scale(0.95)';
-        loginContainer.style.opacity = '0';
-        
-        setTimeout(() => {
-          window.location.href = '/single-dashboard.html';
-        }, 300);
-        
-      } catch (err) {
-        console.error(err);
-        loginContainer.classList.remove('loading');
-        errorMsg.style.display = 'block';
-        errorMsg.textContent = err.message || 'Username atau password salah.';
-        
-        // Shake animation
-        loginContainer.style.animation = 'none';
-        setTimeout(() => {
-          loginContainer.style.animation = '';
-        }, 10);
-      }
-    });
-
-    // Add enter key support
-    document.getElementById('password').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        loginForm.dispatchEvent(new Event('submit'));
-      }
-    });
-  </script>
+  
 </body>
 </html>
