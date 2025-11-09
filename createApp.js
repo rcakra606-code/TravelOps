@@ -216,7 +216,15 @@ export async function createApp() {
     const documents = await db.get(`SELECT COUNT(*) AS total_docs, SUM(CASE WHEN process_type='Normal' THEN 1 ELSE 0 END) AS normal, SUM(CASE WHEN process_type='Kilat' THEN 1 ELSE 0 END) AS kilat FROM documents ${wh('receive_date')}`, params);
     const participants_by_month = await db.all((isPg ? `SELECT TO_CHAR(departure_date,'MM') AS month, SUM(jumlah_peserta) AS participants FROM tours ${wh('departure_date')} GROUP BY month` : `SELECT strftime('%m', departure_date) AS month, SUM(jumlah_peserta) AS participants FROM tours ${wh('departure_date')} GROUP BY month`), params);
     const regionWhere = wh('departure_date');
-    const participants_by_region = await db.all(`SELECT r.region_name, SUM(t.jumlah_peserta) AS participants FROM tours t JOIN regions r ON r.id = t.region_id ${regionWhere ? regionWhere.replace('WHERE','WHERE ') : ''} GROUP BY t.region_id`, params);
+    // Postgres requires all selected non-aggregates in GROUP BY; group by region_name
+    const participants_by_region = await db.all(
+      `SELECT r.region_name, SUM(t.jumlah_peserta) AS participants
+       FROM tours t
+       JOIN regions r ON r.id = t.region_id
+       ${regionWhere ? regionWhere.replace('WHERE', 'WHERE ') : ''}
+       GROUP BY r.region_name`,
+      params
+    );
     res.json({ sales, targets, participants, documents, participants_by_month, participants_by_region });
   });
 
