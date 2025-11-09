@@ -2,47 +2,10 @@
    CRUD HANDLERS FOR ALL ENTITIES
    ========================================================= */
 
-// Wait for dashboard.js globals to be available
-function waitForGlobals() {
-  return new Promise((resolve) => {
-    if (window.fetchJson && window.openModal && window.closeModal) {
-      resolve();
-    } else {
-      const check = setInterval(() => {
-        if (window.fetchJson && window.openModal && window.closeModal) {
-          clearInterval(check);
-          resolve();
-        }
-      }, 50);
-    }
-  });
-}
-
-// Helper functions with fallback
-const fetchJson = (...args) => {
-  if (!window.fetchJson) {
-    console.error('❌ fetchJson not available');
-    throw new Error('fetchJson function not loaded');
-  }
-  return window.fetchJson(...args);
-};
-
-const openModal = (...args) => {
-  if (!window.openModal) {
-    console.error('❌ openModal not available');
-    alert('Modal system not ready. Please refresh the page.');
-    return;
-  }
-  return window.openModal(...args);
-};
-
-const formatCurrency = (...args) => {
-  if (!window.formatCurrency) {
-    console.error('❌ formatCurrency not available');
-    return args[0];
-  }
-  return window.formatCurrency(...args);
-};
+// Use globals from dashboard.js (loaded before this script)
+const fetchJson = window.fetchJson;
+const openModal = window.openModal;
+const formatCurrency = window.formatCurrency;
 
 // Global state
 let state = {
