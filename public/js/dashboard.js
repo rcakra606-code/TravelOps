@@ -197,6 +197,24 @@ function formatCurrency(v) {
   catch { return v; }
 }
 
+function formatNumberWithCommas(value) {
+  // Remove non-numeric characters except decimal point
+  const numStr = String(value).replace(/[^\d.]/g, '');
+  const parts = numStr.split('.');
+  // Add commas to integer part
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return parts.join('.');
+}
+
+function parseFormattedNumber(value) {
+  // Remove commas and parse to number
+  return parseFloat(String(value).replace(/,/g, '')) || 0;
+}
+
+// Export globally for other scripts
+window.formatNumberWithCommas = formatNumberWithCommas;
+window.parseFormattedNumber = parseFormattedNumber;
+
 /* === NAVIGATION === */
 function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -340,6 +358,50 @@ function closeModal(confirmed = false) {
 
 function initializeModalInputs() {
   if (!modalBody) return;
+  
+  // Add currency formatting to number inputs for amounts
+  const numberInputs = modalBody.querySelectorAll('input[type="number"]');
+  numberInputs.forEach(input => {
+    const inputName = input.getAttribute('name');
+    // Check if this is an amount/price/financial field
+    const isAmountField = inputName && (
+      inputName.includes('amount') || 
+      inputName.includes('price') || 
+      inputName.includes('deposit') || 
+      inputName.includes('target')
+    );
+    
+    if (isAmountField) {
+      // Change type to text for formatting
+      input.setAttribute('type', 'text');
+      input.setAttribute('inputmode', 'decimal');
+      input.setAttribute('pattern', '[0-9,.]');
+      
+      // Format existing value
+      if (input.value) {
+        input.value = formatNumberWithCommas(input.value);
+      }
+      
+      // Format on input
+      input.addEventListener('input', function(e) {
+        const cursorPos = this.selectionStart;
+        const oldLength = this.value.length;
+        const oldValue = this.value;
+        
+        // Format the value
+        const formatted = formatNumberWithCommas(this.value);
+        this.value = formatted;
+        
+        // Restore cursor position
+        const newLength = this.value.length;
+        const lengthDiff = newLength - oldLength;
+        this.setSelectionRange(cursorPos + lengthDiff, cursorPos + lengthDiff);
+      });
+      
+      // Store original name for form submission
+      input.setAttribute('data-original-name', inputName);
+    }
+  });
   
   // Add validation listeners
   const inputs = modalBody.querySelectorAll('input, select, textarea');

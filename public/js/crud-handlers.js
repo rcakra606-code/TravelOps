@@ -357,6 +357,47 @@ function updateRegionSelects() {
     });
     
     if (currentValue) select.value = currentValue;
+    
+    // Make select searchable by adding data-searchable attribute
+    if (!select.hasAttribute('data-searchable-initialized')) {
+      makeSelectSearchable(select);
+      select.setAttribute('data-searchable-initialized', 'true');
+    }
+  });
+}
+
+function makeSelectSearchable(selectElement) {
+  // Add autocomplete attribute for better UX
+  selectElement.setAttribute('autocomplete', 'off');
+  
+  // Listen for keydown events to enable type-to-search
+  let searchBuffer = '';
+  let searchTimeout = null;
+  
+  selectElement.addEventListener('keydown', (e) => {
+    // Allow normal arrow key navigation
+    if (['ArrowUp', 'ArrowDown', 'Enter', 'Escape', 'Tab'].includes(e.key)) {
+      return;
+    }
+    
+    // Build search buffer from typed characters
+    clearTimeout(searchTimeout);
+    searchBuffer += e.key.toLowerCase();
+    
+    // Find first matching option
+    const options = Array.from(selectElement.options);
+    const match = options.find(opt => 
+      opt.textContent.toLowerCase().startsWith(searchBuffer)
+    );
+    
+    if (match) {
+      selectElement.value = match.value;
+    }
+    
+    // Clear search buffer after 1 second
+    searchTimeout = setTimeout(() => {
+      searchBuffer = '';
+    }, 1000);
   });
 }
 
@@ -1324,6 +1365,16 @@ async function handleModalSubmit(formData, context) {
       applyFilterFromModal(entity, formData);
       return true;
     }
+  
+  // Parse formatted numbers back to regular numbers
+  Object.keys(formData).forEach(key => {
+    if (key.includes('amount') || key.includes('price') || key.includes('deposit') || key.includes('target')) {
+      if (formData[key] && typeof formData[key] === 'string') {
+        // Remove commas and parse to number
+        formData[key] = window.parseFormattedNumber ? window.parseFormattedNumber(formData[key]) : parseFloat(formData[key].replace(/,/g, '')) || 0;
+      }
+    }
+  });
   
   // Remove empty password field for user updates
   if (entity === 'users' && action === 'update' && !formData.password) {
