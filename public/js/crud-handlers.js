@@ -319,15 +319,18 @@ async function loadUsers() {
 }
 
 function updateRegionSelects() {
-  const selects = document.querySelectorAll('select[name="region_id"], #filterRegion, #globalRegion');
+  const selects = document.querySelectorAll('select[name="region_id"], select[name="passport_country"], #filterRegion, #globalRegion');
   selects.forEach(select => {
     const currentValue = select.value;
     const isFilter = select.id === 'filterRegion' || select.id === 'globalRegion';
+    const isPassport = select.name === 'passport_country';
     
-    select.innerHTML = isFilter ? '<option value="">Semua</option>' : '<option value="">Pilih Region</option>';
+    select.innerHTML = isFilter ? '<option value="">Semua</option>' : 
+                       isPassport ? '<option value="">Pilih Negara</option>' :
+                       '<option value="">Pilih Region</option>';
     state.regions.forEach(r => {
       const opt = document.createElement('option');
-      opt.value = r.id;
+      opt.value = isPassport ? r.region_name : r.id;
       opt.textContent = r.region_name;
       select.appendChild(opt);
     });
@@ -382,6 +385,10 @@ function openAddSalesModal() {
         <input type="text" name="invoice_no" required placeholder="INV-001">
       </div>
       <div class="form-group">
+        <label>Unique Code</label>
+        <input type="text" name="unique_code" placeholder="UC-001">
+      </div>
+      <div class="form-group">
         <label>Staff *</label>
         <select name="staff_name" required></select>
       </div>
@@ -425,6 +432,10 @@ function openEditSalesModal(id) {
       <div class="form-group">
         <label>Invoice Number *</label>
         <input type="text" name="invoice_no" value="${item.invoice_no || ''}" required>
+      </div>
+      <div class="form-group">
+        <label>Unique Code</label>
+        <input type="text" name="unique_code" value="${item.unique_code || ''}" placeholder="UC-001">
       </div>
       <div class="form-group">
         <label>Staff *</label>
@@ -471,12 +482,12 @@ function openAddTourModal() {
           <input type="date" name="registration_date" required>
         </div>
         <div class="form-group">
-          <label>Lead Passenger *</label>
-          <input type="text" name="lead_passenger" required placeholder="Nama Jamaah Utama">
+          <label>Nama Penumpang Utama *</label>
+          <input type="text" name="lead_passenger" required placeholder="Nama Penumpang Utama">
         </div>
         <div class="form-group">
-          <label>All Passengers</label>
-          <textarea name="all_passengers" rows="2" placeholder="Semua nama peserta (pisahkan dengan koma)"></textarea>
+          <label>Semua Penumpang</label>
+          <textarea name="all_passengers" rows="2" placeholder="Semua nama penumpang (pisahkan dengan koma)"></textarea>
         </div>
         <div class="form-group">
           <label>Tour Code *</label>
@@ -557,11 +568,11 @@ function openEditTourModal(id) {
           <input type="date" name="registration_date" value="${item.registration_date || ''}" required>
         </div>
         <div class="form-group">
-          <label>Lead Passenger *</label>
+          <label>Nama Penumpang Utama *</label>
           <input type="text" name="lead_passenger" value="${item.lead_passenger || ''}" required>
         </div>
         <div class="form-group">
-          <label>All Passengers</label>
+          <label>Semua Penumpang</label>
           <textarea name="all_passengers" rows="2">${item.all_passengers || ''}</textarea>
         </div>
         <div class="form-group">
@@ -654,7 +665,9 @@ function openAddDocModal() {
         </div>
         <div class="form-group">
           <label>Passport Country</label>
-          <input type="text" name="passport_country" placeholder="Indonesia">
+          <select name="passport_country">
+            <option value="">Pilih Negara</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Process Type *</label>
@@ -697,6 +710,7 @@ function openAddDocModal() {
     context: { entity: 'documents', action: 'create' }
   });
   updateStaffSelects();
+  updateRegionSelects();
 }
 
 function openEditDocModal(id) {
@@ -722,7 +736,9 @@ function openEditDocModal(id) {
         </div>
         <div class="form-group">
           <label>Passport Country</label>
-          <input type="text" name="passport_country" value="${item.passport_country || ''}">
+          <select name="passport_country">
+            <option value="">Pilih Negara</option>
+          </select>
         </div>
         <div class="form-group">
           <label>Process Type *</label>
@@ -764,8 +780,11 @@ function openEditDocModal(id) {
     context: { entity: 'documents', action: 'update', id }
   });
   updateStaffSelects();
+  updateRegionSelects();
   setTimeout(() => {
     document.querySelector('select[name="staff_name"]').value = item.staff_name || '';
+    const passportSelect = document.querySelector('select[name="passport_country"]');
+    if (passportSelect && item.passport_country) passportSelect.value = item.passport_country;
   }, 100);
 }
 
