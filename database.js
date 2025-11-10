@@ -266,37 +266,37 @@ async function createSchema(db) {
   await ensureColumn('sales', 'unique_code', 'TEXT');
   await ensureColumn('sales', 'status', "TEXT DEFAULT 'Pending'");
   await ensureColumn('sales', 'notes', 'TEXT');
-  await ensureColumn('sales', 'created_at', ts + ' ' + createdDefault);
+  await ensureColumn('sales', 'created_at', isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : 'TEXT DEFAULT (datetime(\'now\'))');
 
   // Documents: all columns used by frontend
-  await ensureColumn('documents', 'receive_date', text());
-  await ensureColumn('documents', 'send_date', text());
+  await ensureColumn('documents', 'receive_date', 'TEXT');
+  await ensureColumn('documents', 'send_date', 'TEXT');
   await ensureColumn('documents', 'guest_name', 'TEXT');
   await ensureColumn('documents', 'passport_country', 'TEXT');
   await ensureColumn('documents', 'process_type', 'TEXT');
   await ensureColumn('documents', 'booking_code', 'TEXT');
   await ensureColumn('documents', 'invoice_number', 'TEXT');
   await ensureColumn('documents', 'phone_number', 'TEXT');
-  await ensureColumn('documents', 'estimated_done', text());
+  await ensureColumn('documents', 'estimated_done', 'TEXT');
   await ensureColumn('documents', 'staff_name', 'TEXT');
   await ensureColumn('documents', 'tour_code', 'TEXT');
   await ensureColumn('documents', 'notes', 'TEXT');
 
   // Tours: all columns used by frontend
-  await ensureColumn('tours', 'registration_date', text());
+  await ensureColumn('tours', 'registration_date', 'TEXT');
   await ensureColumn('tours', 'lead_passenger', 'TEXT');
   await ensureColumn('tours', 'all_passengers', 'TEXT');
   await ensureColumn('tours', 'tour_code', 'TEXT');
   await ensureColumn('tours', 'region_id', 'INTEGER');
-  await ensureColumn('tours', 'departure_date', text());
+  await ensureColumn('tours', 'departure_date', 'TEXT');
   await ensureColumn('tours', 'booking_code', 'TEXT');
-  await ensureColumn('tours', 'tour_price', num());
-  await ensureColumn('tours', 'sales_amount', num());
-  await ensureColumn('tours', 'profit_amount', num());
-  await ensureColumn('tours', 'discount_amount', num());
+  await ensureColumn('tours', 'tour_price', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tours', 'sales_amount', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tours', 'profit_amount', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tours', 'discount_amount', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
   await ensureColumn('tours', 'discount_remarks', 'TEXT');
   await ensureColumn('tours', 'staff_name', 'TEXT');
-  await ensureColumn('tours', 'jumlah_peserta', 'INTEGER');
+  await ensureColumn('tours', 'jumlah_peserta', 'INTEGER DEFAULT 1');
   await ensureColumn('tours', 'phone_number', 'TEXT');
   await ensureColumn('tours', 'email', 'TEXT');
   await ensureColumn('tours', 'status', 'TEXT');
@@ -307,21 +307,21 @@ async function createSchema(db) {
   await ensureColumn('telecom', 'no_telephone', 'TEXT');
   await ensureColumn('telecom', 'type_product', 'TEXT');
   await ensureColumn('telecom', 'region_id', 'INTEGER');
-  await ensureColumn('telecom', 'tanggal_mulai', text());
-  await ensureColumn('telecom', 'tanggal_selesai', text());
+  await ensureColumn('telecom', 'tanggal_mulai', 'TEXT');
+  await ensureColumn('telecom', 'tanggal_selesai', 'TEXT');
   await ensureColumn('telecom', 'no_rekening', 'TEXT');
   await ensureColumn('telecom', 'bank', 'TEXT');
   await ensureColumn('telecom', 'nama_rekening', 'TEXT');
-  await ensureColumn('telecom', 'estimasi_pengambilan', text());
+  await ensureColumn('telecom', 'estimasi_pengambilan', 'TEXT');
   await ensureColumn('telecom', 'staff_name', 'TEXT');
   await ensureColumn('telecom', 'deposit', 'TEXT');
-  await ensureColumn('telecom', 'jumlah_deposit', num());
-  await ensureColumn('telecom', 'tanggal_pengambilan', text());
-  await ensureColumn('telecom', 'tanggal_pengembalian', text());
+  await ensureColumn('telecom', 'jumlah_deposit', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('telecom', 'tanggal_pengambilan', 'TEXT');
+  await ensureColumn('telecom', 'tanggal_pengembalian', 'TEXT');
 
   // Hotel Bookings: all columns
-  await ensureColumn('hotel_bookings', 'check_in', text());
-  await ensureColumn('hotel_bookings', 'check_out', text());
+  await ensureColumn('hotel_bookings', 'check_in', 'TEXT');
+  await ensureColumn('hotel_bookings', 'check_out', 'TEXT');
   await ensureColumn('hotel_bookings', 'hotel_name', 'TEXT');
   await ensureColumn('hotel_bookings', 'region_id', 'INTEGER');
   await ensureColumn('hotel_bookings', 'confirmation_number', 'TEXT');
