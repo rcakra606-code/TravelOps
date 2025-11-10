@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="id">
+<head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tours Dashboard - TravelOps</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales Dashboard</a>
+      <a href="/tours-dashboard.html" class="active">🧳 Tours Dashboard</a>
+      <a href="/documents-dashboard.html">📄 Documents Dashboard</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/single-dashboard.html?section=tours">📊 Tours Data</a>
+      <a href="/single-dashboard.html?section=regions">🌍 Regions</a>
+      <a href="/single-dashboard.html?section=users">👥 Users</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>Tours Dashboard</h2>
+        <div class="small">Analisis tour & peserta berdasarkan region</div>
+      </div>
+      <div class="controls">
+        <div class="filter-row" style="margin:0">
+          <label class="small">Staff:</label>
+          <select id="filterStaff"><option value="all">Semua</option></select>
+          <label class="small">Periode:</label>
+          <select id="filterPeriod"><option value="all">Keseluruhan</option><option value="month">Per Bulan</option><option value="year">Per Tahun</option></select>
+          <input id="filterMonth" type="month" style="display:none">
+          <input id="filterYear" type="number" placeholder="Tahun" min="2000" max="2100" style="width:100px;display:none">
+          <label class="small">Region:</label>
+          <select id="filterRegion"><option value="all">Semua</option></select>
+          <button id="applyFilters" class="btn">Terapkan</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <!-- Metrics Row -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Peserta</div>
+          <div class="metric-value" id="totalParticipants">0</div>
+          <div class="metric-subtitle">Semua tour</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Total Tours</div>
+          <div class="metric-value" id="totalTours">0</div>
+          <div class="metric-subtitle">Tour tercatat</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Rata-rata Peserta</div>
+          <div class="metric-value" id="avgParticipants">0</div>
+          <div class="metric-subtitle">Per tour</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Upcoming Departures</div>
+          <div class="metric-value" id="upcomingDepartures">0</div>
+          <div class="metric-subtitle">Dalam 30 hari</div>
+        </div>
+      </div>
+
+      <!-- Charts Row 1 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px;">
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Peserta per Bulan</div>
+          </div>
+          <canvas id="chartParticipantsMonthly" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Peserta per Region</div>
+          </div>
+          <canvas id="chartParticipantsRegion" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row 2 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Top 5 Destinations</div>
+          </div>
+          <canvas id="chartTopDestinations" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Tours per Staff</div>
+          </div>
+          <canvas id="chartToursPerStaff" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Charts Row 3 -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Departure Timeline (Next 60 Days)</div>
+          </div>
+          <canvas id="chartDepartureTimeline" style="max-height: 300px;"></canvas>
+        </div>
+
+        <div class="chart-container">
+          <div class="chart-header">
+            <div class="chart-title">Package Type Distribution</div>
+          </div>
+          <canvas id="chartPackageTypes" style="max-height: 300px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Upcoming Departures Table -->
+      <div class="chart-container" style="margin-top: 20px;">
+        <div class="chart-header">
+          <div class="chart-title">⚠️ Upcoming Departures (Next 7 Days)</div>
+        </div>
+        <div style="padding: 16px;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="border-bottom: 2px solid #e5e7eb;">
+                <th style="padding: 8px; text-align: left;">Departure Date</th>
+                <th style="padding: 8px; text-align: left;">Tour Name</th>
+                <th style="padding: 8px; text-align: left;">Region</th>
+                <th style="padding: 8px; text-align: right;">Peserta</th>
+                <th style="padding: 8px; text-align: left;">Staff</th>
+              </tr>
+            </thead>
+            <tbody id="upcomingToursTable">
+              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Export Button -->
+      <div style="text-align: right; margin-top: 20px;">
+        <button id="exportToursCSV" class="btn">⬇ Export Tours Data</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="/js/tours-dashboard.js"></script>
+</body>
+</html>

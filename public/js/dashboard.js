@@ -89,7 +89,13 @@ async function fetchJson(url, opts = {}) {
     await refreshTokenIfNeeded();
   }
   
-  opts.headers = { ...(opts.headers || {}), ...getHeaders(!!opts.body) };
+  opts.headers = { 
+    ...(opts.headers || {}), 
+    ...getHeaders(!!opts.body),
+    // Prevent caching for metrics endpoint to ensure fresh data
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache'
+  };
   if (opts.body && typeof opts.body === 'object' && opts.headers['Content-Type'] === 'application/json')
     opts.body = JSON.stringify(opts.body);
   const res = await fetch(api(url), opts);
