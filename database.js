@@ -251,11 +251,11 @@ async function createSchema(db) {
         } else {
           await db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definitionSql}`);
         }
-        logger && logger.info && logger.info({ table, column }, 'Added missing column');
+        console.log(`✅ Added missing column: ${table}.${column}`);
       }
     } catch (err) {
       // Non-fatal: log and continue
-      logger && logger.warn && logger.warn({ err, table, column }, 'Failed to ensure column');
+      console.warn(`⚠️ Failed to ensure column ${table}.${column}:`, err.message);
     }
   }
 

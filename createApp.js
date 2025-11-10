@@ -157,8 +157,8 @@ export async function createApp() {
     try { const decoded = jwt.verify(token, SECRET); const newToken = jwt.sign(decoded, SECRET, { expiresIn:'15m' }); res.json({ token:newToken }); } catch { res.status(403).json({ error:'Token expired' }); }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom'];
-  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom']);
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings'];
+  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings']);
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{

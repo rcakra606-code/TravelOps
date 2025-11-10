@@ -791,6 +791,10 @@ window.addEventListener('DOMContentLoaded', () => {
         window.crudHandlers.openAddTelecomModal();
       });
       
+      el('addHotelBookingBtn')?.addEventListener('click', () => {
+        window.crudHandlers.openAddHotelBookingModal();
+      });
+      
       // Initialize CRUD handlers
       window.crudHandlers.init();
     } else {
@@ -807,4 +811,5 @@ window.editTarget = (id) => window.crudHandlers?.openEditTargetModal(id);
 window.editRegion = (id) => window.crudHandlers?.openEditRegionModal(id);
 window.editUser = (id) => window.crudHandlers?.openEditUserModal(id);
 window.editTelecom = (id) => window.crudHandlers?.openEditTelecomModal(id);
+window.editHotelBooking = (id) => window.crudHandlers?.openEditHotelBookingModal(id);
 window.deleteItem = (entity, id) => window.crudHandlers?.deleteItem(entity, id);

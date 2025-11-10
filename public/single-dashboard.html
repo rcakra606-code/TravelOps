@@ -21,6 +21,7 @@
       <button data-section="documents">📄 Documents</button>
       <button data-section="targets">🎯 Targets</button>
       <button data-section="telecom">📞 Telecom</button>
+      <button data-section="hotel_bookings">🏨 Hotel Bookings</button>
       <button data-section="regions">🌍 Regions</button>
       <button data-section="users">👥 Users</button>
   <button data-section="profile">⚙️ Profile</button>
@@ -378,6 +379,42 @@
         <tbody id="tblTelecom"></tbody>
       </table>
       <div class="pagination" id="telecomPagination"></div>
+    </section>
+
+    <!-- Hotel Bookings -->
+    <section id="hotel_bookings" class="card section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <h3>Hotel Bookings</h3>
+        <div>
+          <button id="addHotelBookingBtn" class="btn primary">+ Tambah Hotel Booking</button>
+          <button data-filter-entity="hotel_bookings" class="btn">🔍 Filter</button>
+          <button id="exportHotelBookings" class="btn">Export CSV</button>
+        </div>
+      </div>
+      <div class="searchbar">
+        <select id="hotelBookingsPageSize" data-pagesize-entity="hotel_bookings" style="margin-left:auto">
+          <option value="5">5</option>
+          <option value="10" selected>10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+        </select>
+      </div>
+      <table class="table">
+        <thead>
+          <tr>
+            <th class="sortable" data-column="check_in">Check In</th>
+            <th class="sortable" data-column="check_out">Check Out</th>
+            <th class="sortable" data-column="hotel_name">Hotel</th>
+            <th class="sortable" data-column="region_id">Region</th>
+            <th class="sortable" data-column="confirmation_number">Konfirmasi</th>
+            <th class="sortable" data-column="guest_list">Guest List</th>
+            <th class="sortable" data-column="staff_name">Staff</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody id="tblHotelBookings"></tbody>
+      </table>
+      <div class="pagination" id="hotelBookingsPagination"></div>
     </section>
 
     <!-- Profile -->

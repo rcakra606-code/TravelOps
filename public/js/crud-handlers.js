@@ -15,6 +15,7 @@ let state = {
   documents: [],
   targets: [],
   telecom: [],
+  hotel_bookings: [],
   // Pagination & filtering state
   pagination: {
     sales: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' },
@@ -23,7 +24,8 @@ let state = {
     targets: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' },
     regions: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' },
     users: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' },
-    telecom: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' }
+    telecom: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' },
+    hotel_bookings: { page: 1, pageSize: 10, sortBy: null, sortOrder: 'asc' }
   },
   filters: {
     sales: {},
@@ -32,7 +34,8 @@ let state = {
     targets: {},
     regions: {},
     users: {},
-    telecom: {}
+    telecom: {},
+    hotel_bookings: {}
   }
 };
 
@@ -215,6 +218,24 @@ function openFilterModal(entity) {
             <option value="">Semua Status</option>
             <option value="sudah" ${filters.deposit === 'sudah' ? 'selected' : ''}>Sudah</option>
             <option value="belum" ${filters.deposit === 'belum' ? 'selected' : ''}>Belum</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Staff</label>
+          <select name="staff_name">
+            <option value="">Semua Staff</option>
+            ${state.users.map(u => `<option value="${u.name}" ${filters.staff_name == u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+          </select>
+        </div>
+      `;
+      break;
+    case 'hotel_bookings':
+      specificFilters = `
+        <div class="form-group">
+          <label>Region</label>
+          <select name="region_id">
+            <option value="">Semua Region</option>
+            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -1156,6 +1177,114 @@ function openEditTelecomModal(id) {
   }, 100);
 }
 
+/* === HOTEL BOOKINGS CRUD === */
+function openAddHotelBookingModal() {
+  openModal({
+    title: 'Tambah Hotel Booking',
+    size: 'large',
+    bodyHtml: `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Check In *</label>
+          <input type="date" name="check_in" required>
+        </div>
+        <div class="form-group">
+          <label>Check Out *</label>
+          <input type="date" name="check_out" required>
+        </div>
+        <div class="form-group">
+          <label>Nama Hotel *</label>
+          <input type="text" name="hotel_name" required placeholder="Nama Hotel">
+        </div>
+        <div class="form-group">
+          <label>Region *</label>
+          <select name="region_id" required></select>
+        </div>
+        <div class="form-group">
+          <label>Confirmation Number</label>
+          <input type="text" name="confirmation_number" placeholder="Nomor Konfirmasi">
+        </div>
+        <div class="form-group">
+          <label>Guest List</label>
+          <textarea name="guest_list" rows="3" placeholder="Daftar tamu (pisahkan dengan koma)"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Supplier Code</label>
+          <input type="text" name="supplier_code" placeholder="Kode Supplier">
+        </div>
+        <div class="form-group">
+          <label>Supplier Name</label>
+          <input type="text" name="supplier_name" placeholder="Nama Supplier">
+        </div>
+        <div class="form-group">
+          <label>Staff *</label>
+          <select name="staff_name" required></select>
+        </div>
+      </div>
+    `,
+    context: { entity: 'hotel_bookings', action: 'create' }
+  });
+  updateRegionSelects();
+  updateStaffSelects();
+}
+
+function openEditHotelBookingModal(id) {
+  const item = state.hotel_bookings.find(h => h.id === id);
+  if (!item) return;
+  
+  openModal({
+    title: 'Edit Hotel Booking',
+    size: 'large',
+    bodyHtml: `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Check In *</label>
+          <input type="date" name="check_in" value="${item.check_in || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Check Out *</label>
+          <input type="date" name="check_out" value="${item.check_out || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Nama Hotel *</label>
+          <input type="text" name="hotel_name" value="${item.hotel_name || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Region *</label>
+          <select name="region_id" required></select>
+        </div>
+        <div class="form-group">
+          <label>Confirmation Number</label>
+          <input type="text" name="confirmation_number" value="${item.confirmation_number || ''}">
+        </div>
+        <div class="form-group">
+          <label>Guest List</label>
+          <textarea name="guest_list" rows="3">${item.guest_list || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Supplier Code</label>
+          <input type="text" name="supplier_code" value="${item.supplier_code || ''}">
+        </div>
+        <div class="form-group">
+          <label>Supplier Name</label>
+          <input type="text" name="supplier_name" value="${item.supplier_name || ''}">
+        </div>
+        <div class="form-group">
+          <label>Staff *</label>
+          <select name="staff_name" required></select>
+        </div>
+      </div>
+    `,
+    context: { entity: 'hotel_bookings', action: 'update', id }
+  });
+  updateRegionSelects();
+  updateStaffSelects();
+  setTimeout(() => {
+    document.querySelector('select[name="region_id"]').value = item.region_id || '';
+    document.querySelector('select[name="staff_name"]').value = item.staff_name || '';
+  }, 100);
+}
+
 /* === DELETE HANDLER === */
 async function deleteItem(entity, id) {
   if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
@@ -1274,6 +1403,9 @@ function renderTable(entity) {
       break;
     case 'telecom':
       renderTelecomTable();
+      break;
+    case 'hotel_bookings':
+      renderHotelBookingsTable();
       break;
   }
 }
@@ -1547,6 +1679,50 @@ function renderTelecomTable() {
   renderPagination('telecom', filtered.length);
 }
 
+function renderHotelBookingsTable() {
+  const tbody = document.getElementById('tblHotelBookings');
+  if (!tbody) return;
+  
+  const filtered = applyFiltersAndSort('hotel_bookings');
+  const paginated = paginateData('hotel_bookings', filtered);
+  const current = getCurrentUser();
+  const isBasic = current.type === 'basic';
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8">Tidak ada data</td></tr>';
+    renderPagination('hotel_bookings', 0);
+    return;
+  }
+  
+  tbody.innerHTML = paginated.map(item => {
+    const region = state.regions.find(r => r.id === item.region_id);
+    const owned = item.staff_name && item.staff_name === current.name;
+    let actions = '';
+    if (isBasic && !owned) {
+      actions += `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"hotel_bookings\" data-id=\"${item.id}\">View</button>`;
+    } else {
+      actions += `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"hotel_bookings\" data-id=\"${item.id}\">Edit</button>`;
+    }
+    if (!isBasic) {
+      actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"hotel_bookings\" data-id=\"${item.id}\">Delete</button>`;
+    }
+    return `
+      <tr>
+        <td>${item.check_in || '-'}</td>
+        <td>${item.check_out || '-'}</td>
+        <td>${item.hotel_name || '-'}</td>
+        <td>${region ? region.region_name : '-'}</td>
+        <td>${item.confirmation_number || '-'}</td>
+        <td>${item.guest_list ? (item.guest_list.length > 50 ? item.guest_list.substring(0, 50) + '...' : item.guest_list) : '-'}</td>
+        <td>${item.staff_name || '-'}</td>
+        <td>${actions}</td>
+      </tr>
+    `;
+  }).join('');
+  
+  renderPagination('hotel_bookings', filtered.length);
+}
+
 /* === INITIALIZE === */
 async function init() {
   console.log('🔄 Initializing CRUD handlers...');
@@ -1562,7 +1738,8 @@ async function init() {
       loadData('tours'),
       loadData('documents'),
       loadData('targets'),
-      loadData('telecom')
+      loadData('telecom'),
+      loadData('hotel_bookings')
     ]);
     
     console.log('✅ Data loaded:', {
@@ -1572,7 +1749,8 @@ async function init() {
       tours: state.tours.length,
       documents: state.documents.length,
       targets: state.targets.length,
-      telecom: state.telecom.length
+      telecom: state.telecom.length,
+      hotel_bookings: state.hotel_bookings.length
     });
     
     // Render all tables
@@ -1583,6 +1761,7 @@ async function init() {
     renderRegionsTable();
     renderUsersTable();
     renderTelecomTable();
+    renderHotelBookingsTable();
     
     console.log('✅ All tables rendered');
 
@@ -1642,6 +1821,7 @@ async function init() {
                   case 'regions': window.crudHandlers.openEditRegionModal(id); break;
                   case 'users': window.crudHandlers.openEditUserModal(id); break;
                   case 'telecom': window.crudHandlers.openEditTelecomModal(id); break;
+                  case 'hotel_bookings': window.crudHandlers.openEditHotelBookingModal(id); break;
                 }
               }
               break;
@@ -1666,7 +1846,7 @@ async function init() {
 
   // Update sort indicators
   function updateAllSortIndicators() {
-    ['sales','tours','documents','targets','regions','users','telecom'].forEach(updateSortIndicators);
+    ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings'].forEach(updateSortIndicators);
   }
 
   function updateSortIndicators(entity) {
@@ -1700,6 +1880,8 @@ window.crudHandlers = {
   unlockUser,
   openAddTelecomModal,
   openEditTelecomModal,
+  openAddHotelBookingModal,
+  openEditHotelBookingModal,
   deleteItem,
   handleModalSubmit,
   init,
@@ -1788,6 +1970,7 @@ document.addEventListener('DOMContentLoaded', () => {
     exportDocs: 'documents',
     exportTargets: 'targets',
     exportTelecom: 'telecom',
+    exportHotelBookings: 'hotel_bookings',
     exportRegions: 'regions',
     exportUsers: 'users'
   };
