@@ -208,24 +208,95 @@ export async function createApp() {
   }
 
   app.get('/api/metrics', authMiddleware(), async (req,res)=>{
-    const { month, year, staff, region } = req.query; const isPg = db.dialect === 'postgres';
-    const params = []; const wh = (field)=>{ const c = []; if (month){ if (isPg){ c.push(`TO_CHAR(${field}, 'MM')=$${params.length+1}`); params.push(month.padStart(2,'0')); } else { c.push(`strftime('%m', ${field})=?`); params.push(month.padStart(2,'0')); } } if (year){ if (isPg){ c.push(`TO_CHAR(${field}, 'YYYY')=$${params.length+1}`); params.push(year); } else { c.push(`strftime('%Y', ${field})=?`); params.push(year); } } if (staff){ c.push(isPg?`staff_name=$${params.length+1}`:`staff_name=?`); params.push(staff); } if (region){ c.push(isPg?`region_id=$${params.length+1}::INTEGER`:`region_id=?`); params.push(region); } return c.length ? 'WHERE ' + c.join(' AND ') : ''; };
-    const sales = await db.get(`SELECT SUM(sales_amount) AS total_sales, SUM(profit_amount) AS total_profit FROM sales ${wh('transaction_date')}`, params);
-    const targets = await db.get('SELECT SUM(target_sales) AS target_sales, SUM(target_profit) AS target_profit FROM targets');
-    const participants = await db.get(`SELECT SUM(jumlah_peserta) AS total_participants FROM tours ${wh('departure_date')}`, params);
-    const documents = await db.get(`SELECT COUNT(*) AS total_docs, SUM(CASE WHEN process_type='Normal' THEN 1 ELSE 0 END) AS normal, SUM(CASE WHEN process_type='Kilat' THEN 1 ELSE 0 END) AS kilat FROM documents ${wh('receive_date')}`, params);
-    const participants_by_month = await db.all((isPg ? `SELECT TO_CHAR(departure_date,'MM') AS month, SUM(jumlah_peserta) AS participants FROM tours ${wh('departure_date')} GROUP BY month` : `SELECT strftime('%m', departure_date) AS month, SUM(jumlah_peserta) AS participants FROM tours ${wh('departure_date')} GROUP BY month`), params);
-    const regionWhere = wh('departure_date');
-    // Postgres requires all selected non-aggregates in GROUP BY; group by region_name
-    const participants_by_region = await db.all(
-      `SELECT r.region_name, SUM(t.jumlah_peserta) AS participants
-       FROM tours t
-       JOIN regions r ON r.id = t.region_id
-       ${regionWhere ? regionWhere.replace('WHERE', 'WHERE ') : ''}
-       GROUP BY r.region_name`,
-      params
-    );
-    res.json({ sales, targets, participants, documents, participants_by_month, participants_by_region });
+    try {
+      const { month, year, staff, region } = req.query; 
+      const isPg = db.dialect === 'postgres';
+      
+      // Helper to build WHERE clause with fresh params each time
+      const buildWhere = (field) => {
+        const params = [];
+        const conditions = [];
+        
+        if (month) {
+          if (isPg) {
+            conditions.push(`TO_CHAR(${field}, 'MM')=$${params.length+1}::TEXT`);
+            params.push(month.padStart(2,'0'));
+          } else {
+            conditions.push(`strftime('%m', ${field})=?`);
+            params.push(month.padStart(2,'0'));
+          }
+        }
+        
+        if (year) {
+          if (isPg) {
+            conditions.push(`TO_CHAR(${field}, 'YYYY')=$${params.length+1}::TEXT`);
+            params.push(year);
+          } else {
+            conditions.push(`strftime('%Y', ${field})=?`);
+            params.push(year);
+          }
+        }
+        
+        if (staff) {
+          conditions.push(isPg ? `staff_name=$${params.length+1}::TEXT` : `staff_name=?`);
+          params.push(staff);
+        }
+        
+        if (region) {
+          conditions.push(isPg ? `region_id=$${params.length+1}::INTEGER` : `region_id=?`);
+          params.push(region);
+        }
+        
+        return {
+          where: conditions.length ? 'WHERE ' + conditions.join(' AND ') : '',
+          params: params
+        };
+      };
+      
+      // Execute queries with independent parameter arrays
+      const salesQuery = buildWhere('transaction_date');
+      const sales = await db.get(
+        `SELECT SUM(sales_amount) AS total_sales, SUM(profit_amount) AS total_profit FROM sales ${salesQuery.where}`,
+        salesQuery.params
+      );
+      
+      const targets = await db.get('SELECT SUM(target_sales) AS target_sales, SUM(target_profit) AS target_profit FROM targets');
+      
+      const toursQuery = buildWhere('departure_date');
+      const participants = await db.get(
+        `SELECT SUM(jumlah_peserta) AS total_participants FROM tours ${toursQuery.where}`,
+        toursQuery.params
+      );
+      
+      const docsQuery = buildWhere('receive_date');
+      const documents = await db.get(
+        `SELECT COUNT(*) AS total_docs, SUM(CASE WHEN process_type='Normal' THEN 1 ELSE 0 END) AS normal, SUM(CASE WHEN process_type='Kilat' THEN 1 ELSE 0 END) AS kilat FROM documents ${docsQuery.where}`,
+        docsQuery.params
+      );
+      
+      const monthlyQuery = buildWhere('departure_date');
+      const participants_by_month = await db.all(
+        isPg 
+          ? `SELECT TO_CHAR(departure_date,'MM') AS month, SUM(jumlah_peserta) AS participants FROM tours ${monthlyQuery.where} GROUP BY month`
+          : `SELECT strftime('%m', departure_date) AS month, SUM(jumlah_peserta) AS participants FROM tours ${monthlyQuery.where} GROUP BY month`,
+        monthlyQuery.params
+      );
+      
+      const regionQuery = buildWhere('t.departure_date');
+      const participants_by_region = await db.all(
+        `SELECT r.region_name, SUM(t.jumlah_peserta) AS participants
+         FROM tours t
+         JOIN regions r ON r.id = t.region_id
+         ${regionQuery.where}
+         GROUP BY r.region_name`,
+        regionQuery.params
+      );
+      
+      res.json({ sales, targets, participants, documents, participants_by_month, participants_by_region });
+    } catch (err) {
+      console.error('Metrics endpoint error:', err);
+      res.status(500).json({ error: 'Failed to fetch metrics', details: err.message });
+    }
   });
 
   app.post('/api/users/reset-password', authMiddleware(), async (req,res)=>{
