@@ -3,6 +3,34 @@
    Extracted to external module for CSP compliance
    ========================================================= */
 
+/* === AUTHENTICATION CHECK === */
+(() => {
+  const token = localStorage.getItem('token');
+  const user = localStorage.getItem('user');
+  
+  if (!token || !user) {
+    console.warn('No authentication found, redirecting to login...');
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/login.html';
+    return;
+  }
+  
+  // Verify token format (basic check)
+  try {
+    const userData = JSON.parse(user);
+    if (!userData.username || !userData.type) {
+      throw new Error('Invalid user data');
+    }
+  } catch (err) {
+    console.error('Invalid session data:', err);
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/login.html';
+    return;
+  }
+})();
+
 /* === GLOBAL HELPERS === */
 const api = p => p.startsWith('/') ? p : '/' + p;
 const el = id => document.getElementById(id);
@@ -21,13 +49,22 @@ async function fetchJson(url, opts = {}) {
   if (opts.body && typeof opts.body === 'object' && opts.headers['Content-Type'] === 'application/json')
     opts.body = JSON.stringify(opts.body);
   const res = await fetch(api(url), opts);
-  if (res.status === 401 || res.status === 403) {
+  
+  // Only logout on 401 (invalid/expired token), not 403 (forbidden by permission)
+  if (res.status === 401) {
     alert('Sesi login telah berakhir. Silakan login kembali.');
     localStorage.clear();
     sessionStorage.clear();
     location.href = '/login.html';
     return;
   }
+  
+  // For 403, throw error to let caller handle it (e.g., basic user accessing /api/users)
+  if (res.status === 403) {
+    const errorData = await res.json().catch(() => ({ error: 'Forbidden' }));
+    throw new Error(errorData.error || 'Akses ditolak');
+  }
+  
   if (!res.ok) throw new Error(await res.text());
   try { return await res.json(); } catch { return null; }
 }
