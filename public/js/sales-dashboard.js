@@ -321,7 +321,7 @@ async function renderDashboard() {
       const ctxStaff = document.getElementById('chartTopStaff')?.getContext('2d');
       if (ctxStaff) {
         charts.topStaff = new Chart(ctxStaff, {
-          type: 'horizontalBar',
+          type: 'bar',
           data: {
             labels: sortedStaff.map(s => s[0]),
             datasets: [{

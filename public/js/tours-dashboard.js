@@ -273,7 +273,7 @@ async function renderDashboard() {
     const ctxDest = document.getElementById('chartTopDestinations')?.getContext('2d');
     if (ctxDest) {
       charts.topDest = new Chart(ctxDest, {
-        type: 'horizontalBar',
+        type: 'bar',
         data: {
           labels: topDest.map(d => d[0]),
           datasets: [{
