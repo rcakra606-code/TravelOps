@@ -44,7 +44,51 @@ const getHeaders = (json = true) => {
   return h;
 };
 
+// Track token refresh timing
+let lastTokenRefreshTime = Date.now();
+
+async function refreshTokenIfNeeded() {
+  const token = localStorage.getItem('token');
+  if (!token) return false;
+  
+  const timeSinceRefresh = Date.now() - lastTokenRefreshTime;
+  const twelveMinutes = 12 * 60 * 1000;
+  
+  // Refresh token if it's been more than 12 minutes since last refresh
+  // This keeps us well ahead of the 15-minute expiry
+  if (timeSinceRefresh > twelveMinutes) {
+    try {
+      const response = await fetch(api('/api/refresh'), {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.token) {
+          localStorage.setItem('token', data.token);
+          lastTokenRefreshTime = Date.now();
+          lastActivityTime = Date.now();
+          console.log('🔄 Token proactively refreshed');
+          return true;
+        }
+      }
+    } catch (err) {
+      console.error('Proactive token refresh failed:', err);
+    }
+  }
+  return false;
+}
+
 async function fetchJson(url, opts = {}) {
+  // Update activity timestamp on any API call
+  lastActivityTime = Date.now();
+  
+  // Proactively refresh token if needed before making the request
+  if (!url.includes('/api/refresh') && !url.includes('/api/login')) {
+    await refreshTokenIfNeeded();
+  }
+  
   opts.headers = { ...(opts.headers || {}), ...getHeaders(!!opts.body) };
   if (opts.body && typeof opts.body === 'object' && opts.headers['Content-Type'] === 'application/json')
     opts.body = JSON.stringify(opts.body);
@@ -75,19 +119,21 @@ let lastActivityTime = Date.now();
 
 function startTokenRefresh() {
   // Update activity time on user interactions
-  ['click', 'keydown', 'mousemove', 'scroll'].forEach(event => {
+  ['click', 'keydown', 'mousemove', 'scroll', 'touchstart'].forEach(event => {
     document.addEventListener(event, () => {
       lastActivityTime = Date.now();
     }, { passive: true, once: false });
   });
   
-  // Refresh token every 10 minutes if user has been active in last 2 minutes
+  // Check and refresh token every 2 minutes to stay ahead of 15min expiry
   if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
   tokenRefreshInterval = setInterval(async () => {
     const idleTime = Date.now() - lastActivityTime;
-    const twoMinutes = 2 * 60 * 1000;
+    const tenMinutes = 10 * 60 * 1000;
     
-    if (idleTime < twoMinutes) {
+    // Only refresh if user has been active in the last 10 minutes
+    // This ensures idle users get logged out after 15 min as intended
+    if (idleTime < tenMinutes) {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -101,14 +147,26 @@ function startTokenRefresh() {
           const data = await response.json();
           if (data.token) {
             localStorage.setItem('token', data.token);
-            console.log('🔄 Token refreshed');
+            const idleMinutes = Math.floor(idleTime / 60000);
+            console.log(`🔄 Token refreshed (idle: ${idleMinutes}m)`);
           }
+        } else if (response.status === 401 || response.status === 403) {
+          // Token expired, logout
+          console.warn('Token expired, logging out...');
+          localStorage.clear();
+          sessionStorage.clear();
+          alert('Sesi Anda telah berakhir. Silakan login kembali.');
+          window.location.href = '/login.html';
         }
       } catch (err) {
         console.error('Token refresh failed:', err);
       }
+    } else {
+      // User has been idle for more than 10 minutes, stop refreshing
+      // Token will expire naturally and user will be logged out on next action
+      console.log('⏸️ User idle, token refresh paused');
     }
-  }, 10 * 60 * 1000); // Every 10 minutes
+  }, 2 * 60 * 1000); // Check every 2 minutes
 }
 
 // Export globally for other scripts
