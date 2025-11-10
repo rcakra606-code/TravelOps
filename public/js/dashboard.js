@@ -996,7 +996,7 @@ function populateFilterDropdowns() {
         filterStaff.innerHTML = '<option value="all">Semua</option>';
         window.crudHandlers.state.users.forEach(u => {
           const opt = document.createElement('option');
-          opt.value = u.id;
+          opt.value = u.name; // Use name instead of id
           opt.textContent = u.name;
           filterStaff.appendChild(opt);
         });
