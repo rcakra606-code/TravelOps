@@ -558,10 +558,35 @@ function stopAutoRefresh() { if (autoInterval) clearInterval(autoInterval); auto
 let charts = {};
 async function renderCharts() {
   try {
-    const month = el('globalMonth')?.value || '';
-    const year = el('globalYear')?.value || '';
-    const staff = el('globalStaff')?.value || '';
-    const q = new URLSearchParams({ month, year, staff }).toString();
+    // Read from filter controls
+    const filterPeriod = el('filterPeriod')?.value || 'all';
+    const filterMonth = el('filterMonth')?.value || '';
+    const filterYear = el('filterYear')?.value || '';
+    const filterStaff = el('filterStaff')?.value || 'all';
+    const filterRegion = el('filterRegion')?.value || 'all';
+    
+    // Build query parameters
+    let month = '';
+    let year = '';
+    
+    if (filterPeriod === 'month' && filterMonth) {
+      const [y, m] = filterMonth.split('-');
+      month = m;
+      year = y;
+    } else if (filterPeriod === 'year' && filterYear) {
+      year = filterYear;
+    }
+    
+    const staff = filterStaff !== 'all' ? filterStaff : '';
+    const region = filterRegion !== 'all' ? filterRegion : '';
+    
+    const params = {};
+    if (month) params.month = month;
+    if (year) params.year = year;
+    if (staff) params.staff = staff;
+    if (region) params.region = region;
+    
+    const q = new URLSearchParams(params).toString();
     const metrics = await fetchJson('/api/metrics' + (q ? '?' + q : ''));
     if (!metrics) return;
 
@@ -914,8 +939,90 @@ if (el('pwForm')) {
   });
 }
 
+/* === FILTER MANAGEMENT === */
+function initializeFilters() {
+  // Handle period selection to show/hide month/year inputs
+  el('filterPeriod')?.addEventListener('change', (e) => {
+    const period = e.target.value;
+    const monthInput = el('filterMonth');
+    const yearInput = el('filterYear');
+    
+    if (period === 'month') {
+      monthInput.style.display = 'inline-block';
+      yearInput.style.display = 'none';
+      yearInput.value = '';
+    } else if (period === 'year') {
+      monthInput.style.display = 'none';
+      yearInput.style.display = 'inline-block';
+      monthInput.value = '';
+    } else {
+      monthInput.style.display = 'none';
+      yearInput.style.display = 'none';
+      monthInput.value = '';
+      yearInput.value = '';
+    }
+  });
+  
+  // Apply filters button
+  el('applyFilters')?.addEventListener('click', () => {
+    renderCharts();
+  });
+  
+  // Also apply on Enter key in month/year inputs
+  el('filterMonth')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') renderCharts();
+  });
+  el('filterYear')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') renderCharts();
+  });
+}
+
+function populateFilterDropdowns() {
+  // Wait for CRUD handlers to load state
+  const checkState = setInterval(() => {
+    if (window.crudHandlers?.state?.users && window.crudHandlers?.state?.regions) {
+      clearInterval(checkState);
+      
+      // Populate staff dropdown
+      const filterStaff = el('filterStaff');
+      if (filterStaff && window.crudHandlers.state.users) {
+        const currentValue = filterStaff.value;
+        filterStaff.innerHTML = '<option value="all">Semua</option>';
+        window.crudHandlers.state.users.forEach(u => {
+          const opt = document.createElement('option');
+          opt.value = u.id;
+          opt.textContent = u.name;
+          filterStaff.appendChild(opt);
+        });
+        filterStaff.value = currentValue;
+      }
+      
+      // Populate region dropdown
+      const filterRegion = el('filterRegion');
+      if (filterRegion && window.crudHandlers.state.regions) {
+        const currentValue = filterRegion.value;
+        filterRegion.innerHTML = '<option value="all">Semua</option>';
+        window.crudHandlers.state.regions.forEach(r => {
+          const opt = document.createElement('option');
+          opt.value = r.id;
+          opt.textContent = r.name;
+          filterRegion.appendChild(opt);
+        });
+        filterRegion.value = currentValue;
+      }
+    }
+  }, 100);
+  
+  // Timeout after 5 seconds if state doesn't load
+  setTimeout(() => clearInterval(checkState), 5000);
+}
+
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', () => {
+  // Initialize filters
+  initializeFilters();
+  populateFilterDropdowns();
+  
   renderCharts();
   setInterval(renderCharts, 30000);
   if (getUser().type === 'admin') loadActivity();

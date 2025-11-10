@@ -208,8 +208,8 @@ export async function createApp() {
   }
 
   app.get('/api/metrics', authMiddleware(), async (req,res)=>{
-    const { month, year, staff } = req.query; const isPg = db.dialect === 'postgres';
-    const params = []; const wh = (field)=>{ const c = []; if (month){ if (isPg){ c.push(`TO_CHAR(${field}, 'MM')=$${params.length+1}`); params.push(month.padStart(2,'0')); } else { c.push(`strftime('%m', ${field})=?`); params.push(month.padStart(2,'0')); } } if (year){ if (isPg){ c.push(`TO_CHAR(${field}, 'YYYY')=$${params.length+1}`); params.push(year); } else { c.push(`strftime('%Y', ${field})=?`); params.push(year); } } if (staff){ c.push(isPg?`staff_name=$${params.length+1}`:`staff_name=?`); params.push(staff); } return c.length ? 'WHERE ' + c.join(' AND ') : ''; };
+    const { month, year, staff, region } = req.query; const isPg = db.dialect === 'postgres';
+    const params = []; const wh = (field)=>{ const c = []; if (month){ if (isPg){ c.push(`TO_CHAR(${field}, 'MM')=$${params.length+1}`); params.push(month.padStart(2,'0')); } else { c.push(`strftime('%m', ${field})=?`); params.push(month.padStart(2,'0')); } } if (year){ if (isPg){ c.push(`TO_CHAR(${field}, 'YYYY')=$${params.length+1}`); params.push(year); } else { c.push(`strftime('%Y', ${field})=?`); params.push(year); } } if (staff){ c.push(isPg?`staff_name=$${params.length+1}`:`staff_name=?`); params.push(staff); } if (region){ c.push(isPg?`region_id=$${params.length+1}`:`region_id=?`); params.push(region); } return c.length ? 'WHERE ' + c.join(' AND ') : ''; };
     const sales = await db.get(`SELECT SUM(sales_amount) AS total_sales, SUM(profit_amount) AS total_profit FROM sales ${wh('transaction_date')}`, params);
     const targets = await db.get('SELECT SUM(target_sales) AS target_sales, SUM(target_profit) AS target_profit FROM targets');
     const participants = await db.get(`SELECT SUM(jumlah_peserta) AS total_participants FROM tours ${wh('departure_date')}`, params);
