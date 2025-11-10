@@ -248,16 +248,22 @@ async function createSchema(db) {
     try {
       const exists = await columnExists(table, column);
       if (!exists) {
+        console.log(`🔧 Adding missing column: ${table}.${column}`);
         if (db.dialect === 'postgres') {
           await db.run(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definitionSql}`);
         } else {
           await db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definitionSql}`);
         }
         console.log(`✅ Added missing column: ${table}.${column}`);
+      } else {
+        console.log(`✓ Column already exists: ${table}.${column}`);
       }
     } catch (err) {
-      // Non-fatal: log and continue
-      console.warn(`⚠️ Failed to ensure column ${table}.${column}:`, err.message);
+      // For critical tables, throw error; otherwise log and continue
+      console.error(`❌ Failed to ensure column ${table}.${column}:`, err.message);
+      if (['sales', 'tours', 'documents', 'telecom', 'hotel_bookings'].includes(table)) {
+        throw new Error(`Critical migration failed for ${table}.${column}: ${err.message}`);
+      }
     }
   }
 
@@ -333,6 +339,8 @@ async function createSchema(db) {
   // Targets: month/year
   await ensureColumn('targets', 'month', 'INTEGER');
   await ensureColumn('targets', 'year', 'INTEGER');
+
+  console.log('✅ All database migrations completed successfully');
 }
 
 export async function initDb() {
