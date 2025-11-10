@@ -131,6 +131,8 @@ async function createSchema(db) {
     tour_price ${num()} DEFAULT 0,
     sales_amount ${num()} DEFAULT 0,
     profit_amount ${num()} DEFAULT 0,
+    discount_amount ${num()} DEFAULT 0,
+    discount_remarks TEXT,
     staff_name TEXT,
     jumlah_peserta INTEGER DEFAULT 1,
     phone_number TEXT,
@@ -269,12 +271,15 @@ async function createSchema(db) {
   // Documents: passport_country
   await ensureColumn('documents', 'passport_country', 'TEXT');
 
-  // Tours: lead_passenger, all_passengers, registration_date, tour_code, jumlah_peserta
+  // Tours: lead_passenger, all_passengers, registration_date, tour_code, jumlah_peserta, booking_code, discount_amount, discount_remarks
   await ensureColumn('tours', 'registration_date', text());
   await ensureColumn('tours', 'lead_passenger', 'TEXT');
   await ensureColumn('tours', 'all_passengers', 'TEXT');
   await ensureColumn('tours', 'tour_code', 'TEXT');
   await ensureColumn('tours', 'jumlah_peserta', 'INTEGER');
+  await ensureColumn('tours', 'booking_code', 'TEXT');
+  await ensureColumn('tours', 'discount_amount', num());
+  await ensureColumn('tours', 'discount_remarks', 'TEXT');
 
   // Telecom: region_id and fields used by frontend
   await ensureColumn('telecom', 'nama', 'TEXT');

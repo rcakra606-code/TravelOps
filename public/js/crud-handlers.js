@@ -539,6 +539,14 @@ function openAddTourModal() {
           <input type="number" name="profit_amount" step="0.01" placeholder="0">
         </div>
         <div class="form-group">
+          <label>Discount Amount</label>
+          <input type="number" name="discount_amount" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Discount Remarks</label>
+          <input type="text" name="discount_remarks" placeholder="Keterangan diskon">
+        </div>
+        <div class="form-group">
           <label>Staff *</label>
           <select name="staff_name" required></select>
         </div>
@@ -623,6 +631,14 @@ function openEditTourModal(id) {
         <div class="form-group">
           <label>Profit Amount</label>
           <input type="number" name="profit_amount" value="${item.profit_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Discount Amount</label>
+          <input type="number" name="discount_amount" value="${item.discount_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Discount Remarks</label>
+          <input type="text" name="discount_remarks" value="${item.discount_remarks || ''}">
         </div>
         <div class="form-group">
           <label>Staff *</label>
