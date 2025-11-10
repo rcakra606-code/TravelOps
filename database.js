@@ -107,39 +107,66 @@ async function createSchema(db) {
   // Sales
   await db.run(`CREATE TABLE IF NOT EXISTS sales (
     id ${idCol},
-    invoice_number TEXT,
-    customer TEXT,
-    sales_amount ${num()},
-    profit_amount ${num()},
-    transaction_date ${ts},
-    staff_name TEXT
+    transaction_date ${text()},
+    invoice_no TEXT,
+    staff_name TEXT,
+    status TEXT DEFAULT 'Pending',
+    sales_amount ${num()} DEFAULT 0,
+    profit_amount ${num()} DEFAULT 0,
+    notes TEXT,
+    unique_code TEXT,
+    created_at ${ts} ${createdDefault}
   )`);
 
   // Tours
   await db.run(`CREATE TABLE IF NOT EXISTS tours (
     id ${idCol},
-    tour_name TEXT,
+    registration_date ${text()},
+    lead_passenger TEXT,
+    all_passengers TEXT,
+    tour_code TEXT,
     region_id INTEGER,
-    jumlah_peserta INTEGER,
-    departure_date ${ts},
-    staff_name TEXT
+    departure_date ${text()},
+    booking_code TEXT,
+    tour_price ${num()} DEFAULT 0,
+    sales_amount ${num()} DEFAULT 0,
+    profit_amount ${num()} DEFAULT 0,
+    staff_name TEXT,
+    jumlah_peserta INTEGER DEFAULT 1,
+    phone_number TEXT,
+    email TEXT,
+    status TEXT DEFAULT 'Pending',
+    link_pelunasan_tour TEXT,
+    created_at ${ts} ${createdDefault}
   )`);
 
   // Documents
   await db.run(`CREATE TABLE IF NOT EXISTS documents (
     id ${idCol},
-    doc_name TEXT,
+    receive_date ${text()},
+    send_date ${text()},
+    guest_name TEXT,
+    passport_country TEXT,
     process_type TEXT,
-    receive_date ${ts},
-    staff_name TEXT
+    booking_code TEXT,
+    invoice_number TEXT,
+    phone_number TEXT,
+    estimated_done ${text()},
+    staff_name TEXT,
+    tour_code TEXT,
+    notes TEXT,
+    created_at ${ts} ${createdDefault}
   )`);
 
   // Targets
   await db.run(`CREATE TABLE IF NOT EXISTS targets (
     id ${idCol},
-    target_sales ${num()},
-    target_profit ${num()},
-    staff_name TEXT
+    month INTEGER,
+    year INTEGER,
+    staff_name TEXT,
+    target_sales ${num()} DEFAULT 0,
+    target_profit ${num()} DEFAULT 0,
+    created_at ${ts} ${createdDefault}
   )`);
 
   // Regions
@@ -151,12 +178,37 @@ async function createSchema(db) {
   // Telecom
   await db.run(`CREATE TABLE IF NOT EXISTS telecom (
     id ${idCol},
-    customer_name TEXT,
-    product_name TEXT,
+    nama TEXT,
+    no_telephone TEXT,
     type_product TEXT,
-    amount ${num()},
-    transaction_date ${ts},
-    staff_name TEXT
+    region_id INTEGER,
+    tanggal_mulai ${text()},
+    tanggal_selesai ${text()},
+    no_rekening TEXT,
+    bank TEXT,
+    nama_rekening TEXT,
+    estimasi_pengambilan ${text()},
+    staff_name TEXT,
+    deposit TEXT,
+    jumlah_deposit ${num()} DEFAULT 0,
+    tanggal_pengambilan ${text()},
+    tanggal_pengembalian ${text()},
+    created_at ${ts} ${createdDefault}
+  )`);
+
+  // Hotel Bookings
+  await db.run(`CREATE TABLE IF NOT EXISTS hotel_bookings (
+    id ${idCol},
+    check_in ${text()},
+    check_out ${text()},
+    hotel_name TEXT,
+    region_id INTEGER,
+    confirmation_number TEXT,
+    guest_list TEXT,
+    supplier_code TEXT,
+    supplier_name TEXT,
+    staff_name TEXT,
+    created_at ${ts} ${createdDefault}
   )`);
 
   // Activity logs
@@ -178,6 +230,60 @@ async function createSchema(db) {
     const hash = await bcrypt.hash(adminPass, 10);
     await db.run('INSERT INTO users (username, password, name, email, type) VALUES (?,?,?,?,?)', [adminUser, hash, 'Administrator', 'admin@example.com', 'admin']);
   }
+
+  // Run lightweight migrations: add missing columns to existing tables (important for Postgres where CREATE TABLE IF NOT EXISTS won't alter existing tables)
+  async function columnExists(table, column) {
+    if (db.dialect === 'postgres') {
+      const row = await db.get("SELECT column_name FROM information_schema.columns WHERE table_name=$1 AND column_name=$2", [table, column]);
+      return !!row;
+    } else {
+      const rows = await db.all(`PRAGMA table_info(${table})`);
+      return rows.some(r => r.name === column);
+    }
+  }
+
+  async function ensureColumn(table, column, definitionSql) {
+    try {
+      const exists = await columnExists(table, column);
+      if (!exists) {
+        if (db.dialect === 'postgres') {
+          await db.run(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definitionSql}`);
+        } else {
+          await db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definitionSql}`);
+        }
+        logger && logger.info && logger.info({ table, column }, 'Added missing column');
+      }
+    } catch (err) {
+      // Non-fatal: log and continue
+      logger && logger.warn && logger.warn({ err, table, column }, 'Failed to ensure column');
+    }
+  }
+
+  // Sales columns expected by frontend
+  await ensureColumn('sales', 'invoice_no', 'TEXT');
+  await ensureColumn('sales', 'unique_code', 'TEXT');
+  await ensureColumn('sales', 'status', "TEXT DEFAULT 'Pending'");
+  await ensureColumn('sales', 'notes', 'TEXT');
+  await ensureColumn('sales', 'created_at', ts + ' ' + createdDefault);
+
+  // Documents: passport_country
+  await ensureColumn('documents', 'passport_country', 'TEXT');
+
+  // Tours: lead_passenger, all_passengers, registration_date, tour_code, jumlah_peserta
+  await ensureColumn('tours', 'registration_date', text());
+  await ensureColumn('tours', 'lead_passenger', 'TEXT');
+  await ensureColumn('tours', 'all_passengers', 'TEXT');
+  await ensureColumn('tours', 'tour_code', 'TEXT');
+  await ensureColumn('tours', 'jumlah_peserta', 'INTEGER');
+
+  // Telecom: region_id and fields used by frontend
+  await ensureColumn('telecom', 'nama', 'TEXT');
+  await ensureColumn('telecom', 'no_telephone', 'TEXT');
+  await ensureColumn('telecom', 'region_id', 'INTEGER');
+
+  // Targets: month/year
+  await ensureColumn('targets', 'month', 'INTEGER');
+  await ensureColumn('targets', 'year', 'INTEGER');
 }
 
 export async function initDb() {
