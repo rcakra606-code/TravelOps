@@ -124,7 +124,7 @@ async function populateFilterDropdowns() {
       regions.forEach(r => {
         const opt = document.createElement('option');
         opt.value = r.id;
-        opt.textContent = r.name;
+        opt.textContent = r.region_name; // fix: correct field
         filterRegion.appendChild(opt);
       });
     }

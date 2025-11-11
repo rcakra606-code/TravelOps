@@ -1003,7 +1003,7 @@ function populateFilterDropdowns() {
         filterStaff.value = currentValue;
       }
       
-      // Populate region dropdown
+      // Populate region dropdown (use region_name from schema; previously used r.name causing undefined labels)
       const filterRegion = el('filterRegion');
       if (filterRegion && window.crudHandlers.state.regions) {
         const currentValue = filterRegion.value;
@@ -1011,7 +1011,7 @@ function populateFilterDropdowns() {
         window.crudHandlers.state.regions.forEach(r => {
           const opt = document.createElement('option');
           opt.value = r.id;
-          opt.textContent = r.name;
+          opt.textContent = r.region_name; // fix: schema field is region_name
           filterRegion.appendChild(opt);
         });
         filterRegion.value = currentValue;

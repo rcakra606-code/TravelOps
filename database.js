@@ -110,6 +110,7 @@ async function createSchema(db) {
     transaction_date ${text()},
     invoice_no TEXT,
     staff_name TEXT,
+    region_id INTEGER,
     status TEXT DEFAULT 'Pending',
     sales_amount ${num()} DEFAULT 0,
     profit_amount ${num()} DEFAULT 0,
@@ -272,6 +273,7 @@ async function createSchema(db) {
   await ensureColumn('sales', 'unique_code', 'TEXT');
   await ensureColumn('sales', 'status', "TEXT DEFAULT 'Pending'");
   await ensureColumn('sales', 'notes', 'TEXT');
+  await ensureColumn('sales', 'region_id', 'INTEGER');
   await ensureColumn('sales', 'created_at', isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : 'TEXT DEFAULT (datetime(\'now\'))');
 
   // Documents: all columns used by frontend

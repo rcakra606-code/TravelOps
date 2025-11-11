@@ -163,8 +163,21 @@ export async function createApp() {
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{
       if (t === 'users' && req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
-      const rows = await db.all(`SELECT * FROM ${t}`);
-      res.json(rows);
+      // Provide region_name join enrichment for sales and tours when region_id exists
+      try {
+        let rows;
+        if (t === 'sales') {
+          rows = await db.all(`SELECT s.*, r.region_name FROM sales s LEFT JOIN regions r ON r.id = s.region_id`);
+        } else if (t === 'tours') {
+          rows = await db.all(`SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id`);
+        } else {
+          rows = await db.all(`SELECT * FROM ${t}`);
+        }
+        res.json(rows);
+      } catch (err) {
+        console.error('List fetch error:', t, err);
+        res.status(500).json({ error: 'Failed to fetch '+t });
+      }
     });
     app.post(`/api/${t}`, authMiddleware(), async (req,res)=>{
       if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
@@ -174,6 +187,11 @@ export async function createApp() {
       }
       if (staffOwnedTables.has(t)) {
         if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
+      }
+      // Sales: allow optional region_id, but validate if provided
+      if (t === 'sales' && req.body.region_id) {
+        const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
       }
       const keys = Object.keys(req.body);
       const values = Object.values(req.body);
@@ -190,6 +208,10 @@ export async function createApp() {
         if (!record) return res.status(404).json({ error:'Not found' });
         if ('staff_name' in record && record.staff_name !== req.user.name) return res.status(403).json({ error:'Unauthorized edit (ownership mismatch)' });
         if ('staff_name' in record && 'staff_name' in req.body) req.body.staff_name = record.staff_name;
+      }
+      if (t === 'sales' && 'region_id' in req.body && req.body.region_id) {
+        const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
       }
       const keys = Object.keys(req.body);
       const values = Object.values(req.body);
@@ -213,7 +235,8 @@ export async function createApp() {
       const isPg = db.dialect === 'postgres';
       
       // Helper to build WHERE clause with fresh params each time
-      const buildWhere = (field) => {
+      const buildWhere = (field, opts = {}) => {
+        const { allowRegion = true } = opts;
         const params = [];
         const conditions = [];
         
@@ -242,7 +265,7 @@ export async function createApp() {
           params.push(staff);
         }
         
-        if (region) {
+        if (region && allowRegion) {
           conditions.push(isPg ? `region_id=$${params.length+1}::INTEGER` : `region_id=?`);
           params.push(region);
         }
@@ -254,7 +277,7 @@ export async function createApp() {
       };
       
       // Execute queries with independent parameter arrays
-      const salesQuery = buildWhere('transaction_date');
+  const salesQuery = buildWhere('transaction_date', { allowRegion: false });
       const sales = await db.get(
         `SELECT SUM(sales_amount) AS total_sales, SUM(profit_amount) AS total_profit FROM sales ${salesQuery.where}`,
         salesQuery.params
@@ -268,7 +291,7 @@ export async function createApp() {
         toursQuery.params
       );
       
-      const docsQuery = buildWhere('receive_date');
+  const docsQuery = buildWhere('receive_date', { allowRegion: false });
       const documents = await db.get(
         `SELECT COUNT(*) AS total_docs, SUM(CASE WHEN process_type='Normal' THEN 1 ELSE 0 END) AS normal, SUM(CASE WHEN process_type='Kilat' THEN 1 ELSE 0 END) AS kilat FROM documents ${docsQuery.where}`,
         docsQuery.params

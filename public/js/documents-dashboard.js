@@ -310,27 +310,7 @@ async function renderDashboard() {
       });
     }
     
-    // Document Type Breakdown (passport, visa, etc.)
-    const typeData = {};
-    docsData.forEach(doc => {
-      const type = doc.document_type || 'Lainnya';
-      typeData[type] = (typeData[type] || 0) + 1;
-    });
-    
-    const ctxDocType = document.getElementById('chartDocumentTypes')?.getContext('2d');
-    if (ctxDocType) {
-      charts.docTypes = new Chart(ctxDocType, {
-        type: 'pie',
-        data: {
-          labels: Object.keys(typeData),
-          datasets: [{
-            data: Object.values(typeData),
-            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-          }]
-        },
-        options: commonOptions
-      });
-    }
+    // Removed document_type breakdown (field not in schema). Instead show process_type distribution already covered by processTypes chart.
     
     // Monthly Trend (Normal vs Kilat)
     const monthlyNormal = {};
@@ -420,12 +400,12 @@ el('exportDocumentsCSV')?.addEventListener('click', async () => {
       return;
     }
     
-    const headers = ['ID', 'Client Name', 'Document Type', 'Process Type', 'Receive Date', 'Send Date', 'Staff', 'Created At'];
+    const headers = ['ID', 'Guest Name', 'Process Type', 'Passport Country', 'Receive Date', 'Send Date', 'Staff', 'Created At'];
     const rows = data.map(d => [
       d.id,
-      d.client_name || '',
-      d.document_type || '',
+      d.guest_name || '',
       d.process_type || '',
+      d.passport_country || '',
       d.receive_date || '',
       d.send_date || '',
       d.staff_name || '',

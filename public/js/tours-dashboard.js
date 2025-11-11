@@ -120,7 +120,7 @@ async function populateFilterDropdowns() {
       regions.forEach(r => {
         const opt = document.createElement('option');
         opt.value = r.id;
-        opt.textContent = r.name;
+        opt.textContent = r.region_name; // fix: correct field
         filterRegion.appendChild(opt);
       });
     }
@@ -235,16 +235,19 @@ async function renderDashboard() {
       });
     }
     
-    // Participants per Region
+    // Participants per Region (derive name from regions list using region_id)
+    const regionList = await fetchJson('/api/regions');
+    const regionMap = Object.fromEntries((regionList || []).map(r => [String(r.id), r.region_name]));
     const regionData = {};
     toursData.forEach(tour => {
-      if (tour.region_name) {
-        regionData[tour.region_name] = (regionData[tour.region_name] || 0) + (parseInt(tour.jumlah_peserta) || 0);
+      const rname = regionMap[String(tour.region_id)] || null;
+      if (rname) {
+        regionData[rname] = (regionData[rname] || 0) + (parseInt(tour.jumlah_peserta) || 0);
       }
     });
     
     const ctxRegion = document.getElementById('chartParticipantsRegion')?.getContext('2d');
-    if (ctxRegion) {
+    if (ctxRegion && Object.keys(regionData).length) {
       charts.region = new Chart(ctxRegion, {
         type: 'pie',
         data: {
@@ -258,20 +261,18 @@ async function renderDashboard() {
       });
     }
     
-    // Top 5 Destinations
+    // Top 5 Destinations (use tour_code as proxy — tour_name not in schema)
     const destData = {};
     toursData.forEach(tour => {
-      if (tour.tour_name) {
-        destData[tour.tour_name] = (destData[tour.tour_name] || 0) + (parseInt(tour.jumlah_peserta) || 0);
+      if (tour.tour_code) {
+        destData[tour.tour_code] = (destData[tour.tour_code] || 0) + (parseInt(tour.jumlah_peserta) || 0);
       }
     });
-    
     const topDest = Object.entries(destData)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5);
-    
     const ctxDest = document.getElementById('chartTopDestinations')?.getContext('2d');
-    if (ctxDest) {
+    if (ctxDest && topDest.length) {
       charts.topDest = new Chart(ctxDest, {
         type: 'bar',
         data: {
