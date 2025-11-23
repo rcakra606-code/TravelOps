@@ -212,6 +212,18 @@ Behavior details:
 - Partial input allowed; validation only enforced on blur/submit.
 - Server receives already formatted `YYYY-MM-DD` strings.
 
+## 18) Unsaved Form Change Protection
+All create/edit modals track field modifications. If the user attempts to close the modal (overlay click, close button, ESC key) with unsaved changes:
+
+- A confirmation prompt appears: *"Perubahan belum disimpan. Keluar tanpa menyimpan?"*
+- Choosing Cancel keeps the modal open; choosing OK discards changes.
+- View and Filter modals are excluded (no prompt).
+
+Implementation summary:
+- `openModal()` sets `modal.dataset.dirty = 'false'` and attaches listeners to inputs to mark dirty.
+- `closeModal()` checks `modal.dataset.dirty` and `context.action` before prompting.
+- ESC key handling integrated with the same guard.
+
 - Add unit tests for metrics calculations
 - Add pagination & server-side filtering endpoints (UI currently handles client-side)
 - Implement refresh token rotation + revoke list

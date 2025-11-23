@@ -200,6 +200,7 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
   if (modalTitle) modalTitle.textContent = title;
   if (modalBody) modalBody.innerHTML = bodyHtml;
   if (modal) modal.dataset.context = JSON.stringify(context || {});
+  if (modal) modal.dataset.dirty = 'false';
   
   // Set modal size
   const modalCard = modal?.querySelector('.modal-card');
@@ -216,10 +217,32 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
   
   // Initialize any special inputs
   initializeModalInputs();
+
+  // Attach dirty tracking listeners (after content injection & special init)
+  if (modalForm) {
+    const markDirty = () => { if (modal) modal.dataset.dirty = 'true'; };
+    modalForm.querySelectorAll('input, select, textarea').forEach(el => {
+      el.addEventListener('input', markDirty, { once: false });
+      el.addEventListener('change', markDirty, { once: false });
+    });
+  }
 }
 
 function closeModal(confirmed = false) {
   if (!modal) return;
+
+  // If not confirmed and form is dirty, prompt user before closing
+  try {
+    const ctx = JSON.parse(modal.dataset.context || '{}');
+    const skippable = ['view','filter'].includes(ctx.action);
+    const isDirty = modal.dataset.dirty === 'true';
+    if (!confirmed && isDirty && !skippable) {
+      const proceed = confirm('Perubahan belum disimpan. Keluar tanpa menyimpan?');
+      if (!proceed) {
+        return; // user canceled close
+      }
+    }
+  } catch { /* ignore parse errors */ }
   
   // Add closing animation
   modal.classList.add('closing');
@@ -371,6 +394,13 @@ if (modalClose) modalClose.addEventListener('click', () => closeModal());
 if (el('modalCancel')) el('modalCancel').addEventListener('click', () => closeModal());
 if (modal) modal.addEventListener('click', e => {
   if (e.target === modal) closeModal();
+});
+
+// ESC key closes modal with dirty check
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && modal?.classList.contains('active')) {
+    closeModal(false);
+  }
 });
 
 // Handle form submission
