@@ -3,61 +3,12 @@
    Focused analytics for sales performance and targets
    ========================================================= */
 
-/* === AUTHENTICATION CHECK === */
-(() => {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
-  
-  if (!token || !user) {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-})();
-
-/* === GLOBAL HELPERS === */
-const api = p => p.startsWith('/') ? p : '/' + p;
+/* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
 const el = id => document.getElementById(id);
-const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
-
-const getHeaders = (json = true) => {
-  const h = {};
-  const token = localStorage.getItem('token');
-  if (token) h['Authorization'] = 'Bearer ' + token;
-  if (json) h['Content-Type'] = 'application/json';
-  return h;
-};
-
-async function fetchJson(url, opts = {}) {
-  opts.headers = { 
-    ...(opts.headers || {}), 
-    ...getHeaders(!!opts.body),
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
-  };
-  if (opts.body && typeof opts.body === 'object')
-    opts.body = JSON.stringify(opts.body);
-  const res = await fetch(api(url), opts);
-  
-  if (res.status === 401) {
-    alert('Sesi login telah berakhir. Silakan login kembali.');
-    localStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-  
-  if (!res.ok) throw new Error(await res.text() || res.statusText);
-  return await res.json();
-}
-
-const formatCurrency = (val) => {
-  const num = parseFloat(val) || 0;
-  return 'Rp ' + num.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
-};
 
 /* === DISPLAY USER INFO === */
 (() => {
-  const user = getUser();
+  const user = window.getUser();
   el('userName').textContent = user.name || user.username || '—';
   el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 })();
@@ -103,8 +54,8 @@ function initializeFilters() {
 async function populateFilterDropdowns() {
   try {
     const [users, regions] = await Promise.all([
-      fetchJson('/api/users'),
-      fetchJson('/api/regions')
+      window.fetchJson('/api/users'),
+      window.fetchJson('/api/regions')
     ]);
     
     const filterStaff = el('filterStaff');
@@ -166,8 +117,8 @@ async function renderDashboard() {
     
     // Fetch sales data and metrics
     const [salesData, metrics] = await Promise.all([
-      fetchJson('/api/sales' + (q ? '?' + q : '')),
-      fetchJson('/api/metrics' + (q ? '?' + q : ''))
+      window.fetchJson('/api/sales' + (q ? '?' + q : '')),
+      window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
     
     if (!metrics) return;
@@ -183,8 +134,8 @@ async function renderDashboard() {
     const targetProfit = metrics.targets?.target_profit || 0;
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
     
-    el('totalSales').textContent = formatCurrency(totalSales);
-    el('totalProfit').textContent = formatCurrency(totalProfit);
+    el('totalSales').textContent = window.formatCurrency(totalSales);
+    el('totalProfit').textContent = window.formatCurrency(totalProfit);
     el('profitMargin').textContent = profitMargin + '%';
     el('totalTransactions').textContent = salesData?.length || 0;
     el('salesAchievement').textContent = `Target: ${(totalSales / (targetSales || 1) * 100).toFixed(1)}%`;

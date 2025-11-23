@@ -30,20 +30,24 @@ body {
   width: 300px;
   background: linear-gradient(180deg, #072f5f, #0f62fe);
   color: #fff;
-  padding: 18px;
+  padding: 24px 18px;
   border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 }
 
 .brand {
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  padding: 12px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 16px;
 }
 
 .nav {
-  margin-top: 18px;
+  margin-top: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 .nav button,
@@ -51,25 +55,56 @@ body {
   background: transparent;
   border: none;
   color: #e6f0ff;
-  padding: 10px;
+  padding: 12px 14px;
   border-radius: 8px;
   text-align: left;
-  font-weight: 600;
+  font-size: 0.95rem;
+  font-weight: 500;
   cursor: pointer;
-  transition: background .15s;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  display: block;
+}
+
+.nav button:hover,
+.nav a:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  transform: translateX(2px);
 }
 
 .nav button.active,
 .nav a.active {
-  background: rgba(255,255,255,0.14);
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.nav hr {
+  margin: 8px 0;
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
 }
 
 .userbox {
-  margin-top: 18px;
-  padding: 10px;
+  margin-top: 20px;
+  padding: 14px 12px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.03);
-  font-size: 0.95rem;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.userbox > div:first-child {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #fff;
+}
+
+.userbox > div:last-child {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Main content */
@@ -416,8 +451,46 @@ h4 {
 
 /* Responsive */
 @media (max-width: 768px) {
+  .app {
+    flex-direction: column;
+    padding: 12px;
+  }
+  
+  .sidebar {
+    width: 100%;
+    padding: 16px;
+  }
+  
+  .brand {
+    font-size: 1.1rem;
+  }
+  
+  .nav {
+    gap: 6px;
+  }
+  
+  .nav button,
+  .nav a {
+    padding: 10px 12px;
+    font-size: 0.9rem;
+  }
+  
+  .filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .controls {
+    flex-wrap: wrap;
+  }
+  
   .form-grid {
     grid-template-columns: 1fr;
     row-gap: 16px;
+  }
+  
+  .modal-card {
+    padding: 20px;
+    margin: 12px;
   }
 }

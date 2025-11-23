@@ -3,56 +3,12 @@
    Focused analytics for document processing
    ========================================================= */
 
-/* === AUTHENTICATION CHECK === */
-(() => {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
-  
-  if (!token || !user) {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-})();
-
-/* === GLOBAL HELPERS === */
-const api = p => p.startsWith('/') ? p : '/' + p;
+/* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
 const el = id => document.getElementById(id);
-const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
-
-const getHeaders = (json = true) => {
-  const h = {};
-  const token = localStorage.getItem('token');
-  if (token) h['Authorization'] = 'Bearer ' + token;
-  if (json) h['Content-Type'] = 'application/json';
-  return h;
-};
-
-async function fetchJson(url, opts = {}) {
-  opts.headers = { 
-    ...(opts.headers || {}), 
-    ...getHeaders(!!opts.body),
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
-  };
-  if (opts.body && typeof opts.body === 'object')
-    opts.body = JSON.stringify(opts.body);
-  const res = await fetch(api(url), opts);
-  
-  if (res.status === 401) {
-    alert('Sesi login telah berakhir. Silakan login kembali.');
-    localStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-  
-  if (!res.ok) throw new Error(await res.text() || res.statusText);
-  return await res.json();
-}
 
 /* === DISPLAY USER INFO === */
 (() => {
-  const user = getUser();
+  const user = window.getUser();
   el('userName').textContent = user.name || user.username || '—';
   el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 })();
@@ -97,7 +53,7 @@ function initializeFilters() {
 
 async function populateFilterDropdowns() {
   try {
-    const users = await fetchJson('/api/users');
+    const users = await window.fetchJson('/api/users');
     
     const filterStaff = el('filterStaff');
     if (filterStaff && users) {
@@ -144,7 +100,7 @@ async function renderDashboard() {
     const q = new URLSearchParams(params).toString();
     
     // Fetch documents data
-    let docsData = await fetchJson('/api/documents' + (q ? '?' + q : ''));
+    let docsData = await window.fetchJson('/api/documents' + (q ? '?' + q : ''));
     
     if (!docsData) return;
     
@@ -394,7 +350,7 @@ async function renderDashboard() {
 /* === EXPORT CSV === */
 el('exportDocumentsCSV')?.addEventListener('click', async () => {
   try {
-    const data = await fetchJson('/api/documents');
+    const data = await window.fetchJson('/api/documents');
     if (!data || !data.length) {
       alert('Tidak ada data untuk di-export');
       return;

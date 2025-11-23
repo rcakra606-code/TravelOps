@@ -145,7 +145,7 @@ export async function createApp() {
     }
     if (user.type !== 'admin') await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
     const safeUser = { id: user.id, username: user.username, name: user.name, email: user.email, type: user.type };
-    const token = jwt.sign(safeUser, SECRET, { expiresIn: '15m' });
+    const token = jwt.sign(safeUser, SECRET, { expiresIn: '30m' });
     await logActivity(username, 'LOGIN', 'auth', user.id);
     res.json({ ...safeUser, token });
   });
@@ -154,7 +154,7 @@ export async function createApp() {
   app.post('/api/refresh', authMiddleware(false), async (req,res)=>{
     const token = (req.headers.authorization || '').replace('Bearer ','');
     if (!token) return res.status(401).json({ error: 'No token' });
-    try { const decoded = jwt.verify(token, SECRET); const newToken = jwt.sign(decoded, SECRET, { expiresIn:'15m' }); res.json({ token:newToken }); } catch { res.status(403).json({ error:'Token expired' }); }
+    try { const decoded = jwt.verify(token, SECRET); const newToken = jwt.sign(decoded, SECRET, { expiresIn:'30m' }); res.json({ token:newToken }); } catch { res.status(403).json({ error:'Token expired' }); }
   });
 
   const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings'];

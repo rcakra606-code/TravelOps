@@ -4,56 +4,12 @@
    Includes 7-day departure warnings
    ========================================================= */
 
-/* === AUTHENTICATION CHECK === */
-(() => {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
-  
-  if (!token || !user) {
-    localStorage.clear();
-    sessionStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-})();
-
-/* === GLOBAL HELPERS === */
-const api = p => p.startsWith('/') ? p : '/' + p;
+/* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
 const el = id => document.getElementById(id);
-const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
-
-const getHeaders = (json = true) => {
-  const h = {};
-  const token = localStorage.getItem('token');
-  if (token) h['Authorization'] = 'Bearer ' + token;
-  if (json) h['Content-Type'] = 'application/json';
-  return h;
-};
-
-async function fetchJson(url, opts = {}) {
-  opts.headers = { 
-    ...(opts.headers || {}), 
-    ...getHeaders(!!opts.body),
-    'Cache-Control': 'no-cache, no-store, must-revalidate'
-  };
-  if (opts.body && typeof opts.body === 'object')
-    opts.body = JSON.stringify(opts.body);
-  const res = await fetch(api(url), opts);
-  
-  if (res.status === 401) {
-    alert('Sesi login telah berakhir. Silakan login kembali.');
-    localStorage.clear();
-    window.location.href = '/login.html';
-    return;
-  }
-  
-  if (!res.ok) throw new Error(await res.text() || res.statusText);
-  return await res.json();
-}
 
 /* === DISPLAY USER INFO === */
 (() => {
-  const user = getUser();
+  const user = window.getUser();
   el('userName').textContent = user.name || user.username || '—';
   el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 })();
@@ -99,8 +55,8 @@ function initializeFilters() {
 async function populateFilterDropdowns() {
   try {
     const [users, regions] = await Promise.all([
-      fetchJson('/api/users'),
-      fetchJson('/api/regions')
+      window.fetchJson('/api/users'),
+      window.fetchJson('/api/regions')
     ]);
     
     const filterStaff = el('filterStaff');
@@ -162,8 +118,8 @@ async function renderDashboard() {
     
     // Fetch tours data and metrics
     const [toursData, metrics] = await Promise.all([
-      fetchJson('/api/tours' + (q ? '?' + q : '')),
-      fetchJson('/api/metrics' + (q ? '?' + q : ''))
+      window.fetchJson('/api/tours' + (q ? '?' + q : '')),
+      window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
     
     if (!toursData) return;
@@ -236,7 +192,7 @@ async function renderDashboard() {
     }
     
     // Participants per Region (derive name from regions list using region_id)
-    const regionList = await fetchJson('/api/regions');
+    const regionList = await window.fetchJson('/api/regions');
     const regionMap = Object.fromEntries((regionList || []).map(r => [String(r.id), r.region_name]));
     const regionData = {};
     toursData.forEach(tour => {
@@ -417,7 +373,7 @@ async function renderDashboard() {
 /* === EXPORT CSV === */
 el('exportToursCSV')?.addEventListener('click', async () => {
   try {
-    const data = await fetchJson('/api/tours');
+    const data = await window.fetchJson('/api/tours');
     if (!data || !data.length) {
       alert('Tidak ada data untuk di-export');
       return;
