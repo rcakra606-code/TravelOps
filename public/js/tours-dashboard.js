@@ -314,24 +314,34 @@ async function renderDashboard() {
       });
     }
     
-    // Package Type Distribution (if you have tour type field)
+    // Tour Status Distribution
+    const statusData = {};
+    toursData.forEach(tour => {
+      const status = tour.status || 'Pending';
+      statusData[status] = (statusData[status] || 0) + 1;
+    });
+    
     const ctxPackage = document.getElementById('chartPackageTypes')?.getContext('2d');
-    if (ctxPackage) {
-      // Placeholder - adjust based on your actual tour type field
-      charts.package = new Chart(ctxPackage, {
+    if (ctxPackage && Object.keys(statusData).length) {
+      charts.status = new Chart(ctxPackage, {
         type: 'doughnut',
         data: {
-          labels: ['Group Tour', 'Private Tour', 'Custom Package'],
+          labels: Object.keys(statusData),
           datasets: [{
-            data: [
-              toursData.filter(t => t.jumlah_peserta >= 10).length,
-              toursData.filter(t => t.jumlah_peserta < 10 && t.jumlah_peserta > 0).length,
-              toursData.filter(t => t.jumlah_peserta === 0).length
-            ],
-            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b']
+            data: Object.values(statusData),
+            backgroundColor: ['#fbbf24', '#3b82f6', '#10b981', '#ef4444'],
+            borderWidth: 2,
+            borderColor: '#fff'
           }]
         },
-        options: commonOptions
+        options: {
+          ...commonOptions,
+          plugins: {
+            ...commonOptions.plugins,
+            title: { display: true, text: 'Tour Status Distribution', font: { size: 16, weight: '600' } },
+            legend: { position: 'bottom' }
+          }
+        }
       });
     }
     
