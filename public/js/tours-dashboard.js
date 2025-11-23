@@ -50,6 +50,10 @@ function initializeFilters() {
   el('filterYear')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') renderDashboard();
   });
+  
+  // Auto-render on filter dropdown change
+  el('filterStaff')?.addEventListener('change', () => renderDashboard());
+  el('filterRegion')?.addEventListener('change', () => renderDashboard());
 }
 
 async function populateFilterDropdowns() {
@@ -403,9 +407,9 @@ el('exportToursCSV')?.addEventListener('click', async () => {
 });
 
 /* === INITIALIZATION === */
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   initializeFilters();
-  populateFilterDropdowns();
+  await populateFilterDropdowns();
   renderDashboard();
   setInterval(renderDashboard, 60000); // Refresh every minute
 });

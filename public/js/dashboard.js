@@ -954,6 +954,10 @@ function initializeFilters() {
   el('filterYear')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') renderCharts();
   });
+  
+  // Auto-render on filter dropdown change
+  el('filterStaff')?.addEventListener('change', () => renderCharts());
+  el('filterRegion')?.addEventListener('change', () => renderCharts());
 }
 
 function populateFilterDropdowns() {
