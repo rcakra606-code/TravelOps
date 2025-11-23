@@ -1366,19 +1366,43 @@ async function handleModalSubmit(formData, context) {
       return true;
     }
   
-  // Normalize numeric (financial) fields: accept inputs like "1,234", "Rp 1.234,00", "1234.56", etc.
+  // Robust normalization for numeric (financial) fields.
+  // Accept inputs like: "1,234", "Rp 1.234,00", "1.234.567", "1,234.50", "1234567", "1.234,5".
+  function normalizeMoney(raw) {
+    if (raw == null) return 0;
+    let s = String(raw).trim().toLowerCase();
+    if (!s) return 0;
+    // Strip currency words/symbols
+    s = s.replace(/(rp|idr|usd|eur|sgd|rm|aud|gbp|£|€|¥|\$)/g,'');
+    // Remove spaces & letters
+    s = s.replace(/[a-z\s]/g,'');
+    // Keep digits and separators only
+    s = s.replace(/[^0-9.,-]/g,'');
+    if (!s) return 0;
+    // Identify decimal separator (last occurrence with 1-4 trailing digits)
+    const lastComma = s.lastIndexOf(',');
+    const lastDot = s.lastIndexOf('.');
+    let decSep = null;
+    const candidates = [];
+    if (lastComma !== -1) candidates.push({pos:lastComma, ch:','});
+    if (lastDot !== -1) candidates.push({pos:lastDot, ch:'.'});
+    const chosen = candidates.find(c => /\d{1,4}$/.test(s.slice(c.pos+1)));
+    if (chosen) decSep = chosen.ch;
+    if (!decSep) {
+      // Treat all separators as thousands
+      const intOnly = s.replace(/[.,]/g,'');
+      return parseInt(intOnly || '0',10) || 0;
+    }
+    const parts = s.split(decSep);
+    const intPart = parts[0].replace(/[.,]/g,'') || '0';
+    const fracPart = parts.slice(1).join('').replace(/[^0-9]/g,'');
+    return parseFloat(intPart + '.' + (fracPart || '0')) || 0;
+  }
   Object.keys(formData).forEach(key => {
     if (/(amount|price|deposit|target|_sales|_profit|jumlah_deposit|tour_price)/i.test(key)) {
       const raw = formData[key];
-      if (typeof raw === 'string' && raw.trim() !== '') {
-        // Remove currency symbols, letters, spaces except digits and one decimal point
-        const cleaned = raw
-          .replace(/rp\s*/i, '')
-          .replace(/[^0-9.,]/g, '') // keep digits separators
-          .replace(/,/g, '') // remove thousand commas
-          .replace(/(\.(?=.*\.))+/g,''); // ensure single dot (fallback)
-        const numeric = parseFloat(cleaned);
-        formData[key] = Number.isFinite(numeric) ? numeric : 0;
+      if (typeof raw === 'string') {
+        formData[key] = normalizeMoney(raw);
       }
     }
   });

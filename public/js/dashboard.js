@@ -46,17 +46,54 @@ function formatCurrency(v) {
 }
 
 function formatNumberWithCommas(value) {
-  // Remove non-numeric characters except decimal point
-  const numStr = String(value).replace(/[^\d.]/g, '');
-  const parts = numStr.split('.');
-  // Add commas to integer part
-  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  return parts.join('.');
+  // Normalize raw string (accept both '.' and ',' as separators)
+  let raw = String(value).replace(/[^0-9,\.]/g,'');
+  if (!raw) return '';
+  // Determine decimal separator (last occurrence of ',' or '.') if followed by 1-4 digits
+  let decSep = null;
+  const lastComma = raw.lastIndexOf(',');
+  const lastDot = raw.lastIndexOf('.');
+  const choose = [];
+  if (lastComma !== -1) choose.push({pos:lastComma, ch:','});
+  if (lastDot !== -1) choose.push({pos:lastDot, ch:'.'});
+  const candidate = choose.find(c => /\d{1,4}$/.test(raw.slice(c.pos+1)));
+  if (candidate) decSep = candidate.ch;
+  let intPart = raw;
+  let fracPart = '';
+  if (decSep) {
+    const parts = raw.split(decSep);
+    intPart = parts[0];
+    fracPart = parts.slice(1).join(''); // merge in case multiple
+  }
+  // Remove all separators from int part
+  intPart = intPart.replace(/[.,]/g,'');
+  if (!intPart) intPart = '0';
+  const intFormatted = Number(intPart).toLocaleString('id-ID'); // thousands with '.'
+  return decSep ? intFormatted + ',' + fracPart.replace(/[^0-9]/g,'') : intFormatted;
 }
 
 function parseFormattedNumber(value) {
-  // Remove commas and parse to number
-  return parseFloat(String(value).replace(/,/g, '')) || 0;
+  if (value == null || value === '') return 0;
+  let raw = String(value).trim();
+  // Remove currency symbols and spaces
+  raw = raw.replace(/rp\s*/i,'').replace(/[a-zA-Z ]/g,'');
+  // Determine decimal separator similar to formatting
+  const lastComma = raw.lastIndexOf(',');
+  const lastDot = raw.lastIndexOf('.');
+  let decSep = null;
+  const choose = [];
+  if (lastComma !== -1) choose.push({pos:lastComma, ch:','});
+  if (lastDot !== -1) choose.push({pos:lastDot, ch:'.'});
+  const candidate = choose.find(c => /\d{1,4}$/.test(raw.slice(c.pos+1)));
+  if (candidate) decSep = candidate.ch;
+  if (!decSep) {
+    // treat all separators as thousands
+    return parseInt(raw.replace(/[.,]/g,''),10) || 0;
+  }
+  const parts = raw.split(decSep);
+  const intPart = parts[0].replace(/[.,]/g,'') || '0';
+  const fracPart = parts.slice(1).join('').replace(/[^0-9]/g,'');
+  return parseFloat(intPart + '.' + (fracPart || '0')) || 0;
 }
 
 // Export globally for other scripts
@@ -288,6 +325,25 @@ function initializeModalInputs() {
     d.setAttribute('pattern','\\d{4}-\\d{2}-\\d{2}');
     d.setAttribute('inputmode','numeric');
     if (originalValue) d.value = originalValue;
+    // Live auto-format while typing: enforce YYYY-MM-DD
+    d.addEventListener('input', () => {
+      const digits = d.value.replace(/[^0-9]/g,'').slice(0,8); // max 8 digits
+      let out = '';
+      if (digits.length >= 4) {
+        out = digits.slice(0,4);
+        if (digits.length >= 5) {
+          out += '-' + digits.slice(4,6);
+          if (digits.length >= 7) {
+            out += '-' + digits.slice(6,8);
+          }
+        } else if (digits.length > 4) {
+          out += '-' + digits.slice(4);
+        }
+      } else {
+        out = digits;
+      }
+      d.value = out;
+    });
     d.addEventListener('blur', () => {
       if (d.value && !/^\d{4}-\d{2}-\d{2}$/.test(d.value)) {
         d.classList.add('error');

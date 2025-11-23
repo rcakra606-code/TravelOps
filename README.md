@@ -176,23 +176,44 @@ npm test
 ### Debug Diagnostics
 Client logs `[auth] Token remaining ~Xm` every 5 minutes and after each refresh for observability.
 
-## 16) Financial Input Normalization
-All numeric monetary fields (e.g. `sales_amount`, `profit_amount`, `tour_price`, `target_sales`, `target_profit`, `jumlah_deposit`) accept loosely formatted input:
+## 16) Financial Input Normalization & Live Formatting
+All monetary / numeric target fields (`sales_amount`, `profit_amount`, `tour_price`, `discount_amount`, `target_sales`, `target_profit`, `jumlah_deposit`, etc.) now support very flexible user typing and are auto-formatted as you type.
 
-Examples accepted: `1000`, `1,000`, `Rp 1,000`, `1.000,00`, `Rp1.234.567`.
+Accepted raw inputs (examples):
+```
+1000
+1,000
+1.000
+Rp 1.234.567
+1.234.567,50
+1,234,567.50
+Rp1.234,5
+```
 
-Normalization rules (client-side before submit):
-- Strip currency symbols & whitespace.
-- Remove thousands separators (`,` or `.` depending on user typing).
-- Preserve a single decimal point.
-- Fallback to `0` if parsing fails.
+Live formatting rules:
+- While typing, value is rendered using Indonesian locale thousands separators (`.`) and decimal comma (`,`).
+- Mixed separators are tolerated; the last separator followed by 1–4 digits is treated as the decimal separator, others become thousands separators.
+- Currency symbols / letters are ignored visually on reformat.
 
-CSV import applies similar sanitization; errors surface per-row.
+Submission normalization (before sending to API):
+- Strips currency codes/symbols and spaces.
+- Collapses all thousands separators.
+- Determines decimal portion (if any) via heuristic (last `,` or `.` with 1–4 trailing digits).
+- Converts to a JS Number (decimal point `.` internally) or falls back to `0` if parsing fails.
 
-## 17) Manual Date Entry
-Date fields inside modals are converted to free-text inputs (`YYYY-MM-DD` pattern) allowing manual typing. Invalid format highlights the field (class `error`); submission still relies on server validation.
+CSV import applies similar logic; per-row errors are summarized after import.
+
+## 17) Manual Date Entry (Auto Formatting)
+Modal date fields are converted to text inputs permitting manual typing. As the user types digits, the input auto-formats to `YYYY-MM-DD` (inserting dashes after year and month). Invalid final patterns highlight the field (`error` class) on blur.
+
+Behavior details:
+- Non-digit characters are stripped.
+- Maximum 8 digits accepted (YYYYMMDD) then rendered as `YYYY-MM-DD`.
+- Partial input allowed; validation only enforced on blur/submit.
+- Server receives already formatted `YYYY-MM-DD` strings.
 
 - Add unit tests for metrics calculations
 - Add pagination & server-side filtering endpoints (UI currently handles client-side)
 - Implement refresh token rotation + revoke list
 - Add audit export (CSV/JSON) for activity logs
+- Inline form validation messaging for date field (current: CSS highlight only)
