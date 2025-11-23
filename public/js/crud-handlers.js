@@ -39,6 +39,13 @@ let state = {
   }
 };
 
+// Helper: ensure date value is YYYY-MM-DD (handles ISO strings with time)
+function formatDateValue(v) {
+  if (!v) return '';
+  if (typeof v === 'string' && v.length >= 10) return v.slice(0,10);
+  return v;
+}
+
 function getCurrentUser() {
   try { return JSON.parse(localStorage.getItem('user') || '{}'); } catch { return {}; }
 }
@@ -59,16 +66,38 @@ function applyFiltersAndSort(entity) {
   }
   
   // Apply date range filter
+  const getDateRangeStart = (it) => {
+    switch(entity) {
+      case 'sales': return it.transaction_date;
+      case 'tours': return it.registration_date || it.departure_date;
+      case 'documents': return it.receive_date || it.send_date;
+      case 'telecom': return it.tanggal_mulai;
+      case 'hotel_bookings': return it.check_in;
+      case 'targets': return null; // no date filtering
+      default: return it.created_at || it.tanggal_mulai || it.tanggal;
+    }
+  };
+  const getDateRangeEnd = (it) => {
+    switch(entity) {
+      case 'sales': return it.transaction_date;
+      case 'tours': return it.departure_date || it.registration_date;
+      case 'documents': return it.send_date || it.receive_date;
+      case 'telecom': return it.tanggal_selesai || it.tanggal_mulai;
+      case 'hotel_bookings': return it.check_out || it.check_in;
+      case 'targets': return null;
+      default: return it.created_at || it.tanggal_selesai || it.tanggal;
+    }
+  };
   if (filters.dateFrom) {
-    data = data.filter(item => {
-      const itemDate = item.tanggal_mulai || item.tanggal || item.created_at;
-      return itemDate >= filters.dateFrom;
+    data = data.filter(it => {
+      const start = getDateRangeStart(it);
+      return !start || start >= filters.dateFrom ? true : false;
     });
   }
   if (filters.dateTo) {
-    data = data.filter(item => {
-      const itemDate = item.tanggal_selesai || item.tanggal || item.created_at;
-      return itemDate <= filters.dateTo;
+    data = data.filter(it => {
+      const end = getDateRangeEnd(it);
+      return !end || end <= filters.dateTo ? true : false;
     });
   }
   
@@ -489,7 +518,7 @@ function openEditSalesModal(id) {
     bodyHtml: `
       <div class="form-group">
         <label>Tanggal Transaksi *</label>
-        <input type="date" name="transaction_date" value="${item.transaction_date || ''}" required>
+        <input type="date" name="transaction_date" value="${formatDateValue(item.transaction_date)}" required>
       </div>
       <div class="form-group">
         <label>Invoice Number *</label>
@@ -635,7 +664,7 @@ function openEditTourModal(id) {
       <div class="form-grid">
         <div class="form-group">
           <label>Registration Date *</label>
-          <input type="date" name="registration_date" value="${item.registration_date || ''}" required>
+          <input type="date" name="registration_date" value="${formatDateValue(item.registration_date)}" required>
         </div>
         <div class="form-group">
           <label>Nama Penumpang Utama *</label>
@@ -655,7 +684,7 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group">
           <label>Departure Date *</label>
-          <input type="date" name="departure_date" value="${item.departure_date || ''}" required>
+          <input type="date" name="departure_date" value="${formatDateValue(item.departure_date)}" required>
         </div>
         <div class="form-group">
           <label>Booking Code</label>
@@ -1372,26 +1401,27 @@ async function handleModalSubmit(formData, context) {
     if (raw == null) return 0;
     let s = String(raw).trim().toLowerCase();
     if (!s) return 0;
-    // Strip currency words/symbols
     s = s.replace(/(rp|idr|usd|eur|sgd|rm|aud|gbp|£|€|¥|\$)/g,'');
-    // Remove spaces & letters
     s = s.replace(/[a-z\s]/g,'');
-    // Keep digits and separators only
     s = s.replace(/[^0-9.,-]/g,'');
     if (!s) return 0;
-    // Identify decimal separator (last occurrence with 1-4 trailing digits)
-    const lastComma = s.lastIndexOf(',');
-    const lastDot = s.lastIndexOf('.');
     let decSep = null;
-    const candidates = [];
-    if (lastComma !== -1) candidates.push({pos:lastComma, ch:','});
-    if (lastDot !== -1) candidates.push({pos:lastDot, ch:'.'});
-    const chosen = candidates.find(c => /\d{1,4}$/.test(s.slice(c.pos+1)));
-    if (chosen) decSep = chosen.ch;
+    if (s.includes(',')) {
+      const lastComma = s.lastIndexOf(',');
+      const tail = s.slice(lastComma + 1);
+      if (/^\d{1,2}$/.test(tail)) decSep = ',';
+    } else if (s.includes('.')) {
+      const lastDot = s.lastIndexOf('.');
+      const tail = s.slice(lastDot + 1);
+      const head = s.slice(0, lastDot);
+      const headGroups = head.split('.');
+      const thousandsPattern = headGroups.slice(1).every(g => /^\d{3}$/.test(g));
+      const headFirstOk = /^\d{1,3}$/.test(headGroups[0] || '');
+      const isPureThousands = thousandsPattern && headFirstOk;
+      if (/^\d{1,2}$/.test(tail) && !isPureThousands) decSep = '.';
+    }
     if (!decSep) {
-      // Treat all separators as thousands
-      const intOnly = s.replace(/[.,]/g,'');
-      return parseInt(intOnly || '0',10) || 0;
+      return parseInt(s.replace(/[.,]/g,''),10) || 0;
     }
     const parts = s.split(decSep);
     const intPart = parts[0].replace(/[.,]/g,'') || '0';

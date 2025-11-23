@@ -217,25 +217,19 @@ async function renderDashboard() {
       });
     }
     
-    // Top 5 Destinations (use tour_code as proxy — tour_name not in schema)
-    const destData = {};
-    toursData.forEach(tour => {
-      if (tour.tour_code) {
-        destData[tour.tour_code] = (destData[tour.tour_code] || 0) + (parseInt(tour.jumlah_peserta) || 0);
-      }
-    });
-    const topDest = Object.entries(destData)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5);
+    // Top 5 Regions (aggregate participants per region)
+    const topRegions = Object.entries(regionData)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0,5);
     const ctxDest = document.getElementById('chartTopDestinations')?.getContext('2d');
-    if (ctxDest && topDest.length) {
-      charts.topDest = new Chart(ctxDest, {
+    if (ctxDest && topRegions.length) {
+      charts.topRegions = new Chart(ctxDest, {
         type: 'bar',
         data: {
-          labels: topDest.map(d => d[0]),
+          labels: topRegions.map(r => r[0]),
           datasets: [{
             label: 'Peserta',
-            data: topDest.map(d => d[1]),
+            data: topRegions.map(r => r[1]),
             backgroundColor: '#10b981',
             borderRadius: 8
           }]
@@ -243,7 +237,11 @@ async function renderDashboard() {
         options: {
           ...commonOptions,
           indexAxis: 'y',
-          scales: { x: { beginAtZero: true } }
+          scales: { x: { beginAtZero: true } },
+          plugins: {
+            ...commonOptions.plugins,
+            title: { display: true, text: 'Top 5 Regions', font: { size: 16, weight: '600' } }
+          }
         }
       });
     }

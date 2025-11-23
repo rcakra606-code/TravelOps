@@ -46,48 +46,67 @@ function formatCurrency(v) {
 }
 
 function formatNumberWithCommas(value) {
-  // Normalize raw string (accept both '.' and ',' as separators)
+  // Accept any characters, keep digits and separators
   let raw = String(value).replace(/[^0-9,\.]/g,'');
   if (!raw) return '';
-  // Determine decimal separator (last occurrence of ',' or '.') if followed by 1-4 digits
+
+  // If a comma exists, we treat comma as decimal (Indonesian locale)
+  // Decimal part only valid when 1-2 digits after last comma
   let decSep = null;
-  const lastComma = raw.lastIndexOf(',');
-  const lastDot = raw.lastIndexOf('.');
-  const choose = [];
-  if (lastComma !== -1) choose.push({pos:lastComma, ch:','});
-  if (lastDot !== -1) choose.push({pos:lastDot, ch:'.'});
-  const candidate = choose.find(c => /\d{1,4}$/.test(raw.slice(c.pos+1)));
-  if (candidate) decSep = candidate.ch;
+  if (raw.includes(',')) {
+    const lastComma = raw.lastIndexOf(',');
+    const tail = raw.slice(lastComma + 1);
+    if (/^\d{1,2}$/.test(tail)) decSep = ','; // treat as decimal
+  } else if (raw.includes('.')) {
+    // Potential '.' decimal only if tail 1-2 digits AND preceding groups not all thousands groups
+    const lastDot = raw.lastIndexOf('.');
+    const tail = raw.slice(lastDot + 1);
+    const head = raw.slice(0, lastDot);
+    const headGroups = head.split('.');
+    const thousandsPattern = headGroups.slice(1).every(g => /^\d{3}$/.test(g));
+    const headFirstOk = /^\d{1,3}$/.test(headGroups[0] || '');
+    const isPureThousands = thousandsPattern && headFirstOk;
+    if (/^\d{1,2}$/.test(tail) && !isPureThousands) {
+      decSep = '.'; // interpret as decimal
+    }
+  }
+
   let intPart = raw;
   let fracPart = '';
   if (decSep) {
     const parts = raw.split(decSep);
     intPart = parts[0];
-    fracPart = parts.slice(1).join(''); // merge in case multiple
+    fracPart = parts.slice(1).join('');
   }
-  // Remove all separators from int part
   intPart = intPart.replace(/[.,]/g,'');
   if (!intPart) intPart = '0';
-  const intFormatted = Number(intPart).toLocaleString('id-ID'); // thousands with '.'
+  const intFormatted = Number(intPart).toLocaleString('id-ID');
   return decSep ? intFormatted + ',' + fracPart.replace(/[^0-9]/g,'') : intFormatted;
 }
 
 function parseFormattedNumber(value) {
   if (value == null || value === '') return 0;
   let raw = String(value).trim();
-  // Remove currency symbols and spaces
   raw = raw.replace(/rp\s*/i,'').replace(/[a-zA-Z ]/g,'');
-  // Determine decimal separator similar to formatting
-  const lastComma = raw.lastIndexOf(',');
-  const lastDot = raw.lastIndexOf('.');
+  if (!raw) return 0;
+
   let decSep = null;
-  const choose = [];
-  if (lastComma !== -1) choose.push({pos:lastComma, ch:','});
-  if (lastDot !== -1) choose.push({pos:lastDot, ch:'.'});
-  const candidate = choose.find(c => /\d{1,4}$/.test(raw.slice(c.pos+1)));
-  if (candidate) decSep = candidate.ch;
+  if (raw.includes(',')) {
+    const lastComma = raw.lastIndexOf(',');
+    const tail = raw.slice(lastComma + 1);
+    if (/^\d{1,2}$/.test(tail)) decSep = ',';
+  } else if (raw.includes('.')) {
+    const lastDot = raw.lastIndexOf('.');
+    const tail = raw.slice(lastDot + 1);
+    const head = raw.slice(0, lastDot);
+    const headGroups = head.split('.');
+    const thousandsPattern = headGroups.slice(1).every(g => /^\d{3}$/.test(g));
+    const headFirstOk = /^\d{1,3}$/.test(headGroups[0] || '');
+    const isPureThousands = thousandsPattern && headFirstOk;
+    if (/^\d{1,2}$/.test(tail) && !isPureThousands) decSep = '.';
+  }
+
   if (!decSep) {
-    // treat all separators as thousands
     return parseInt(raw.replace(/[.,]/g,''),10) || 0;
   }
   const parts = raw.split(decSep);
