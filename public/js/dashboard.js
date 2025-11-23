@@ -278,6 +278,24 @@ function initializeModalInputs() {
       }
     });
   });
+
+  // Allow manual typing for date fields: convert to text with pattern YYYY-MM-DD
+  const dateInputs = modalBody.querySelectorAll('input[type="date"]');
+  dateInputs.forEach(d => {
+    const originalValue = d.value;
+    d.setAttribute('type','text');
+    d.setAttribute('placeholder','YYYY-MM-DD');
+    d.setAttribute('pattern','\\d{4}-\\d{2}-\\d{2}');
+    d.setAttribute('inputmode','numeric');
+    if (originalValue) d.value = originalValue;
+    d.addEventListener('blur', () => {
+      if (d.value && !/^\d{4}-\d{2}-\d{2}$/.test(d.value)) {
+        d.classList.add('error');
+      } else {
+        d.classList.remove('error');
+      }
+    });
+  });
 }
 
 // Export modal functions globally

@@ -145,15 +145,16 @@ export async function createApp() {
     }
     if (user.type !== 'admin') await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
     const safeUser = { id: user.id, username: user.username, name: user.name, email: user.email, type: user.type };
-    const token = jwt.sign(safeUser, SECRET, { expiresIn: '30m' });
+  const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '30m';
+  const token = jwt.sign(safeUser, SECRET, { expiresIn: TOKEN_EXPIRES });
     await logActivity(username, 'LOGIN', 'auth', user.id);
     res.json({ ...safeUser, token });
   });
 
   app.post('/api/logout', (req,res)=>res.json({ ok:true }));
-  // Refresh endpoint with small grace window to avoid race-based premature logout
-  // Allows refresh up to 2 minutes after nominal expiry so client-side proactive refresh
-  // can tolerate minor clock skew or tab sleep. Returns 403 only when well beyond grace.
+  // Refresh endpoint with configurable grace window to avoid race-based premature logout.
+  // Allows refresh up to REFRESH_GRACE_SECONDS (default 120) after nominal expiry so client-side proactive refresh
+  // can tolerate minor clock skew or tab sleep. Returns 403 only when beyond grace.
   app.post('/api/refresh', authMiddleware(false), async (req,res)=>{
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'No token' });
@@ -161,13 +162,14 @@ export async function createApp() {
       // Decode ignoring expiration first to inspect original exp
       const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true });
       const nowSec = Math.floor(Date.now()/1000);
-      const GRACE_SECONDS = 120; // 2 minute grace
+      const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '120', 10);
       if (decoded.exp && decoded.exp + GRACE_SECONDS < nowSec) {
         return res.status(403).json({ error: 'Token expired' });
       }
       // Strip iat/exp before re-signing (payload only contains user fields)
       const { iat, exp, ...payload } = decoded;
-      const newToken = jwt.sign(payload, SECRET, { expiresIn: '30m' });
+      const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '30m';
+      const newToken = jwt.sign(payload, SECRET, { expiresIn: TOKEN_EXPIRES });
       return res.json({ token: newToken });
     } catch (err) {
       return res.status(403).json({ error: 'Invalid token' });

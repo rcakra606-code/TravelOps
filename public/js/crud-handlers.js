@@ -1366,12 +1366,19 @@ async function handleModalSubmit(formData, context) {
       return true;
     }
   
-  // Parse formatted numbers back to regular numbers
+  // Normalize numeric (financial) fields: accept inputs like "1,234", "Rp 1.234,00", "1234.56", etc.
   Object.keys(formData).forEach(key => {
-    if (key.includes('amount') || key.includes('price') || key.includes('deposit') || key.includes('target')) {
-      if (formData[key] && typeof formData[key] === 'string') {
-        // Remove commas and parse to number
-        formData[key] = window.parseFormattedNumber ? window.parseFormattedNumber(formData[key]) : parseFloat(formData[key].replace(/,/g, '')) || 0;
+    if (/(amount|price|deposit|target|_sales|_profit|jumlah_deposit|tour_price)/i.test(key)) {
+      const raw = formData[key];
+      if (typeof raw === 'string' && raw.trim() !== '') {
+        // Remove currency symbols, letters, spaces except digits and one decimal point
+        const cleaned = raw
+          .replace(/rp\s*/i, '')
+          .replace(/[^0-9.,]/g, '') // keep digits separators
+          .replace(/,/g, '') // remove thousand commas
+          .replace(/(\.(?=.*\.))+/g,''); // ensure single dot (fallback)
+        const numeric = parseFloat(cleaned);
+        formData[key] = Number.isFinite(numeric) ? numeric : 0;
       }
     }
   });

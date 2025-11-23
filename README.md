@@ -148,6 +148,50 @@ test('health', async () => { const r = await request(app).get('/healthz'); expec
 - Integration tests (Jest + supertest) for auth & CRUD (green)
 
 ## 14) Future Ideas
+## 15) Authentication & Token Strategy
+
+| Aspect | Details |
+|--------|---------|
+| Access Token | Signed JWT containing user id, username, name, email, type |
+| Default Lifetime | 30 minutes (configurable via `JWT_EXPIRES`, e.g. `45m`, `2h`, `1d`) |
+| Refresh Mechanism | Client proactively calls `/api/refresh` (every ~12m or on activity) before expiry |
+| Grace Window | Server allows refresh for `REFRESH_GRACE_SECONDS` (default 120s) after nominal expiry to tolerate clock skew & sleeping tabs |
+| Storage | `localStorage` (`token`, `user`) cleared only on 401 or explicit logout |
+| Activity Tracking | Client records last activity; pauses refresh when idle >10m (can be tuned) |
+| Security | No long-lived opaque refresh token yet; simple sliding session. Future improvement: rotate refresh tokens & maintain revocation list |
+
+### Configurable Lifetime for Tests
+Set a short expiry during automated tests:
+
+```powershell
+$env:JWT_EXPIRES="5s"
+$env:REFRESH_GRACE_SECONDS="2"
+npm test
+```
+
+### Failure Modes
+- 401: Missing / invalid token → client logs out.
+- 403: Token structurally valid but beyond grace or action forbidden → stay on page (except refresh flow).
+
+### Debug Diagnostics
+Client logs `[auth] Token remaining ~Xm` every 5 minutes and after each refresh for observability.
+
+## 16) Financial Input Normalization
+All numeric monetary fields (e.g. `sales_amount`, `profit_amount`, `tour_price`, `target_sales`, `target_profit`, `jumlah_deposit`) accept loosely formatted input:
+
+Examples accepted: `1000`, `1,000`, `Rp 1,000`, `1.000,00`, `Rp1.234.567`.
+
+Normalization rules (client-side before submit):
+- Strip currency symbols & whitespace.
+- Remove thousands separators (`,` or `.` depending on user typing).
+- Preserve a single decimal point.
+- Fallback to `0` if parsing fails.
+
+CSV import applies similar sanitization; errors surface per-row.
+
+## 17) Manual Date Entry
+Date fields inside modals are converted to free-text inputs (`YYYY-MM-DD` pattern) allowing manual typing. Invalid format highlights the field (class `error`); submission still relies on server validation.
+
 - Add unit tests for metrics calculations
 - Add pagination & server-side filtering endpoints (UI currently handles client-side)
 - Implement refresh token rotation + revoke list
