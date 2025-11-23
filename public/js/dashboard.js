@@ -566,7 +566,10 @@ async function renderCharts() {
     if (region) params.region = region;
     
     const q = new URLSearchParams(params).toString();
-    const metrics = await fetchJson('/api/metrics' + (q ? '?' + q : ''));
+    const [metrics, toursData] = await Promise.all([
+      fetchJson('/api/metrics' + (q ? '?' + q : '')),
+      fetchJson('/api/tours' + (q ? '?' + q : ''))
+    ]);
     if (!metrics) return;
 
     const ctx = id => document.getElementById(id)?.getContext('2d');
@@ -578,12 +581,69 @@ async function renderCharts() {
     const targetSales = metrics.targets?.target_sales || 0;
     const targetProfit = metrics.targets?.target_profit || 0;
 
+    // Update welcome message with user name
+    const user = getUser();
+    const welcomeMsg = el('welcomeMessage');
+    if (welcomeMsg) {
+      const userName = user.name || user.username || 'User';
+      const hour = new Date().getHours();
+      const greeting = hour < 12 ? 'Selamat Pagi' : hour < 18 ? 'Selamat Siang' : 'Selamat Malam';
+      welcomeMsg.textContent = `${greeting}, ${userName}! Kelola bisnis travel Anda dengan mudah`;
+    }
+
+    // Update metrics
     el('totalSales').textContent = formatCurrency(totalSales);
     el('totalProfit').textContent = formatCurrency(totalProfit);
     el('salesAchievement').textContent = `Achv: ${(totalSales / (targetSales || 1) * 100).toFixed(1)}%`;
     el('profitAchievement').textContent = `Achv: ${(totalProfit / (targetProfit || 1) * 100).toFixed(1)}%`;
-    el('totalParticipants').textContent = metrics.participants?.total_participants || 0;
-    el('totalDocs').textContent = metrics.documents?.total_docs || 0;
+
+    // Calculate upcoming tours (next 30 days)
+    const now = new Date();
+    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+    const upcomingTours = (toursData || []).filter(t => {
+      if (!t.departure_date) return false;
+      const depDate = new Date(t.departure_date);
+      return depDate >= now && depDate <= thirtyDaysLater;
+    }).sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
+
+    el('upcomingToursCount').textContent = upcomingTours.length;
+
+    // Render upcoming tours table
+    const upcomingTable = el('upcomingToursTable');
+    if (upcomingTable) {
+      if (upcomingTours.length === 0) {
+        upcomingTable.innerHTML = '<tr><td colspan=\"7\" style=\"text-align: center; padding: 20px; color: #9ca3af;\">Tidak ada keberangkatan dalam 30 hari ke depan</td></tr>';
+      } else {
+        // Get regions for name mapping
+        const regionList = window.crudHandlers?.state?.regions || [];
+        const regionMap = Object.fromEntries(regionList.map(r => [String(r.id), r.region_name]));
+        
+        upcomingTable.innerHTML = upcomingTours.map(tour => {
+          const depDate = new Date(tour.departure_date);
+          const daysUntil = Math.ceil((depDate - now) / (24 * 60 * 60 * 1000));
+          const urgency = daysUntil <= 7 ? 'background-color: #fef2f2;' : daysUntil <= 14 ? 'background-color: #fef9c3;' : '';
+          const regionName = regionMap[String(tour.region_id)] || '-';
+          const statusColor = {
+            'Pending': '#fbbf24',
+            'Confirmed': '#3b82f6',
+            'Completed': '#10b981',
+            'Cancelled': '#ef4444'
+          }[tour.status] || '#6b7280';
+          
+          return `
+            <tr style=\"${urgency}\">
+              <td style=\"padding: 8px;\">${tour.departure_date} <span style=\"color: #6b7280;\">(${daysUntil} hari)</span></td>
+              <td style=\"padding: 8px;\">${tour.tour_code || '-'}</td>
+              <td style=\"padding: 8px;\">${tour.lead_passenger || '-'}</td>
+              <td style=\"padding: 8px;\">${regionName}</td>
+              <td style=\"padding: 8px; text-align: center;\">${tour.jumlah_peserta || 0}</td>
+              <td style=\"padding: 8px;\">${tour.staff_name || '-'}</td>
+              <td style=\"padding: 8px;\"><span style=\"background: ${statusColor}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px;\">${tour.status || 'Pending'}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
 
     // Common chart options
     const commonOptions = {
@@ -687,101 +747,6 @@ async function renderCharts() {
       }
     });
 
-    // Document Type Chart
-    const docs = metrics.documents || {};
-    charts.docType = new Chart(ctx('chartDocType'), {
-      type: 'doughnut',
-      data: {
-        labels: ['Normal', 'Kilat'],
-        datasets: [{
-          data: [docs.normal || 0, docs.kilat || 0],
-          backgroundColor: ['#38bdf8', '#fbbf24'],
-          borderWidth: 0,
-          cutout: '60%'
-        }]
-      },
-      options: {
-        ...commonOptions,
-        plugins: {
-          ...commonOptions.plugins,
-          legend: {
-            position: 'bottom'
-          }
-        }
-      }
-    });
-
-    // Documents by Region Chart
-    const docsRegion = metrics.participants_by_region || [];
-    charts.docsRegion = new Chart(ctx('chartDocsRegion'), {
-      type: 'bar',
-      data: {
-        labels: docsRegion.map(r => r.region_name),
-        datasets: [{
-          label: 'Participants',
-          data: docsRegion.map(r => r.participants),
-          backgroundColor: '#f87171',
-          borderRadius: 6,
-          borderWidth: 0
-        }]
-      },
-      options: {
-        ...commonOptions,
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              borderDash: [2, 4],
-              color: 'rgba(0, 0, 0, 0.06)'
-            }
-          }
-        }
-      }
-    });
-
-    // Documents by Month Chart
-    const docsMonth = metrics.participants_by_month || [];
-    charts.docsMonth = new Chart(ctx('chartDocsMonth'), {
-      type: 'line',
-      data: {
-        labels: docsMonth.map(m => 'Bulan ' + m.month),
-        datasets: [{
-          label: 'Participants',
-          data: docsMonth.map(m => m.participants),
-          borderColor: '#6366f1',
-          backgroundColor: 'rgba(99, 102, 241, 0.1)',
-          borderWidth: 2,
-          tension: 0.4,
-          fill: true,
-          pointRadius: 4,
-          pointHoverRadius: 6
-        }]
-      },
-      options: {
-        ...commonOptions,
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: {
-              borderDash: [2, 4],
-              color: 'rgba(0, 0, 0, 0.06)'
-            }
-          }
-        }
-      }
-    });
-
-    charts.participantRegion = new Chart(ctx('chartParticipantRegion'), {
-      type: 'bar',
-      data: { labels: docsRegion.map(r => r.region_name), datasets: [{ data: docsRegion.map(r => r.participants), backgroundColor: '#10b981' }] },
-      options: { plugins: { legend: { display: false } } }
-    });
-
-    charts.participantMonth = new Chart(ctx('chartParticipantMonth'), {
-      type: 'bar',
-      data: { labels: docsMonth.map(m => 'Bulan ' + m.month), datasets: [{ data: docsMonth.map(m => m.participants), backgroundColor: '#f97316' }] },
-      options: { plugins: { legend: { display: false } } }
-    });
   } catch (err) {
     console.error('renderCharts error', err);
   }
