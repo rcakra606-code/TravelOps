@@ -392,4 +392,17 @@ window.addEventListener('DOMContentLoaded', async () => {
   await populateFilterDropdowns();
   renderDashboard();
   setInterval(renderDashboard, 60000); // Refresh every minute
+  
+  // Wire logout link
+  const logoutLink = document.getElementById('logoutLink');
+  if (logoutLink) {
+    logoutLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (confirm('Apakah Anda yakin ingin keluar?')) {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/login.html';
+      }
+    });
+  }
 });
