@@ -46,6 +46,34 @@ const getHeaders = (json = true) => {
 let lastTokenRefreshTime = Date.now();
 let lastActivityTime = Date.now();
 
+// Decode JWT (no signature verification) to inspect exp for diagnostics
+function decodeTokenRaw(token) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+    return payload;
+  } catch { return null; }
+}
+
+function getTokenRemainingMinutes() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  const payload = decodeTokenRaw(token);
+  if (!payload || !payload.exp) return null;
+  const nowSec = Date.now()/1000;
+  const remaining = payload.exp - nowSec;
+  return Math.max(0, Math.round(remaining/60));
+}
+
+// Periodic diagnostic log (every 5 minutes) to help detect premature expirations
+setInterval(() => {
+  const mins = getTokenRemainingMinutes();
+  if (mins != null) {
+    console.log(`[auth] Token remaining ~${mins}m`);
+  }
+}, 5 * 60 * 1000);
+
 /**
  * Proactively refresh token if it's been more than 12 minutes since last refresh
  * This keeps us well ahead of the 30-minute expiry
@@ -70,7 +98,9 @@ async function refreshTokenIfNeeded() {
           localStorage.setItem('token', data.token);
           lastTokenRefreshTime = Date.now();
           lastActivityTime = Date.now();
+          const remaining = getTokenRemainingMinutes();
           console.log('🔄 Token proactively refreshed');
+          if (remaining != null) console.log(`[auth] New token remaining ~${remaining}m`);
           return true;
         }
       }
@@ -163,6 +193,8 @@ function startTokenRefresh() {
             lastTokenRefreshTime = Date.now();
             const idleMinutes = Math.floor(idleTime / 60000);
             console.log(`🔄 Token refreshed (idle: ${idleMinutes}m)`);
+            const remaining = getTokenRemainingMinutes();
+            if (remaining != null) console.log(`[auth] Post-refresh remaining ~${remaining}m`);
           }
         } else if (response.status === 401 || response.status === 403) {
           console.warn('Token expired, logging out...');

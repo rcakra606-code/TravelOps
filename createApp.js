@@ -151,10 +151,27 @@ export async function createApp() {
   });
 
   app.post('/api/logout', (req,res)=>res.json({ ok:true }));
+  // Refresh endpoint with small grace window to avoid race-based premature logout
+  // Allows refresh up to 2 minutes after nominal expiry so client-side proactive refresh
+  // can tolerate minor clock skew or tab sleep. Returns 403 only when well beyond grace.
   app.post('/api/refresh', authMiddleware(false), async (req,res)=>{
-    const token = (req.headers.authorization || '').replace('Bearer ','');
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'No token' });
-    try { const decoded = jwt.verify(token, SECRET); const newToken = jwt.sign(decoded, SECRET, { expiresIn:'30m' }); res.json({ token:newToken }); } catch { res.status(403).json({ error:'Token expired' }); }
+    try {
+      // Decode ignoring expiration first to inspect original exp
+      const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true });
+      const nowSec = Math.floor(Date.now()/1000);
+      const GRACE_SECONDS = 120; // 2 minute grace
+      if (decoded.exp && decoded.exp + GRACE_SECONDS < nowSec) {
+        return res.status(403).json({ error: 'Token expired' });
+      }
+      // Strip iat/exp before re-signing (payload only contains user fields)
+      const { iat, exp, ...payload } = decoded;
+      const newToken = jwt.sign(payload, SECRET, { expiresIn: '30m' });
+      return res.json({ token: newToken });
+    } catch (err) {
+      return res.status(403).json({ error: 'Invalid token' });
+    }
   });
 
   const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings'];

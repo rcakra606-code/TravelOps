@@ -532,8 +532,10 @@
   </div>
 </div>
 
-<!-- Load dashboard first (plain script exports globals immediately), then CRUD handlers -->
-<script src="/js/dashboard.js?v=8"></script>
+<!-- Load shared auth module first to provide fetchJson & token management -->
+<script type="module" src="/js/auth-common.js?v=1"></script>
+<!-- Dashboard logic (now relies on auth-common for auth utilities) -->
+<script src="/js/dashboard.js?v=9"></script>
 <script defer src="/js/crud-handlers.js?v=7"></script>
 
 <!-- Removed logout confirmation modal; using direct navigation to /logout.html -->
