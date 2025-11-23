@@ -5,4 +5,5 @@ export default {
   transform: {},
   moduleFileExtensions: ['js','mjs'],
   testMatch: ['**/tests/**/*.test.mjs'],
+  maxWorkers: 1,
 };

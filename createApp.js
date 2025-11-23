@@ -153,21 +153,25 @@ export async function createApp() {
 
   app.post('/api/logout', (req,res)=>res.json({ ok:true }));
   // Refresh endpoint with configurable grace window to avoid race-based premature logout.
-  // Allows refresh up to REFRESH_GRACE_SECONDS (default 120) after nominal expiry so client-side proactive refresh
-  // can tolerate minor clock skew or tab sleep. Returns 403 only when beyond grace.
-  app.post('/api/refresh', authMiddleware(false), async (req,res)=>{
+  // IMPORTANT: Do NOT use authMiddleware here because it enforces expiration strictly.
+  // We manually verify with ignoreExpiration, then apply grace logic.
+  // Allows refresh up to REFRESH_GRACE_SECONDS (default 120) AFTER nominal expiry so proactive refresh
+  // tolerates clock skew / tab sleep. Returns 403 only when beyond grace or signature invalid.
+  app.post('/api/refresh', async (req,res)=>{
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'No token' });
     try {
-      // Decode ignoring expiration first to inspect original exp
       const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true });
       const nowSec = Math.floor(Date.now()/1000);
       const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '120', 10);
-      if (decoded.exp && decoded.exp + GRACE_SECONDS < nowSec) {
+      // Clamp negative (not yet expired) to 0 for simpler logic
+      const expSec = decoded.exp;
+      if (!expSec) return res.status(403).json({ error: 'Token missing exp' });
+      const secondsPastExpiry = Math.max(0, nowSec - expSec);
+      if (secondsPastExpiry > GRACE_SECONDS) {
         return res.status(403).json({ error: 'Token expired' });
       }
-      // Strip iat/exp before re-signing (payload only contains user fields)
-      const { iat, exp, ...payload } = decoded;
+      const { iat, exp, ...payload } = decoded; // strip timing claims
       const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '30m';
       const newToken = jwt.sign(payload, SECRET, { expiresIn: TOKEN_EXPIRES });
       return res.json({ token: newToken });

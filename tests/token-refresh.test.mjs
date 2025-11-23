@@ -1,5 +1,6 @@
 import request from 'supertest';
 import fs from 'fs';
+import jwt from 'jsonwebtoken';
 import { createApp } from '../createApp.js';
 
 // Configure very short expiry & tiny grace for fast test
@@ -34,12 +35,7 @@ describe('Token refresh with grace window', () => {
     await new Promise(r => setTimeout(r, 1050));
 
     const refresh = await request(app).post('/api/refresh').set('Authorization', 'Bearer ' + token);
-    // Accept 200 (success) OR 403 if environment clock drift causes exp evaluation earlier than expected.
-    // In case of 403, log diagnostic output.
-    if (refresh.statusCode !== 200) {
-      console.warn('Refresh within grace returned', refresh.statusCode, refresh.body);
-    }
-    expect([200]).toContain(refresh.statusCode);
+    expect(refresh.statusCode).toBe(200);
     expect(refresh.body.token).toBeDefined();
   });
 
@@ -47,11 +43,16 @@ describe('Token refresh with grace window', () => {
     const login = await request(app).post('/api/login').send({ username: 'admin', password: 'Admin1234!' });
     expect(login.statusCode).toBe(200);
     const token = login.body.token;
-
-    // Wait beyond expiry + grace (1s + 2s = 3s) → wait ~3.3s
-    await new Promise(r => setTimeout(r, 3300));
+    const decoded = jwt.decode(token);
+    expect(decoded.exp).toBeDefined();
+    const grace = parseInt(process.env.REFRESH_GRACE_SECONDS || '2', 10);
+    // Compute dynamic wait: (exp + grace + 1) - nowSec
+    const nowSec = Math.floor(Date.now()/1000);
+    const targetSec = decoded.exp + grace + 1; // one second past grace
+    const waitMs = Math.max(0, (targetSec - nowSec) * 1000);
+    await new Promise(r => setTimeout(r, waitMs));
 
     const refresh = await request(app).post('/api/refresh').set('Authorization', 'Bearer ' + token);
-    expect([401,403]).toContain(refresh.statusCode); // 403 expected, 401 acceptable
+    expect(refresh.statusCode).toBe(403); // Beyond grace should be 403 (expired)
   });
 });

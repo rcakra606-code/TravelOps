@@ -249,15 +249,21 @@ async function createSchema(db) {
     try {
       const exists = await columnExists(table, column);
       if (!exists) {
-        console.log(`🔧 Adding missing column: ${table}.${column}`);
+        if (process.env.NODE_ENV !== 'test') {
+          console.log(`🔧 Adding missing column: ${table}.${column}`);
+        }
         if (db.dialect === 'postgres') {
           await db.run(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} ${definitionSql}`);
         } else {
           await db.run(`ALTER TABLE ${table} ADD COLUMN ${column} ${definitionSql}`);
         }
-        console.log(`✅ Added missing column: ${table}.${column}`);
+        if (process.env.NODE_ENV !== 'test') {
+          console.log(`✅ Added missing column: ${table}.${column}`);
+        }
       } else {
-        console.log(`✓ Column already exists: ${table}.${column}`);
+        if (process.env.NODE_ENV !== 'test') {
+          console.log(`✓ Column already exists: ${table}.${column}`);
+        }
       }
     } catch (err) {
       // For critical tables, throw error; otherwise log and continue
@@ -342,7 +348,9 @@ async function createSchema(db) {
   await ensureColumn('targets', 'month', 'INTEGER');
   await ensureColumn('targets', 'year', 'INTEGER');
 
-  console.log('✅ All database migrations completed successfully');
+  if (process.env.NODE_ENV !== 'test') {
+    console.log('✅ All database migrations completed successfully');
+  }
 }
 
 export async function initDb() {
