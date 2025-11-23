@@ -260,11 +260,19 @@ function initializeModalInputs() {
       // Change type to text for formatting
       input.setAttribute('type', 'text');
       input.setAttribute('inputmode', 'decimal');
-      input.setAttribute('pattern', '[0-9,.]');
+      input.removeAttribute('step'); // Remove step to avoid HTML5 validation
+      input.removeAttribute('pattern'); // Allow free-form formatted input
+      input.removeAttribute('required'); // Re-add if field was originally required
+      const wasRequired = input.hasAttribute('required');
       
       // Format existing value
       if (input.value) {
         input.value = formatNumberWithCommas(input.value);
+      }
+      
+      // Re-apply required if it was set
+      if (wasRequired) {
+        input.setAttribute('required', 'required');
       }
       
       // Format on input
