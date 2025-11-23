@@ -2116,32 +2116,93 @@ async function handleImportCsv(entity, event) {
     
     const headers = lines[0].split(',').map(h => h.trim());
     const rows = lines.slice(1);
-    
+    // Allowed columns per entity (reflect current schema). Extra columns rejected early.
+    const allowed = {
+      sales: ['transaction_date','invoice_no','unique_code','staff_name','status','sales_amount','profit_amount','notes','region_id'],
+      tours: ['registration_date','lead_passenger','all_passengers','tour_code','region_id','departure_date','booking_code','tour_price','sales_amount','profit_amount','discount_amount','discount_remarks','staff_name','jumlah_peserta','phone_number','email','status','link_pelunasan_tour'],
+      documents: ['receive_date','send_date','guest_name','passport_country','process_type','booking_code','invoice_number','phone_number','estimated_done','staff_name','tour_code','notes'],
+      targets: ['month','year','staff_name','target_sales','target_profit'],
+      telecom: ['nama','no_telephone','type_product','region_id','tanggal_mulai','tanggal_selesai','no_rekening','bank','nama_rekening','estimasi_pengambilan','staff_name','deposit','jumlah_deposit','tanggal_pengambilan','tanggal_pengembalian'],
+      hotel_bookings: ['check_in','check_out','hotel_name','region_id','confirmation_number','guest_list','supplier_code','supplier_name','staff_name'],
+      regions: ['region_name'],
+      users: ['username','password','name','email','type']
+    }[entity] || [];
+
+    // Support alternative header region_name -> region_id mapping for entities needing region.
+    const needsRegionMap = ['sales','tours','telecom','hotel_bookings'];
+
+    // Pre-fetch regions if necessary for name mapping
+    let regionMap = {};
+    if (needsRegionMap.includes(entity)) {
+      try {
+        const regs = await fetchJson('/api/regions');
+        regionMap = Object.fromEntries((regs||[]).map(r => [r.region_name, r.id]));
+      } catch (e) {
+        console.warn('Gagal memuat regions untuk mapping nama -> id', e);
+      }
+    }
+
+    // Validate headers
+    const unknownHeaders = headers.filter(h => !allowed.includes(h) && !(needsRegionMap.includes(entity) && h === 'region_name'));
+    if (unknownHeaders.length) {
+      alert('Header tidak dikenal: ' + unknownHeaders.join(', ') + '\nHarus salah satu dari: ' + allowed.join(', '));
+      return;
+    }
+
+    // Prepare numeric columns sets
+    const numericCols = new Set(['sales_amount','profit_amount','tour_price','discount_amount','jumlah_deposit','jumlah_peserta','target_sales','target_profit','month','year']);
+    const intCols = new Set(['jumlah_peserta','month','year','region_id']);
+
     let successCount = 0;
     let errorCount = 0;
-    
-    for (const row of rows) {
+    const rowErrors = [];
+
+    for (let rowIdx = 0; rowIdx < rows.length; rowIdx++) {
+      const rowLine = rows[rowIdx];
+      if (!rowLine.trim()) continue;
       try {
-        const values = row.split(',').map(v => v.trim());
+        const values = rowLine.split(',').map(v => v.trim());
         const data = {};
         headers.forEach((h, i) => {
-          if (values[i]) data[h] = values[i];
+          const raw = values[i];
+          if (!raw) return;
+          // Map region_name -> region_id if provided
+          if (h === 'region_name') {
+            const rid = regionMap[raw];
+            if (!rid) throw new Error(`Region name '${raw}' tidak ditemukan`);
+            data['region_id'] = rid;
+            return;
+          }
+          let val = raw;
+          if (numericCols.has(h)) {
+            // Strip currency markers or commas
+            const cleaned = raw.replace(/Rp\s*/i,'').replace(/,/g,'');
+            val = cleaned === '' ? null : (intCols.has(h) ? parseInt(cleaned,10) : parseFloat(cleaned));
+            if (val !== null && Number.isNaN(val)) throw new Error(`Nilai numerik tidak valid untuk kolom ${h}: '${raw}'`);
+          }
+          // Basic date format sanity (YYYY-MM-DD) for common date columns
+          if (/date$/.test(h) || ['transaction_date','registration_date','departure_date','receive_date','send_date','estimated_done','tanggal_mulai','tanggal_selesai','tanggal_pengambilan','tanggal_pengembalian','check_in','check_out'].includes(h)) {
+            if (!/^\d{4}-\d{2}-\d{2}/.test(raw)) console.warn(`Format tanggal mungkin tidak valid (kolom ${h}): ${raw}`);
+          }
+          data[h] = val;
         });
-        
         await fetchJson(`/api/${entity}`, { method: 'POST', body: data });
         successCount++;
       } catch (err) {
-        console.error('Import row error:', err);
         errorCount++;
+        rowErrors.push({ row: rowIdx+2, line: rowLine.slice(0,120), error: err.message }); // +2 accounts for header + 1-indexing
+        if (rowErrors.length < 10) console.error('Import row error:', err);
       }
     }
-    
-    alert(`Import selesai:\n✅ Berhasil: ${successCount}\n❌ Gagal: ${errorCount}`);
-    
+
+    let msg = `Import selesai:\n✅ Berhasil: ${successCount}\n❌ Gagal: ${errorCount}`;
+    if (rowErrors.length) {
+      msg += '\nContoh error (max 5):\n' + rowErrors.slice(0,5).map(e => `Baris ${e.row}: ${e.error}`).join('\n');
+    }
+    alert(msg);
+
     await loadData(entity);
     renderTable(entity);
-    
-    // Clear file input
     event.target.value = '';
   } catch (err) {
     alert('Gagal membaca file CSV: ' + err.message);
