@@ -23,7 +23,8 @@ let filterState = {
   region: 'all',
   period: 'all',
   month: '',
-  year: ''
+  year: '',
+  dateType: 'departure' // 'departure' or 'registration'
 };
 
 let regionsData = [];
@@ -55,6 +56,13 @@ function openToursFilterModal() {
           <select name="region">
             <option value="all">Semua</option>
             ${regionsData.map(r => `<option value="${r.id}" ${filterState.region == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Tipe Tanggal</label>
+          <select name="dateType">
+            <option value="departure" ${filterState.dateType === 'departure' ? 'selected' : ''}>Tanggal Keberangkatan</option>
+            <option value="registration" ${filterState.dateType === 'registration' ? 'selected' : ''}>Tanggal Registrasi</option>
           </select>
         </div>
         <div class="form-group">
@@ -102,7 +110,8 @@ function resetToursFilters() {
     region: 'all',
     period: 'all',
     month: '',
-    year: ''
+    year: '',
+    dateType: 'departure'
   };
   if (window.closeModal) window.closeModal();
   renderDashboard();
@@ -115,6 +124,7 @@ function applyToursFilters(formData) {
   filterState.period = formData.period || 'all';
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
+  filterState.dateType = formData.dateType || 'departure';
   
   console.log('Updated filterState:', filterState);
   if (window.closeModal) window.closeModal();
@@ -153,6 +163,7 @@ async function renderDashboard() {
     
     let staff = filterState.staff !== 'all' ? filterState.staff : '';
     const region = filterState.region !== 'all' ? filterState.region : '';
+    const dateType = filterState.dateType || 'departure';
     
     // For basic users, always filter to their own data
     if (user.type === 'basic') {
@@ -164,6 +175,7 @@ async function renderDashboard() {
     if (year) params.year = year;
     if (staff) params.staff = staff;
     if (region) params.region = region;
+    if (dateType) params.dateType = dateType;
     
     console.log('Rendering tours dashboard with params:', params);
     const q = new URLSearchParams(params).toString();

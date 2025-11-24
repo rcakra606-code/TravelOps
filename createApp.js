@@ -189,7 +189,7 @@ export async function createApp() {
       // Provide region_name join enrichment for sales and tours when region_id exists
       try {
         let rows;
-        const { month, year, staff, region } = req.query;
+        const { month, year, staff, region, dateType } = req.query;
         const isPg = db.dialect === 'postgres';
         
         // Build WHERE clause for filtering
@@ -197,7 +197,11 @@ export async function createApp() {
         let params = [];
         
         if (month && (t === 'sales' || t === 'tours' || t === 'documents')) {
-          const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
+          let dateField = t === 'sales' ? 'transaction_date' : t === 'documents' ? 'receive_date' : 'departure_date';
+          // For tours, allow filtering by registration_date or departure_date
+          if (t === 'tours' && dateType === 'registration') {
+            dateField = 'registration_date';
+          }
           if (isPg) {
             conditions.push(`TO_CHAR(${dateField}, 'MM')=$${params.length+1}::TEXT`);
             params.push(month.padStart(2,'0'));
@@ -208,7 +212,11 @@ export async function createApp() {
         }
         
         if (year && (t === 'sales' || t === 'tours' || t === 'documents')) {
-          const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
+          let dateField = t === 'sales' ? 'transaction_date' : t === 'documents' ? 'receive_date' : 'departure_date';
+          // For tours, allow filtering by registration_date or departure_date
+          if (t === 'tours' && dateType === 'registration') {
+            dateField = 'registration_date';
+          }
           if (isPg) {
             conditions.push(`TO_CHAR(${dateField}, 'YYYY')=$${params.length+1}::TEXT`);
             params.push(year);
