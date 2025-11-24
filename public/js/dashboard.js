@@ -1023,3 +1023,23 @@ window.editUser = (id) => window.crudHandlers?.openEditUserModal(id);
 window.editTelecom = (id) => window.crudHandlers?.openEditTelecomModal(id);
 window.editHotelBooking = (id) => window.crudHandlers?.openEditHotelBookingModal(id);
 window.deleteItem = (entity, id) => window.crudHandlers?.deleteItem(entity, id);
+
+/* === DARK MODE TOGGLE === */
+(function initDarkMode() {
+  // Load saved theme preference
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  
+  // Update toggle button emoji
+  const toggleBtn = el('darkModeToggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      toggleBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
+    });
+  }
+})();

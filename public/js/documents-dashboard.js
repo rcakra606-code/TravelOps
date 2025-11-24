@@ -77,6 +77,7 @@ async function populateFilterDropdowns() {
 /* === RENDER DASHBOARD === */
 async function renderDashboard() {
   try {
+    const user = window.getUser();
     const filterPeriod = el('filterPeriod')?.value || 'all';
     const filterMonth = el('filterMonth')?.value || '';
     const filterYear = el('filterYear')?.value || '';
@@ -94,7 +95,12 @@ async function renderDashboard() {
       year = filterYear;
     }
     
-    const staff = filterStaff !== 'all' ? filterStaff : '';
+    let staff = filterStaff !== 'all' ? filterStaff : '';
+    
+    // For basic users, always filter to their own data
+    if (user.type === 'basic') {
+      staff = user.name || user.username;
+    }
     
     const params = {};
     if (month) params.month = month;
@@ -388,21 +394,31 @@ el('exportDocumentsCSV')?.addEventListener('click', async () => {
 
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', async () => {
+  const user = window.getUser();
+  
+  // Hide staff filter for basic users (they can only see their own data)
+  if (user.type === 'basic') {
+    const staffGroup = el('filterStaff')?.closest('.filter-group');
+    if (staffGroup) staffGroup.style.display = 'none';
+  }
+  
   initializeFilters();
   await populateFilterDropdowns();
   renderDashboard();
   setInterval(renderDashboard, 60000); // Refresh every minute
   
-  // Wire logout link
-  const logoutLink = document.getElementById('logoutLink');
-  if (logoutLink) {
-    logoutLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      if (confirm('Apakah Anda yakin ingin keluar?')) {
-        localStorage.clear();
-        sessionStorage.clear();
-        window.location.href = '/login.html';
-      }
+  // Dark mode toggle
+  const savedTheme = localStorage.getItem('theme') || 'light';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  const toggleBtn = document.getElementById('darkModeToggle');
+  if (toggleBtn) {
+    toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
+    toggleBtn.addEventListener('click', () => {
+      const currentTheme = document.documentElement.getAttribute('data-theme');
+      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', newTheme);
+      localStorage.setItem('theme', newTheme);
+      toggleBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
     });
   }
 });

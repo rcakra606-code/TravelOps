@@ -10,8 +10,10 @@
 <link rel="stylesheet" href="/css/app-v2.css">
 <link rel="stylesheet" href="/css/modal.css">
 <link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/filters.css">
 </head>
 <body>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
 <div class="app">
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
@@ -41,24 +43,26 @@
         <div class="small" id="pageSubtitle">Ringkasan operasional</div>
       </div>
       <div class="controls">
-        <div class="filter-row" style="margin:0; align-items: center;">
-          <!-- Specialized Dashboard Links -->
-          <div style="display: flex; gap: 8px; margin-right: 16px;">
-            <a href="/sales-dashboard.html" class="btn" style="text-decoration: none; padding: 8px 16px;">💰 Sales Dashboard</a>
-            <a href="/tours-dashboard.html" class="btn" style="text-decoration: none; padding: 8px 16px;">🧳 Tours Dashboard</a>
-            <a href="/documents-dashboard.html" class="btn" style="text-decoration: none; padding: 8px 16px;">📄 Documents Dashboard</a>
+        <div class="filter-controls">
+          <div class="filter-group">
+            <label>Staff</label>
+            <select id="filterStaff" class="filter-select"><option value="all">Semua Staff</option></select>
           </div>
-          
-          <!-- Filters -->
-          <label class="small">Staff:</label>
-          <select id="filterStaff"><option value="all">Semua</option></select>
-          <label class="small">Periode:</label>
-          <select id="filterPeriod"><option value="all">Keseluruhan</option><option value="month">Per Bulan</option><option value="year">Per Tahun</option></select>
-          <input id="filterMonth" type="month" style="display:none">
-          <input id="filterYear" type="number" placeholder="Tahun" min="2000" max="2100" style="width:100px;display:none">
-          <label class="small">Region:</label>
-          <select id="filterRegion"><option value="all">Semua</option></select>
-          <button id="applyFilters" class="btn">Terapkan</button>
+          <div class="filter-group">
+            <label>Periode</label>
+            <select id="filterPeriod" class="filter-select">
+              <option value="all">Semua Periode</option>
+              <option value="month">Bulanan</option>
+              <option value="year">Tahunan</option>
+            </select>
+          </div>
+          <input id="filterMonth" type="month" class="filter-input" style="display:none">
+          <input id="filterYear" type="number" class="filter-input" placeholder="Tahun" min="2000" max="2100" style="width:120px;display:none">
+          <div class="filter-group">
+            <label>Region</label>
+            <select id="filterRegion" class="filter-select"><option value="all">Semua Region</option></select>
+          </div>
+          <button id="applyFilters" class="btn btn-primary filter-btn">Terapkan Filter</button>
         </div>
       </div>
     </div>
@@ -544,6 +548,7 @@
 
 <!-- Load shared auth module first to provide fetchJson & token management -->
 <script type="module" src="/js/auth-common.js?v=1"></script>
+<script src="/js/logout-handler.js"></script>
 <!-- Dashboard logic (now relies on auth-common for auth utilities) -->
 <script src="/js/dashboard.js?v=9"></script>
 <script defer src="/js/crud-handlers.js?v=7"></script>
