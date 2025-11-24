@@ -203,7 +203,9 @@ export async function createApp() {
             dateField = 'registration_date';
           }
           if (isPg) {
-            conditions.push(`TO_CHAR(${dateField}, 'MM')=$${params.length+1}::TEXT`);
+            // Cast to date if it's a text field (registration_date might be text)
+            const castField = (t === 'tours' && dateType === 'registration') ? `${dateField}::date` : dateField;
+            conditions.push(`TO_CHAR(${castField}, 'MM')=$${params.length+1}::TEXT`);
             params.push(month.padStart(2,'0'));
           } else {
             conditions.push(`strftime('%m', ${dateField})=?`);
@@ -218,7 +220,9 @@ export async function createApp() {
             dateField = 'registration_date';
           }
           if (isPg) {
-            conditions.push(`TO_CHAR(${dateField}, 'YYYY')=$${params.length+1}::TEXT`);
+            // Cast to date if it's a text field (registration_date might be text)
+            const castField = (t === 'tours' && dateType === 'registration') ? `${dateField}::date` : dateField;
+            conditions.push(`TO_CHAR(${castField}, 'YYYY')=$${params.length+1}::TEXT`);
             params.push(year);
           } else {
             conditions.push(`strftime('%Y', ${dateField})=?`);
