@@ -189,10 +189,42 @@ export async function createApp() {
       // Provide region_name join enrichment for sales and tours when region_id exists
       try {
         let rows;
+        const { month, year, staff, region } = req.query;
+        
+        // Build WHERE clause for filtering
+        let conditions = [];
+        let params = [];
+        
+        if (month && (t === 'sales' || t === 'tours' || t === 'documents')) {
+          const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
+          conditions.push(`strftime('%m', ${dateField})=?`);
+          params.push(month.padStart(2,'0'));
+        }
+        
+        if (year && (t === 'sales' || t === 'tours' || t === 'documents')) {
+          const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
+          conditions.push(`strftime('%Y', ${dateField})=?`);
+          params.push(year);
+        }
+        
+        if (staff && staffOwnedTables.has(t)) {
+          conditions.push(`staff_name=?`);
+          params.push(staff);
+        }
+        
+        if (region && (t === 'sales' || t === 'tours')) {
+          conditions.push(`region_id=?`);
+          params.push(region);
+        }
+        
+        const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+        
         if (t === 'sales') {
-          rows = await db.all(`SELECT s.*, r.region_name FROM sales s LEFT JOIN regions r ON r.id = s.region_id`);
+          rows = await db.all(`SELECT s.*, r.region_name FROM sales s LEFT JOIN regions r ON r.id = s.region_id ${whereClause}`, params);
         } else if (t === 'tours') {
-          rows = await db.all(`SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id`);
+          rows = await db.all(`SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id ${whereClause}`, params);
+        } else if (t === 'documents') {
+          rows = await db.all(`SELECT * FROM ${t} ${whereClause}`, params);
         } else {
           rows = await db.all(`SELECT * FROM ${t}`);
         }
