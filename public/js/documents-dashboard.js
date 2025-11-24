@@ -164,11 +164,14 @@ async function renderDashboard() {
     // Fetch documents data
     let docsData = await window.fetchJson('/api/documents' + (q ? '?' + q : ''));
     
+    console.log('Received docsData count (before processType filter):', docsData?.length || 0);
+    
     if (!docsData) return;
     
     // Apply process type filter on client side
     if (filterState.processType !== 'all') {
       docsData = docsData.filter(d => d.process_type === filterState.processType);
+      console.log('Filtered docsData count (after processType filter):', docsData.length);
     }
     
     // Destroy existing charts

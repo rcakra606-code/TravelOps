@@ -175,7 +175,10 @@ async function renderDashboard() {
       window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
     
-    if (!toursData) return;
+    console.log('Received toursData count:', toursData?.length || 0);
+    console.log('Received metrics:', metrics);
+    
+    if (!metrics) return;
     
     // Destroy existing charts
     Object.values(charts).forEach(c => c.destroy());

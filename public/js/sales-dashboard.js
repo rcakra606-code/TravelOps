@@ -179,6 +179,9 @@ async function renderDashboard() {
       window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
     
+    console.log('Received salesData count:', salesData?.length || 0);
+    console.log('Received metrics:', metrics);
+    
     if (!metrics) return;
     
     // Destroy existing charts
