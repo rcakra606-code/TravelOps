@@ -9,6 +9,7 @@
 <link rel="stylesheet" href="/css/styles.css">
 <link rel="stylesheet" href="/css/app-v2.css">
 <link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/modal.css">
 <link rel="stylesheet" href="/css/filters.css">
 </head>
 <body>
@@ -132,6 +133,22 @@
       </div>
     </div>
   </main>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title"></div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
 </div>
 
 <script type="module" src="/js/auth-common.js"></script>
