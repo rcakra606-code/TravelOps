@@ -234,10 +234,15 @@ async function generateReport() {
     renderReport(reportType, reportData);
     
     // Enable export buttons
-    document.getElementById('exportPdfBtn').disabled = false;
-    document.getElementById('exportExcelBtn').disabled = false;
-    document.getElementById('exportCsvBtn').disabled = false;
-    document.getElementById('printBtn').disabled = false;
+    const exportButtons = ['exportPdfBtn', 'exportExcelBtn', 'exportCsvBtn', 'printBtn'];
+    exportButtons.forEach(btnId => {
+      const btn = document.getElementById(btnId);
+      btn.disabled = false;
+      btn.style.background = 'var(--card)';
+      btn.style.color = 'var(--text-primary)';
+      btn.style.cursor = 'pointer';
+      btn.style.borderColor = 'var(--border-medium)';
+    });
     
     showNotification('Report generated successfully', 'success');
   } catch (error) {
@@ -310,38 +315,68 @@ function renderSalesSummary(data) {
   // Summary Metrics
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Sales</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalSales || 0)}</div>
-      <div class="metric-subtitle">${data.summary.salesCount || 0} transactions</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">💰</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Sales</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalSales || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">${data.summary.salesCount || 0} transactions</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Target Achievement</div>
-      <div class="metric-value">${formatPercent(data.summary.targetAchievement || 0)}</div>
-      <div class="metric-subtitle">Target: ${formatCurrency(data.summary.target || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎯</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Target Achievement</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatPercent(data.summary.targetAchievement || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Target: ${formatCurrency(data.summary.target || 0)}</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Average Sale</div>
-      <div class="metric-value">${formatCurrency(data.summary.averageSale || 0)}</div>
-      <div class="metric-subtitle">Per transaction</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📊</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Average Sale</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.averageSale || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Per transaction</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Growth Rate</div>
-      <div class="metric-value">${formatPercent(data.summary.growthRate || 0)}</div>
-      <div class="metric-subtitle">vs previous period</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📈</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Growth Rate</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatPercent(data.summary.growthRate || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">vs previous period</div>
     </div>
   `;
   
   // Charts
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Sales Trend</h3>
-      <canvas id="salesTrendChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📈</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Sales Trend</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="salesTrendChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Sales by Region</h3>
-      <canvas id="salesRegionChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🗺️</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Sales by Region</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="salesRegionChart"></canvas>
+      </div>
     </div>
   `;
   
@@ -368,21 +403,45 @@ function renderSalesDetailed(data) {
   
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Transactions</div>
-      <div class="metric-value">${data.summary.totalCount || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📋</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Transactions</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalCount || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">All transactions</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Completed</div>
-      <div class="metric-value">${data.summary.completedCount || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Completed</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.completedCount || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Confirmed payments</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Pending</div>
-      <div class="metric-value">${data.summary.pendingCount || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">⏳</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Pending</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.pendingCount || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Awaiting confirmation</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Total Revenue</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalRevenue || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">💰</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Revenue</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalRevenue || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Gross income</div>
     </div>
   `;
   
@@ -402,33 +461,67 @@ function renderToursProfitability(data) {
   
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Revenue</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalRevenue || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">💵</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Revenue</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalRevenue || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Gross tour income</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Total Profit</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalProfit || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📈</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Profit</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalProfit || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Net earnings</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Profit Margin</div>
-      <div class="metric-value">${formatPercent(data.summary.profitMargin || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📊</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Profit Margin</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatPercent(data.summary.profitMargin || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Average margin</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Total Tours</div>
-      <div class="metric-value">${data.summary.totalTours || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🗺️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Tours</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalTours || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Active tours</div>
     </div>
   `;
   
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Revenue vs Profit</h3>
-      <canvas id="revenueProfitChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📊</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Revenue vs Profit</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="revenueProfitChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Top Profitable Tours</h3>
-      <canvas id="topToursChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🏆</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Top Profitable Tours</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="topToursChart"></canvas>
+      </div>
     </div>
   `;
   
@@ -454,21 +547,45 @@ function renderToursParticipants(data) {
   
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Participants</div>
-      <div class="metric-value">${data.summary.totalParticipants || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">👥</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Participants</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalParticipants || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">All tour participants</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Total Tours</div>
-      <div class="metric-value">${data.summary.totalTours || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🗺️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Tours</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalTours || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Active tours</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Average per Tour</div>
-      <div class="metric-value">${(data.summary.averagePerTour || 0).toFixed(1)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📏</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Average per Tour</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${(data.summary.averagePerTour || 0).toFixed(1)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Participants/tour</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Occupancy Rate</div>
-      <div class="metric-value">${formatPercent(data.summary.occupancyRate || 0)}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🎯</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Occupancy Rate</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatPercent(data.summary.occupancyRate || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Capacity utilization</div>
     </div>
   `;
   
@@ -487,33 +604,67 @@ function renderDocumentsStatus(data) {
   
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Documents</div>
-      <div class="metric-value">${data.summary.totalDocuments || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Documents</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalDocuments || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">All documents</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Completed</div>
-      <div class="metric-value">${data.summary.completedCount || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Completed</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.completedCount || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Finished processing</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">In Progress</div>
-      <div class="metric-value">${data.summary.inProgressCount || 0}</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🔄</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">In Progress</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.inProgressCount || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Currently processing</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Avg Processing Time</div>
-      <div class="metric-value">${(data.summary.avgProcessingDays || 0).toFixed(1)} days</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">⏱️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Avg Processing Time</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${(data.summary.avgProcessingDays || 0).toFixed(1)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Days average</div>
     </div>
   `;
   
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Documents by Process Type</h3>
-      <canvas id="processTypeChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📊</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Documents by Process Type</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="processTypeChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Processing Timeline</h3>
-      <canvas id="timelineChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📅</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Processing Timeline</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="timelineChart"></canvas>
+      </div>
     </div>
   `;
   
@@ -536,13 +687,23 @@ function renderStaffPerformance(data) {
   
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Sales by Staff</h3>
-      <canvas id="staffSalesChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">👤</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Sales by Staff</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="staffSalesChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Performance Comparison</h3>
-      <canvas id="staffComparisonChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📈</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Performance Comparison</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="staffComparisonChart"></canvas>
+      </div>
     </div>
   `;
   
@@ -565,13 +726,23 @@ function renderRegionalComparison(data) {
   
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Revenue by Region</h3>
-      <canvas id="regionRevenueChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🌍</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Revenue by Region</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="regionRevenueChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Regional Performance</h3>
-      <canvas id="regionPerformanceChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📊</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Regional Performance</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="regionPerformanceChart"></canvas>
+      </div>
     </div>
   `;
   
@@ -593,37 +764,67 @@ function renderExecutiveSummary(data) {
   
   const metrics = document.getElementById('summaryMetrics');
   metrics.innerHTML = `
-    <div class="metric-card">
-      <div class="metric-title">Total Revenue</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalRevenue || 0)}</div>
-      <div class="metric-subtitle">All sources</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">💵</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Revenue</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalRevenue || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">All sources</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Total Profit</div>
-      <div class="metric-value">${formatCurrency(data.summary.totalProfit || 0)}</div>
-      <div class="metric-subtitle">Net profit</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📈</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Total Profit</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${formatCurrency(data.summary.totalProfit || 0)}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Net profit</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Active Tours</div>
-      <div class="metric-value">${data.summary.activeTours || 0}</div>
-      <div class="metric-subtitle">${data.summary.totalParticipants || 0} participants</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">🗺️</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Active Tours</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.activeTours || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">${data.summary.totalParticipants || 0} participants</div>
     </div>
-    <div class="metric-card">
-      <div class="metric-title">Documents</div>
-      <div class="metric-value">${data.summary.totalDocuments || 0}</div>
-      <div class="metric-subtitle">${data.summary.pendingDocuments || 0} pending</div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #8b5cf6, #7c3aed); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">📄</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Documents</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalDocuments || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">${data.summary.pendingDocuments || 0} pending</div>
     </div>
   `;
   
   const chartsSection = document.getElementById('chartsSection');
   chartsSection.innerHTML = `
-    <div class="chart-container">
-      <h3>Revenue Overview</h3>
-      <canvas id="revenueOverviewChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">📈</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Revenue Overview</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="revenueOverviewChart"></canvas>
+      </div>
     </div>
-    <div class="chart-container">
-      <h3>Business Distribution</h3>
-      <canvas id="distributionChart"></canvas>
+    <div class="chart-container" style="border-radius: 16px; overflow: hidden;">
+      <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
+        <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🧩</div>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Business Distribution</h3>
+      </div>
+      <div style="padding: 24px;">
+        <canvas id="distributionChart"></canvas>
+      </div>
     </div>
   `;
   
