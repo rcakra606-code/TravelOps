@@ -42,29 +42,6 @@
         <h2 id="pageTitle">Dashboard</h2>
         <div class="small" id="pageSubtitle">Ringkasan operasional</div>
       </div>
-      <div class="controls">
-        <div class="filter-controls">
-          <div class="filter-group">
-            <label>Staff</label>
-            <select id="filterStaff" class="filter-select"><option value="all">Semua Staff</option></select>
-          </div>
-          <div class="filter-group">
-            <label>Periode</label>
-            <select id="filterPeriod" class="filter-select">
-              <option value="all">Semua Periode</option>
-              <option value="month">Bulanan</option>
-              <option value="year">Tahunan</option>
-            </select>
-          </div>
-          <input id="filterMonth" type="month" class="filter-input" style="display:none">
-          <input id="filterYear" type="number" class="filter-input" placeholder="Tahun" min="2000" max="2100" style="width:120px;display:none">
-          <div class="filter-group">
-            <label>Region</label>
-            <select id="filterRegion" class="filter-select"><option value="all">Semua Region</option></select>
-          </div>
-          <button id="applyFilters" class="btn btn-primary filter-btn">Terapkan Filter</button>
-        </div>
-      </div>
     </div>
 
    <section id="summary" class="card section active">
@@ -248,7 +225,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Documents</h3>
         <div>
-          <button id="addDocBtn" class="btn primary">+ Tambah Document</button>
+          <button id="addDocBtn" class="btn primary">+ Tambah Dokumen</button>
           <button data-filter-entity="documents" class="btn">🔍 Filter</button>
           <button id="exportDocs" class="btn">Export CSV</button>
           <button id="downloadDocsTemplate" class="btn">Download Template</button>
@@ -420,7 +397,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Hotel Bookings</h3>
         <div>
-          <button id="addHotelBookingBtn" class="btn primary">+ Tambah Hotel Booking</button>
+          <button id="addHotelBookingBtn" class="btn primary">+ Tambah Booking</button>
           <button data-filter-entity="hotel_bookings" class="btn">🔍 Filter</button>
           <button id="exportHotelBookings" class="btn">Export CSV</button>
         </div>

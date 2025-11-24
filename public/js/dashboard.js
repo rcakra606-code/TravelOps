@@ -127,18 +127,6 @@ function showSection(name) {
   document.querySelectorAll('#mainNav button[data-section]').forEach(b => b.classList.toggle('active', b.dataset.section === name));
   localStorage.setItem('activeSection', name);
   
-  // Hide/show filters based on section
-  const filterControls = document.querySelector('.filter-controls');
-  if (filterControls) {
-    // Only show filters for data sections (sales, tours, documents, targets, regions, users, telecom, hotel_bookings)
-    const sectionsWithFilters = ['sales', 'tours', 'documents', 'targets', 'regions', 'users', 'telecom', 'hotel_bookings'];
-    if (sectionsWithFilters.includes(name)) {
-      filterControls.style.display = 'flex';
-    } else {
-      filterControls.style.display = 'none';
-    }
-  }
-  
   // Render profile when profile section is shown
   if (name === 'profile') {
     renderProfile();
