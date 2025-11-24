@@ -16,61 +16,113 @@ const el = id => document.getElementById(id);
 /* === CHARTS STORAGE === */
 let charts = {};
 
+/* === FILTER STATE === */
+let filterState = {
+  staff: 'all',
+  processType: 'all',
+  period: 'all',
+  month: '',
+  year: ''
+};
+
+let usersData = [];
+
 /* === FILTER MANAGEMENT === */
-function initializeFilters() {
-  el('filterPeriod')?.addEventListener('change', (e) => {
-    const period = e.target.value;
-    const monthInput = el('filterMonth');
-    const yearInput = el('filterYear');
+function openDocumentsFilterModal() {
+  const user = window.getUser();
+  const isBasicUser = user.type === 'basic';
+  
+  const staffDropdown = isBasicUser ? '' : `
+    <div class="form-group">
+      <label>Staff</label>
+      <select name="staff">
+        <option value="all">Semua</option>
+        ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  
+  window.openModal({
+    title: 'Filter Documents Analytics',
+    size: 'medium',
+    bodyHtml: `
+      <div class="form-grid">
+        ${staffDropdown}
+        <div class="form-group">
+          <label>Tipe Proses</label>
+          <select name="processType">
+            <option value="all" ${filterState.processType === 'all' ? 'selected' : ''}>Semua</option>
+            <option value="normal" ${filterState.processType === 'normal' ? 'selected' : ''}>Normal</option>
+            <option value="kilat" ${filterState.processType === 'kilat' ? 'selected' : ''}>Kilat</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Periode</label>
+          <select name="period" id="modalFilterPeriod">
+            <option value="all" ${filterState.period === 'all' ? 'selected' : ''}>Semua</option>
+            <option value="month" ${filterState.period === 'month' ? 'selected' : ''}>Bulan</option>
+            <option value="year" ${filterState.period === 'year' ? 'selected' : ''}>Tahun</option>
+          </select>
+        </div>
+        <div class="form-group" id="monthGroup" style="display:${filterState.period === 'month' ? 'block' : 'none'}">
+          <label>Pilih Bulan</label>
+          <input type="month" name="month" value="${filterState.month || ''}">
+        </div>
+        <div class="form-group" id="yearGroup" style="display:${filterState.period === 'year' ? 'block' : 'none'}">
+          <label>Pilih Tahun</label>
+          <input type="number" name="year" min="2020" max="2100" value="${filterState.year || ''}" placeholder="YYYY">
+        </div>
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn" data-reset-documents-filters>Reset Filters</button>
+      </div>
+    `,
+    context: { entity: 'documents', action: 'filter' }
+  });
+  
+  setTimeout(() => {
+    const periodSelect = document.getElementById('modalFilterPeriod');
+    const monthGroup = document.getElementById('monthGroup');
+    const yearGroup = document.getElementById('yearGroup');
     
-    if (period === 'month') {
-      monthInput.style.display = 'inline-block';
-      yearInput.style.display = 'none';
-      yearInput.value = '';
-    } else if (period === 'year') {
-      monthInput.style.display = 'none';
-      yearInput.style.display = 'inline-block';
-      monthInput.value = '';
-    } else {
-      monthInput.style.display = 'none';
-      yearInput.style.display = 'none';
-      monthInput.value = '';
-      yearInput.value = '';
+    if (periodSelect) {
+      periodSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        monthGroup.style.display = val === 'month' ? 'block' : 'none';
+        yearGroup.style.display = val === 'year' ? 'block' : 'none';
+      });
     }
-  });
+  }, 100);
+}
+
+function resetDocumentsFilters() {
+  filterState = {
+    staff: 'all',
+    processType: 'all',
+    period: 'all',
+    month: '',
+    year: ''
+  };
+  if (window.closeModal) window.closeModal();
+  renderDashboard();
+}
+
+function applyDocumentsFilters(formData) {
+  filterState.staff = formData.staff || 'all';
+  filterState.processType = formData.processType || 'all';
+  filterState.period = formData.period || 'all';
+  filterState.month = formData.month || '';
+  filterState.year = formData.year || '';
   
-  el('applyFilters')?.addEventListener('click', () => {
-    renderDashboard();
-  });
-  
-  el('filterMonth')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') renderDashboard();
-  });
-  el('filterYear')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') renderDashboard();
-  });
-  
-  // Auto-render on filter dropdown change
-  el('filterStaff')?.addEventListener('change', () => renderDashboard());
-  el('filterProcessType')?.addEventListener('change', () => renderDashboard());
+  renderDashboard();
 }
 
 async function populateFilterDropdowns() {
   try {
     const users = await window.fetchJson('/api/users');
-    
-    const filterStaff = el('filterStaff');
-    if (filterStaff && users) {
-      filterStaff.innerHTML = '<option value="all">Semua</option>';
-      users.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.name; // Use name instead of id
-        opt.textContent = u.name;
-        filterStaff.appendChild(opt);
-      });
-    }
+    usersData = users || [];
   } catch (err) {
-    console.error('Error populating filters:', err);
+    console.error('Error loading filter data:', err);
   }
 }
 
@@ -78,24 +130,19 @@ async function populateFilterDropdowns() {
 async function renderDashboard() {
   try {
     const user = window.getUser();
-    const filterPeriod = el('filterPeriod')?.value || 'all';
-    const filterMonth = el('filterMonth')?.value || '';
-    const filterYear = el('filterYear')?.value || '';
-    const filterStaff = el('filterStaff')?.value || 'all';
-    const filterProcessType = el('filterProcessType')?.value || 'all';
     
     let month = '';
     let year = '';
     
-    if (filterPeriod === 'month' && filterMonth) {
-      const [y, m] = filterMonth.split('-');
+    if (filterState.period === 'month' && filterState.month) {
+      const [y, m] = filterState.month.split('-');
       month = m;
       year = y;
-    } else if (filterPeriod === 'year' && filterYear) {
-      year = filterYear;
+    } else if (filterState.period === 'year' && filterState.year) {
+      year = filterState.year;
     }
     
-    let staff = filterStaff !== 'all' ? filterStaff : '';
+    let staff = filterState.staff !== 'all' ? filterState.staff : '';
     
     // For basic users, always filter to their own data
     if (user.type === 'basic') {
@@ -115,8 +162,8 @@ async function renderDashboard() {
     if (!docsData) return;
     
     // Apply process type filter on client side
-    if (filterProcessType !== 'all') {
-      docsData = docsData.filter(d => d.process_type === filterProcessType);
+    if (filterState.processType !== 'all') {
+      docsData = docsData.filter(d => d.process_type === filterState.processType);
     }
     
     // Destroy existing charts
@@ -396,13 +443,29 @@ el('exportDocumentsCSV')?.addEventListener('click', async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   const user = window.getUser();
   
-  // Hide staff filter for basic users (they can only see their own data)
-  if (user.type === 'basic') {
-    const staffGroup = el('filterStaff')?.closest('.filter-group');
-    if (staffGroup) staffGroup.style.display = 'none';
+  // Set up filter button
+  const filterBtn = el('documentsFilterBtn');
+  if (filterBtn) {
+    filterBtn.addEventListener('click', openDocumentsFilterModal);
   }
   
-  initializeFilters();
+  // Handle modal submissions for filters
+  document.addEventListener('modalSubmit', (e) => {
+    const { data, context } = e.detail;
+    if (context.entity === 'documents' && context.action === 'filter') {
+      e.preventDefault();
+      applyDocumentsFilters(data);
+      if (window.closeModal) window.closeModal();
+    }
+  });
+  
+  // Handle filter reset
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('[data-reset-documents-filters]')) {
+      resetDocumentsFilters();
+    }
+  });
+  
   await populateFilterDropdowns();
   renderDashboard();
   setInterval(renderDashboard, 60000); // Refresh every minute

@@ -435,6 +435,18 @@ if (modalForm) {
       // Get context data
       const context = JSON.parse(modal?.dataset.context || '{}');
       
+      // Dispatch event for specialized dashboard filters
+      const submitEvent = new CustomEvent('modalSubmit', { 
+        detail: { data, context },
+        cancelable: true 
+      });
+      document.dispatchEvent(submitEvent);
+      
+      // If event was prevented (handled by specialized dashboard), return
+      if (submitEvent.defaultPrevented) {
+        return;
+      }
+      
       // Call API based on context
       if (window.crudHandlers && window.crudHandlers.handleModalSubmit) {
         await window.crudHandlers.handleModalSubmit(data, context);

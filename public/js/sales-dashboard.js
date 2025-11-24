@@ -16,43 +16,108 @@ const el = id => document.getElementById(id);
 /* === CHARTS STORAGE === */
 let charts = {};
 
+/* === FILTER STATE === */
+let filterState = {
+  staff: 'all',
+  region: 'all',
+  period: 'all',
+  month: '',
+  year: ''
+};
+
+let regionsData = [];
+let usersData = [];
+
 /* === FILTER MANAGEMENT === */
-function initializeFilters() {
-  el('filterPeriod')?.addEventListener('change', (e) => {
-    const period = e.target.value;
-    const monthInput = el('filterMonth');
-    const yearInput = el('filterYear');
+function openSalesFilterModal() {
+  const user = window.getUser();
+  const isBasicUser = user.type === 'basic';
+  
+  const staffDropdown = isBasicUser ? '' : `
+    <div class="form-group">
+      <label>Staff</label>
+      <select name="staff">
+        <option value="all">Semua</option>
+        ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+      </select>
+    </div>
+  `;
+  
+  window.openModal({
+    title: 'Filter Sales Analytics',
+    size: 'medium',
+    bodyHtml: `
+      <div class="form-grid">
+        ${staffDropdown}
+        <div class="form-group">
+          <label>Region</label>
+          <select name="region">
+            <option value="all">Semua</option>
+            ${regionsData.map(r => `<option value="${r.id}" ${filterState.region == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Periode</label>
+          <select name="period" id="modalFilterPeriod">
+            <option value="all" ${filterState.period === 'all' ? 'selected' : ''}>Semua</option>
+            <option value="month" ${filterState.period === 'month' ? 'selected' : ''}>Bulan</option>
+            <option value="year" ${filterState.period === 'year' ? 'selected' : ''}>Tahun</option>
+          </select>
+        </div>
+        <div class="form-group" id="monthGroup" style="display:${filterState.period === 'month' ? 'block' : 'none'}">
+          <label>Pilih Bulan</label>
+          <input type="month" name="month" value="${filterState.month || ''}">
+        </div>
+        <div class="form-group" id="yearGroup" style="display:${filterState.period === 'year' ? 'block' : 'none'}">
+          <label>Pilih Tahun</label>
+          <input type="number" name="year" min="2020" max="2100" value="${filterState.year || ''}" placeholder="YYYY">
+        </div>
+      </div>
+      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="btn" data-reset-sales-filters>Reset Filters</button>
+      </div>
+    `,
+    context: { entity: 'sales', action: 'filter' }
+  });
+  
+  // Handle period change to show/hide month/year inputs
+  setTimeout(() => {
+    const periodSelect = document.getElementById('modalFilterPeriod');
+    const monthGroup = document.getElementById('monthGroup');
+    const yearGroup = document.getElementById('yearGroup');
     
-    if (period === 'month') {
-      monthInput.style.display = 'inline-block';
-      yearInput.style.display = 'none';
-      yearInput.value = '';
-    } else if (period === 'year') {
-      monthInput.style.display = 'none';
-      yearInput.style.display = 'inline-block';
-      monthInput.value = '';
-    } else {
-      monthInput.style.display = 'none';
-      yearInput.style.display = 'none';
-      monthInput.value = '';
-      yearInput.value = '';
+    if (periodSelect) {
+      periodSelect.addEventListener('change', (e) => {
+        const val = e.target.value;
+        monthGroup.style.display = val === 'month' ? 'block' : 'none';
+        yearGroup.style.display = val === 'year' ? 'block' : 'none';
+        monthGroup.style.display = val === 'month' ? 'block' : 'none';
+        yearGroup.style.display = val === 'year' ? 'block' : 'none';
+      });
     }
-  });
+  }, 100);
+}
+
+function resetSalesFilters() {
+  filterState = {
+    staff: 'all',
+    region: 'all',
+    period: 'all',
+    month: '',
+    year: ''
+  };
+  if (window.closeModal) window.closeModal();
+  renderDashboard();
+}
+
+function applySalesFilters(formData) {
+  filterState.staff = formData.staff || 'all';
+  filterState.region = formData.region || 'all';
+  filterState.period = formData.period || 'all';
+  filterState.month = formData.month || '';
+  filterState.year = formData.year || '';
   
-  el('applyFilters')?.addEventListener('click', () => {
-    renderDashboard();
-  });
-  
-  el('filterMonth')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') renderDashboard();
-  });
-  el('filterYear')?.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') renderDashboard();
-  });
-  
-  // Auto-render on filter dropdown change
-  el('filterStaff')?.addEventListener('change', () => renderDashboard());
-  el('filterRegion')?.addEventListener('change', () => renderDashboard());
+  renderDashboard();
 }
 
 async function populateFilterDropdowns() {
@@ -62,29 +127,12 @@ async function populateFilterDropdowns() {
       window.fetchJson('/api/regions')
     ]);
     
-    const filterStaff = el('filterStaff');
-    if (filterStaff && users) {
-      filterStaff.innerHTML = '<option value="all">Semua</option>';
-      users.forEach(u => {
-        const opt = document.createElement('option');
-        opt.value = u.name; // Use name instead of id
-        opt.textContent = u.name;
-        filterStaff.appendChild(opt);
-      });
-    }
-    
-    const filterRegion = el('filterRegion');
-    if (filterRegion && regions) {
-      filterRegion.innerHTML = '<option value="all">Semua</option>';
-      regions.forEach(r => {
-        const opt = document.createElement('option');
-        opt.value = r.id;
-        opt.textContent = r.region_name; // fix: correct field
-        filterRegion.appendChild(opt);
-      });
-    }
+    usersData = users || [];
+    regionsData = regions || [];
+    usersData = users || [];
+    regionsData = regions || [];
   } catch (err) {
-    console.error('Error populating filters:', err);
+    console.error('Error loading filter data:', err);
   }
 }
 
@@ -92,25 +140,20 @@ async function populateFilterDropdowns() {
 async function renderDashboard() {
   try {
     const user = window.getUser();
-    const filterPeriod = el('filterPeriod')?.value || 'all';
-    const filterMonth = el('filterMonth')?.value || '';
-    const filterYear = el('filterYear')?.value || '';
-    const filterStaff = el('filterStaff')?.value || 'all';
-    const filterRegion = el('filterRegion')?.value || 'all';
     
     let month = '';
     let year = '';
     
-    if (filterPeriod === 'month' && filterMonth) {
-      const [y, m] = filterMonth.split('-');
+    if (filterState.period === 'month' && filterState.month) {
+      const [y, m] = filterState.month.split('-');
       month = m;
       year = y;
-    } else if (filterPeriod === 'year' && filterYear) {
-      year = filterYear;
+    } else if (filterState.period === 'year' && filterState.year) {
+      year = filterState.year;
     }
     
-    let staff = filterStaff !== 'all' ? filterStaff : '';
-    const region = filterRegion !== 'all' ? filterRegion : '';
+    let staff = filterState.staff !== 'all' ? filterState.staff : '';
+    const region = filterState.region !== 'all' ? filterState.region : '';
     
     // For basic users, always filter to their own data
     if (user.type === 'basic') {
@@ -389,13 +432,29 @@ el('exportSalesCSV')?.addEventListener('click', async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   const user = window.getUser();
   
-  // Hide staff filter for basic users (they can only see their own data)
-  if (user.type === 'basic') {
-    const staffGroup = el('filterStaff')?.closest('.filter-group');
-    if (staffGroup) staffGroup.style.display = 'none';
+  // Set up filter button
+  const filterBtn = el('salesFilterBtn');
+  if (filterBtn) {
+    filterBtn.addEventListener('click', openSalesFilterModal);
   }
   
-  initializeFilters();
+  // Handle modal submissions for filters
+  document.addEventListener('modalSubmit', (e) => {
+    const { data, context } = e.detail;
+    if (context.entity === 'sales' && context.action === 'filter') {
+      e.preventDefault();
+      applySalesFilters(data);
+      if (window.closeModal) window.closeModal();
+    }
+  });
+  
+  // Handle filter reset
+  document.addEventListener('click', (e) => {
+    if (e.target.matches('[data-reset-sales-filters]')) {
+      resetSalesFilters();
+    }
+  });
+  
   await populateFilterDropdowns();
   renderDashboard();
   setInterval(renderDashboard, 60000); // Refresh every minute

@@ -40,22 +40,14 @@
         <h2>Tours Dashboard</h2>
         <div class="small">Analisis tour & peserta berdasarkan region</div>
       </div>
-      <div class="controls">
-        <div class="filter-row" style="margin:0">
-          <label class="small">Staff:</label>
-          <select id="filterStaff"><option value="all">Semua</option></select>
-          <label class="small">Periode:</label>
-          <select id="filterPeriod"><option value="all">Keseluruhan</option><option value="month">Per Bulan</option><option value="year">Per Tahun</option></select>
-          <input id="filterMonth" type="month" style="display:none">
-          <input id="filterYear" type="number" placeholder="Tahun" min="2000" max="2100" style="width:100px;display:none">
-          <label class="small">Region:</label>
-          <select id="filterRegion"><option value="all">Semua</option></select>
-          <button id="applyFilters" class="btn">Terapkan</button>
-        </div>
-      </div>
     </div>
 
     <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Tours Analytics</h3>
+        <button id="toursFilterBtn" class="btn">🔍 Filter</button>
+      </div>
+      
       <!-- Metrics Row -->
       <div class="dashboard-metrics">
         <div class="metric-card">
