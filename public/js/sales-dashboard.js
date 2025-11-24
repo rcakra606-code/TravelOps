@@ -111,12 +111,14 @@ function resetSalesFilters() {
 }
 
 function applySalesFilters(formData) {
+  console.log('Applying filters with data:', formData);
   filterState.staff = formData.staff || 'all';
   filterState.region = formData.region || 'all';
   filterState.period = formData.period || 'all';
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
   
+  console.log('Updated filterState:', filterState);
   if (window.closeModal) window.closeModal();
   renderDashboard();
 }
@@ -167,7 +169,9 @@ async function renderDashboard() {
     if (staff) params.staff = staff;
     if (region) params.region = region;
     
+    console.log('Rendering dashboard with params:', params);
     const q = new URLSearchParams(params).toString();
+    console.log('Query string:', q);
     
     // Fetch sales data and metrics
     const [salesData, metrics] = await Promise.all([
