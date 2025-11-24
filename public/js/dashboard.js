@@ -484,6 +484,7 @@ function refreshUser() {
   el('userName').textContent = u.name || u.username || '-';
   el('userRole').textContent = 'Role: ' + (u.type || '-');
   const isAdmin = u.type === 'admin';
+  const isSemiAdmin = u.type === 'semi-admin';
   const isBasic = u.type === 'basic';
   if (!isAdmin) el('addTargetBtn').style.display = 'none';
   if (isBasic) document.querySelectorAll('.btn.delete').forEach(b => b.style.display = 'none');
@@ -498,6 +499,11 @@ function refreshUser() {
     if (active && active.id === 'users') {
       showSection('summary');
     }
+  }
+  // Show Reports link only for admin and semi-admin
+  const reportsLink = el('reportsLink');
+  if (reportsLink && (isAdmin || isSemiAdmin)) {
+    reportsLink.style.display = 'flex';
   }
 }
 

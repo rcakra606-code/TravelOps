@@ -423,6 +423,59 @@ export async function createApp() {
 
   app.post('/api/admin/seed', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const username = req.body.username || process.env.ADMIN_USERNAME || 'admin'; const name = req.body.name || 'Administrator'; const email = req.body.email || 'admin@example.com'; const password = req.body.password || process.env.ADMIN_PASSWORD || 'Admin1234!'; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); const existing = await db.get('SELECT * FROM users WHERE username=?',[username]); if (existing){ await db.run('UPDATE users SET password=?, name=?, email=?, type=? WHERE id=?',[hashed, name, email,'admin', existing.id]); await logActivity(req.user.username,'ADMIN_SEED_UPDATE','users',existing.id,`Updated admin user ${username}`); return res.json({ ok:true, updated:true }); } else { const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)',[username, hashed, name, email,'admin']); await logActivity(req.user.username,'ADMIN_SEED_CREATE','users',r.lastID,`Created admin user ${username}`); return res.json({ ok:true, created:true, id:r.lastID }); } });
 
+  // ============================================
+  // REPORTS API - ADMIN & SEMI-ADMIN ONLY
+  // ============================================
+  app.get('/api/reports/:reportType', authMiddleware(), async (req, res) => {
+    // Role-based access control
+    if (req.user.type !== 'admin' && req.user.type !== 'semi-admin') {
+      return res.status(403).json({ error: 'Access denied. Reports are only available for admin and semi-admin users.' });
+    }
+
+    const { reportType } = req.params;
+    const { from, to, staff, region, groupBy } = req.query;
+    const isPg = db.dialect === 'postgres';
+
+    try {
+      let reportData = {};
+
+      switch (reportType) {
+        case 'sales-summary':
+          reportData = await generateSalesSummary(db, isPg, { from, to, staff, region });
+          break;
+        case 'sales-detailed':
+          reportData = await generateSalesDetailed(db, isPg, { from, to, staff, region });
+          break;
+        case 'tours-profitability':
+          reportData = await generateToursProfitability(db, isPg, { from, to, staff, region });
+          break;
+        case 'tours-participants':
+          reportData = await generateToursParticipants(db, isPg, { from, to, staff, region });
+          break;
+        case 'documents-status':
+          reportData = await generateDocumentsStatus(db, isPg, { from, to, staff, region });
+          break;
+        case 'staff-performance':
+          reportData = await generateStaffPerformance(db, isPg, { from, to, region });
+          break;
+        case 'regional-comparison':
+          reportData = await generateRegionalComparison(db, isPg, { from, to });
+          break;
+        case 'executive-summary':
+          reportData = await generateExecutiveSummary(db, isPg, { from, to });
+          break;
+        default:
+          return res.status(400).json({ error: 'Invalid report type' });
+      }
+
+      await logActivity(req.user.username, 'GENERATE_REPORT', 'reports', null, `Generated ${reportType} from ${from} to ${to}`);
+      res.json(reportData);
+    } catch (err) {
+      logger.error({ err, reportType }, 'Report generation failed');
+      res.status(500).json({ error: 'Failed to generate report', details: err.message });
+    }
+  });
+
   app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
 
   // Optional debug: list admin usernames (only if explicitly enabled via env)
@@ -441,6 +494,463 @@ export async function createApp() {
   app.use((err, req, res, next)=>{ logger.error({ err: err.message, stack: err.stack }, 'Unhandled error'); if (res.headersSent) return next(err); res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' }); });
 
   return { app, db };
+}
+
+// ============================================
+// REPORT GENERATION FUNCTIONS
+// ============================================
+async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
+  const dateField = isPg ? 'created_at' : 'created_at';
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
+    params.push(to);
+  }
+  if (staff) {
+    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    params.push(staff);
+  }
+  if (region) {
+    conditions.push(isPg ? `region_id = $${params.length + 1}::int` : `region_id = ?`);
+    params.push(region);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  // Summary metrics
+  const summary = await db.get(
+    `SELECT 
+      COUNT(*) as salesCount,
+      COALESCE(SUM(sales_amount), 0) as totalSales,
+      COALESCE(AVG(sales_amount), 0) as averageSale
+    FROM sales s ${whereClause}`,
+    params
+  );
+  
+  // Get target (simplified - would need date logic)
+  const target = await db.get(`SELECT COALESCE(SUM(sales_target), 0) as target FROM targets`);
+  summary.target = target?.target || 0;
+  summary.targetAchievement = summary.target > 0 ? summary.totalSales / summary.target : 0;
+  summary.growthRate = 0; // Would need previous period comparison
+  
+  // Chart data - sales trend by month
+  const trendData = await db.all(
+    isPg
+      ? `SELECT TO_CHAR(created_at, 'YYYY-MM') as month, SUM(sales_amount) as total
+         FROM sales s ${whereClause}
+         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+         ORDER BY month`
+      : `SELECT strftime('%Y-%m', created_at) as month, SUM(sales_amount) as total
+         FROM sales s ${whereClause}
+         GROUP BY strftime('%Y-%m', created_at)
+         ORDER BY month`,
+    params
+  );
+  
+  // Sales by region
+  const regionData = await db.all(
+    `SELECT r.region_name, SUM(s.sales_amount) as total
+     FROM sales s
+     JOIN regions r ON r.id = s.region_id
+     ${whereClause}
+     GROUP BY r.region_name`,
+    params
+  );
+  
+  // Table data
+  const tableData = await db.all(
+    `SELECT s.*, r.region_name
+     FROM sales s
+     JOIN regions r ON r.id = s.region_id
+     ${whereClause}
+     ORDER BY s.created_at DESC
+     LIMIT 100`,
+    params
+  );
+  
+  return {
+    summary,
+    chartData: {
+      trend: {
+        labels: trendData.map(d => d.month),
+        values: trendData.map(d => d.total)
+      },
+      byRegion: {
+        labels: regionData.map(d => d.region_name),
+        values: regionData.map(d => d.total)
+      }
+    },
+    tableData
+  };
+}
+
+async function generateSalesDetailed(db, isPg, { from, to, staff, region }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
+    params.push(to);
+  }
+  if (staff) {
+    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    params.push(staff);
+  }
+  if (region) {
+    conditions.push(isPg ? `region_id = $${params.length + 1}::int` : `region_id = ?`);
+    params.push(region);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const summary = {
+    totalCount: 0,
+    completedCount: 0,
+    pendingCount: 0,
+    totalRevenue: 0
+  };
+  
+  const counts = await db.get(
+    `SELECT 
+      COUNT(*) as totalCount,
+      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completedCount,
+      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingCount,
+      COALESCE(SUM(sales_amount), 0) as totalRevenue
+    FROM sales s ${whereClause}`,
+    params
+  );
+  
+  Object.assign(summary, counts);
+  
+  const tableData = await db.all(
+    `SELECT s.*, r.region_name
+     FROM sales s
+     JOIN regions r ON r.id = s.region_id
+     ${whereClause}
+     ORDER BY s.created_at DESC`,
+    params
+  );
+  
+  return { summary, tableData };
+}
+
+async function generateToursProfitability(db, isPg, { from, to, staff, region }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `departure_date >= $${params.length + 1}::date` : `date(departure_date) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `departure_date <= $${params.length + 1}::date` : `date(departure_date) <= ?`);
+    params.push(to);
+  }
+  if (staff) {
+    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    params.push(staff);
+  }
+  if (region) {
+    conditions.push(isPg ? `region_id = $${params.length + 1}::int` : `region_id = ?`);
+    params.push(region);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const summary = await db.get(
+    `SELECT 
+      COUNT(*) as totalTours,
+      COALESCE(SUM(sales_amount), 0) as totalRevenue,
+      COALESCE(SUM(profit_amount), 0) as totalProfit
+    FROM tours t ${whereClause}`,
+    params
+  );
+  
+  summary.profitMargin = summary.totalRevenue > 0 ? summary.totalProfit / summary.totalRevenue : 0;
+  
+  const tableData = await db.all(
+    `SELECT t.*, r.region_name,
+      CASE WHEN sales_amount > 0 THEN profit_amount::float / sales_amount ELSE 0 END as profit_margin
+     FROM tours t
+     JOIN regions r ON r.id = t.region_id
+     ${whereClause}
+     ORDER BY profit_amount DESC`,
+    params
+  );
+  
+  const topTours = tableData.slice(0, 10);
+  
+  return {
+    summary,
+    chartData: {
+      revenueProfit: {
+        labels: topTours.map(t => t.tour_code),
+        values: topTours.map(t => t.profit_amount)
+      },
+      topTours: {
+        labels: topTours.map(t => t.tour_code),
+        values: topTours.map(t => t.profit_amount)
+      }
+    },
+    tableData
+  };
+}
+
+async function generateToursParticipants(db, isPg, { from, to, staff, region }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `departure_date >= $${params.length + 1}::date` : `date(departure_date) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `departure_date <= $${params.length + 1}::date` : `date(departure_date) <= ?`);
+    params.push(to);
+  }
+  if (staff) {
+    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    params.push(staff);
+  }
+  if (region) {
+    conditions.push(isPg ? `region_id = $${params.length + 1}::int` : `region_id = ?`);
+    params.push(region);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const summary = await db.get(
+    `SELECT 
+      COUNT(*) as totalTours,
+      COALESCE(SUM(jumlah_peserta), 0) as totalParticipants,
+      COALESCE(AVG(jumlah_peserta), 0) as averagePerTour
+    FROM tours t ${whereClause}`,
+    params
+  );
+  
+  summary.occupancyRate = 0.75; // Placeholder - would need capacity data
+  
+  const tableData = await db.all(
+    `SELECT t.*, r.region_name
+     FROM tours t
+     JOIN regions r ON r.id = t.region_id
+     ${whereClause}
+     ORDER BY t.departure_date DESC`,
+    params
+  );
+  
+  return { summary, tableData };
+}
+
+async function generateDocumentsStatus(db, isPg, { from, to, staff, region }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `receive_date >= $${params.length + 1}::date` : `date(receive_date) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `receive_date <= $${params.length + 1}::date` : `date(receive_date) <= ?`);
+    params.push(to);
+  }
+  if (staff) {
+    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    params.push(staff);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const summary = {
+    totalDocuments: 0,
+    completedCount: 0,
+    inProgressCount: 0,
+    avgProcessingDays: 0
+  };
+  
+  const counts = await db.get(
+    `SELECT 
+      COUNT(*) as totalDocuments,
+      SUM(CASE WHEN send_date IS NOT NULL THEN 1 ELSE 0 END) as completedCount,
+      SUM(CASE WHEN send_date IS NULL THEN 1 ELSE 0 END) as inProgressCount
+    FROM documents d ${whereClause}`,
+    params
+  );
+  
+  Object.assign(summary, counts);
+  
+  const processTypeData = await db.all(
+    `SELECT process_type, COUNT(*) as count
+     FROM documents d ${whereClause}
+     GROUP BY process_type`,
+    params
+  );
+  
+  const tableData = await db.all(
+    `SELECT * FROM documents d ${whereClause}
+     ORDER BY receive_date DESC`,
+    params
+  );
+  
+  return {
+    summary,
+    chartData: {
+      byProcessType: {
+        labels: processTypeData.map(d => d.process_type),
+        values: processTypeData.map(d => d.count)
+      }
+    },
+    tableData
+  };
+}
+
+async function generateStaffPerformance(db, isPg, { from, to, region }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `s.created_at >= $${params.length + 1}::date` : `date(s.created_at) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `s.created_at <= $${params.length + 1}::date` : `date(s.created_at) <= ?`);
+    params.push(to);
+  }
+  if (region) {
+    conditions.push(isPg ? `s.region_id = $${params.length + 1}::int` : `s.region_id = ?`);
+    params.push(region);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const tableData = await db.all(
+    `SELECT 
+      s.staff_name,
+      COALESCE(SUM(s.sales_amount), 0) as total_sales,
+      COUNT(s.id) as transaction_count,
+      COALESCE(AVG(s.sales_amount), 0) as average_sale,
+      (SELECT COUNT(*) FROM tours t WHERE t.staff_name = s.staff_name) as tours_handled,
+      (SELECT COUNT(*) FROM documents d WHERE d.staff_name = s.staff_name) as documents_processed
+    FROM sales s
+    ${whereClause}
+    GROUP BY s.staff_name
+    ORDER BY total_sales DESC`,
+    params
+  );
+  
+  return {
+    chartData: {
+      staffSales: {
+        labels: tableData.map(d => d.staff_name),
+        values: tableData.map(d => d.total_sales)
+      }
+    },
+    tableData
+  };
+}
+
+async function generateRegionalComparison(db, isPg, { from, to }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `s.created_at >= $${params.length + 1}::date` : `date(s.created_at) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `s.created_at <= $${params.length + 1}::date` : `date(s.created_at) <= ?`);
+    params.push(to);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const tableData = await db.all(
+    `SELECT 
+      r.region_name,
+      COALESCE(SUM(s.sales_amount), 0) as total_sales,
+      COUNT(DISTINCT t.id) as total_tours,
+      COALESCE(SUM(t.jumlah_peserta), 0) as total_participants
+    FROM regions r
+    LEFT JOIN sales s ON s.region_id = r.id ${from || to ? `AND ${conditions.join(' AND ')}` : ''}
+    LEFT JOIN tours t ON t.region_id = r.id
+    GROUP BY r.region_name
+    ORDER BY total_sales DESC`,
+    from || to ? params : []
+  );
+  
+  const totalSales = tableData.reduce((sum, r) => sum + parseFloat(r.total_sales || 0), 0);
+  tableData.forEach(row => {
+    row.market_share = totalSales > 0 ? parseFloat(row.total_sales) / totalSales : 0;
+  });
+  
+  return {
+    chartData: {
+      regionRevenue: {
+        labels: tableData.map(d => d.region_name),
+        values: tableData.map(d => d.total_sales)
+      }
+    },
+    tableData
+  };
+}
+
+async function generateExecutiveSummary(db, isPg, { from, to }) {
+  let conditions = [];
+  let params = [];
+  
+  if (from) {
+    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
+    params.push(from);
+  }
+  if (to) {
+    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
+    params.push(to);
+  }
+  
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  const salesSummary = await db.get(
+    `SELECT COALESCE(SUM(sales_amount), 0) as totalRevenue FROM sales s ${whereClause}`,
+    params
+  );
+  
+  const toursSummary = await db.get(
+    `SELECT 
+      COUNT(*) as activeTours,
+      COALESCE(SUM(profit_amount), 0) as totalProfit,
+      COALESCE(SUM(jumlah_peserta), 0) as totalParticipants
+    FROM tours t`,
+    []
+  );
+  
+  const docsSummary = await db.get(
+    `SELECT 
+      COUNT(*) as totalDocuments,
+      SUM(CASE WHEN send_date IS NULL THEN 1 ELSE 0 END) as pendingDocuments
+    FROM documents`,
+    []
+  );
+  
+  const summary = {
+    totalRevenue: salesSummary.totalRevenue,
+    totalProfit: toursSummary.totalProfit,
+    activeTours: toursSummary.activeTours,
+    totalParticipants: toursSummary.totalParticipants,
+    totalDocuments: docsSummary.totalDocuments,
+    pendingDocuments: docsSummary.pendingDocuments
+  };
+  
+  return { summary, chartData: {}, tableData: [] };
 }
 
 export function startServer(app) {

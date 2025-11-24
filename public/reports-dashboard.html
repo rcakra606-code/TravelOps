@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reports Center - TravelOps</title>
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/filters.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+</head>
+<body>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">TravelOps 📊</div>
+    <nav class="nav" id="mainNav"></nav>
+    <div class="userbox" id="userBox"></div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>📊 Reports Center</h2>
+        <p class="text-muted">Generate and export comprehensive reports</p>
+      </div>
+      <div class="controls">
+        <button id="refreshBtn" class="btn btn-secondary">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Report Configuration Card -->
+    <div class="card">
+      <h3 style="margin-bottom: 20px;">Report Configuration</h3>
+      
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 24px;">
+        <!-- Report Type -->
+        <div class="form-group">
+          <label for="reportType">Report Type</label>
+          <select id="reportType" class="filter-select">
+            <option value="sales-summary">📈 Sales Summary</option>
+            <option value="sales-detailed">📋 Sales Detailed</option>
+            <option value="tours-profitability">💰 Tours Profitability</option>
+            <option value="tours-participants">👥 Tours Participants</option>
+            <option value="documents-status">📄 Documents Status</option>
+            <option value="staff-performance">⭐ Staff Performance</option>
+            <option value="regional-comparison">🗺️ Regional Comparison</option>
+            <option value="executive-summary">📊 Executive Summary</option>
+          </select>
+        </div>
+
+        <!-- Date Range -->
+        <div class="form-group">
+          <label for="dateFrom">Date From</label>
+          <input type="date" id="dateFrom" class="filter-input">
+        </div>
+
+        <div class="form-group">
+          <label for="dateTo">Date To</label>
+          <input type="date" id="dateTo" class="filter-input">
+        </div>
+
+        <!-- Quick Periods -->
+        <div class="form-group">
+          <label for="quickPeriod">Quick Select</label>
+          <select id="quickPeriod" class="filter-select">
+            <option value="">Custom Range</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="this-week">This Week</option>
+            <option value="last-week">Last Week</option>
+            <option value="this-month">This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-quarter">This Quarter</option>
+            <option value="last-quarter">Last Quarter</option>
+            <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Additional Filters -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div class="form-group">
+          <label for="filterStaff">Staff Filter</label>
+          <select id="filterStaff" class="filter-select">
+            <option value="">All Staff</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="filterRegion">Region Filter</label>
+          <select id="filterRegion" class="filter-select">
+            <option value="">All Regions</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="groupBy">Group By</label>
+          <select id="groupBy" class="filter-select">
+            <option value="none">No Grouping</option>
+            <option value="staff">Staff</option>
+            <option value="region">Region</option>
+            <option value="month">Month</option>
+            <option value="quarter">Quarter</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button id="generateBtn" class="btn btn-primary">🔍 Generate Report</button>
+        <button id="exportPdfBtn" class="btn btn-secondary" disabled>📄 Export PDF</button>
+        <button id="exportExcelBtn" class="btn btn-secondary" disabled>📊 Export Excel</button>
+        <button id="exportCsvBtn" class="btn btn-secondary" disabled>📋 Export CSV</button>
+        <button id="printBtn" class="btn btn-outline" disabled>🖨️ Print</button>
+      </div>
+    </div>
+
+    <!-- Report Preview -->
+    <div id="reportPreview" style="display: none;">
+      <!-- Report Header -->
+      <div class="card">
+        <div id="reportHeader" style="text-align: center; padding: 20px 0; border-bottom: 3px solid var(--primary);">
+          <h1 style="margin: 0; color: var(--primary);">TravelOps Report</h1>
+          <h3 id="reportTitle" style="margin: 8px 0; color: var(--text-primary);">Sales Summary</h3>
+          <p id="reportPeriod" style="margin: 4px 0; color: var(--text-secondary);">Period: January 2024</p>
+          <p style="margin: 4px 0; color: var(--text-secondary); font-size: 0.9rem;">Generated: <span id="reportDate"></span></p>
+        </div>
+      </div>
+
+      <!-- Summary Metrics -->
+      <div id="summaryMetrics" class="dashboard-metrics">
+        <!-- Dynamic metrics will be inserted here -->
+      </div>
+
+      <!-- Charts Section -->
+      <div id="chartsSection" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 24px; margin-bottom: 24px;">
+        <!-- Dynamic charts will be inserted here -->
+      </div>
+
+      <!-- Data Table -->
+      <div class="card">
+        <h3 style="margin-bottom: 16px;">Detailed Data</h3>
+        <div style="overflow-x: auto;">
+          <table class="table dashboard-table" id="reportTable">
+            <thead id="reportTableHead">
+              <!-- Dynamic headers -->
+            </thead>
+            <tbody id="reportTableBody">
+              <!-- Dynamic rows -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Footer Summary -->
+      <div class="card" id="reportFooter">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+          <!-- Dynamic footer stats -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" style="display: none; text-align: center; padding: 60px;">
+      <div style="font-size: 48px; margin-bottom: 16px;">⏳</div>
+      <h3 style="color: var(--text-secondary);">Generating Report...</h3>
+      <p style="color: var(--muted);">Please wait while we compile your data</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" style="text-align: center; padding: 60px;">
+      <div style="font-size: 64px; margin-bottom: 16px;">📊</div>
+      <h3 style="color: var(--text-secondary);">No Report Generated Yet</h3>
+      <p style="color: var(--muted);">Select report type and date range, then click "Generate Report"</p>
+    </div>
+  </main>
+</div>
+
+<script type="module" src="/js/reports-dashboard.js"></script>
+</body>
+</html>
