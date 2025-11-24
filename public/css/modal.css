@@ -59,7 +59,7 @@
 .modal-title {
   font-size: var(--text-lg, 1.35rem);
   font-weight: 600;
-  color: var(--gray-900, #0f172a);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: var(--space-2, 8px);
@@ -84,7 +84,7 @@
 
 .modal-close:hover {
   background: var(--gray-200, #e2e8f0);
-  color: var(--gray-900, #0f172a);
+  color: var(--text-primary);
   transform: rotate(90deg);
 }
 
@@ -111,7 +111,7 @@
   display: block;
   font-size: var(--text-sm, 0.85rem);
   font-weight: 600;
-  color: var(--gray-700, #334155);
+  color: var(--text-secondary);
   margin-bottom: var(--space-2, 8px);
   letter-spacing: 0.3px;
 }
@@ -133,7 +133,7 @@
 .form-group select:focus,
 .form-group textarea:focus {
   border-color: var(--primary, #2563eb);
-  background: #fff;
+  background: var(--card, #fff);
   box-shadow: var(--elevate-focus, 0 0 0 4px rgba(37, 99, 235, 0.25));
   outline: none;
 }
@@ -199,7 +199,8 @@
   content: "";
   position: absolute;
   inset: 0;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(var(--primary-rgb), 0.1);
+  backdrop-filter: blur(2px);
   display: flex;
   align-items: center;
   justify-content: center;
