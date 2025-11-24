@@ -190,6 +190,7 @@ export async function createApp() {
       try {
         let rows;
         const { month, year, staff, region } = req.query;
+        const isPg = db.dialect === 'postgres';
         
         // Build WHERE clause for filtering
         let conditions = [];
@@ -197,24 +198,44 @@ export async function createApp() {
         
         if (month && (t === 'sales' || t === 'tours' || t === 'documents')) {
           const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
-          conditions.push(`strftime('%m', ${dateField})=?`);
-          params.push(month.padStart(2,'0'));
+          if (isPg) {
+            conditions.push(`TO_CHAR(${dateField}, 'MM')=$${params.length+1}::TEXT`);
+            params.push(month.padStart(2,'0'));
+          } else {
+            conditions.push(`strftime('%m', ${dateField})=?`);
+            params.push(month.padStart(2,'0'));
+          }
         }
         
         if (year && (t === 'sales' || t === 'tours' || t === 'documents')) {
           const dateField = t === 'sales' ? 'transaction_date' : t === 'tours' ? 'departure_date' : 'receive_date';
-          conditions.push(`strftime('%Y', ${dateField})=?`);
-          params.push(year);
+          if (isPg) {
+            conditions.push(`TO_CHAR(${dateField}, 'YYYY')=$${params.length+1}::TEXT`);
+            params.push(year);
+          } else {
+            conditions.push(`strftime('%Y', ${dateField})=?`);
+            params.push(year);
+          }
         }
         
         if (staff && staffOwnedTables.has(t)) {
-          conditions.push(`staff_name=?`);
-          params.push(staff);
+          if (isPg) {
+            conditions.push(`staff_name=$${params.length+1}::TEXT`);
+            params.push(staff);
+          } else {
+            conditions.push(`staff_name=?`);
+            params.push(staff);
+          }
         }
         
         if (region && (t === 'sales' || t === 'tours')) {
-          conditions.push(`region_id=?`);
-          params.push(region);
+          if (isPg) {
+            conditions.push(`region_id=$${params.length+1}::INTEGER`);
+            params.push(region);
+          } else {
+            conditions.push(`region_id=?`);
+            params.push(region);
+          }
         }
         
         const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
