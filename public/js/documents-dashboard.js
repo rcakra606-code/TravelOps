@@ -114,6 +114,7 @@ function applyDocumentsFilters(formData) {
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
   
+  if (window.closeModal) window.closeModal();
   renderDashboard();
 }
 
@@ -455,7 +456,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (context.entity === 'documents' && context.action === 'filter') {
       e.preventDefault();
       applyDocumentsFilters(data);
-      if (window.closeModal) window.closeModal();
     }
   });
   

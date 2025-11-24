@@ -115,6 +115,7 @@ function applyToursFilters(formData) {
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
   
+  if (window.closeModal) window.closeModal();
   renderDashboard();
 }
 
@@ -476,7 +477,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (context.entity === 'tours' && context.action === 'filter') {
       e.preventDefault();
       applyToursFilters(data);
-      if (window.closeModal) window.closeModal();
     }
   });
   

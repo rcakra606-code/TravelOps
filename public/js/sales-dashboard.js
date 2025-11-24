@@ -117,6 +117,7 @@ function applySalesFilters(formData) {
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
   
+  if (window.closeModal) window.closeModal();
   renderDashboard();
 }
 
@@ -444,7 +445,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (context.entity === 'sales' && context.action === 'filter') {
       e.preventDefault();
       applySalesFilters(data);
-      if (window.closeModal) window.closeModal();
     }
   });
   

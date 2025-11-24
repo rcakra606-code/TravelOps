@@ -444,6 +444,7 @@ if (modalForm) {
       
       // If event was prevented (handled by specialized dashboard), return
       if (submitEvent.defaultPrevented) {
+        if (modal) modal.classList.remove('loading');
         return;
       }
       
