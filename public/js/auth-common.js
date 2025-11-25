@@ -3,17 +3,29 @@
    Provides token refresh and session management for all pages
    ========================================================= */
 
-/* === AUTHENTICATION CHECK === */
-(() => {
+/* === CONFIGURATION === */
+const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity = auto logout
+const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes if active
+const TOKEN_REFRESH_THRESHOLD = 10 * 60 * 1000; // Refresh if token is older than 10 minutes
+
+/* === AUTHENTICATION CHECK (on DOM ready, not immediately) === */
+let authCheckPassed = false;
+
+function checkAuthOnLoad() {
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
+  
+  // Skip auth check for login and logout pages
+  if (window.location.pathname.includes('/login.html') || window.location.pathname.includes('/logout.html')) {
+    return true;
+  }
   
   if (!token || !user) {
     console.warn('No authentication found, redirecting to login...');
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = '/login.html';
-    return;
+    return false;
   }
   
   // Verify token format (basic check)
@@ -22,14 +34,23 @@
     if (!userData.username || !userData.type) {
       throw new Error('Invalid user data');
     }
+    authCheckPassed = true;
+    return true;
   } catch (err) {
     console.error('Invalid session data:', err);
     localStorage.clear();
     sessionStorage.clear();
     window.location.href = '/login.html';
-    return;
+    return false;
   }
-})();
+}
+
+// Run auth check when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', checkAuthOnLoad);
+} else {
+  checkAuthOnLoad();
+}
 
 /* === GLOBAL HELPERS === */
 const api = p => p.startsWith('/') ? p : '/' + p;
@@ -75,7 +96,7 @@ setInterval(() => {
 }, 5 * 60 * 1000);
 
 /**
- * Proactively refresh token if it's been more than 12 minutes since last refresh
+ * Proactively refresh token if it's been more than 10 minutes since last refresh
  * This keeps us well ahead of the 30-minute expiry
  */
 async function refreshTokenIfNeeded() {
@@ -83,9 +104,8 @@ async function refreshTokenIfNeeded() {
   if (!token) return false;
   
   const timeSinceRefresh = Date.now() - lastTokenRefreshTime;
-  const twelveMinutes = 12 * 60 * 1000;
   
-  if (timeSinceRefresh > twelveMinutes) {
+  if (timeSinceRefresh > TOKEN_REFRESH_THRESHOLD) {
     try {
       const response = await fetch(api('/api/refresh'), {
         method: 'POST',
@@ -103,10 +123,40 @@ async function refreshTokenIfNeeded() {
           if (remaining != null) console.log(`[auth] New token remaining ~${remaining}m`);
           return true;
         }
+      } else if (response.status === 401 || response.status === 403) {
+        console.warn('Token refresh rejected, logging out...');
+        handleSessionExpired();
       }
     } catch (err) {
       console.error('Proactive token refresh failed:', err);
     }
+  }
+  return false;
+}
+
+/**
+ * Handle session expiration
+ */
+function handleSessionExpired() {
+  localStorage.clear();
+  sessionStorage.clear();
+  alert('Session Anda telah berakhir. Silakan login kembali.');
+  window.location.href = '/login.html';
+}
+
+/**
+ * Check for inactivity and auto-logout
+ */
+function checkInactivity() {
+  const idleTime = Date.now() - lastActivityTime;
+  
+  if (idleTime > INACTIVITY_TIMEOUT) {
+    console.warn('User inactive for 30 minutes, logging out...');
+    localStorage.clear();
+    sessionStorage.clear();
+    alert('Anda telah logout otomatis karena tidak aktif selama 30 menit.');
+    window.location.href = '/login.html';
+    return true;
   }
   return false;
 }
@@ -160,6 +210,7 @@ async function fetchJson(url, opts = {}) {
  * Start automatic token refresh based on user activity
  */
 let tokenRefreshInterval = null;
+let inactivityCheckInterval = null;
 
 function startTokenRefresh() {
   // Update activity time on user interactions
@@ -169,14 +220,17 @@ function startTokenRefresh() {
     }, { passive: true, once: false });
   });
   
-  // Check and refresh token every 2 minutes to stay ahead of 30min expiry
+  // Check and refresh token every 5 minutes
   if (tokenRefreshInterval) clearInterval(tokenRefreshInterval);
   tokenRefreshInterval = setInterval(async () => {
-    const idleTime = Date.now() - lastActivityTime;
-    const tenMinutes = 10 * 60 * 1000;
+    // First check inactivity
+    if (checkInactivity()) return;
     
-    // Only refresh if user has been active in the last 10 minutes
-    if (idleTime < tenMinutes) {
+    const idleTime = Date.now() - lastActivityTime;
+    const fiveMinutes = 5 * 60 * 1000;
+    
+    // Only refresh if user has been active in the last 5 minutes
+    if (idleTime < fiveMinutes) {
       try {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -197,19 +251,22 @@ function startTokenRefresh() {
             if (remaining != null) console.log(`[auth] Post-refresh remaining ~${remaining}m`);
           }
         } else if (response.status === 401 || response.status === 403) {
-          console.warn('Token expired, logging out...');
-          localStorage.clear();
-          sessionStorage.clear();
-          alert('Sesi Anda telah berakhir. Silakan login kembali.');
-          window.location.href = '/login.html';
+          handleSessionExpired();
         }
       } catch (err) {
         console.error('Token refresh failed:', err);
       }
     } else {
-      console.log('⏸️ User idle, token refresh paused');
+      const idleMinutes = Math.floor(idleTime / 60000);
+      console.log(`⏸️ User idle for ${idleMinutes}m, token refresh paused`);
     }
-  }, 2 * 60 * 1000); // Check every 2 minutes
+  }, TOKEN_REFRESH_INTERVAL);
+  
+  // Check inactivity every minute
+  if (inactivityCheckInterval) clearInterval(inactivityCheckInterval);
+  inactivityCheckInterval = setInterval(() => {
+    checkInactivity();
+  }, 60 * 1000); // Check every minute
 }
 
 /**
@@ -252,6 +309,14 @@ window.parseFormattedNumber = parseFormattedNumber;
 window.getUser = getUser;
 window.refreshTokenIfNeeded = refreshTokenIfNeeded;
 window.startTokenRefresh = startTokenRefresh;
+window.checkInactivity = checkInactivity;
+window.handleSessionExpired = handleSessionExpired;
 
-// Auto-start token refresh when module loads
-startTokenRefresh();
+// Auto-start token refresh when module loads (after auth check)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    if (authCheckPassed) startTokenRefresh();
+  });
+} else {
+  if (authCheckPassed) startTokenRefresh();
+}

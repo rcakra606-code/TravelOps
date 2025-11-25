@@ -145,7 +145,7 @@ export async function createApp() {
     }
     if (user.type !== 'admin') await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
     const safeUser = { id: user.id, username: user.username, name: user.name, email: user.email, type: user.type };
-  const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '30m';
+  const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m'; // Reduced from 30m for better security
   const token = jwt.sign(safeUser, SECRET, { expiresIn: TOKEN_EXPIRES });
     await logActivity(username, 'LOGIN', 'auth', user.id);
     res.json({ ...safeUser, token });
@@ -163,7 +163,7 @@ export async function createApp() {
     try {
       const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true });
       const nowSec = Math.floor(Date.now()/1000);
-      const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '120', 10);
+      const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '60', 10); // Reduced from 120 to 60
       // Clamp negative (not yet expired) to 0 for simpler logic
       const expSec = decoded.exp;
       if (!expSec) return res.status(403).json({ error: 'Token missing exp' });
@@ -172,7 +172,7 @@ export async function createApp() {
         return res.status(403).json({ error: 'Token expired' });
       }
       const { iat, exp, ...payload } = decoded; // strip timing claims
-      const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '30m';
+      const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m'; // Reduced from 30m for better security
       const newToken = jwt.sign(payload, SECRET, { expiresIn: TOKEN_EXPIRES });
       return res.json({ token: newToken });
     } catch (err) {
