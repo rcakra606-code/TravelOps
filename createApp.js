@@ -166,6 +166,22 @@ export async function createApp() {
   });
 
   app.post('/api/logout', (req,res)=>res.json({ ok:true }));
+  
+  // Get current user info (requires valid token)
+  app.get('/api/me', authMiddleware(), async (req, res) => {
+    try {
+      // req.user is set by authMiddleware after JWT verification
+      const user = await db.get('SELECT id, username, name, email, type FROM users WHERE id=?', [req.user.id]);
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json(user);
+    } catch (err) {
+      console.error('Error fetching user:', err);
+      res.status(500).json({ error: 'Failed to fetch user data' });
+    }
+  });
+  
   // Refresh endpoint with configurable grace window to avoid race-based premature logout.
   // IMPORTANT: Do NOT use authMiddleware here because it enforces expiration strictly.
   // We manually verify with ignoreExpiration, then apply grace logic.

@@ -45,11 +45,14 @@ function checkAuthOnLoad() {
   }
 }
 
-// Run auth check when DOM is ready
+// Run auth check when DOM is ready (delay slightly to let page load)
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', checkAuthOnLoad);
+  document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(checkAuthOnLoad, 100); // Small delay to ensure scripts load
+  });
 } else {
-  checkAuthOnLoad();
+  // If already loaded, still delay slightly
+  setTimeout(checkAuthOnLoad, 100);
 }
 
 /* === GLOBAL HELPERS === */
