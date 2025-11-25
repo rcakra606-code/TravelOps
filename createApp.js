@@ -44,11 +44,11 @@ export async function createApp() {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
-          scriptSrc: ["'self'", "https://cdn.jsdelivr.net"],
+          scriptSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
   styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", 'data:'],
-  connectSrc: ["'self'", "https://cdn.jsdelivr.net"],
+  connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
         baseUri: ["'self'"]
@@ -59,13 +59,27 @@ export async function createApp() {
   app.use(requestLogger);
   const limiter = rateLimit({
     windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
-    max: parseInt(process.env.RATE_LIMIT_MAX || '100', 10),
+    max: parseInt(process.env.RATE_LIMIT_MAX || '300', 10), // Increased from 100 to 300
     standardHeaders: true,
-    legacyHeaders: false
+    legacyHeaders: false,
+    // Skip rate limiting for static assets
+    skip: (req) => {
+      const staticPaths = ['/css/', '/js/', '/images/', '/fonts/', '/favicon.ico'];
+      return staticPaths.some(path => req.path.startsWith(path));
+    }
   });
   app.use(limiter);
   app.use(bodyParser.json());
-  app.use(express.static('public'));
+  app.use(express.static('public', {
+    setHeaders: (res, path) => {
+      // Set proper MIME types for static files
+      if (path.endsWith('.css')) {
+        res.setHeader('Content-Type', 'text/css');
+      } else if (path.endsWith('.js')) {
+        res.setHeader('Content-Type', 'application/javascript');
+      }
+    }
+  }));
   // Avoid favicon 404s in environments without an icon
   app.get('/favicon.ico', (req,res)=>res.status(204).end());
 
