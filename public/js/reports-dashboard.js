@@ -1,4 +1,29 @@
-import { openModal, closeModal, showNotification } from './dashboard.js';
+// ============================================
+// HELPER FUNCTIONS
+// ============================================
+function showNotification(message, type = 'info') {
+  const notif = document.createElement('div');
+  notif.className = `notification notification-${type}`;
+  notif.textContent = message;
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 16px 24px;
+    background: ${type === 'error' ? '#ef4444' : type === 'success' ? '#10b981' : '#3b82f6'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  document.body.appendChild(notif);
+  setTimeout(() => {
+    notif.style.opacity = '0';
+    notif.style.transform = 'translateX(100%)';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
+}
 
 // ============================================
 // AUTHENTICATION & ROLE CHECK
