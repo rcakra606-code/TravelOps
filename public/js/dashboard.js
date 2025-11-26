@@ -5,6 +5,9 @@
 
 // Authentication now handled globally by auth-common.js
 
+/* === PAGE DETECTION === */
+const isReportsPage = window.location.pathname.includes('reports-dashboard');
+
 /* === GLOBAL HELPERS === */
 const api = p => p.startsWith('/') ? p : '/' + p;
 const el = id => document.getElementById(id);
@@ -995,8 +998,58 @@ function populateFilterDropdowns() {
   setTimeout(() => clearInterval(checkState), 5000);
 }
 
+/* === REPORTS PAGE NAVIGATION === */
+function populateReportsNav() {
+  const mainNav = el('mainNav');
+  if (!mainNav) return;
+  
+  const user = getUser();
+  const isAdmin = user.type === 'admin';
+  const isSemiAdmin = user.type === 'semi-admin';
+  
+  // Build navigation items for reports page
+  mainNav.innerHTML = `
+    <a href="/single-dashboard.html" style="display: flex; align-items: center; padding: 12px 16px; color: var(--text-secondary); text-decoration: none; border-radius: 8px; transition: all 0.2s; font-weight: 500;">
+      <span style="margin-right: 8px;">←</span> Back to Dashboard
+    </a>
+    <div style="margin: 16px 0; border-top: 1px solid var(--border-light);"></div>
+    <div style="padding: 8px 16px; font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px;">
+      Reports
+    </div>
+  `;
+  
+  // Add hover effect to back link
+  const backLink = mainNav.querySelector('a');
+  if (backLink) {
+    backLink.addEventListener('mouseenter', function() {
+      this.style.background = 'var(--bg-hover)';
+      this.style.color = 'var(--primary)';
+    });
+    backLink.addEventListener('mouseleave', function() {
+      this.style.background = 'transparent';
+      this.style.color = 'var(--text-secondary)';
+    });
+  }
+  
+  // Populate user box
+  const userBox = el('userBox');
+  if (userBox) {
+    userBox.innerHTML = `
+      <div style="font-weight: 600; margin-bottom: 4px;">${user.name || user.username || '—'}</div>
+      <div style="font-size: 12px; color: var(--text-tertiary);">Role: ${user.type || '—'}</div>
+    `;
+  }
+}
+
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', () => {
+  // Skip dashboard-specific initialization if on reports page
+  if (isReportsPage) {
+    console.log('📊 Reports page detected - skipping dashboard initialization');
+    populateReportsNav();
+    return;
+  }
+  
   // Initialize filters
   initializeFilters();
   populateFilterDropdowns();
