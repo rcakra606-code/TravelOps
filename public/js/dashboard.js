@@ -488,6 +488,14 @@ function refreshUser() {
   const isBasic = u.type === 'basic';
   if (!isAdmin) el('addTargetBtn').style.display = 'none';
   if (isBasic) document.querySelectorAll('.btn.delete').forEach(b => b.style.display = 'none');
+  
+  // Hide sales add/import buttons for basic users (view only)
+  if (isBasic) {
+    el('addSalesBtn')?.style.setProperty('display', 'none', 'important');
+    el('importSalesBtn')?.style.setProperty('display', 'none', 'important');
+    el('downloadSalesTemplate')?.style.setProperty('display', 'none', 'important');
+  }
+  
   // Hide Users section and nav only for basic users (semiadmin can access)
   if (isBasic) {
     const usersSection = el('users');

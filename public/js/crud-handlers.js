@@ -635,15 +635,23 @@ function openAddTourModal() {
         <div class="form-group">
           <label>Status</label>
           <select name="status">
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Completed">Completed</option>
-            <option value="Cancelled">Cancelled</option>
+            <option value="belum jalan">Belum Jalan</option>
+            <option value="sudah jalan">Sudah Jalan</option>
+            <option value="tidak jalan">Tidak Jalan</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Link Pelunasan Tour</label>
-          <input type="url" name="link_pelunasan_tour" placeholder="https://">
+          <label>Link Pelunasan Tour & Bukti Discount</label>
+          <input type="url" name="link_pelunasan_tour" placeholder="Upload to Google Drive or Lark">
+          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="remarks" rows="3" placeholder="Additional notes or remarks"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Total Nominal Sales Tour</label>
+          <input type="number" name="total_nominal_sales" step="0.01" placeholder="Total sales amount">
         </div>
       </div>
     `,
@@ -729,15 +737,23 @@ function openEditTourModal(id) {
         <div class="form-group">
           <label>Status</label>
           <select name="status">
-            <option value="Pending" ${item.status === 'Pending' ? 'selected' : ''}>Pending</option>
-            <option value="Confirmed" ${item.status === 'Confirmed' ? 'selected' : ''}>Confirmed</option>
-            <option value="Completed" ${item.status === 'Completed' ? 'selected' : ''}>Completed</option>
-            <option value="Cancelled" ${item.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+            <option value="belum jalan" ${item.status === 'belum jalan' ? 'selected' : ''}>Belum Jalan</option>
+            <option value="sudah jalan" ${item.status === 'sudah jalan' ? 'selected' : ''}>Sudah Jalan</option>
+            <option value="tidak jalan" ${item.status === 'tidak jalan' ? 'selected' : ''}>Tidak Jalan</option>
           </select>
         </div>
         <div class="form-group">
-          <label>Link Pelunasan Tour</label>
-          <input type="url" name="link_pelunasan_tour" value="${item.link_pelunasan_tour || ''}">
+          <label>Link Pelunasan Tour & Bukti Discount</label>
+          <input type="url" name="link_pelunasan_tour" value="${item.link_pelunasan_tour || ''}" placeholder="Upload to Google Drive or Lark">
+          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
+        </div>
+        <div class="form-group">
+          <label>Remarks</label>
+          <textarea name="remarks" rows="3" placeholder="Additional notes or remarks">${item.remarks || ''}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Total Nominal Sales Tour</label>
+          <input type="number" name="total_nominal_sales" value="${item.total_nominal_sales || item.sales_amount || 0}" step="0.01" placeholder="Total sales amount">
         </div>
       </div>
     `,
@@ -771,7 +787,7 @@ function openAddDocModal() {
           <input type="text" name="guest_name" required placeholder="Nama Tamu">
         </div>
         <div class="form-group">
-          <label>Passport Country</label>
+          <label>Passport / Visa Country</label>
           <select name="passport_country">
             <option value="">Pilih Negara</option>
           </select>
@@ -831,18 +847,18 @@ function openEditDocModal(id) {
       <div class="form-grid">
         <div class="form-group">
           <label>Receive Date *</label>
-          <input type="date" name="receive_date" value="${item.receive_date || ''}" required>
+          <input type="date" name="receive_date" value="${formatDateValue(item.receive_date)}" required>
         </div>
         <div class="form-group">
           <label>Send Date</label>
-          <input type="date" name="send_date" value="${item.send_date || ''}">
+          <input type="date" name="send_date" value="${formatDateValue(item.send_date)}">
         </div>
         <div class="form-group">
           <label>Guest Name *</label>
           <input type="text" name="guest_name" value="${item.guest_name || ''}" required>
         </div>
         <div class="form-group">
-          <label>Passport Country</label>
+          <label>Passport / Visa Country</label>
           <select name="passport_country">
             <option value="">Pilih Negara</option>
           </select>

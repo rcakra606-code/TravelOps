@@ -315,6 +315,8 @@ async function createSchema(db) {
   await ensureColumn('tours', 'email', 'TEXT');
   await ensureColumn('tours', 'status', 'TEXT');
   await ensureColumn('tours', 'link_pelunasan_tour', 'TEXT');
+  await ensureColumn('tours', 'remarks', 'TEXT');
+  await ensureColumn('tours', 'total_nominal_sales', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
 
   // Telecom: all columns used by frontend
   await ensureColumn('telecom', 'nama', 'TEXT');
