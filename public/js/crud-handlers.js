@@ -573,52 +573,32 @@ function openAddTourModal() {
           <input type="date" name="registration_date" required>
         </div>
         <div class="form-group">
-          <label>Nama Penumpang Utama *</label>
-          <input type="text" name="lead_passenger" required placeholder="Nama Penumpang Utama">
-        </div>
-        <div class="form-group">
-          <label>Semua Penumpang</label>
-          <textarea name="all_passengers" rows="2" placeholder="Semua nama penumpang (pisahkan dengan koma)"></textarea>
-        </div>
-        <div class="form-group">
           <label>Tour Code *</label>
           <input type="text" name="tour_code" required placeholder="TRV-001">
-        </div>
-        <div class="form-group">
-          <label>Region *</label>
-          <select name="region_id" required></select>
-        </div>
-        <div class="form-group">
-          <label>Departure Date *</label>
-          <input type="date" name="departure_date" required>
         </div>
         <div class="form-group">
           <label>Booking Code</label>
           <input type="text" name="booking_code" placeholder="BKG-001">
         </div>
         <div class="form-group">
-          <label>Tour Price</label>
-          <input type="number" name="tour_price" step="0.01" placeholder="0">
+          <label>Departure Date *</label>
+          <input type="date" name="departure_date" required>
         </div>
         <div class="form-group">
-          <label>Sales Amount</label>
-          <input type="number" name="sales_amount" step="0.01" placeholder="0">
+          <label>Region *</label>
+          <select name="region_id" required></select>
         </div>
         <div class="form-group">
-          <label>Profit Amount</label>
-          <input type="number" name="profit_amount" step="0.01" placeholder="0">
+          <label>Status</label>
+          <select name="status">
+            <option value="belum jalan">Belum Jalan</option>
+            <option value="sudah jalan">Sudah Jalan</option>
+            <option value="tidak jalan">Tidak Jalan</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Discount Amount</label>
-          <input type="number" name="discount_amount" step="0.01" placeholder="0">
-        </div>
-        <div class="form-group">
-          <label>Discount Remarks</label>
-          <input type="text" name="discount_remarks" placeholder="Keterangan diskon">
-        </div>
-        <div class="form-group">
-          <label>Staff *</label>
-          <select name="staff_name" required></select>
+          <label>Nama Penumpang Utama *</label>
+          <input type="text" name="lead_passenger" required placeholder="Nama Penumpang Utama">
         </div>
         <div class="form-group">
           <label>Jumlah Peserta *</label>
@@ -632,26 +612,53 @@ function openAddTourModal() {
           <label>Email</label>
           <input type="email" name="email" placeholder="email@example.com">
         </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select name="status">
-            <option value="belum jalan">Belum Jalan</option>
-            <option value="sudah jalan">Sudah Jalan</option>
-            <option value="tidak jalan">Tidak Jalan</option>
-          </select>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Semua Penumpang</label>
+          <textarea name="all_passengers" rows="2" placeholder="Semua nama penumpang (pisahkan dengan koma)"></textarea>
         </div>
         <div class="form-group">
-          <label>Link Pelunasan Tour & Bukti Discount</label>
-          <input type="url" name="link_pelunasan_tour" placeholder="Upload to Google Drive or Lark">
-          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
+          <label>Staff *</label>
+          <select name="staff_name" required></select>
         </div>
         <div class="form-group">
           <label>Remarks</label>
           <textarea name="remarks" rows="3" placeholder="Additional notes or remarks"></textarea>
         </div>
+        
+        <!-- Financial Section -->
+        <div class="form-group" style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border-medium);">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">💰</span> Financial Information
+          </h4>
+        </div>
+        <div class="form-group">
+          <label>Tour Price</label>
+          <input type="number" name="tour_price" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Sales Amount</label>
+          <input type="number" name="sales_amount" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Discount Amount</label>
+          <input type="number" name="discount_amount" step="0.01" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label>Profit Amount</label>
+          <input type="number" name="profit_amount" step="0.01" placeholder="0">
+        </div>
         <div class="form-group">
           <label>Total Nominal Sales Tour</label>
           <input type="number" name="total_nominal_sales" step="0.01" placeholder="Total sales amount">
+        </div>
+        <div class="form-group">
+          <label>Discount Remarks</label>
+          <input type="text" name="discount_remarks" placeholder="Keterangan diskon">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Link Pelunasan Tour & Bukti Discount</label>
+          <input type="url" name="link_pelunasan_tour" placeholder="Upload to Google Drive or Lark">
+          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
         </div>
       </div>
     `,
@@ -675,52 +682,32 @@ function openEditTourModal(id) {
           <input type="date" name="registration_date" value="${formatDateValue(item.registration_date)}" required>
         </div>
         <div class="form-group">
-          <label>Nama Penumpang Utama *</label>
-          <input type="text" name="lead_passenger" value="${item.lead_passenger || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Semua Penumpang</label>
-          <textarea name="all_passengers" rows="2">${item.all_passengers || ''}</textarea>
-        </div>
-        <div class="form-group">
           <label>Tour Code *</label>
           <input type="text" name="tour_code" value="${item.tour_code || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Region *</label>
-          <select name="region_id" required></select>
-        </div>
-        <div class="form-group">
-          <label>Departure Date *</label>
-          <input type="date" name="departure_date" value="${formatDateValue(item.departure_date)}" required>
         </div>
         <div class="form-group">
           <label>Booking Code</label>
           <input type="text" name="booking_code" value="${item.booking_code || ''}">
         </div>
         <div class="form-group">
-          <label>Tour Price</label>
-          <input type="number" name="tour_price" value="${item.tour_price || 0}" step="0.01">
+          <label>Departure Date *</label>
+          <input type="date" name="departure_date" value="${formatDateValue(item.departure_date)}" required>
         </div>
         <div class="form-group">
-          <label>Sales Amount</label>
-          <input type="number" name="sales_amount" value="${item.sales_amount || 0}" step="0.01">
+          <label>Region *</label>
+          <select name="region_id" required></select>
         </div>
         <div class="form-group">
-          <label>Profit Amount</label>
-          <input type="number" name="profit_amount" value="${item.profit_amount || 0}" step="0.01">
+          <label>Status</label>
+          <select name="status">
+            <option value="belum jalan" ${item.status === 'belum jalan' ? 'selected' : ''}>Belum Jalan</option>
+            <option value="sudah jalan" ${item.status === 'sudah jalan' ? 'selected' : ''}>Sudah Jalan</option>
+            <option value="tidak jalan" ${item.status === 'tidak jalan' ? 'selected' : ''}>Tidak Jalan</option>
+          </select>
         </div>
         <div class="form-group">
-          <label>Discount Amount</label>
-          <input type="number" name="discount_amount" value="${item.discount_amount || 0}" step="0.01">
-        </div>
-        <div class="form-group">
-          <label>Discount Remarks</label>
-          <input type="text" name="discount_remarks" value="${item.discount_remarks || ''}">
-        </div>
-        <div class="form-group">
-          <label>Staff *</label>
-          <select name="staff_name" required></select>
+          <label>Nama Penumpang Utama *</label>
+          <input type="text" name="lead_passenger" value="${item.lead_passenger || ''}" required>
         </div>
         <div class="form-group">
           <label>Jumlah Peserta *</label>
@@ -734,26 +721,53 @@ function openEditTourModal(id) {
           <label>Email</label>
           <input type="email" name="email" value="${item.email || ''}">
         </div>
-        <div class="form-group">
-          <label>Status</label>
-          <select name="status">
-            <option value="belum jalan" ${item.status === 'belum jalan' ? 'selected' : ''}>Belum Jalan</option>
-            <option value="sudah jalan" ${item.status === 'sudah jalan' ? 'selected' : ''}>Sudah Jalan</option>
-            <option value="tidak jalan" ${item.status === 'tidak jalan' ? 'selected' : ''}>Tidak Jalan</option>
-          </select>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Semua Penumpang</label>
+          <textarea name="all_passengers" rows="2">${item.all_passengers || ''}</textarea>
         </div>
         <div class="form-group">
-          <label>Link Pelunasan Tour & Bukti Discount</label>
-          <input type="url" name="link_pelunasan_tour" value="${item.link_pelunasan_tour || ''}" placeholder="Upload to Google Drive or Lark">
-          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
+          <label>Staff *</label>
+          <select name="staff_name" required></select>
         </div>
         <div class="form-group">
           <label>Remarks</label>
           <textarea name="remarks" rows="3" placeholder="Additional notes or remarks">${item.remarks || ''}</textarea>
         </div>
+        
+        <!-- Financial Section -->
+        <div class="form-group" style="grid-column: 1 / -1; margin-top: 20px; padding-top: 20px; border-top: 2px solid var(--border-medium);">
+          <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 1.3rem;">💰</span> Financial Information
+          </h4>
+        </div>
+        <div class="form-group">
+          <label>Tour Price</label>
+          <input type="number" name="tour_price" value="${item.tour_price || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Sales Amount</label>
+          <input type="number" name="sales_amount" value="${item.sales_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Discount Amount</label>
+          <input type="number" name="discount_amount" value="${item.discount_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Profit Amount</label>
+          <input type="number" name="profit_amount" value="${item.profit_amount || 0}" step="0.01">
+        </div>
         <div class="form-group">
           <label>Total Nominal Sales Tour</label>
           <input type="number" name="total_nominal_sales" value="${item.total_nominal_sales || item.sales_amount || 0}" step="0.01" placeholder="Total sales amount">
+        </div>
+        <div class="form-group">
+          <label>Discount Remarks</label>
+          <input type="text" name="discount_remarks" value="${item.discount_remarks || ''}">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Link Pelunasan Tour & Bukti Discount</label>
+          <input type="url" name="link_pelunasan_tour" value="${item.link_pelunasan_tour || ''}" placeholder="Upload to Google Drive or Lark">
+          <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
         </div>
       </div>
     `,

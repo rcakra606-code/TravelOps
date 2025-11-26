@@ -481,12 +481,15 @@ if (modalForm) {
 /* === ROLE HANDLER === */
 function refreshUser() {
   const u = getUser();
-  el('userName').textContent = u.name || u.username || '-';
-  el('userRole').textContent = 'Role: ' + (u.type || '-');
+  const userNameEl = el('userName');
+  const userRoleEl = el('userRole');
+  if (userNameEl) userNameEl.textContent = u.name || u.username || '-';
+  if (userRoleEl) userRoleEl.textContent = 'Role: ' + (u.type || '-');
   const isAdmin = u.type === 'admin';
   const isSemiAdmin = u.type === 'semi-admin';
   const isBasic = u.type === 'basic';
-  if (!isAdmin) el('addTargetBtn').style.display = 'none';
+  const addTargetBtn = el('addTargetBtn');
+  if (!isAdmin && addTargetBtn) addTargetBtn.style.display = 'none';
   if (isBasic) document.querySelectorAll('.btn.delete').forEach(b => b.style.display = 'none');
   
   // Hide sales add/import buttons for basic users (view only)
@@ -780,10 +783,12 @@ async function renderCharts() {
 /* === ACTIVITY LOG === */
 async function loadActivity() {
   if (getUser().type !== 'admin') return;
+  const tblActivity = el('tblActivity');
+  if (!tblActivity) return; // Element doesn't exist on this page
   try {
     const data = await fetchJson('/api/activity_logs');
     if (!data?.length) {
-      el('tblActivity').innerHTML = '<tr><td colspan="6">Belum ada aktivitas</td></tr>';
+      tblActivity.innerHTML = '<tr><td colspan="6">Belum ada aktivitas</td></tr>';
       return;
     }
     const rows = data.map(r => `
@@ -795,10 +800,10 @@ async function loadActivity() {
         <td>${r.record_id ?? '-'}</td>
         <td>${r.description ? r.description.slice(0,80) : '-'}</td>
       </tr>`).join('');
-    el('tblActivity').innerHTML = rows;
+    tblActivity.innerHTML = rows;
   } catch (err) {
     console.error('Gagal memuat aktivitas:', err);
-    el('tblActivity').innerHTML = '<tr><td colspan="6">Gagal memuat data</td></tr>';
+    if (tblActivity) tblActivity.innerHTML = '<tr><td colspan="6">Gagal memuat data</td></tr>';
   }
 }
 

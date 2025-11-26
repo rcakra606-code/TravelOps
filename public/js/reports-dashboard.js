@@ -25,16 +25,48 @@ function showNotification(message, type = 'info') {
   }, 3000);
 }
 
+// Authenticated fetch helper
+async function fetchWithAuth(url, options = {}) {
+  const token = localStorage.getItem('token');
+  const headers = {
+    ...options.headers,
+    'Authorization': `Bearer ${token}`
+  };
+  
+  const response = await fetch(url, {
+    ...options,
+    headers
+  });
+  
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login.html';
+    throw new Error('Unauthorized');
+  }
+  
+  return response;
+}
+
+
 // ============================================
 // AUTHENTICATION & ROLE CHECK
 // ============================================
 async function checkAuth() {
   try {
-    const response = await fetch('/api/me', { credentials: 'include' });
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/login.html';
+      return null;
+    }
+    
+    const response = await fetchWithAuth('/api/me', { credentials: 'include' });
+    
     if (!response.ok) {
       window.location.href = '/login.html';
       return null;
     }
+    
     const user = await response.json();
     
     // Role-based access: Only admin and semi-admin can access reports
@@ -179,7 +211,7 @@ function setQuickPeriod(period) {
 // ============================================
 async function loadStaffList() {
   try {
-    const response = await fetch('/api/users');
+    const response = await fetchWithAuth('/api/users');
     if (!response.ok) return;
     const users = await response.json();
     
@@ -198,7 +230,7 @@ async function loadStaffList() {
 
 async function loadRegionList() {
   try {
-    const response = await fetch('/api/regions');
+    const response = await fetchWithAuth('/api/regions');
     if (!response.ok) return;
     const regions = await response.json();
     
@@ -247,7 +279,7 @@ async function generateReport() {
     });
     
     const endpoint = `/api/reports/${reportType}?${params}`;
-    const response = await fetch(endpoint);
+    const response = await fetchWithAuth(endpoint);
     
     if (!response.ok) {
       throw new Error('Failed to generate report');
