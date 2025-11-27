@@ -1618,7 +1618,7 @@ function renderToursTable() {
   const isBasic = current.type === 'basic';
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7">Tidak ada data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9">Tidak ada data</td></tr>';
     renderPagination('tours', 0);
     return;
   }
@@ -1635,6 +1635,18 @@ function renderToursTable() {
     if (!isBasic) {
       actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"tours\" data-id=\"${item.id}\">Delete</button>`;
     }
+    
+    // Format status for display
+    const statusMap = {
+      'belum jalan': '⏳ Belum Jalan',
+      'sudah jalan': '✅ Sudah Jalan',
+      'tidak jalan': '❌ Tidak Jalan'
+    };
+    const statusDisplay = statusMap[item.status] || item.status || '-';
+    
+    // Format total_nominal_sales as currency
+    const totalSales = item.total_nominal_sales ? formatCurrency(item.total_nominal_sales) : '-';
+    
     return `
       <tr>
         <td>${item.registration_date || '-'}</td>
@@ -1642,6 +1654,8 @@ function renderToursTable() {
         <td>${item.jumlah_peserta || 0}</td>
         <td>${item.departure_date || '-'}</td>
         <td>${region ? region.region_name : '-'}</td>
+        <td>${statusDisplay}</td>
+        <td>${totalSales}</td>
         <td>${item.staff_name || '-'}</td>
         <td>${actions}</td>
       </tr>
@@ -1997,10 +2011,38 @@ async function init() {
           console.error('Action handler error:', err);
         }
       });
+      
+      // Wire up search inputs for all entities
+      wireSearchHandlers();
+      
   } catch (err) {
     console.error('❌ Error initializing CRUD handlers:', err);
   }
 }
+
+  // Wire search input handlers
+  function wireSearchHandlers() {
+    const entities = ['sales', 'tours', 'documents', 'targets', 'regions', 'users', 'telecom', 'hotel_bookings'];
+    
+    entities.forEach(entity => {
+      const searchInput = document.getElementById(`${entity}Search`) || 
+                         document.getElementById(`${entity === 'hotel_bookings' ? 'hotelBookings' : entity === 'documents' ? 'documents' : entity}Search`);
+      
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          const searchTerm = e.target.value.trim();
+          if (searchTerm) {
+            state.filters[entity].search = searchTerm;
+          } else {
+            delete state.filters[entity].search;
+          }
+          state.pagination[entity].page = 1; // Reset to first page
+          renderTable(entity);
+        });
+        console.log(`✅ Search handler wired for ${entity}`);
+      }
+    });
+  }
 
   // Update sort indicators
   function updateAllSortIndicators() {

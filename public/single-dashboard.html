@@ -169,7 +169,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="salesPageSize" data-pagesize-entity="sales" style="margin-left:auto">
+        <input id="salesSearch" placeholder="Cari invoice / staff / status..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="salesPageSize" data-pagesize-entity="sales">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -215,6 +216,8 @@
         <th class="sortable" data-column="jumlah_peserta">Pax</th>
         <th class="sortable" data-column="departure_date">Depart</th>
         <th class="sortable" data-column="region_id">Region</th>
+        <th class="sortable" data-column="status">Status</th>
+        <th class="sortable" data-column="total_nominal_sales">Total Sales</th>
         <th class="sortable" data-column="staff_name">Staff</th>
         <th>Aksi</th>
       </tr></thead><tbody id="tblTours"></tbody></table>
@@ -235,7 +238,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="docsPageSize" data-pagesize-entity="documents" style="margin-left:auto">
+        <input id="documentsSearch" placeholder="Cari nama / passport / booking..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="docsPageSize" data-pagesize-entity="documents">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -266,7 +270,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="targetsPageSize" data-pagesize-entity="targets" style="margin-left:auto">
+        <input id="targetsSearch" placeholder="Cari staff / bulan / tahun..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="targetsPageSize" data-pagesize-entity="targets">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -295,7 +300,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="regionsPageSize" data-pagesize-entity="regions" style="margin-left:auto">
+        <input id="regionsSearch" placeholder="Cari nama region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="regionsPageSize" data-pagesize-entity="regions">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -340,7 +346,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="usersPageSize" data-pagesize-entity="users" style="margin-left:auto">
+        <input id="usersSearch" placeholder="Cari username / nama / email..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="usersPageSize" data-pagesize-entity="users">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -367,7 +374,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="telecomPageSize" data-pagesize-entity="telecom" style="margin-left:auto">
+        <input id="telecomSearch" placeholder="Cari nama / no telephone / type..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="telecomPageSize" data-pagesize-entity="telecom">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>
@@ -404,7 +412,8 @@
         </div>
       </div>
       <div class="searchbar">
-        <select id="hotelBookingsPageSize" data-pagesize-entity="hotel_bookings" style="margin-left:auto">
+        <input id="hotelBookingsSearch" placeholder="Cari hotel / guest / konfirmasi..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <select id="hotelBookingsPageSize" data-pagesize-entity="hotel_bookings">
           <option value="5">5</option>
           <option value="10" selected>10</option>
           <option value="25">25</option>

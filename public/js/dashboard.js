@@ -121,6 +121,7 @@ function parseFormattedNumber(value) {
 // Export globally for other scripts
 window.formatNumberWithCommas = formatNumberWithCommas;
 window.parseFormattedNumber = parseFormattedNumber;
+window.formatCurrency = formatCurrency;
 
 /* === NAVIGATION === */
 function showSection(name) {
