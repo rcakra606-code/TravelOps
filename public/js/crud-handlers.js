@@ -1477,6 +1477,17 @@ async function handleModalSubmit(formData, context) {
     delete formData.username;
   }
   
+  // Validate booking code uniqueness for tours
+  if (entity === 'tours' && formData.booking_code) {
+    const existingTour = state.tours.find(t => 
+      t.booking_code === formData.booking_code && 
+      (action === 'create' || t.id !== id)
+    );
+    if (existingTour) {
+      throw new Error(`Booking code "${formData.booking_code}" already exists for tour ${existingTour.tour_code}. Please use a different booking code.`);
+    }
+  }
+  
   try {
     // Handle reset password
     if (entity === 'users' && action === 'reset') {
@@ -1618,7 +1629,7 @@ function renderToursTable() {
   const isBasic = current.type === 'basic';
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9">Tidak ada data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="16">Tidak ada data</td></tr>';
     renderPagination('tours', 0);
     return;
   }
@@ -1644,20 +1655,24 @@ function renderToursTable() {
     };
     const statusDisplay = statusMap[item.status] || item.status || '-';
     
-    // Format total_nominal_sales as currency
-    const totalSales = item.total_nominal_sales ? formatCurrency(item.total_nominal_sales) : '-';
-    
     return `
       <tr>
         <td>${item.registration_date || '-'}</td>
         <td>${item.tour_code || '-'}</td>
+        <td>${item.booking_code || '-'}</td>
         <td>${item.jumlah_peserta || 0}</td>
         <td>${item.departure_date || '-'}</td>
         <td>${region ? region.region_name : '-'}</td>
         <td>${statusDisplay}</td>
-        <td>${totalSales}</td>
+        <td>${item.lead_passenger || '-'}</td>
+        <td>${item.phone_number || '-'}</td>
+        <td>${item.tour_price ? formatCurrency(item.tour_price) : '-'}</td>
+        <td>${item.sales_amount ? formatCurrency(item.sales_amount) : '-'}</td>
+        <td>${item.discount_amount ? formatCurrency(item.discount_amount) : '-'}</td>
+        <td>${item.profit_amount ? formatCurrency(item.profit_amount) : '-'}</td>
+        <td>${item.total_nominal_sales ? formatCurrency(item.total_nominal_sales) : '-'}</td>
         <td>${item.staff_name || '-'}</td>
-        <td>${actions}</td>
+        <td style=\"white-space: nowrap;\">${actions}</td>
       </tr>
     `;
   }).join('');

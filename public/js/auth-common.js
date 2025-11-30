@@ -11,7 +11,7 @@ const TOKEN_REFRESH_THRESHOLD = 10 * 60 * 1000; // Refresh if token is older tha
 /* === AUTHENTICATION CHECK (on DOM ready, not immediately) === */
 let authCheckPassed = false;
 
-function checkAuthOnLoad() {
+async function checkAuthOnLoad() {
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
   
@@ -28,12 +28,22 @@ function checkAuthOnLoad() {
     return false;
   }
   
-  // Verify token format (basic check)
+  // Verify token with server
   try {
     const userData = JSON.parse(user);
     if (!userData.username || !userData.type) {
       throw new Error('Invalid user data');
     }
+    
+    // Verify token is still valid on server
+    const response = await fetch('/api/me', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Token validation failed');
+    }
+    
     authCheckPassed = true;
     return true;
   } catch (err) {

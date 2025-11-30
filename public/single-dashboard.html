@@ -210,17 +210,26 @@
           <option value="50">50</option>
         </select>
       </div>
-      <table class="table"><thead><tr>
-        <th class="sortable" data-column="registration_date">Reg</th>
-        <th class="sortable" data-column="tour_code">Code</th>
-        <th class="sortable" data-column="jumlah_peserta">Pax</th>
-        <th class="sortable" data-column="departure_date">Depart</th>
-        <th class="sortable" data-column="region_id">Region</th>
-        <th class="sortable" data-column="status">Status</th>
-        <th class="sortable" data-column="total_nominal_sales">Total Sales</th>
-        <th class="sortable" data-column="staff_name">Staff</th>
-        <th>Aksi</th>
-      </tr></thead><tbody id="tblTours"></tbody></table>
+      <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
+        <table class="table" style="min-width: 100%; white-space: nowrap;"><thead><tr>
+          <th class="sortable" data-column="registration_date">Reg Date</th>
+          <th class="sortable" data-column="tour_code">Tour Code</th>
+          <th class="sortable" data-column="booking_code">Booking Code</th>
+          <th class="sortable" data-column="jumlah_peserta">Pax</th>
+          <th class="sortable" data-column="departure_date">Departure</th>
+          <th class="sortable" data-column="region_id">Region</th>
+          <th class="sortable" data-column="status">Status</th>
+          <th class="sortable" data-column="lead_passenger">Lead Passenger</th>
+          <th class="sortable" data-column="phone_number">Phone</th>
+          <th class="sortable" data-column="tour_price">Tour Price</th>
+          <th class="sortable" data-column="sales_amount">Sales</th>
+          <th class="sortable" data-column="discount_amount">Discount</th>
+          <th class="sortable" data-column="profit_amount">Profit</th>
+          <th class="sortable" data-column="total_nominal_sales">Total Sales</th>
+          <th class="sortable" data-column="staff_name">Staff</th>
+          <th>Actions</th>
+        </tr></thead><tbody id="tblTours"></tbody></table>
+      </div>
       <div class="pagination" id="toursPagination"></div>
     </section>
 
