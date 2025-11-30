@@ -1,4 +1,53 @@
 /* Dashboard specific styles */
+.table-scroll-wrapper {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 0 -8px;
+  padding: 0 8px;
+  position: relative;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-track {
+  background: var(--bg-alt, #f8fafc);
+  border-radius: 4px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb {
+  background: var(--border-light, #cbd5e1);
+  border-radius: 4px;
+}
+
+.table-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+  background: var(--primary, #2563eb);
+}
+
+/* Scroll shadow indicators */
+.table-scroll-wrapper::before,
+.table-scroll-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 8px;
+  width: 20px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.3s;
+}
+
+.table-scroll-wrapper::before {
+  left: 0;
+  background: linear-gradient(to right, var(--card, #fff), transparent);
+}
+
+.table-scroll-wrapper::after {
+  right: 0;
+  background: linear-gradient(to left, var(--card, #fff), transparent);
+}
+
 .dashboard-metrics {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));

@@ -14,6 +14,25 @@
   <script type="module" src="/js/auth-common.js"></script>
   <script type="module" src="/js/dashboard.js"></script>
   <style>
+    /* Fix sidebar layout on reports page */
+    .app {
+      display: flex;
+      min-height: 100vh;
+      padding: 18px;
+      gap: 18px;
+    }
+    .sidebar {
+      width: 300px;
+      flex-shrink: 0;
+      height: fit-content;
+      position: sticky;
+      top: 18px;
+    }
+    .main {
+      flex: 1;
+      min-width: 0;
+    }
+    
     .reports-hero {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       padding: 32px;
@@ -25,17 +44,21 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
       color: white;
     }
     .reports-hero h1 {
       margin: 0;
       font-size: 28px;
       font-weight: 700;
+      line-height: 1.2;
     }
     .reports-hero p {
       margin: 8px 0 0 0;
       font-size: 14px;
       opacity: 0.9;
+      line-height: 1.5;
     }
     
     .config-card {
