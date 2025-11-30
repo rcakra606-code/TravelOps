@@ -15,17 +15,34 @@ const emailConfig = {
   }
 };
 
-// Create reusable transporter
-const transporter = nodemailer.createTransport(emailConfig);
+// Check if email is configured
+const isEmailConfigured = process.env.SMTP_USER && 
+                          process.env.SMTP_PASSWORD && 
+                          process.env.SMTP_USER !== 'your-email@gmail.com';
 
-// Verify connection configuration
-transporter.verify(function(error, success) {
-  if (error) {
-    logger.error('Email service error:', error);
-  } else {
-    logger.info('Email service is ready to send messages');
+if (!isEmailConfigured) {
+  logger.warn('Email service not configured. Set SMTP_USER and SMTP_PASSWORD in environment variables.');
+}
+
+// Create reusable transporter only if configured
+let transporter = null;
+
+if (isEmailConfigured) {
+  try {
+    transporter = nodemailer.createTransport(emailConfig);
+    
+    // Verify connection configuration
+    transporter.verify(function(error, success) {
+      if (error) {
+        logger.error({ error: error.message }, 'Email service error');
+      } else {
+        logger.info('Email service is ready to send messages');
+      }
+    });
+  } catch (error) {
+    logger.error({ error: error.message }, 'Failed to create email transporter');
   }
-});
+}
 
 /**
  * Send departure reminder email
@@ -33,6 +50,11 @@ transporter.verify(function(error, success) {
  * @param {number} daysUntil - Days until departure
  */
 async function sendDepartureReminder(tour, daysUntil) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping departure reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
   try {
     const subject = getDepartureSubject(daysUntil, tour.tour_code);
     const htmlContent = getDepartureEmailTemplate(tour, daysUntil);
@@ -221,6 +243,10 @@ function getDepartureEmailTemplate(tour, daysUntil) {
  * Send test email
  */
 async function sendTestEmail(toEmail) {
+  if (!isEmailConfigured || !transporter) {
+    return { success: false, error: 'Email service not configured. Please set SMTP credentials in environment variables.' };
+  }
+  
   try {
     const mailOptions = {
       from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,

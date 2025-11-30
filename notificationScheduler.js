@@ -12,12 +12,21 @@ let schedulerActive = false;
  * Initialize the notification scheduler
  */
 function initScheduler(database) {
+  if (!database) {
+    logger.warn('Database not provided to scheduler - email notifications disabled');
+    return;
+  }
+  
   db = database;
   
   // Run daily at 9:00 AM
   cron.schedule('0 9 * * *', async () => {
     logger.info('Running daily departure reminder check...');
-    await checkAndSendReminders();
+    try {
+      await checkAndSendReminders();
+    } catch (error) {
+      logger.error({ error: error.message }, 'Error in scheduled reminder check');
+    }
   });
 
   // Optional: Run every hour during business hours (9 AM - 6 PM)

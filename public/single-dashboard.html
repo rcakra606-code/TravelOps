@@ -519,6 +519,111 @@
               <div class="stat-value" id="statDocs">0</div>
               <div class="stat-label">Total Dokumen</div>
             </div>
+          </div>
+        </div>
+
+        <!-- Email Notification Testing (Admin Only) -->
+        <div class="card" id="emailTestingPanel" style="display: none;">
+          <h3 style="margin-top: 0; color: #2563eb; display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 24px;">📧</span>
+            Email Notification System
+          </h3>
+          
+          <div id="emailConfigStatus" style="padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+            <span id="emailStatusIcon" style="font-size: 24px;"></span>
+            <div>
+              <strong id="emailStatusTitle">Checking configuration...</strong>
+              <p id="emailStatusMessage" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem;"></p>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 24px;">
+            <!-- Test Email Card -->
+            <div style="background: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
+              <h4 style="margin-top: 0; color: #1f2937; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                <span>✉️</span> Test Email
+              </h4>
+              <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 16px;">
+                Send a test email to verify SMTP configuration
+              </p>
+              <div style="margin-bottom: 12px;">
+                <input 
+                  type="email" 
+                  id="testEmailInput" 
+                  placeholder="recipient@example.com"
+                  style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem;"
+                />
+              </div>
+              <button 
+                id="sendTestEmailBtn" 
+                class="btn primary" 
+                style="width: 100%;"
+              >
+                Send Test Email
+              </button>
+            </div>
+
+            <!-- Manual Trigger Card -->
+            <div style="background: #fef3c7; padding: 20px; border-radius: 12px; border: 1px solid #fbbf24;">
+              <h4 style="margin-top: 0; color: #92400e; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                <span>⚡</span> Trigger Reminders
+              </h4>
+              <p style="color: #78350f; font-size: 0.9rem; margin-bottom: 16px;">
+                Manually check and send departure reminders now
+              </p>
+              <button 
+                id="triggerRemindersBtn" 
+                class="btn" 
+                style="width: 100%; background: #f59e0b; color: white;"
+              >
+                Trigger Now
+              </button>
+              <p style="margin-top: 12px; font-size: 0.85rem; color: #78350f;">
+                <strong>Note:</strong> Automated schedule runs daily at 9:00 AM
+              </p>
+            </div>
+
+            <!-- Reminder Stats Card -->
+            <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; border: 1px solid #10b981;">
+              <h4 style="margin-top: 0; color: #065f46; font-size: 16px; display: flex; align-items: center; gap: 8px;">
+                <span>📊</span> Statistics
+              </h4>
+              <p style="color: #047857; font-size: 0.9rem; margin-bottom: 16px;">
+                View sent reminder statistics
+              </p>
+              <button 
+                id="viewStatsBtn" 
+                class="btn" 
+                style="width: 100%; background: #10b981; color: white;"
+              >
+                View Stats
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Display -->
+          <div id="emailTestResults" style="display: none; margin-top: 20px;"></div>
+
+          <!-- Stats Table -->
+          <div id="emailStatsTable" style="display: none; margin-top: 20px;">
+            <h4 style="color: #1f2937; margin-bottom: 12px;">Recent Reminder Activity</h4>
+            <div style="overflow-x: auto;">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Days Before</th>
+                    <th>Count</th>
+                    <th>Date Sent</th>
+                  </tr>
+                </thead>
+                <tbody id="statsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+            </div>
             <div class="stat-item">
               <div class="stat-value" id="statTargets">0</div>
               <div class="stat-label">Total Targets</div>

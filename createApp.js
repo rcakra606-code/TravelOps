@@ -574,9 +574,9 @@ export async function createApp() {
   // Initialize the notification scheduler
   try {
     initScheduler(db);
-    logger.info('Email notification scheduler initialized');
+    logger.info('Email notification scheduler initialized successfully');
   } catch (err) {
-    logger.error({ err }, 'Failed to initialize notification scheduler');
+    logger.error({ err: err.message }, 'Failed to initialize notification scheduler - email reminders disabled');
   }
 
   // Optional debug: list admin usernames (only if explicitly enabled via env)

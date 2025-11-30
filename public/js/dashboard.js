@@ -520,6 +520,13 @@ function refreshUser() {
   if (reportsLink && (isAdmin || isSemiAdmin)) {
     reportsLink.style.display = 'flex';
   }
+  
+  // Show email testing panel only for admin
+  const emailTestingPanel = el('emailTestingPanel');
+  if (emailTestingPanel && isAdmin) {
+    emailTestingPanel.style.display = 'block';
+    checkEmailConfiguration();
+  }
 }
 
 /* === REFRESH ALL === */
@@ -1129,3 +1136,220 @@ window.deleteItem = (entity, id) => window.crudHandlers?.deleteItem(entity, id);
     });
   }
 })();
+
+/* === EMAIL NOTIFICATION TESTING === */
+async function checkEmailConfiguration() {
+  const statusIcon = el('emailStatusIcon');
+  const statusTitle = el('emailStatusTitle');
+  const statusMessage = el('emailStatusMessage');
+  const configStatus = el('emailConfigStatus');
+  
+  if (!statusIcon || !statusTitle || !statusMessage || !configStatus) return;
+  
+  try {
+    const response = await fetch('/healthz', { headers: getHeaders() });
+    const data = await response.json();
+    
+    // Check if email is likely configured (we'll test with actual send)
+    statusIcon.textContent = '⚙️';
+    statusTitle.textContent = 'Email System Ready';
+    statusMessage.textContent = 'Use the test button to verify SMTP configuration';
+    configStatus.style.background = '#eff6ff';
+    configStatus.style.border = '1px solid #2563eb';
+  } catch (error) {
+    statusIcon.textContent = '⚠️';
+    statusTitle.textContent = 'System Status Unknown';
+    statusMessage.textContent = 'Could not connect to server';
+    configStatus.style.background = '#fef3c7';
+    configStatus.style.border = '1px solid #f59e0b';
+  }
+}
+
+function showEmailResult(success, message, details = null) {
+  const resultsDiv = el('emailTestResults');
+  if (!resultsDiv) return;
+  
+  const bgColor = success ? '#ecfdf5' : '#fef2f2';
+  const borderColor = success ? '#10b981' : '#ef4444';
+  const icon = success ? '✅' : '❌';
+  
+  let html = `
+    <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; padding: 16px;">
+      <div style="display: flex; align-items: start; gap: 12px;">
+        <span style="font-size: 24px;">${icon}</span>
+        <div style="flex: 1;">
+          <strong style="color: ${success ? '#065f46' : '#991b1b'};">${message}</strong>
+          ${details ? `<pre style="margin-top: 8px; font-size: 0.85rem; color: #6b7280; background: white; padding: 12px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(details, null, 2)}</pre>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  resultsDiv.innerHTML = html;
+  resultsDiv.style.display = 'block';
+  
+  // Auto-hide after 10 seconds for success messages
+  if (success) {
+    setTimeout(() => {
+      resultsDiv.style.display = 'none';
+    }, 10000);
+  }
+}
+
+async function sendTestEmail() {
+  const emailInput = el('testEmailInput');
+  const sendBtn = el('sendTestEmailBtn');
+  
+  if (!emailInput || !sendBtn) return;
+  
+  const email = emailInput.value.trim();
+  if (!email) {
+    showEmailResult(false, 'Please enter an email address');
+    return;
+  }
+  
+  if (!email.includes('@')) {
+    showEmailResult(false, 'Please enter a valid email address');
+    return;
+  }
+  
+  sendBtn.disabled = true;
+  sendBtn.textContent = 'Sending...';
+  
+  try {
+    const response = await fetch('/api/email/test', {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ email })
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      showEmailResult(true, `Test email sent successfully to ${email}!`, {
+        status: 'Email sent',
+        recipient: email,
+        tip: 'Check your inbox (and spam folder)'
+      });
+      emailInput.value = '';
+    } else {
+      showEmailResult(false, data.error || 'Failed to send test email', data);
+    }
+  } catch (error) {
+    showEmailResult(false, 'Network error: ' + error.message);
+  } finally {
+    sendBtn.disabled = false;
+    sendBtn.textContent = 'Send Test Email';
+  }
+}
+
+async function triggerReminders() {
+  const triggerBtn = el('triggerRemindersBtn');
+  
+  if (!triggerBtn) return;
+  
+  triggerBtn.disabled = true;
+  triggerBtn.textContent = 'Checking...';
+  
+  try {
+    const response = await fetch('/api/email/trigger-reminders', {
+      method: 'POST',
+      headers: getHeaders()
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.success) {
+      showEmailResult(true, `Reminder check complete!`, {
+        remindersSent: data.remindersSent,
+        errors: data.errors,
+        details: data.details
+      });
+    } else {
+      showEmailResult(false, data.error || 'Failed to trigger reminders', data);
+    }
+  } catch (error) {
+    showEmailResult(false, 'Network error: ' + error.message);
+  } finally {
+    triggerBtn.disabled = false;
+    triggerBtn.textContent = 'Trigger Now';
+  }
+}
+
+async function viewReminderStats() {
+  const viewBtn = el('viewStatsBtn');
+  const statsTable = el('emailStatsTable');
+  const statsBody = el('statsTableBody');
+  
+  if (!viewBtn || !statsTable || !statsBody) return;
+  
+  viewBtn.disabled = true;
+  viewBtn.textContent = 'Loading...';
+  
+  try {
+    const response = await fetch('/api/email/reminder-stats', {
+      headers: getHeaders()
+    });
+    
+    const data = await response.json();
+    
+    if (response.ok && data.stats) {
+      if (data.stats.length === 0) {
+        showEmailResult(true, 'No reminders sent yet', {
+          message: 'Reminders will appear here after being sent'
+        });
+        statsTable.style.display = 'none';
+      } else {
+        statsBody.innerHTML = data.stats.map(stat => `
+          <tr>
+            <td>${stat.days_until_departure} ${stat.days_until_departure === 1 ? 'day' : 'days'}</td>
+            <td><strong>${stat.count}</strong></td>
+            <td>${stat.sent_date}</td>
+          </tr>
+        `).join('');
+        statsTable.style.display = 'block';
+        
+        // Hide results div when showing stats
+        const resultsDiv = el('emailTestResults');
+        if (resultsDiv) resultsDiv.style.display = 'none';
+      }
+    } else {
+      showEmailResult(false, data.error || 'Failed to load statistics');
+      statsTable.style.display = 'none';
+    }
+  } catch (error) {
+    showEmailResult(false, 'Network error: ' + error.message);
+    statsTable.style.display = 'none';
+  } finally {
+    viewBtn.disabled = false;
+    viewBtn.textContent = 'View Stats';
+  }
+}
+
+// Setup email testing event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  const sendTestBtn = el('sendTestEmailBtn');
+  const triggerBtn = el('triggerRemindersBtn');
+  const viewStatsBtn = el('viewStatsBtn');
+  const testEmailInput = el('testEmailInput');
+  
+  if (sendTestBtn) {
+    sendTestBtn.addEventListener('click', sendTestEmail);
+  }
+  
+  if (triggerBtn) {
+    triggerBtn.addEventListener('click', triggerReminders);
+  }
+  
+  if (viewStatsBtn) {
+    viewStatsBtn.addEventListener('click', viewReminderStats);
+  }
+  
+  if (testEmailInput) {
+    testEmailInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendTestEmail();
+      }
+    });
+  }
+});
