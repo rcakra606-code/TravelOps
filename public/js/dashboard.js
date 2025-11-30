@@ -1173,13 +1173,32 @@ function showEmailResult(success, message, details = null) {
   const borderColor = success ? '#10b981' : '#ef4444';
   const icon = success ? '✅' : '❌';
   
+  let detailsHtml = '';
+  if (details) {
+    if (details.steps && Array.isArray(details.steps)) {
+      // Special formatting for setup instructions
+      detailsHtml = `
+        <div style="margin-top: 12px; padding: 12px; background: white; border-radius: 6px; border-left: 3px solid #f59e0b;">
+          <strong style="color: #92400e;">💡 ${details.issue || 'Setup Required'}</strong>
+          <p style="margin: 8px 0; color: #78350f; font-size: 0.9rem;">${details.solution || ''}</p>
+          <div style="margin-top: 8px; font-size: 0.85rem; color: #6b7280;">
+            ${details.steps.map(step => `<div style="margin: 4px 0;">${step}</div>`).join('')}
+          </div>
+        </div>
+      `;
+    } else {
+      // JSON formatting for other details
+      detailsHtml = `<pre style="margin-top: 8px; font-size: 0.85rem; color: #6b7280; background: white; padding: 12px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(details, null, 2)}</pre>`;
+    }
+  }
+  
   let html = `
     <div style="background: ${bgColor}; border: 1px solid ${borderColor}; border-radius: 8px; padding: 16px;">
       <div style="display: flex; align-items: start; gap: 12px;">
         <span style="font-size: 24px;">${icon}</span>
         <div style="flex: 1;">
           <strong style="color: ${success ? '#065f46' : '#991b1b'};">${message}</strong>
-          ${details ? `<pre style="margin-top: 8px; font-size: 0.85rem; color: #6b7280; background: white; padding: 12px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(details, null, 2)}</pre>` : ''}
+          ${detailsHtml}
         </div>
       </div>
     </div>
@@ -1188,7 +1207,7 @@ function showEmailResult(success, message, details = null) {
   resultsDiv.innerHTML = html;
   resultsDiv.style.display = 'block';
   
-  // Auto-hide after 10 seconds for success messages
+  // Auto-hide after 10 seconds for success messages only
   if (success) {
     setTimeout(() => {
       resultsDiv.style.display = 'none';
@@ -1232,8 +1251,51 @@ async function sendTestEmail() {
         tip: 'Check your inbox (and spam folder)'
       });
       emailInput.value = '';
+      
+      // Update status to show it's working
+      const statusIcon = el('emailStatusIcon');
+      const statusTitle = el('emailStatusTitle');
+      const statusMessage = el('emailStatusMessage');
+      const configStatus = el('emailConfigStatus');
+      if (statusIcon) statusIcon.textContent = '✅';
+      if (statusTitle) statusTitle.textContent = 'Email Configured & Working';
+      if (statusMessage) statusMessage.textContent = 'SMTP connection verified successfully';
+      if (configStatus) {
+        configStatus.style.background = '#ecfdf5';
+        configStatus.style.border = '1px solid #10b981';
+      }
     } else {
-      showEmailResult(false, data.error || 'Failed to send test email', data);
+      const errorMsg = data.error || 'Failed to send test email';
+      let helpText = null;
+      
+      // Provide helpful guidance based on error
+      if (errorMsg.includes('not configured') || errorMsg.includes('BadCredentials')) {
+        helpText = {
+          issue: 'SMTP Not Configured',
+          solution: 'Add SMTP credentials to environment variables',
+          steps: [
+            '1. For Gmail: Create App Password at https://myaccount.google.com/apppasswords',
+            '2. Set SMTP_USER=your-email@gmail.com',
+            '3. Set SMTP_PASSWORD=your-16-char-app-password',
+            '4. Restart the server'
+          ]
+        };
+        
+        // Update status to show configuration needed
+        const statusIcon = el('emailStatusIcon');
+        const statusTitle = el('emailStatusTitle');
+        const statusMessage = el('emailStatusMessage');
+        const configStatus = el('emailConfigStatus');
+        if (statusIcon) statusIcon.textContent = '⚙️';
+        if (statusTitle) statusTitle.textContent = 'SMTP Configuration Required';
+        if (statusMessage) statusMessage.textContent = 'Set SMTP_USER and SMTP_PASSWORD environment variables';
+        if (configStatus) {
+          configStatus.style.background = '#fef3c7';
+          configStatus.style.border = '1px solid #f59e0b';
+        }
+      }
+      
+      showEmailResult(false, errorMsg, helpText || data);
     }
   } catch (error) {
     showEmailResult(false, 'Network error: ' + error.message);

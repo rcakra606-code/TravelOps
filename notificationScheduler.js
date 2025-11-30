@@ -36,8 +36,9 @@ function initScheduler(database) {
 
   schedulerActive = true;
   logger.info('Departure reminder scheduler initialized - Daily at 9:00 AM');
+  logger.info('Note: Email reminders require SMTP configuration to function');
   
-  // Run once on startup for testing (optional)
+  // Run once on startup for testing (optional - commented out by default)
   // checkAndSendReminders();
 }
 

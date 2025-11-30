@@ -31,17 +31,22 @@ if (isEmailConfigured) {
   try {
     transporter = nodemailer.createTransport(emailConfig);
     
-    // Verify connection configuration
+    // Verify connection configuration (async, non-blocking)
     transporter.verify(function(error, success) {
       if (error) {
-        logger.error({ error: error.message }, 'Email service error');
+        logger.warn({ error: error.message }, 'Email SMTP verification failed - please check credentials');
+        logger.info('To configure email: Set SMTP_USER and SMTP_PASSWORD environment variables');
+        logger.info('For Gmail: Use App Password from https://myaccount.google.com/apppasswords');
       } else {
-        logger.info('Email service is ready to send messages');
+        logger.info('✅ Email service is ready to send messages');
       }
     });
   } catch (error) {
     logger.error({ error: error.message }, 'Failed to create email transporter');
   }
+} else {
+  logger.info('📧 Email notifications disabled - Configure SMTP settings to enable');
+  logger.info('Required: SMTP_USER and SMTP_PASSWORD environment variables');
 }
 
 /**
