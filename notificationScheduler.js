@@ -9,6 +9,35 @@ let db;
 let schedulerActive = false;
 
 /**
+ * Get CREATE TABLE statement compatible with both SQLite and PostgreSQL
+ */
+function getCreateTableSQL() {
+  const isPostgres = db.dialect === 'postgres';
+  
+  if (isPostgres) {
+    return `
+      CREATE TABLE IF NOT EXISTS email_reminders (
+        id SERIAL PRIMARY KEY,
+        tour_id INTEGER NOT NULL,
+        days_until_departure INTEGER NOT NULL,
+        sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(tour_id, days_until_departure)
+      )
+    `;
+  } else {
+    return `
+      CREATE TABLE IF NOT EXISTS email_reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tour_id INTEGER NOT NULL,
+        days_until_departure INTEGER NOT NULL,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(tour_id, days_until_departure)
+      )
+    `;
+  }
+}
+
+/**
  * Initialize the notification scheduler
  */
 function initScheduler(database) {
@@ -150,15 +179,7 @@ function getUpcomingTours() {
 function checkReminderSent(tourId, daysUntil) {
   return new Promise((resolve, reject) => {
     // First, ensure the table exists
-    db.run(`
-      CREATE TABLE IF NOT EXISTS email_reminders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tour_id INTEGER NOT NULL,
-        days_until_departure INTEGER NOT NULL,
-        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(tour_id, days_until_departure)
-      )
-    `, (err) => {
+    db.run(getCreateTableSQL(), (err) => {
       if (err) {
         reject(err);
         return;
@@ -223,17 +244,7 @@ async function manualTrigger() {
 function getReminderStats() {
   return new Promise((resolve, reject) => {
     // First ensure the table exists
-    const createTableSql = `
-      CREATE TABLE IF NOT EXISTS email_reminders (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        tour_id INTEGER NOT NULL,
-        days_until_departure INTEGER NOT NULL,
-        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE(tour_id, days_until_departure)
-      )
-    `;
-
-    db.run(createTableSql, (err) => {
+    db.run(getCreateTableSQL(), (err) => {
       if (err) {
         logger.error('Error creating email_reminders table:', err);
         // Return empty array instead of rejecting

@@ -64,9 +64,9 @@ async function initPostgres() {
         : qmarkToDollar(sql);
       const res = await pool.query(text, params);
       if (isInsert) {
-        return { lastID: res.rows[0]?.id };
+        return { lastID: res?.rows?.[0]?.id || null };
       }
-      return { changes: res.rowCount };
+      return { changes: res?.rowCount || 0 };
     },
     async get(sql, params = []) {
       const res = await pool.query(qmarkToDollar(sql), params);
