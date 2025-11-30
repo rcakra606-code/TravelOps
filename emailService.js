@@ -64,23 +64,21 @@ async function sendDepartureReminder(tour, daysUntil) {
     const subject = getDepartureSubject(daysUntil, tour.tour_code);
     const htmlContent = getDepartureEmailTemplate(tour, daysUntil);
     
-    // Send to lead passenger email if available
-    if (!tour.email) {
-      logger.warn(`No email found for tour ${tour.tour_code}`);
-      return { success: false, error: 'No email address' };
+    // Send to staff user's email instead of passenger
+    if (!tour.staff_email) {
+      logger.warn(`No staff email found for tour ${tour.tour_code}`);
+      return { success: false, error: 'No staff email address' };
     }
 
     const mailOptions = {
       from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
-      to: tour.email,
+      to: tour.staff_email,
       subject: subject,
-      html: htmlContent,
-      // Optional: Add CC to staff member
-      cc: tour.staff_email || ''
+      html: htmlContent
     };
 
     const info = await transporter.sendMail(mailOptions);
-    logger.info(`Departure reminder sent for tour ${tour.tour_code} (${daysUntil} days) to ${tour.email}`);
+    logger.info(`Departure reminder sent for tour ${tour.tour_code} (${daysUntil} days) to ${tour.staff_email}`);
     
     return { success: true, messageId: info.messageId };
   } catch (error) {

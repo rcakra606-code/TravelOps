@@ -1,7 +1,7 @@
 # Email Notification System - Setup Guide
 
 ## Overview
-The TravelOps email notification system automatically sends departure reminders to tour passengers at the following intervals:
+The TravelOps email notification system automatically sends departure reminders to staff users (the logged-in user who created/manages the tour) at the following intervals:
 - **7 days** before departure
 - **3 days** before departure  
 - **2 days** before departure
@@ -288,7 +288,7 @@ Edit `emailService.js` - Function `getDepartureEmailTemplate()`:
 
 ### No Reminders Being Sent
 
-1. **Check tour email addresses** - Tours need valid email in the database
+1. **Check staff user email addresses** - Tours need the assigned staff to have a valid email in the users table
 2. **Verify tour status** - Tours with status "tidak jalan" are skipped
 3. **Check departure dates** - Only upcoming tours are processed
 4. **View reminder stats** to see what was sent:
@@ -331,10 +331,11 @@ SELECT days_until_departure, COUNT(*) as count
 FROM email_reminders
 GROUP BY days_until_departure;
 
--- Find tours without email addresses
-SELECT tour_code, lead_passenger 
-FROM tours 
-WHERE (email IS NULL OR email = '')
+-- Find tours without staff email addresses
+SELECT tour_code, lead_passenger, staff_name
+FROM tours t
+LEFT JOIN users u ON t.staff_name = u.name
+WHERE (u.email IS NULL OR u.email = '')
 AND departure_date >= DATE('now');
 ```
 

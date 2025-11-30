@@ -122,14 +122,15 @@ function getUpcomingTours() {
       SELECT 
         t.*,
         r.region_name,
-        u.username as staff_username
+        u.username as staff_username,
+        u.email as staff_email
       FROM tours t
       LEFT JOIN regions r ON t.region_id = r.id
       LEFT JOIN users u ON t.staff_name = u.name
       WHERE t.departure_date >= ?
         AND t.status != 'tidak jalan'
-        AND t.email IS NOT NULL
-        AND t.email != ''
+        AND u.email IS NOT NULL
+        AND u.email != ''
       ORDER BY t.departure_date ASC
     `;
 
@@ -221,23 +222,46 @@ async function manualTrigger() {
  */
 function getReminderStats() {
   return new Promise((resolve, reject) => {
-    const sql = `
-      SELECT 
-        days_until_departure,
-        COUNT(*) as count,
-        DATE(sent_at) as sent_date
-      FROM email_reminders
-      GROUP BY days_until_departure, DATE(sent_at)
-      ORDER BY sent_date DESC, days_until_departure DESC
-      LIMIT 50
+    // First ensure the table exists
+    const createTableSql = `
+      CREATE TABLE IF NOT EXISTS email_reminders (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tour_id INTEGER NOT NULL,
+        days_until_departure INTEGER NOT NULL,
+        sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(tour_id, days_until_departure)
+      )
     `;
 
-    db.all(sql, [], (err, rows) => {
+    db.run(createTableSql, (err) => {
       if (err) {
-        reject(err);
-      } else {
-        resolve(rows || []);
+        logger.error('Error creating email_reminders table:', err);
+        // Return empty array instead of rejecting
+        resolve([]);
+        return;
       }
+
+      // Now get the statistics
+      const sql = `
+        SELECT 
+          days_until_departure,
+          COUNT(*) as count,
+          DATE(sent_at) as sent_date
+        FROM email_reminders
+        GROUP BY days_until_departure, DATE(sent_at)
+        ORDER BY sent_date DESC, days_until_departure DESC
+        LIMIT 50
+      `;
+
+      db.all(sql, [], (err, rows) => {
+        if (err) {
+          logger.error('Error fetching reminder stats:', err);
+          // Return empty array instead of rejecting
+          resolve([]);
+        } else {
+          resolve(rows || []);
+        }
+      });
     });
   });
 }
