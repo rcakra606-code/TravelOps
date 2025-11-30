@@ -1,5 +1,8 @@
-const nodemailer = require('nodemailer');
-const logger = require('./logger');
+import nodemailer from 'nodemailer';
+import { logger } from './logger.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 // Email configuration - Update these with your SMTP settings
 const emailConfig = {
@@ -244,7 +247,7 @@ async function sendTestEmail(toEmail) {
   }
 }
 
-module.exports = {
+export {
   sendDepartureReminder,
   sendTestEmail
 };

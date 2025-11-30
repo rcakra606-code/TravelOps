@@ -1,7 +1,6 @@
-const cron = require('node-cron');
-const sqlite3 = require('sqlite3').verbose();
-const { sendDepartureReminder } = require('./emailService');
-const logger = require('./logger');
+import cron from 'node-cron';
+import { sendDepartureReminder } from './emailService.js';
+import { logger } from './logger.js';
 
 // Reminder intervals in days before departure
 const REMINDER_DAYS = [7, 3, 2, 1, 0];
@@ -233,7 +232,7 @@ function getReminderStats() {
   });
 }
 
-module.exports = {
+export {
   initScheduler,
   checkAndSendReminders,
   manualTrigger,
