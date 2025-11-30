@@ -12,6 +12,8 @@ import rateLimit from 'express-rate-limit';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { initDb } from './database.js';
 import { logger, requestLogger } from './logger.js';
+import { sendDepartureReminder, sendTestEmail } from './emailService.js';
+import { initScheduler, manualTrigger, getReminderStats } from './notificationScheduler.js';
 
 dotenv.config();
 
@@ -507,6 +509,75 @@ export async function createApp() {
   });
 
   app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
+
+  // Email Notification Endpoints (Admin only)
+  app.post('/api/email/test', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ error: 'Email address required' });
+      }
+      
+      const result = await sendTestEmail(email);
+      
+      if (result.success) {
+        await logActivity(req.user.username, 'SEND_TEST_EMAIL', 'email', null, `Test email sent to ${email}`);
+        res.json({ success: true, message: 'Test email sent successfully' });
+      } else {
+        res.status(500).json({ error: 'Failed to send test email', details: result.error });
+      }
+    } catch (err) {
+      logger.error({ err }, 'Test email failed');
+      res.status(500).json({ error: 'Failed to send test email', details: err.message });
+    }
+  });
+
+  app.post('/api/email/trigger-reminders', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    try {
+      const result = await manualTrigger();
+      await logActivity(req.user.username, 'TRIGGER_REMINDERS', 'email', null, `Manual trigger: ${result.sent.length} sent, ${result.errors.length} errors`);
+      
+      res.json({
+        success: true,
+        remindersSent: result.sent.length,
+        errors: result.errors.length,
+        details: result
+      });
+    } catch (err) {
+      logger.error({ err }, 'Manual reminder trigger failed');
+      res.status(500).json({ error: 'Failed to trigger reminders', details: err.message });
+    }
+  });
+
+  app.get('/api/email/reminder-stats', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin' && req.user.type !== 'semi-admin') {
+      return res.status(403).json({ error: 'Admin or semi-admin access required' });
+    }
+    
+    try {
+      const stats = await getReminderStats();
+      res.json({ stats });
+    } catch (err) {
+      logger.error({ err }, 'Failed to get reminder stats');
+      res.status(500).json({ error: 'Failed to get reminder statistics', details: err.message });
+    }
+  });
+
+  // Initialize the notification scheduler
+  try {
+    initScheduler(db);
+    logger.info('Email notification scheduler initialized');
+  } catch (err) {
+    logger.error({ err }, 'Failed to initialize notification scheduler');
+  }
 
   // Optional debug: list admin usernames (only if explicitly enabled via env)
   if (process.env.EXPOSE_ADMIN_USERNAMES === 'true') {
