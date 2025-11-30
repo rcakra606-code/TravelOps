@@ -1216,6 +1216,12 @@ function showEmailResult(success, message, details = null) {
 }
 
 async function sendTestEmail() {
+  const user = getUser();
+  if (user.type !== 'admin') {
+    showEmailResult(false, 'Access Denied: Admin privileges required');
+    return;
+  }
+  
   const emailInput = el('testEmailInput');
   const sendBtn = el('sendTestEmailBtn');
   
@@ -1298,6 +1304,7 @@ async function sendTestEmail() {
       showEmailResult(false, errorMsg, helpText || data);
     }
   } catch (error) {
+    console.error('Test email error:', error);
     showEmailResult(false, 'Network error: ' + error.message);
   } finally {
     sendBtn.disabled = false;
@@ -1306,6 +1313,12 @@ async function sendTestEmail() {
 }
 
 async function triggerReminders() {
+  const user = getUser();
+  if (user.type !== 'admin') {
+    showEmailResult(false, 'Access Denied: Admin privileges required');
+    return;
+  }
+  
   const triggerBtn = el('triggerRemindersBtn');
   
   if (!triggerBtn) return;
@@ -1331,6 +1344,7 @@ async function triggerReminders() {
       showEmailResult(false, data.error || 'Failed to trigger reminders', data);
     }
   } catch (error) {
+    console.error('Trigger reminders error:', error);
     showEmailResult(false, 'Network error: ' + error.message);
   } finally {
     triggerBtn.disabled = false;
@@ -1339,6 +1353,12 @@ async function triggerReminders() {
 }
 
 async function viewReminderStats() {
+  const user = getUser();
+  if (user.type !== 'admin') {
+    showEmailResult(false, 'Access Denied: Admin privileges required');
+    return;
+  }
+  
   const viewBtn = el('viewStatsBtn');
   const statsTable = el('emailStatsTable');
   const statsBody = el('statsTableBody');
@@ -1352,6 +1372,10 @@ async function viewReminderStats() {
     const response = await fetch('/api/email/reminder-stats', {
       headers: getHeaders()
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     
     const data = await response.json();
     
@@ -1380,7 +1404,8 @@ async function viewReminderStats() {
       statsTable.style.display = 'none';
     }
   } catch (error) {
-    showEmailResult(false, 'Network error: ' + error.message);
+    console.error('Stats error:', error);
+    showEmailResult(false, 'Error loading statistics: ' + error.message);
     statsTable.style.display = 'none';
   } finally {
     viewBtn.disabled = false;

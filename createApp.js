@@ -558,8 +558,8 @@ export async function createApp() {
   });
 
   app.get('/api/email/reminder-stats', authMiddleware(), async (req, res) => {
-    if (req.user.type !== 'admin' && req.user.type !== 'semi-admin') {
-      return res.status(403).json({ error: 'Admin or semi-admin access required' });
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
     }
     
     try {
