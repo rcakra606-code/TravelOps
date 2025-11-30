@@ -1629,7 +1629,7 @@ function renderToursTable() {
   const isBasic = current.type === 'basic';
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="16">Tidak ada data</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11">Tidak ada data</td></tr>';
     renderPagination('tours', 0);
     return;
   }
@@ -1647,13 +1647,18 @@ function renderToursTable() {
       actions += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"tours\" data-id=\"${item.id}\">Delete</button>`;
     }
     
-    // Format status for display
+    // Format status for display (icon only)
     const statusMap = {
-      'belum jalan': '⏳ Belum Jalan',
-      'sudah jalan': '✅ Sudah Jalan',
-      'tidak jalan': '❌ Tidak Jalan'
+      'belum jalan': '⏳',
+      'sudah jalan': '✅',
+      'tidak jalan': '❌'
     };
-    const statusDisplay = statusMap[item.status] || item.status || '-';
+    const statusDisplay = statusMap[item.status] || '-';
+    
+    // Truncate lead passenger name if too long
+    const leadName = item.lead_passenger ? 
+      (item.lead_passenger.length > 15 ? item.lead_passenger.substring(0, 15) + '...' : item.lead_passenger) 
+      : '-';
     
     return `
       <tr>
@@ -1663,13 +1668,8 @@ function renderToursTable() {
         <td>${item.jumlah_peserta || 0}</td>
         <td>${item.departure_date || '-'}</td>
         <td>${region ? region.region_name : '-'}</td>
-        <td>${statusDisplay}</td>
-        <td>${item.lead_passenger || '-'}</td>
-        <td>${item.phone_number || '-'}</td>
-        <td>${item.tour_price ? formatCurrency(item.tour_price) : '-'}</td>
-        <td>${item.sales_amount ? formatCurrency(item.sales_amount) : '-'}</td>
-        <td>${item.discount_amount ? formatCurrency(item.discount_amount) : '-'}</td>
-        <td>${item.profit_amount ? formatCurrency(item.profit_amount) : '-'}</td>
+        <td title="${item.status || '-'}">${statusDisplay}</td>
+        <td title="${item.lead_passenger || '-'}">${leadName}</td>
         <td>${item.total_nominal_sales ? formatCurrency(item.total_nominal_sales) : '-'}</td>
         <td>${item.staff_name || '-'}</td>
         <td style=\"white-space: nowrap;\">${actions}</td>

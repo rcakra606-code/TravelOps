@@ -1,4 +1,26 @@
 /* Dashboard specific styles */
+.table-compact {
+  font-size: 0.85rem;
+}
+
+.table-compact th,
+.table-compact td {
+  padding: 8px 10px;
+  white-space: nowrap;
+}
+
+.table-compact th {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.table-compact .btn-action {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
 .table-scroll-wrapper {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
