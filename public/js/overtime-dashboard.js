@@ -1,111 +1,3 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Overtime Dashboard - TravelOps</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/app-v2.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/modal.css">
-</head>
-<body>
-<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">🚀 TravelOps</div>
-    <div class="nav">
-      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
-      <a href="/sales-dashboard.html">💰 Sales Dashboard</a>
-      <a href="/tours-dashboard.html">🧳 Tours Dashboard</a>
-      <a href="/documents-dashboard.html">📄 Documents Dashboard</a>
-      <a href="/overtime-dashboard.html" class="active">⏰ Overtime Dashboard</a>
-      <a href="/cruise-dashboard.html">🚢 Cruise Dashboard</a>
-      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
-      <a href="/reports-dashboard.html">📊 Reports Center</a>
-      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
-    </div>
-    <div class="userbox" style="margin-top:18px">
-      <div id="userName">—</div>
-      <div id="userRole">—</div>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="header">
-      <div>
-        <h2>⏰ Overtime Management</h2>
-        <div class="small">Kelola data overtime staff</div>
-      </div>
-      <button id="addOvertimeBtn" class="btn btn-primary">+ Tambah Overtime</button>
-    </div>
-
-    <div class="card">
-      <div class="dashboard-metrics">
-        <div class="metric-card">
-          <div class="metric-title">Total Overtime</div>
-          <div class="metric-value" id="totalOvertime">0</div>
-          <div class="metric-subtitle">Records</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Pending</div>
-          <div class="metric-value" id="pendingCount">0</div>
-          <div class="metric-subtitle">Awaiting approval</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Paid</div>
-          <div class="metric-value" id="paidCount">0</div>
-          <div class="metric-subtitle">Completed</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Total Hours</div>
-          <div class="metric-value" id="totalHours">0</div>
-          <div class="metric-subtitle">This month</div>
-        </div>
-      </div>
-
-      <div style="overflow-x:auto; margin-top: 24px;">
-        <table class="dashboard-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Staff</th>
-              <th>Event</th>
-              <th>Hours</th>
-              <th>Status</th>
-              <th>Remarks</th>
-              <th id="actionsHeader">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="overtimeTableBody">
-            <tr><td colspan="7" style="text-align:center; padding: 40px;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-</div>
-
-<div id="modal" class="modal">
-  <div class="modal-card">
-    <div class="modal-header">
-      <div id="modalTitle" class="modal-title"></div>
-      <button type="button" class="modal-close" id="modalClose">&times;</button>
-    </div>
-    <form id="modalForm" class="modal-form">
-      <div id="modalBody" class="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
-        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script type="module" src="/js/auth-common.js"></script>
-<script src="/js/logout-handler.js"></script>
-<script src="/js/dashboard.js"></script>
-<script type="module">
 import { getUser, fetchJson } from '/js/auth-common.js';
 
 const el = id => document.getElementById(id);
@@ -122,12 +14,6 @@ await new Promise(resolve => {
 // Display user info
 el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
-
-// Hide actions column for basic users
-if (user.type === 'basic') {
-  const actionsHeader = el('actionsHeader');
-  if (actionsHeader) actionsHeader.style.display = 'none';
-}
 
 async function loadStaff() {
   try {
@@ -155,30 +41,32 @@ function updateMetrics() {
   const pending = overtimeData.filter(o => o.status === 'pending').length;
   const paid = overtimeData.filter(o => o.status === 'paid').length;
   
-  // Calculate total hours for current month
   const now = new Date();
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const thisMonthHours = overtimeData
-    .filter(o => o.event_date && o.event_date.startsWith(currentMonth))
-    .reduce((sum, o) => sum + (parseFloat(o.hours) || 0), 0);
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+  const totalHours = overtimeData.filter(o => {
+    if (!o.event_date) return false;
+    const d = new Date(o.event_date);
+    return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+  }).reduce((sum, o) => sum + (parseFloat(o.hours) || 0), 0);
   
   el('totalOvertime').textContent = total;
-  el('pendingCount').textContent = pending;
-  el('paidCount').textContent = paid;
-  el('totalHours').textContent = Math.round(thisMonthHours * 10) / 10;
+  el('pendingOvertime').textContent = pending;
+  el('paidOvertime').textContent = paid;
+  el('totalHours').textContent = totalHours.toFixed(1);
 }
 
 function renderTable() {
-  const tbody = el('overtimeTableBody');
-  if (!overtimeData.length) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: #9ca3af;">No overtime records found</td></tr>';
-    return;
-  }
+  const tbody = el('overtimeTable');
+  if (!tbody) return;
   
   tbody.innerHTML = overtimeData.map(item => {
-    const statusBadge = item.status === 'paid' ? '<span style="background:#10b981; color:white; padding:4px 12px; border-radius:12px; font-size:0.85rem;">Paid</span>' :
-                       item.status === 'cancel' ? '<span style="background:#ef4444; color:white; padding:4px 12px; border-radius:12px; font-size:0.85rem;">Cancelled</span>' :
-                       '<span style="background:#f59e0b; color:white; padding:4px 12px; border-radius:12px; font-size:0.85rem;">Pending</span>';
+    const statusColors = {
+      pending: 'background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
+      paid: 'background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
+      cancel: 'background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;'
+    };
+    const statusBadge = `<span style="${statusColors[item.status] || statusColors.pending}">${item.status || 'pending'}</span>`;
     
     const actions = user.type === 'admin' 
       ? `<button class="btn-edit" onclick="editOvertime(${item.id})">✏️</button>
@@ -224,14 +112,14 @@ window.editOvertime = async function(id) {
         </div>
         <div class="form-group">
           <label>Hours *</label>
-          <input type="number" name="hours" value="${item.hours || 0}" step="0.5" min="0" required>
+          <input type="number" name="hours" value="${item.hours || ''}" step="0.5" min="0" required>
         </div>
         <div class="form-group">
           <label>Status *</label>
           <select name="status" required>
             <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
             <option value="paid" ${item.status === 'paid' ? 'selected' : ''}>Paid</option>
-            <option value="cancel" ${item.status === 'cancel' ? 'selected' : ''}>Cancelled</option>
+            <option value="cancel" ${item.status === 'cancel' ? 'selected' : ''}>Cancel</option>
           </select>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
@@ -240,7 +128,7 @@ window.editOvertime = async function(id) {
         </div>
       </div>
     `,
-    context: { entity: 'overtime', action: 'update', id }
+    context: { entity: 'overtime', action: 'edit', id: item.id }
   });
 };
 
@@ -248,11 +136,12 @@ window.deleteOvertime = async function(id) {
   if (!confirm('Are you sure you want to delete this overtime record?')) return;
   
   try {
-    await window.fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
+    await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
+    alert('Overtime deleted successfully');
     await loadOvertime();
-    alert('Overtime record deleted successfully');
   } catch (err) {
-    alert('Failed to delete overtime record: ' + err.message);
+    console.error('Delete failed:', err);
+    alert('Failed to delete overtime: ' + err.message);
   }
 };
 
@@ -279,18 +168,25 @@ el('addOvertimeBtn').addEventListener('click', () => {
         </div>
         <div class="form-group">
           <label>Hours *</label>
-          <input type="number" name="hours" step="0.5" min="0" placeholder="0" required>
+          <input type="number" name="hours" step="0.5" min="0" placeholder="e.g., 4.5" required>
+        </div>
+        <div class="form-group">
+          <label>Status *</label>
+          <select name="status" required>
+            <option value="pending" selected>Pending</option>
+            <option value="paid">Paid</option>
+            <option value="cancel">Cancel</option>
+          </select>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Remarks</label>
-          <textarea name="remarks" rows="3" placeholder="Optional notes"></textarea>
+          <textarea name="remarks" rows="3" placeholder="Additional notes"></textarea>
         </div>
       </div>
     `,
     context: { entity: 'overtime', action: 'create' }
   });
   
-  // Auto-select current user if basic
   setTimeout(() => {
     if (user.type === 'basic') {
       const select = document.getElementById('staffSelect');
@@ -337,7 +233,3 @@ document.addEventListener('modalSubmit', async (e) => {
 // Initialize
 await loadStaff();
 await loadOvertime();
-</script>
-<script type="module" src="/js/overtime-dashboard.js"></script>
-</body>
-</html>

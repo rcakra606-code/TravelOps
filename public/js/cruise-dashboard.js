@@ -1,114 +1,3 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cruise Dashboard - TravelOps</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/app-v2.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/modal.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
-<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
-<div class="app">
-  <aside class="sidebar">
-    <div class="brand">🚀 TravelOps</div>
-    <div class="nav">
-      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
-      <a href="/sales-dashboard.html">💰 Sales Dashboard</a>
-      <a href="/tours-dashboard.html">🧳 Tours Dashboard</a>
-      <a href="/documents-dashboard.html">📄 Documents Dashboard</a>
-      <a href="/overtime-dashboard.html">⏰ Overtime Dashboard</a>
-      <a href="/cruise-dashboard.html" class="active">🚢 Cruise Dashboard</a>
-      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
-      <a href="/reports-dashboard.html">📊 Reports Center</a>
-      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
-    </div>
-    <div class="userbox" style="margin-top:18px">
-      <div id="userName">—</div>
-      <div id="userRole">—</div>
-    </div>
-  </aside>
-
-  <main class="main">
-    <div class="header">
-      <div>
-        <h2>🚢 Cruise Management</h2>
-        <div class="small">Kelola data cruise bookings</div>
-      </div>
-      <button id="addCruiseBtn" class="btn btn-primary">+ Tambah Cruise</button>
-    </div>
-
-    <div class="card">
-      <div class="dashboard-metrics">
-        <div class="metric-card">
-          <div class="metric-title">Total Cruises</div>
-          <div class="metric-value" id="totalCruises">0</div>
-          <div class="metric-subtitle">All bookings</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Upcoming</div>
-          <div class="metric-value" id="upcomingCruises">0</div>
-          <div class="metric-subtitle">Next 30 days</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Active</div>
-          <div class="metric-value" id="activeCruises">0</div>
-          <div class="metric-subtitle">Currently sailing</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">This Month</div>
-          <div class="metric-value" id="thisMonthCruises">0</div>
-          <div class="metric-subtitle">Sailings</div>
-        </div>
-      </div>
-
-      <div style="overflow-x:auto; margin-top: 24px;">
-        <table class="dashboard-table">
-          <thead>
-            <tr>
-              <th>Brand</th>
-              <th>Ship Name</th>
-              <th>Sailing Start</th>
-              <th>Sailing End</th>
-              <th>Route</th>
-              <th>PIC</th>
-              <th>Reservation</th>
-              <th>Staff</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody id="cruiseTableBody">
-            <tr><td colspan="9" style="text-align:center; padding: 40px;">Loading...</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </main>
-</div>
-
-<div id="modal" class="modal">
-  <div class="modal-card modal-large">
-    <div class="modal-header">
-      <div id="modalTitle" class="modal-title"></div>
-      <button type="button" class="modal-close" id="modalClose">&times;</button>
-    </div>
-    <form id="modalForm" class="modal-form">
-      <div id="modalBody" class="modal-body"></div>
-      <div class="modal-footer">
-        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
-        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<script type="module" src="/js/auth-common.js"></script>
-<script src="/js/logout-handler.js"></script>
-<script src="/js/dashboard.js"></script>
-<script type="module">
 import { getUser, fetchJson } from '/js/auth-common.js';
 
 const el = id => document.getElementById(id);
@@ -164,8 +53,11 @@ function updateMetrics() {
     return start <= now && end >= now;
   }).length;
   
-  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-  const thisMonth = cruiseData.filter(c => c.sailing_start && c.sailing_start.startsWith(currentMonth)).length;
+  const thisMonth = cruiseData.filter(c => {
+    if (!c.sailing_start) return false;
+    const sailDate = new Date(c.sailing_start);
+    return sailDate.getMonth() === now.getMonth() && sailDate.getFullYear() === now.getFullYear();
+  }).length;
   
   el('totalCruises').textContent = total;
   el('upcomingCruises').textContent = upcoming;
@@ -174,11 +66,8 @@ function updateMetrics() {
 }
 
 function renderTable() {
-  const tbody = el('cruiseTableBody');
-  if (!cruiseData.length) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 40px; color: #9ca3af;">No cruise records found</td></tr>';
-    return;
-  }
+  const tbody = el('cruiseTable');
+  if (!tbody) return;
   
   tbody.innerHTML = cruiseData.map(item => `
     <tr>
@@ -255,25 +144,26 @@ window.editCruise = async function(id) {
         </div>
       </div>
     `,
-    context: { entity: 'cruise', action: 'update', id }
+    context: { entity: 'cruise', action: 'edit', id: item.id }
   });
 };
 
 window.deleteCruise = async function(id) {
-  if (!confirm('Are you sure you want to delete this cruise record?')) return;
+  if (!confirm('Are you sure you want to delete this cruise?')) return;
   
   try {
-    await window.fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
+    await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
+    alert('Cruise deleted successfully');
     await loadCruises();
-    alert('Cruise record deleted successfully');
   } catch (err) {
-    alert('Failed to delete cruise record: ' + err.message);
+    console.error('Delete failed:', err);
+    alert('Failed to delete cruise: ' + err.message);
   }
 };
 
 el('addCruiseBtn').addEventListener('click', () => {
   window.openModal({
-    title: 'Add Cruise',
+    title: 'Add New Cruise',
     size: 'large',
     bodyHtml: `
       <div class="form-grid">
@@ -374,7 +264,3 @@ document.addEventListener('modalSubmit', async (e) => {
 
 await loadStaff();
 await loadCruises();
-</script>
-<script type="module" src="/js/cruise-dashboard.js"></script>
-</body>
-</html>
