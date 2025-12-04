@@ -1,7 +1,13 @@
-// Wait for auth-common.js to load
+// Wait for auth-common.js and dashboard.js to load
 await new Promise(resolve => {
-  if (window.getUser && window.fetchJson) resolve();
-  else window.addEventListener('load', resolve);
+  const checkReady = () => {
+    if (window.getUser && window.fetchJson && window.openModal) {
+      resolve();
+    } else {
+      setTimeout(checkReady, 50);
+    }
+  };
+  checkReady();
 });
 
 const getUser = window.getUser;
@@ -11,12 +17,6 @@ const el = id => document.getElementById(id);
 let overtimeData = [];
 let staffList = [];
 const user = getUser();
-
-// Wait for dashboard.js to load
-await new Promise(resolve => {
-  if (window.openModal) resolve();
-  else window.addEventListener('load', resolve);
-});
 
 // Display user info
 el('userName').textContent = user.name || user.username || '—';
