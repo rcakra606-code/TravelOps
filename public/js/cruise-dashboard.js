@@ -73,7 +73,7 @@ function updateMetrics() {
 }
 
 function renderTable() {
-  const tbody = el('cruiseTable');
+  const tbody = el('cruiseTableBody');
   if (!tbody) return;
   
   tbody.innerHTML = cruiseData.map(item => `
