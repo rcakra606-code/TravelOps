@@ -334,6 +334,38 @@ el('addCruiseBtn').addEventListener('click', () => {
   }, 100);
 });
 
+// Handle modal form submissions
+document.addEventListener('modalSubmit', async (e) => {
+  const { data, context } = e.detail;
+  if (context.entity !== 'cruise') return;
+  
+  e.preventDefault();
+  
+  try {
+    if (context.action === 'create') {
+      await fetchJson('/api/cruise', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert('Cruise added successfully');
+    } else if (context.action === 'edit' && context.id) {
+      await fetchJson(`/api/cruise/${context.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      alert('Cruise updated successfully');
+    }
+    
+    await loadCruises();
+  } catch (err) {
+    console.error('Cruise submission failed:', err);
+    alert('Operation failed: ' + err.message);
+    throw err;
+  }
+});
+
 await loadStaff();
 await loadCruises();
 </script>
