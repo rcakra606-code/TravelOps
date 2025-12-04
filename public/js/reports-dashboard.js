@@ -558,6 +558,26 @@ function renderToursProfitability(data) {
       <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.totalTours || 0}</div>
       <div style="font-size: 0.9rem; color: var(--text-secondary);">Active tours</div>
     </div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #10b981, #059669); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">✅</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Invoiced</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.invoicedTours || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Sudah diinvoice</div>
+    </div>
+    <div class="metric-card" style="padding: 24px; border-radius: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+        <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 24px;">⏳</div>
+        <div style="flex: 1;">
+          <div style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Not Invoiced</div>
+        </div>
+      </div>
+      <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary); margin-bottom: 8px;">${data.summary.notInvoicedTours || 0}</div>
+      <div style="font-size: 0.9rem; color: var(--text-secondary);">Belum diinvoice</div>
+    </div>
   `;
   
   const chartsSection = document.getElementById('chartsSection');

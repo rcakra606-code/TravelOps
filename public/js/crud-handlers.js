@@ -655,6 +655,10 @@ function openAddTourModal() {
           <label>Discount Remarks</label>
           <input type="text" name="discount_remarks" placeholder="Keterangan diskon">
         </div>
+        <div class="form-group">
+          <label>Invoice Number</label>
+          <input type="text" name="invoice_number" placeholder="Nomor invoice">
+        </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Link Pelunasan Tour & Bukti Discount</label>
           <input type="url" name="link_pelunasan_tour" placeholder="Upload to Google Drive or Lark">
@@ -763,6 +767,10 @@ function openEditTourModal(id) {
         <div class="form-group">
           <label>Discount Remarks</label>
           <input type="text" name="discount_remarks" value="${item.discount_remarks || ''}">
+        </div>
+        <div class="form-group">
+          <label>Invoice Number</label>
+          <input type="text" name="invoice_number" value="${item.invoice_number || ''}" placeholder="Nomor invoice">
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Link Pelunasan Tour & Bukti Discount</label>
@@ -2227,7 +2235,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function downloadTemplate(entity) {
   const templates = {
     sales: 'transaction_date,invoice_no,staff_name,status,sales_amount,profit_amount,notes',
-    tours: 'registration_date,lead_passenger,all_passengers,tour_code,region_id,departure_date,booking_code,tour_price,sales_amount,profit_amount,staff_name,jumlah_peserta,phone_number,email,status,link_pelunasan_tour',
+    tours: 'registration_date,lead_passenger,all_passengers,tour_code,region_id,departure_date,booking_code,tour_price,sales_amount,profit_amount,staff_name,jumlah_peserta,phone_number,email,status,link_pelunasan_tour,invoice_number',
     documents: 'receive_date,send_date,guest_name,passport_country,process_type,booking_code,invoice_number,phone_number,estimated_done,staff_name,tour_code,notes',
     targets: 'month,year,staff_name,target_sales,target_profit'
   };
@@ -2267,7 +2275,7 @@ async function handleImportCsv(entity, event) {
     // Allowed columns per entity (reflect current schema). Extra columns rejected early.
     const allowed = {
       sales: ['transaction_date','invoice_no','unique_code','staff_name','status','sales_amount','profit_amount','notes','region_id'],
-      tours: ['registration_date','lead_passenger','all_passengers','tour_code','region_id','departure_date','booking_code','tour_price','sales_amount','profit_amount','discount_amount','discount_remarks','staff_name','jumlah_peserta','phone_number','email','status','link_pelunasan_tour'],
+      tours: ['registration_date','lead_passenger','all_passengers','tour_code','region_id','departure_date','booking_code','tour_price','sales_amount','profit_amount','discount_amount','discount_remarks','staff_name','jumlah_peserta','phone_number','email','status','link_pelunasan_tour','invoice_number'],
       documents: ['receive_date','send_date','guest_name','passport_country','process_type','booking_code','invoice_number','phone_number','estimated_done','staff_name','tour_code','notes'],
       targets: ['month','year','staff_name','target_sales','target_profit'],
       telecom: ['nama','no_telephone','type_product','region_id','tanggal_mulai','tanggal_selesai','no_rekening','bank','nama_rekening','estimasi_pengambilan','staff_name','deposit','jumlah_deposit','tanggal_pengambilan','tanggal_pengembalian'],

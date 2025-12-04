@@ -210,11 +210,17 @@ async function renderDashboard() {
       return depDate >= now && depDate <= thirtyDaysLater;
     }).length;
     
+    // Calculate invoice statistics
+    const invoicedCount = toursData.filter(t => t.invoice_number && t.invoice_number.trim() !== '').length;
+    const notInvoicedCount = totalTours - invoicedCount;
+    
     // Update metrics
     el('totalParticipants').textContent = totalParticipants;
     el('totalTours').textContent = totalTours;
     el('avgParticipants').textContent = avgParticipants;
     el('upcomingDepartures').textContent = upcomingCount;
+    el('invoicedTours').textContent = invoicedCount;
+    el('notInvoicedTours').textContent = notInvoicedCount;
     
     // Chart options
     const commonOptions = {

@@ -140,6 +140,7 @@ async function createSchema(db) {
     email TEXT,
     status TEXT DEFAULT 'Pending',
     link_pelunasan_tour TEXT,
+    invoice_number TEXT,
     created_at ${ts} ${createdDefault}
   )`);
 
@@ -210,6 +211,35 @@ async function createSchema(db) {
     guest_list TEXT,
     supplier_code TEXT,
     supplier_name TEXT,
+    staff_name TEXT,
+    created_at ${ts} ${createdDefault}
+  )`);
+
+  // Overtime
+  await db.run(`CREATE TABLE IF NOT EXISTS overtime (
+    id ${idCol},
+    staff_name TEXT NOT NULL,
+    event_name TEXT,
+    event_date ${text()},
+    hours ${num()} DEFAULT 0,
+    status TEXT DEFAULT 'pending',
+    remarks TEXT,
+    created_at ${ts} ${createdDefault}
+  )`);
+
+  // Cruise
+  await db.run(`CREATE TABLE IF NOT EXISTS cruise (
+    id ${idCol},
+    cruise_brand TEXT,
+    ship_name TEXT,
+    sailing_start ${text()},
+    sailing_end ${text()},
+    route TEXT,
+    pic_name TEXT,
+    participant_names TEXT,
+    phone_number TEXT,
+    email TEXT,
+    reservation_code TEXT,
     staff_name TEXT,
     created_at ${ts} ${createdDefault}
   )`);
@@ -317,6 +347,7 @@ async function createSchema(db) {
   await ensureColumn('tours', 'link_pelunasan_tour', 'TEXT');
   await ensureColumn('tours', 'remarks', 'TEXT');
   await ensureColumn('tours', 'total_nominal_sales', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tours', 'invoice_number', 'TEXT');
 
   // Telecom: all columns used by frontend
   await ensureColumn('telecom', 'nama', 'TEXT');

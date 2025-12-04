@@ -1,9 +1,10 @@
 import cron from 'node-cron';
-import { sendDepartureReminder } from './emailService.js';
+import { sendDepartureReminder, sendCruiseReminder } from './emailService.js';
 import { logger } from './logger.js';
 
-// Reminder intervals in days before departure
-const REMINDER_DAYS = [7, 3, 2, 1, 0];
+// Reminder intervals in days before departure/sailing
+const TOUR_REMINDER_DAYS = [7, 3, 2, 1, 0];
+const CRUISE_REMINDER_DAYS = [30, 15, 7, 3, 2, 1];
 
 let db;
 let schedulerActive = false;
@@ -50,9 +51,10 @@ function initScheduler(database) {
   
   // Run daily at 9:00 AM
   cron.schedule('0 9 * * *', async () => {
-    logger.info('Running daily departure reminder check...');
+    logger.info('Running daily tour and cruise reminder check...');
     try {
       await checkAndSendReminders();
+      await checkAndSendCruiseReminders();
     } catch (error) {
       logger.error({ error: error.message }, 'Error in scheduled reminder check');
     }
@@ -61,10 +63,11 @@ function initScheduler(database) {
   // Optional: Run every hour during business hours (9 AM - 6 PM)
   // cron.schedule('0 9-18 * * *', async () => {
   //   await checkAndSendReminders();
+  //   await checkAndSendCruiseReminders();
   // });
 
   schedulerActive = true;
-  logger.info('Departure reminder scheduler initialized - Daily at 9:00 AM');
+  logger.info('Tour and Cruise reminder scheduler initialized - Daily at 9:00 AM');
   logger.info('Note: Email reminders require SMTP configuration to function');
   
   // Run once on startup for testing (optional - commented out by default)
@@ -277,9 +280,170 @@ function getReminderStats() {
   });
 }
 
+/**
+ * Check for cruises that need reminders and send emails
+ */
+async function checkAndSendCruiseReminders() {
+  try {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    logger.info('Checking for cruises requiring sailing reminders...');
+
+    // Get all upcoming cruises
+    const cruises = await getUpcomingCruises();
+    
+    if (cruises.length === 0) {
+      logger.info('No upcoming cruises found');
+      return;
+    }
+
+    logger.info(`Found ${cruises.length} upcoming cruises`);
+
+    const remindersSent = [];
+    const errors = [];
+
+    for (const cruise of cruises) {
+      const sailingDate = new Date(cruise.sailing_start);
+      sailingDate.setHours(0, 0, 0, 0);
+      
+      const daysUntil = Math.ceil((sailingDate - today) / (1000 * 60 * 60 * 24));
+      
+      // Check if this cruise needs a reminder today
+      if (CRUISE_REMINDER_DAYS.includes(daysUntil)) {
+        // Check if reminder was already sent for this day
+        const alreadySent = await checkCruiseReminderSent(cruise.id, daysUntil);
+        
+        if (!alreadySent) {
+          logger.info(`Sending ${daysUntil}-day cruise reminder for ${cruise.ship_name}`);
+          
+          const result = await sendCruiseReminder(cruise, daysUntil);
+          
+          if (result.success) {
+            await recordCruiseReminderSent(cruise.id, daysUntil);
+            remindersSent.push({ cruise: cruise.ship_name, days: daysUntil });
+          } else {
+            errors.push({ cruise: cruise.ship_name, days: daysUntil, error: result.error });
+          }
+          
+          // Add delay between emails to avoid rate limiting
+          await delay(1000);
+        } else {
+          logger.info(`Reminder already sent for cruise ${cruise.ship_name} (${daysUntil} days)`);
+        }
+      }
+    }
+
+    // Log summary
+    if (remindersSent.length > 0) {
+      logger.info(`Successfully sent ${remindersSent.length} cruise reminders`);
+    }
+    if (errors.length > 0) {
+      logger.error(`Failed to send ${errors.length} cruise reminders:`, errors);
+    }
+
+    return { sent: remindersSent, errors };
+  } catch (error) {
+    logger.error('Error in checkAndSendCruiseReminders:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all upcoming cruises from database
+ */
+function getUpcomingCruises() {
+  return new Promise((resolve, reject) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const sql = `
+      SELECT 
+        c.*,
+        u.email as staff_email
+      FROM cruise c
+      LEFT JOIN users u ON c.staff_name = u.name
+      WHERE c.sailing_start >= ?
+        AND u.email IS NOT NULL
+        AND u.email != ''
+      ORDER BY c.sailing_start ASC
+    `;
+
+    db.all(sql, [today], (err, rows) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(rows || []);
+      }
+    });
+  });
+}
+
+/**
+ * Check if a cruise reminder has already been sent
+ */
+function checkCruiseReminderSent(cruiseId, daysUntil) {
+  return new Promise((resolve, reject) => {
+    // First, ensure the table exists
+    const createTableSql = db.dialect === 'postgres' 
+      ? `CREATE TABLE IF NOT EXISTS cruise_reminders (
+          id SERIAL PRIMARY KEY,
+          cruise_id INTEGER NOT NULL,
+          days_until_sailing INTEGER NOT NULL,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(cruise_id, days_until_sailing)
+        )`
+      : `CREATE TABLE IF NOT EXISTS cruise_reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          cruise_id INTEGER NOT NULL,
+          days_until_sailing INTEGER NOT NULL,
+          sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(cruise_id, days_until_sailing)
+        )`;
+
+    db.run(createTableSql, (err) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      // Check if reminder exists
+      const sql = `
+        SELECT COUNT(*) as count 
+        FROM cruise_reminders 
+        WHERE cruise_id = ? AND days_until_sailing = ?
+      `;
+
+      db.get(sql, [cruiseId, daysUntil], (err, row) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(row.count > 0);
+        }
+      });
+    });
+  });
+}
+
+/**
+ * Record that a cruise reminder was sent
+ */
+function recordCruiseReminderSent(cruiseId, daysUntil) {
+  return new Promise((resolve, reject) => {
+    const sql = `INSERT INTO cruise_reminders (cruise_id, days_until_sailing) VALUES (?, ?)`;
+    db.run(sql, [cruiseId, daysUntil], (err) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+}
+
 export {
   initScheduler,
   checkAndSendReminders,
+  checkAndSendCruiseReminders,
   manualTrigger,
   getReminderStats
 };

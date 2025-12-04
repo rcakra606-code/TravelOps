@@ -212,8 +212,8 @@ export async function createApp() {
     }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings'];
-  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings']);
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise'];
+  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise']);
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{
@@ -290,6 +290,17 @@ export async function createApp() {
           rows = await db.all(`SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id ${whereClause}`, params);
         } else if (t === 'documents') {
           rows = await db.all(`SELECT * FROM ${t} ${whereClause}`, params);
+        } else if (t === 'overtime') {
+          // For overtime: basic users see only their own, admin/semi-admin see all
+          if (req.user.type === 'basic') {
+            const overtimeWhere = whereClause ? `${whereClause} AND staff_name=${isPg ? `$${params.length+1}` : '?'}` : `WHERE staff_name=${isPg ? '$1' : '?'}`;
+            params.push(req.user.name);
+            rows = await db.all(`SELECT * FROM overtime ${overtimeWhere} ORDER BY event_date DESC`, params);
+          } else {
+            rows = await db.all(`SELECT * FROM overtime ${whereClause} ORDER BY event_date DESC`, params);
+          }
+        } else if (t === 'cruise') {
+          rows = await db.all(`SELECT * FROM cruise ${whereClause} ORDER BY sailing_start DESC`, params);
         } else {
           rows = await db.all(`SELECT * FROM ${t}`);
         }
@@ -304,6 +315,10 @@ export async function createApp() {
       if (t === 'users' && req.body.password) {
         if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil dan angka' });
         req.body.password = await bcrypt.hash(req.body.password, 10);
+      }
+      // Auto-set overtime status to 'pending' for new records
+      if (t === 'overtime' && !req.body.status) {
+        req.body.status = 'pending';
       }
       if (staffOwnedTables.has(t)) {
         if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
@@ -323,6 +338,8 @@ export async function createApp() {
     });
     app.put(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
       if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+      // Overtime edit is admin-only
+      if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
       if (req.user.type === 'basic') {
         const record = await db.get(`SELECT * FROM ${t} WHERE id=?`, [req.params.id]);
         if (!record) return res.status(404).json({ error:'Not found' });
@@ -341,6 +358,8 @@ export async function createApp() {
       res.json({ updated:true });
     });
     app.delete(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
+      // Overtime delete is admin-only
+      if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete overtime records' });
       if (req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
       const id = req.params.id;
       await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
@@ -772,7 +791,9 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
     `SELECT 
       COUNT(*) as totalTours,
       COALESCE(SUM(sales_amount), 0) as totalRevenue,
-      COALESCE(SUM(profit_amount), 0) as totalProfit
+      COALESCE(SUM(profit_amount), 0) as totalProfit,
+      SUM(CASE WHEN invoice_number IS NOT NULL AND invoice_number != '' THEN 1 ELSE 0 END) as invoicedTours,
+      SUM(CASE WHEN invoice_number IS NULL OR invoice_number = '' THEN 1 ELSE 0 END) as notInvoicedTours
     FROM tours t ${whereClause}`,
     params
   );

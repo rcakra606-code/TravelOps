@@ -276,7 +276,222 @@ async function sendTestEmail(toEmail) {
   }
 }
 
+/**
+ * Send cruise sailing reminder email
+ * @param {Object} cruise - Cruise details
+ * @param {number} daysUntil - Days until sailing
+ */
+async function sendCruiseReminder(cruise, daysUntil) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping cruise reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
+  try {
+    const subject = getCruiseSubject(daysUntil, cruise.ship_name);
+    const htmlContent = getCruiseEmailTemplate(cruise, daysUntil);
+    
+    // Send to staff user's email
+    if (!cruise.staff_email) {
+      logger.warn(`No staff email found for cruise ${cruise.ship_name}`);
+      return { success: false, error: 'No staff email address' };
+    }
+
+    const mailOptions = {
+      from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
+      to: cruise.staff_email,
+      subject: subject,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(`Cruise reminder sent for ${cruise.ship_name} (${daysUntil} days) to ${cruise.staff_email}`);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error(`Failed to send cruise reminder for ${cruise.ship_name}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate subject line based on days until sailing
+ */
+function getCruiseSubject(daysUntil, shipName) {
+  if (daysUntil === 0) {
+    return `⚓ Your Cruise Departs TODAY! - ${shipName}`;
+  } else if (daysUntil === 1) {
+    return `⏰ Reminder: Your Cruise Departs TOMORROW - ${shipName}`;
+  } else if (daysUntil <= 7) {
+    return `🚢 Reminder: Your Cruise Departs in ${daysUntil} Days - ${shipName}`;
+  } else {
+    return `📅 Upcoming Cruise Reminder: ${daysUntil} Days - ${shipName}`;
+  }
+}
+
+/**
+ * Generate HTML email template for cruise reminder
+ */
+function getCruiseEmailTemplate(cruise, daysUntil) {
+  const urgencyLevel = daysUntil <= 2 ? 'high' : daysUntil <= 7 ? 'medium' : 'low';
+  const urgencyColor = urgencyLevel === 'high' ? '#dc2626' : urgencyLevel === 'medium' ? '#f59e0b' : '#2563eb';
+  
+  let messageText = '';
+  if (daysUntil === 0) {
+    messageText = '⚓ <strong>Your cruise departs TODAY!</strong> Bon voyage!';
+  } else if (daysUntil === 1) {
+    messageText = '⏰ <strong>Your cruise departs TOMORROW!</strong> Please ensure all preparations are complete.';
+  } else if (daysUntil <= 7) {
+    messageText = `🚢 Your cruise departs in <strong>${daysUntil} days</strong>. Final preparations should be underway.`;
+  } else {
+    messageText = `📅 Your cruise departs in <strong>${daysUntil} days</strong>. Time to start planning!`;
+  }
+
+  // Format dates
+  const sailingStart = new Date(cruise.sailing_start).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const sailingEnd = new Date(cruise.sailing_end).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+    .header { background: linear-gradient(135deg, #0891b2 0%, #1e40af 100%); padding: 40px 30px; text-align: center; color: white; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+    .content { padding: 40px 30px; }
+    .alert-box { background-color: ${urgencyColor}10; border-left: 4px solid ${urgencyColor}; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .cruise-details { background-color: #f0f9ff; padding: 25px; border-radius: 12px; margin: 25px 0; border: 2px solid #0891b2; }
+    .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #e0f2fe; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-weight: 600; color: #0c4a6e; width: 140px; flex-shrink: 0; }
+    .detail-value { color: #1f2937; flex: 1; }
+    .checklist { background-color: #ecfdf5; padding: 25px; border-radius: 12px; margin: 25px 0; border: 1px solid #10b981; }
+    .checklist h3 { margin-top: 0; color: #059669; }
+    .checklist ul { margin: 10px 0; padding-left: 25px; }
+    .checklist li { margin: 8px 0; color: #047857; }
+    .footer { background-color: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+    .countdown { text-align: center; font-size: 48px; font-weight: 700; color: ${urgencyColor}; margin: 20px 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚓ TravelOps Cruise Reminder</h1>
+    </div>
+    
+    <div class="content">
+      <div class="alert-box">
+        <p style="margin: 0; font-size: 16px;">${messageText}</p>
+      </div>
+      
+      <div class="countdown">${daysUntil}</div>
+      <p style="text-align: center; color: #6b7280; margin-top: -10px;">
+        ${daysUntil === 1 ? 'day' : 'days'} until sailing
+      </p>
+      
+      <div class="cruise-details">
+        <h2 style="margin-top: 0; color: #0c4a6e;">🚢 Cruise Details</h2>
+        
+        <div class="detail-row">
+          <div class="detail-label">Cruise Brand:</div>
+          <div class="detail-value"><strong>${cruise.cruise_brand || 'N/A'}</strong></div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Ship Name:</div>
+          <div class="detail-value"><strong>${cruise.ship_name || 'N/A'}</strong></div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Route:</div>
+          <div class="detail-value">${cruise.route || 'N/A'}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Sailing Start:</div>
+          <div class="detail-value"><strong>${sailingStart}</strong></div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Sailing End:</div>
+          <div class="detail-value"><strong>${sailingEnd}</strong></div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">PIC:</div>
+          <div class="detail-value">${cruise.pic_name || 'N/A'}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Participants:</div>
+          <div class="detail-value">${cruise.participant_names || 'N/A'}</div>
+        </div>
+        
+        <div class="detail-row">
+          <div class="detail-label">Reservation Code:</div>
+          <div class="detail-value"><strong>${cruise.reservation_code || 'N/A'}</strong></div>
+        </div>
+        
+        ${cruise.phone_number ? `
+        <div class="detail-row">
+          <div class="detail-label">Contact Phone:</div>
+          <div class="detail-value">${cruise.phone_number}</div>
+        </div>
+        ` : ''}
+        
+        ${cruise.email ? `
+        <div class="detail-row">
+          <div class="detail-label">Contact Email:</div>
+          <div class="detail-value">${cruise.email}</div>
+        </div>
+        ` : ''}
+        
+        <div class="detail-row">
+          <div class="detail-label">Staff:</div>
+          <div class="detail-value">${cruise.staff_name || 'N/A'}</div>
+        </div>
+      </div>
+      
+      ${daysUntil <= 7 ? `
+      <div class="checklist">
+        <h3>✅ Pre-Cruise Checklist</h3>
+        <ul>
+          <li>Verify all passenger documentation and passports</li>
+          <li>Confirm reservation code with cruise line</li>
+          <li>Check in with participants regarding embarkation time</li>
+          <li>Review cruise itinerary and shore excursions</li>
+          <li>Ensure contact information is current</li>
+          <li>Prepare travel insurance documents</li>
+          ${daysUntil <= 3 ? '<li><strong>Final confirmation with all participants</strong></li>' : ''}
+          ${daysUntil <= 1 ? '<li><strong>Emergency contact confirmation</strong></li>' : ''}
+        </ul>
+      </div>
+      ` : ''}
+      
+      <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+        This is an automated reminder from TravelOps. Please ensure all cruise preparations are on track.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p><strong>TravelOps</strong></p>
+      <p>Travel Operations Management System</p>
+      <p style="margin-top: 20px; font-size: 12px;">
+        This email was sent to ${cruise.staff_email} as the assigned staff member for this cruise.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export {
   sendDepartureReminder,
+  sendCruiseReminder,
   sendTestEmail
 };

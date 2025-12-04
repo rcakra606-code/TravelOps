@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cruise Dashboard - TravelOps</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales Dashboard</a>
+      <a href="/tours-dashboard.html">🧳 Tours Dashboard</a>
+      <a href="/documents-dashboard.html">📄 Documents Dashboard</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime Dashboard</a>
+      <a href="/cruise-dashboard.html" class="active">🚢 Cruise Dashboard</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports Center</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>🚢 Cruise Management</h2>
+        <div class="small">Kelola data cruise bookings</div>
+      </div>
+      <button id="addCruiseBtn" class="btn btn-primary">+ Tambah Cruise</button>
+    </div>
+
+    <div class="card">
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Cruises</div>
+          <div class="metric-value" id="totalCruises">0</div>
+          <div class="metric-subtitle">All bookings</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Upcoming</div>
+          <div class="metric-value" id="upcomingCruises">0</div>
+          <div class="metric-subtitle">Next 30 days</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Active</div>
+          <div class="metric-value" id="activeCruises">0</div>
+          <div class="metric-subtitle">Currently sailing</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">This Month</div>
+          <div class="metric-value" id="thisMonthCruises">0</div>
+          <div class="metric-subtitle">Sailings</div>
+        </div>
+      </div>
+
+      <div style="overflow-x:auto; margin-top: 24px;">
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>Brand</th>
+              <th>Ship Name</th>
+              <th>Sailing Start</th>
+              <th>Sailing End</th>
+              <th>Route</th>
+              <th>PIC</th>
+              <th>Reservation</th>
+              <th>Staff</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cruiseTableBody">
+            <tr><td colspan="9" style="text-align:center; padding: 40px;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-card modal-large">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title"></div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/dashboard.js"></script>
+<script type="module">
+import { getUser, fetchJson } from '/js/auth-common.js';
+
+const el = id => document.getElementById(id);
+let cruiseData = [];
+let staffList = [];
+const user = getUser();
+
+el('userName').textContent = user.name || user.username || '—';
+el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+
+async function loadStaff() {
+  try {
+    const users = await fetchJson('/api/users');
+    staffList = users || [];
+  } catch (err) {
+    console.error('Failed to load staff:', err);
+  }
+}
+
+async function loadCruises() {
+  try {
+    const data = await fetchJson('/api/cruise');
+    cruiseData = data || [];
+    renderTable();
+    updateMetrics();
+  } catch (err) {
+    console.error('Failed to load cruises:', err);
+    alert('Failed to load cruise data');
+  }
+}
+
+function updateMetrics() {
+  const total = cruiseData.length;
+  const now = new Date();
+  const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
+  
+  const upcoming = cruiseData.filter(c => {
+    if (!c.sailing_start) return false;
+    const sailDate = new Date(c.sailing_start);
+    return sailDate >= now && sailDate <= thirtyDaysLater;
+  }).length;
+  
+  const active = cruiseData.filter(c => {
+    if (!c.sailing_start || !c.sailing_end) return false;
+    const start = new Date(c.sailing_start);
+    const end = new Date(c.sailing_end);
+    return start <= now && end >= now;
+  }).length;
+  
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const thisMonth = cruiseData.filter(c => c.sailing_start && c.sailing_start.startsWith(currentMonth)).length;
+  
+  el('totalCruises').textContent = total;
+  el('upcomingCruises').textContent = upcoming;
+  el('activeCruises').textContent = active;
+  el('thisMonthCruises').textContent = thisMonth;
+}
+
+function renderTable() {
+  const tbody = el('cruiseTableBody');
+  if (!cruiseData.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 40px; color: #9ca3af;">No cruise records found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = cruiseData.map(item => `
+    <tr>
+      <td>${item.cruise_brand || '—'}</td>
+      <td>${item.ship_name || '—'}</td>
+      <td>${item.sailing_start || '—'}</td>
+      <td>${item.sailing_end || '—'}</td>
+      <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.route || '—'}</td>
+      <td>${item.pic_name || '—'}</td>
+      <td>${item.reservation_code || '—'}</td>
+      <td>${item.staff_name || '—'}</td>
+      <td>
+        <button class="btn-edit" onclick="editCruise(${item.id})">✏️</button>
+        ${user.type !== 'basic' ? `<button class="btn-delete" onclick="deleteCruise(${item.id})">🗑️</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.editCruise = async function(id) {
+  const item = cruiseData.find(c => c.id === id);
+  if (!item) return;
+  
+  window.openModal({
+    title: 'Edit Cruise',
+    size: 'large',
+    bodyHtml: `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cruise Brand *</label>
+          <input type="text" name="cruise_brand" value="${item.cruise_brand || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Ship Name *</label>
+          <input type="text" name="ship_name" value="${item.ship_name || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Sailing Start *</label>
+          <input type="date" name="sailing_start" value="${item.sailing_start || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Sailing End *</label>
+          <input type="date" name="sailing_end" value="${item.sailing_end || ''}" required>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Route *</label>
+          <input type="text" name="route" value="${item.route || ''}" placeholder="e.g., Singapore - Penang - Langkawi" required>
+        </div>
+        <div class="form-group">
+          <label>PIC Name *</label>
+          <input type="text" name="pic_name" value="${item.pic_name || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Participant Names</label>
+          <input type="text" name="participant_names" value="${item.participant_names || ''}" placeholder="Comma separated">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone_number" value="${item.phone_number || ''}">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" value="${item.email || ''}">
+        </div>
+        <div class="form-group">
+          <label>Reservation Code</label>
+          <input type="text" name="reservation_code" value="${item.reservation_code || ''}">
+        </div>
+        <div class="form-group">
+          <label>Staff Name *</label>
+          <select name="staff_name" required>
+            ${staffList.map(s => `<option value="${s.name}" ${s.name === item.staff_name ? 'selected' : ''}>${s.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    `,
+    context: { entity: 'cruise', action: 'update', id }
+  });
+};
+
+window.deleteCruise = async function(id) {
+  if (!confirm('Are you sure you want to delete this cruise record?')) return;
+  
+  try {
+    await window.fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
+    await loadCruises();
+    alert('Cruise record deleted successfully');
+  } catch (err) {
+    alert('Failed to delete cruise record: ' + err.message);
+  }
+};
+
+el('addCruiseBtn').addEventListener('click', () => {
+  window.openModal({
+    title: 'Add Cruise',
+    size: 'large',
+    bodyHtml: `
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Cruise Brand *</label>
+          <input type="text" name="cruise_brand" placeholder="e.g., Royal Caribbean" required>
+        </div>
+        <div class="form-group">
+          <label>Ship Name *</label>
+          <input type="text" name="ship_name" placeholder="e.g., Symphony of the Seas" required>
+        </div>
+        <div class="form-group">
+          <label>Sailing Start *</label>
+          <input type="date" name="sailing_start" required>
+        </div>
+        <div class="form-group">
+          <label>Sailing End *</label>
+          <input type="date" name="sailing_end" required>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Route *</label>
+          <input type="text" name="route" placeholder="e.g., Singapore - Penang - Langkawi" required>
+        </div>
+        <div class="form-group">
+          <label>PIC Name *</label>
+          <input type="text" name="pic_name" placeholder="Person in charge" required>
+        </div>
+        <div class="form-group">
+          <label>Participant Names</label>
+          <input type="text" name="participant_names" placeholder="Comma separated names">
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone_number" placeholder="+62...">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" placeholder="contact@example.com">
+        </div>
+        <div class="form-group">
+          <label>Reservation Code</label>
+          <input type="text" name="reservation_code" placeholder="Booking reference">
+        </div>
+        <div class="form-group">
+          <label>Staff Name *</label>
+          <select name="staff_name" required id="staffSelect">
+            <option value="">Select staff</option>
+            ${staffList.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+    `,
+    context: { entity: 'cruise', action: 'create' }
+  });
+  
+  setTimeout(() => {
+    if (user.type === 'basic') {
+      const select = document.getElementById('staffSelect');
+      if (select) {
+        select.value = user.name;
+        select.disabled = true;
+      }
+    }
+  }, 100);
+});
+
+await loadStaff();
+await loadCruises();
+</script>
+</body>
+</html>
