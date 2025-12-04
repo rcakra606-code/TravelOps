@@ -1,4 +1,11 @@
-import { getUser, fetchJson } from '/js/auth-common.js';
+// Wait for auth-common.js to load
+await new Promise(resolve => {
+  if (window.getUser && window.fetchJson) resolve();
+  else window.addEventListener('load', resolve);
+});
+
+const getUser = window.getUser;
+const fetchJson = window.fetchJson;
 
 const el = id => document.getElementById(id);
 let overtimeData = [];
