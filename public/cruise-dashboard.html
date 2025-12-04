@@ -116,6 +116,12 @@ let cruiseData = [];
 let staffList = [];
 const user = getUser();
 
+// Wait for dashboard.js to load
+await new Promise(resolve => {
+  if (window.openModal) resolve();
+  else window.addEventListener('load', resolve);
+});
+
 el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 
