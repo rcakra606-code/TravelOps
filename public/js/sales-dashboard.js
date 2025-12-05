@@ -396,16 +396,16 @@ async function renderDashboard() {
     
   } catch (err) {
     console.error('Error rendering dashboard:', err);
-    alert('Error loading dashboard: ' + err.message);
+    toast.error('Error loading dashboard: ' + err.message);
   }
 }
 
 /* === EXPORT CSV === */
 el('exportSalesCSV')?.addEventListener('click', async () => {
   try {
-    const data = await fetchJson('/api/sales');
+    const data = await window.fetchJson('/api/sales');
     if (!data || !data.length) {
-      alert('Tidak ada data untuk di-export');
+      toast.warning('Tidak ada data untuk di-export');
       return;
     }
     
@@ -432,7 +432,7 @@ el('exportSalesCSV')?.addEventListener('click', async () => {
     URL.revokeObjectURL(url);
   } catch (err) {
     console.error('Export error:', err);
-    alert('Error exporting data: ' + err.message);
+    toast.error('Error exporting data: ' + err.message);
   }
 });
 

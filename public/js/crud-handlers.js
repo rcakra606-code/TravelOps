@@ -1411,15 +1411,16 @@ function openEditHotelBookingModal(id) {
 
 /* === DELETE HANDLER === */
 async function deleteItem(entity, id) {
-  if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) return;
+  const confirmed = await confirmDialog.delete();
+  if (!confirmed) return;
   
   try {
     await fetchJson(`/api/${entity}/${id}`, { method: 'DELETE' });
-    alert('Data berhasil dihapus');
+    toast.success('Data berhasil dihapus');
     await loadData(entity);
     renderTable(entity);
   } catch (err) {
-    alert('Gagal menghapus data: ' + err.message);
+    toast.error('Gagal menghapus data: ' + err.message);
   }
 }
 
@@ -1509,7 +1510,7 @@ async function handleModalSubmit(formData, context) {
         method: 'POST',
         body: { password: formData.password }
       });
-      alert('Password berhasil direset');
+      toast.success('Password berhasil direset');
       return true;
     }
 
@@ -1518,13 +1519,13 @@ async function handleModalSubmit(formData, context) {
         method: 'POST',
         body: formData
       });
-      alert('Data berhasil ditambahkan');
+      toast.success('Data berhasil ditambahkan');
     } else if (action === 'update') {
       await fetchJson(`/api/${entity}/${id}`, {
         method: 'PUT',
         body: formData
       });
-      alert('Data berhasil diperbarui');
+      toast.success('Data berhasil diperbarui');
     }
     
     // Reload data
@@ -2122,7 +2123,7 @@ window.crudHandlers = {
 // === VIEW-ONLY MODAL ===
 function openViewItem(entity, id) {
   const item = state[entity].find(r => r.id === id);
-  if (!item) { alert('Data tidak ditemukan'); return; }
+  if (!item) { toast.error('Data tidak ditemukan'); return; }
   const rows = Object.entries(item)
     .filter(([k]) => !['password'].includes(k))
     .map(([k,v]) => `<tr><th style=\"text-align:left;padding:6px 10px;background:#f3f4f6;width:160px;font-weight:600;text-transform:capitalize\">${k.replace(/_/g,' ')}</th><td style=\"padding:6px 10px\">${v ?? '-'}</td></tr>`)
@@ -2138,14 +2139,20 @@ window.openViewItem = openViewItem;
 
 // === UNLOCK USER (Admin) ===
 async function unlockUser(username) {
-  if (!confirm(`Unlock account for ${username}?`)) return;
+  const confirmed = await confirmDialog.custom({
+    title: 'Unlock User',
+    message: `Unlock account for ${username}?`,
+    confirmText: 'Unlock',
+    cancelText: 'Cancel'
+  });
+  if (!confirmed) return;
   try {
     await fetchJson(`/api/users/${username}/unlock`, { method: 'POST' });
-    alert('User unlocked');
+    toast.success('User unlocked');
     await loadUsers();
     renderTable('users');
   } catch (err) {
-    alert('Gagal unlock user: ' + (err.message || 'Unknown error'));
+    toast.error('Gagal unlock user: ' + (err.message || 'Unknown error'));
   }
 }
 
@@ -2153,7 +2160,7 @@ async function unlockUser(username) {
 function exportCsv(entity) {
   const filtered = applyFiltersAndSort(entity);
   if (!filtered.length) {
-    alert('Tidak ada data untuk diexport');
+    toast.warning('Tidak ada data untuk diexport');
     return;
   }
   const headers = Object.keys(filtered[0]).filter(k => !['password'].includes(k));
@@ -2242,7 +2249,7 @@ function downloadTemplate(entity) {
   
   const csv = templates[entity] || '';
   if (!csv) {
-    alert('Template tidak tersedia');
+    toast.error('Template tidak tersedia');
     return;
   }
   
@@ -2266,7 +2273,7 @@ async function handleImportCsv(entity, event) {
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     if (lines.length < 2) {
-      alert('File CSV kosong atau tidak valid');
+      toast.error('File CSV kosong atau tidak valid');
       return;
     }
     
@@ -2301,7 +2308,7 @@ async function handleImportCsv(entity, event) {
     // Validate headers
     const unknownHeaders = headers.filter(h => !allowed.includes(h) && !(needsRegionMap.includes(entity) && h === 'region_name'));
     if (unknownHeaders.length) {
-      alert('Header tidak dikenal: ' + unknownHeaders.join(', ') + '\nHarus salah satu dari: ' + allowed.join(', '));
+      toast.error('Header tidak dikenal: ' + unknownHeaders.join(', ') + '\nHarus salah satu dari: ' + allowed.join(', '));
       return;
     }
 
@@ -2355,12 +2362,12 @@ async function handleImportCsv(entity, event) {
     if (rowErrors.length) {
       msg += '\nContoh error (max 5):\n' + rowErrors.slice(0,5).map(e => `Baris ${e.row}: ${e.error}`).join('\n');
     }
-    alert(msg);
+    toast.info(msg);
 
     await loadData(entity);
     renderTable(entity);
     event.target.value = '';
   } catch (err) {
-    alert('Gagal membaca file CSV: ' + err.message);
+    toast.error('Gagal membaca file CSV: ' + err.message);
   }
 }

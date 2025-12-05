@@ -153,8 +153,10 @@ async function refreshTokenIfNeeded() {
 function handleSessionExpired() {
   localStorage.clear();
   sessionStorage.clear();
-  alert('Session Anda telah berakhir. Silakan login kembali.');
-  window.location.href = '/login.html';
+  toast.error('Session Anda telah berakhir. Silakan login kembali.');
+  setTimeout(() => {
+    window.location.href = '/login.html';
+  }, 1500);
 }
 
 /**
@@ -167,8 +169,10 @@ function checkInactivity() {
     console.warn('User inactive for 30 minutes, logging out...');
     localStorage.clear();
     sessionStorage.clear();
-    alert('Anda telah logout otomatis karena tidak aktif selama 30 menit.');
-    window.location.href = '/login.html';
+    toast.warning('Anda telah logout otomatis karena tidak aktif selama 30 menit.');
+    setTimeout(() => {
+      window.location.href = '/login.html';
+    }, 1500);
     return true;
   }
   return false;
@@ -202,10 +206,12 @@ async function fetchJson(url, opts = {}) {
   
   // Only logout on 401 (invalid/expired token), not 403 (forbidden by permission)
   if (res.status === 401) {
-    alert('Sesi login telah berakhir. Silakan login kembali.');
+    toast.error('Sesi login telah berakhir. Silakan login kembali.');
     localStorage.clear();
     sessionStorage.clear();
-    location.href = '/login.html';
+    setTimeout(() => {
+      location.href = '/login.html';
+    }, 1500);
     return;
   }
   

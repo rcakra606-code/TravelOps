@@ -143,10 +143,11 @@ document.querySelectorAll('#mainNav button[data-section]').forEach(b =>
 // Wire logout link immediately (before DOMContentLoaded)
 const logoutLinkEarly = document.getElementById('logoutLink');
 if (logoutLinkEarly) {
-  logoutLinkEarly.addEventListener('click', (e) => {
+  logoutLinkEarly.addEventListener('click', async (e) => {
     e.preventDefault();
     
-    if (!confirm('Apakah Anda yakin ingin keluar?')) {
+    const confirmed = await confirmDialog.logout();
+    if (!confirmed) {
       return;
     }
     
@@ -253,17 +254,27 @@ function closeModal(confirmed = false) {
   if (!modal) return;
 
   // If not confirmed and form is dirty, prompt user before closing
-  try {
-    const ctx = JSON.parse(modal.dataset.context || '{}');
-    const skippable = ['view','filter'].includes(ctx.action);
-    const isDirty = modal.dataset.dirty === 'true';
-    if (!confirmed && isDirty && !skippable) {
-      const proceed = confirm('Perubahan belum disimpan. Keluar tanpa menyimpan?');
-      if (!proceed) {
-        return; // user canceled close
+  const ctx = JSON.parse(modal.dataset.context || '{}');
+  const skippable = ['view','filter'].includes(ctx.action);
+  const isDirty = modal.dataset.dirty === 'true';
+  
+  if (!confirmed && isDirty && !skippable) {
+    confirmDialog.unsavedChanges().then(proceed => {
+      if (proceed) {
+        // User confirmed, close the modal
+        performModalClose();
       }
-    }
-  } catch { /* ignore parse errors */ }
+      // If not proceed, do nothing (user canceled)
+    });
+    return;
+  }
+  
+  // Direct close for confirmed or non-dirty modals
+  performModalClose();
+}
+
+function performModalClose() {
+  if (!modal) return;
   
   // Add closing animation
   modal.classList.add('closing');
@@ -277,7 +288,7 @@ function closeModal(confirmed = false) {
     if (modal.dataset.onClose) {
       try {
         const callback = new Function(modal.dataset.onClose);
-        callback(confirmed);
+        callback();
       } catch (err) {
         console.error('Modal close callback error:', err);
       }
@@ -435,6 +446,37 @@ if (modalForm) {
       // Get form data
       const formData = new FormData(modalForm);
       const data = Object.fromEntries(formData.entries());
+      
+      // Validate required fields using validationUtils
+      const requiredFields = Array.from(modalForm.querySelectorAll('[required]'));
+      const missingFields = requiredFields.filter(field => !validationUtils.validateRequired(field.value));
+      
+      if (missingFields.length > 0) {
+        const fieldNames = missingFields.map(f => f.name || f.placeholder || 'field').join(', ');
+        toast.error(`Please fill in required fields: ${fieldNames}`);
+        if (modal) modal.classList.remove('loading');
+        return;
+      }
+      
+      // Validate email fields
+      const emailFields = Array.from(modalForm.querySelectorAll('input[type="email"]'));
+      for (const field of emailFields) {
+        if (field.value && !validationUtils.validateEmail(field.value)) {
+          toast.error(`Invalid email format: ${field.value}`);
+          if (modal) modal.classList.remove('loading');
+          return;
+        }
+      }
+      
+      // Validate phone fields
+      const phoneFields = Array.from(modalForm.querySelectorAll('input[type="tel"]'));
+      for (const field of phoneFields) {
+        if (field.value && !validationUtils.validatePhone(field.value)) {
+          toast.error(`Invalid phone format: ${field.value}`);
+          if (modal) modal.classList.remove('loading');
+          return;
+        }
+      }
       
       // Get context data
       const context = JSON.parse(modal?.dataset.context || '{}');
@@ -900,12 +942,12 @@ if (el('pwForm')) {
     
     // Validate password
     if (password.length < 6) {
-      alert('Password minimal 6 karakter');
+      toast.error('Password minimal 6 karakter');
       return;
     }
     
     if (password !== passwordConfirm) {
-      alert('Password dan konfirmasi password tidak sama');
+      toast.error('Password dan konfirmasi password tidak sama');
       return;
     }
     
@@ -916,10 +958,10 @@ if (el('pwForm')) {
         body: { username: user.username, password }
       });
       
-      alert('Password berhasil diubah');
+      toast.success('Password berhasil diubah');
       e.target.reset();
     } catch (err) {
-      alert('Gagal mengubah password: ' + err.message);
+      toast.error('Gagal mengubah password: ' + err.message);
     }
   });
 }

@@ -205,6 +205,14 @@ async function editOvertime(id) {
     `,
     context: { entity: 'overtime', action: 'edit', id: item.id }
   });
+  
+  // Initialize auto-save for edit form
+  setTimeout(() => {
+    const form = document.querySelector('#modalContent form');
+    if (form && window.AutoSave) {
+      new AutoSave(form, 'overtime-edit-' + id);
+    }
+  }, 100);
 };
 
 async function deleteOvertime(id) {
@@ -271,6 +279,12 @@ el('addOvertimeBtn').addEventListener('click', () => {
         select.disabled = true;
       }
     }
+    
+    // Initialize auto-save for create form
+    const form = document.querySelector('#modalContent form');
+    if (form && window.AutoSave) {
+      new AutoSave(form, 'overtime-create');
+    }
   }, 100);
 });
 
@@ -307,10 +321,14 @@ document.addEventListener('modalSubmit', async (e) => {
 });
 
 // Search and filter handlers
-el('searchInput').addEventListener('input', (e) => {
-  filters.search = e.target.value;
+const debouncedSearch = performanceUtils.debounce((value) => {
+  filters.search = value;
   currentPage = 1;
   applyFiltersAndRender();
+}, 300);
+
+el('searchInput').addEventListener('input', (e) => {
+  debouncedSearch(e.target.value);
 });
 
 el('statusFilter').addEventListener('change', (e) => {
