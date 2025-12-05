@@ -208,7 +208,8 @@ async function editOvertime(id) {
 };
 
 async function deleteOvertime(id) {
-  if (!confirm('Are you sure you want to delete this overtime record?')) return;
+  const confirmed = await confirmDialog.delete('this overtime record');
+  if (!confirmed) return;
   
   try {
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });

@@ -348,3 +348,167 @@ window.exportUtils = exportUtils;
 window.filterUtils = filterUtils;
 window.paginationUtils = paginationUtils;
 window.sortUtils = sortUtils;
+
+/* =========================================================
+   FORM VALIDATION UTILITIES
+   ========================================================= */
+const validationUtils = {
+  // Validate email format
+  isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  },
+
+  // Validate phone number (Indonesian format)
+  isValidPhone(phone) {
+    return /^(\+62|62|0)[0-9]{9,12}$/.test(phone.replace(/[\s-]/g, ''));
+  },
+
+  // Validate required fields
+  validateRequired(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return { valid: false, errors: ['Form not found'] };
+
+    const errors = [];
+    const required = form.querySelectorAll('[required]');
+    
+    required.forEach(field => {
+      if (!field.value.trim()) {
+        errors.push(`${field.name || field.id || 'Field'} is required`);
+        field.classList.add('error');
+      } else {
+        field.classList.remove('error');
+      }
+    });
+
+    return { valid: errors.length === 0, errors };
+  },
+
+  // Show validation errors
+  showErrors(errors, containerId = 'validationErrors') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (errors.length === 0) {
+      container.style.display = 'none';
+      return;
+    }
+
+    container.style.display = 'block';
+    container.style.cssText = `
+      background: #fee2e2;
+      border: 1px solid #fecaca;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+    `;
+    
+    container.innerHTML = `
+      <strong style="color: #991b1b;">⚠️ Validation Errors:</strong>
+      <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #dc2626;">
+        ${errors.map(err => `<li>${err}</li>`).join('')}
+      </ul>
+    `;
+  },
+
+  // Clear validation errors
+  clearErrors(formId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
+
+    form.querySelectorAll('.error').forEach(field => {
+      field.classList.remove('error');
+    });
+  }
+};
+
+/* =========================================================
+   PERFORMANCE UTILITIES
+   ========================================================= */
+const performanceUtils = {
+  // Debounce function calls
+  debounce(func, wait = 300) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  },
+
+  // Throttle function calls
+  throttle(func, limit = 300) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  },
+
+  // Lazy load images
+  lazyLoadImages(selector = 'img[data-src]') {
+    const images = document.querySelectorAll(selector);
+    
+    const imageObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const img = entry.target;
+          img.src = img.dataset.src;
+          img.classList.add('loaded');
+          observer.unobserve(img);
+        }
+      });
+    });
+
+    images.forEach(img => imageObserver.observe(img));
+  }
+};
+
+/* =========================================================
+   LOCAL STORAGE UTILITIES
+   ========================================================= */
+const storageUtils = {
+  // Save with expiration
+  setWithExpiry(key, value, ttlMs) {
+    const item = {
+      value: value,
+      expiry: Date.now() + ttlMs
+    };
+    localStorage.setItem(key, JSON.stringify(item));
+  },
+
+  // Get with expiration check
+  getWithExpiry(key) {
+    const itemStr = localStorage.getItem(key);
+    if (!itemStr) return null;
+
+    try {
+      const item = JSON.parse(itemStr);
+      if (Date.now() > item.expiry) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      return item.value;
+    } catch {
+      return null;
+    }
+  },
+
+  // Clear old items
+  clearExpired() {
+    const keys = Object.keys(localStorage);
+    keys.forEach(key => {
+      this.getWithExpiry(key); // This will auto-remove expired items
+    });
+  }
+};
+
+// Export new utilities
+window.validationUtils = validationUtils;
+window.performanceUtils = performanceUtils;
+window.storageUtils = storageUtils;

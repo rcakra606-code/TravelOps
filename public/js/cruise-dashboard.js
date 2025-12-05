@@ -232,7 +232,8 @@ async function editCruise(id) {
 };
 
 async function deleteCruise(id) {
-  if (!confirm('Are you sure you want to delete this cruise?')) return;
+  const confirmed = await confirmDialog.delete('this cruise booking');
+  if (!confirmed) return;
   
   try {
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
