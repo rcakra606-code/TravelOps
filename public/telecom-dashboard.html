@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telecom Dashboard - TravelOps</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/dashboard-customization.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html" class="active">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>📞 Telecom Expenses</h2>
+        <div class="small">Kelola pengeluaran telepon, internet, dan komunikasi</div>
+      </div>
+      <button id="addTelecomBtn" class="btn btn-primary">+ Add Expense</button>
+    </div>
+
+    <div id="metricsRow" class="metrics" style="display: none;">
+      <div class="metric-card">
+        <div class="label">Total Expenses</div>
+        <div class="value" id="totalExpenses">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Active Subscriptions</div>
+        <div class="value" id="activeSubscriptions">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Monthly Cost</div>
+        <div class="value" id="monthlyCost">Rp 0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">This Year Total</div>
+        <div class="value" id="yearTotal">Rp 0</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header">
+        <h3>Telecom Expenses</h3>
+        <div style="display: flex; gap: 12px;">
+          <input type="search" id="searchTelecom" placeholder="Search..." class="search-input">
+          <button id="filterTelecomBtn" class="btn">🔍 Filter</button>
+          <button id="exportTelecomBtn" class="btn">📥 Export</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Jenis</th>
+              <th>Provider</th>
+              <th>No Telepon</th>
+              <th>Tanggal Mulai</th>
+              <th>Tanggal Selesai</th>
+              <th>Biaya</th>
+              <th>Keterangan</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="telecomTableBody">
+            <tr><td colspan="8" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="telecomPagination"></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal"></div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/table-enhancer.js"></script>
+<script src="/js/filter-manager.js"></script>
+<script src="/js/chart-enhancer.js"></script>
+<script src="/js/quick-view.js"></script>
+<script src="/js/dashboard-customizer.js"></script>
+<script src="/js/advanced-search.js"></script>
+<script src="/js/form-builder.js"></script>
+<script src="/js/form-validator.js"></script>
+<script src="/js/crud-modal.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/dashboard.js"></script>
+<script type="module" src="/js/telecom-dashboard.js"></script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotel Bookings - TravelOps</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/dashboard-customization.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html" class="active">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>🏨 Hotel Bookings</h2>
+        <div class="small">Kelola reservasi hotel untuk tour dan perjalanan</div>
+      </div>
+      <button id="addHotelBtn" class="btn btn-primary">+ Add Booking</button>
+    </div>
+
+    <div id="metricsRow" class="metrics" style="display: none;">
+      <div class="metric-card">
+        <div class="label">Total Bookings</div>
+        <div class="value" id="totalBookings">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Active Bookings</div>
+        <div class="value" id="activeBookings">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Total Room Nights</div>
+        <div class="value" id="totalNights">0</div>
+      </div>
+      <div class="metric-card">
+        <div class="label">Total Cost</div>
+        <div class="value" id="totalCost">Rp 0</div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header">
+        <h3>Hotel Bookings List</h3>
+        <div style="display: flex; gap: 12px;">
+          <input type="search" id="searchHotel" placeholder="Search..." class="search-input">
+          <button id="filterHotelBtn" class="btn">🔍 Filter</button>
+          <button id="exportHotelBtn" class="btn">📥 Export</button>
+        </div>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Hotel Name</th>
+              <th>Location</th>
+              <th>Guest Name</th>
+              <th>Check-In</th>
+              <th>Check-Out</th>
+              <th>Rooms</th>
+              <th>Total Cost</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="hotelTableBody">
+            <tr><td colspan="8" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="hotelPagination"></div>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal"></div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/table-enhancer.js"></script>
+<script src="/js/filter-manager.js"></script>
+<script src="/js/chart-enhancer.js"></script>
+<script src="/js/quick-view.js"></script>
+<script src="/js/dashboard-customizer.js"></script>
+<script src="/js/advanced-search.js"></script>
+<script src="/js/form-builder.js"></script>
+<script src="/js/form-validator.js"></script>
+<script src="/js/crud-modal.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/dashboard.js"></script>
+<script type="module" src="/js/hotel-dashboard.js"></script>
+</body>
+</html>
