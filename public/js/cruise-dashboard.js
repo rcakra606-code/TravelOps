@@ -1,7 +1,7 @@
 // Wait for auth-common.js and dashboard.js to load
 await new Promise(resolve => {
   const checkReady = () => {
-    if (window.getUser && window.fetchJson && window.openModal) {
+    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils) {
       resolve();
     } else {
       setTimeout(checkReady, 50);
@@ -18,6 +18,18 @@ let cruiseData = [];
 let staffList = [];
 const user = getUser();
 
+// State management
+let currentPage = 1;
+let pageSize = 25;
+let sortField = 'sailing_start';
+let sortDirection = 'desc';
+let filters = {
+  search: '',
+  brand: 'all',
+  startDate: '',
+  endDate: ''
+};
+
 el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 
@@ -32,14 +44,59 @@ async function loadStaff() {
 
 async function loadCruises() {
   try {
+    loadingUtils.showTableLoader('cruiseTableBody', 9);
     const data = await fetchJson('/api/cruise');
     cruiseData = data || [];
-    renderTable();
-    updateMetrics();
+    
+    // Populate brand filter
+    const brands = [...new Set(cruiseData.map(c => c.cruise_brand).filter(Boolean))];
+    const brandFilter = el('brandFilter');
+    brandFilter.innerHTML = '<option value="all">All Brands</option>' + 
+      brands.map(b => `<option value="${b}">${b}</option>`).join('');
+    
+    applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load cruises:', err);
-    alert('Failed to load cruise data');
+    toast.error('Failed to load cruise data');
+    loadingUtils.hideTableLoader('cruiseTableBody', 'Failed to load data');
   }
+}
+
+function getFilteredData() {
+  let filtered = [...cruiseData];
+
+  // Apply search
+  if (filters.search) {
+    filtered = filterUtils.search(filtered, filters.search, 
+      ['cruise_brand', 'ship_name', 'route', 'pic_name', 'participant_names', 'reservation_code', 'staff_name']);
+  }
+
+  // Apply brand filter
+  if (filters.brand !== 'all') {
+    filtered = filterUtils.byField(filtered, 'cruise_brand', filters.brand);
+  }
+
+  // Apply date range filter
+  if (filters.startDate || filters.endDate) {
+    filtered = filterUtils.dateRange(filtered, 'sailing_start', filters.startDate, filters.endDate);
+  }
+
+  // Apply sorting
+  filtered = sortUtils.sort(filtered, sortField, sortDirection);
+
+  return filtered;
+}
+
+function applyFiltersAndRender() {
+  const filtered = getFilteredData();
+  const paginated = paginationUtils.paginate(filtered, currentPage, pageSize);
+  
+  renderTable(paginated.data);
+  updateMetrics();
+  paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+    currentPage = page;
+    applyFiltersAndRender();
+  });
 }
 
 function updateMetrics() {
@@ -72,7 +129,7 @@ function updateMetrics() {
   el('thisMonthCruises').textContent = thisMonth;
 }
 
-function renderTable() {
+function renderTable(data) {
   const tbody = el('cruiseTableBody');
   if (!tbody) return;
   
@@ -90,12 +147,17 @@ function renderTable() {
     }
   };
   
-  tbody.innerHTML = cruiseData.map(item => `
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center; padding: 40px; color: var(--text-secondary);">No records found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = data.map(item => `
     <tr>
       <td>${item.cruise_brand || '—'}</td>
       <td>${item.ship_name || '—'}</td>
-      <td>${item.sailing_start || '—'}</td>
-      <td>${item.sailing_end || '—'}</td>
+      <td>${dateUtils.format(item.sailing_start)}</td>
+      <td>${dateUtils.format(item.sailing_end)}</td>
       <td style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.route || '—'}</td>
       <td>${item.pic_name || '—'}</td>
       <td>${item.reservation_code || '—'}</td>
@@ -174,11 +236,11 @@ async function deleteCruise(id) {
   
   try {
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
-    alert('Cruise deleted successfully');
+    toast.success('Cruise deleted successfully');
     await loadCruises();
   } catch (err) {
     console.error('Delete failed:', err);
-    alert('Failed to delete cruise: ' + err.message);
+    toast.error('Failed to delete cruise: ' + err.message);
   }
 };
 
@@ -265,23 +327,105 @@ document.addEventListener('modalSubmit', async (e) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      alert('Cruise added successfully');
+      toast.success('Cruise added successfully');
     } else if (context.action === 'edit' && context.id) {
       await fetchJson(`/api/cruise/${context.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      alert('Cruise updated successfully');
+      toast.success('Cruise updated successfully');
     }
     
     await loadCruises();
   } catch (err) {
     console.error('Cruise submission failed:', err);
-    alert('Operation failed: ' + err.message);
+    toast.error('Operation failed: ' + err.message);
     throw err;
   }
 });
+
+// Search and filter handlers
+el('searchInput').addEventListener('input', (e) => {
+  filters.search = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('brandFilter').addEventListener('change', (e) => {
+  filters.brand = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('startDateFilter').addEventListener('change', (e) => {
+  filters.startDate = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('endDateFilter').addEventListener('change', (e) => {
+  filters.endDate = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('clearFilters').addEventListener('click', () => {
+  filters = { search: '', brand: 'all', startDate: '', endDate: '' };
+  el('searchInput').value = '';
+  el('brandFilter').value = 'all';
+  el('startDateFilter').value = '';
+  el('endDateFilter').value = '';
+  currentPage = 1;
+  applyFiltersAndRender();
+  toast.info('Filters cleared');
+});
+
+// Export handler
+el('exportBtn').addEventListener('click', () => {
+  const filtered = getFilteredData();
+  exportUtils.toCSV(filtered, 'cruise_bookings', [
+    { key: 'cruise_brand', label: 'Cruise Brand' },
+    { key: 'ship_name', label: 'Ship Name' },
+    { key: 'sailing_start', label: 'Sailing Start' },
+    { key: 'sailing_end', label: 'Sailing End' },
+    { key: 'route', label: 'Route' },
+    { key: 'pic_name', label: 'PIC Name' },
+    { key: 'participant_names', label: 'Participants' },
+    { key: 'phone_number', label: 'Phone' },
+    { key: 'email', label: 'Email' },
+    { key: 'reservation_code', label: 'Reservation Code' },
+    { key: 'staff_name', label: 'Staff Name' }
+  ]);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      document.getElementById('modalClose')?.click();
+    }
+  }
+  
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      document.getElementById('modalSave')?.click();
+    }
+  }
+});
+
+// Add sortable headers
+sortUtils.addSortableHeaders('cruiseTable', 
+  ['cruise_brand', 'ship_name', 'sailing_start', 'sailing_end', 'pic_name', 'staff_name'],
+  (field, direction) => {
+    sortField = field;
+    sortDirection = direction;
+    applyFiltersAndRender();
+  }
+);
 
 await loadStaff();
 await loadCruises();

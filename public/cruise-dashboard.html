@@ -38,7 +38,26 @@
         <h2>🚢 Cruise Management</h2>
         <div class="small">Kelola data cruise bookings</div>
       </div>
-      <button id="addCruiseBtn" class="btn btn-primary">+ Tambah Cruise</button>
+      <button id="addCruiseBtn" class="btn btn-primary">+ Add Cruise</button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search by cruise brand, ship, PIC..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="brandFilter" style="min-width: 150px;">
+          <option value="all">All Brands</option>
+        </select>
+        <input type="date" id="startDateFilter" placeholder="Sailing From" style="min-width: 150px;" />
+        <input type="date" id="endDateFilter" placeholder="Sailing To" style="min-width: 150px;" />
+        <button id="clearFilters" class="btn btn-secondary">Clear Filters</button>
+        <button id="exportBtn" class="btn btn-outline">📊 Export CSV</button>
+      </div>
     </div>
 
     <div class="card">
@@ -66,17 +85,17 @@
       </div>
 
       <div style="overflow-x:auto; margin-top: 24px;">
-        <table class="dashboard-table">
+        <table class="dashboard-table" id="cruiseTable">
           <thead>
             <tr>
-              <th>Brand</th>
-              <th>Ship Name</th>
-              <th>Sailing Start</th>
-              <th>Sailing End</th>
+              <th data-sort="cruise_brand">Brand</th>
+              <th data-sort="ship_name">Ship</th>
+              <th data-sort="sailing_start">Sailing Start</th>
+              <th data-sort="sailing_end">Sailing End</th>
               <th>Route</th>
-              <th>PIC</th>
+              <th data-sort="pic_name">PIC</th>
               <th>Reservation</th>
-              <th>Staff</th>
+              <th data-sort="staff_name">Staff</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -85,6 +104,9 @@
           </tbody>
         </table>
       </div>
+      
+      <!-- Pagination -->
+      <div id="paginationControls"></div>
     </div>
   </main>
 </div>
@@ -105,6 +127,8 @@
   </div>
 </div>
 
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
 <script type="module" src="/js/auth-common.js"></script>
 <script src="/js/logout-handler.js"></script>
 <script src="/js/dashboard.js"></script>

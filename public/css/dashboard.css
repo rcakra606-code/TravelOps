@@ -568,4 +568,81 @@
   .profile-info h2 {
     font-size: 1.5rem;
   }
+
+  /* Additional mobile improvements */
+  .dashboard-metrics {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .metric-card {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 1.5rem;
+  }
+
+  .dashboard-table {
+    font-size: 0.85rem;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding: 8px 10px;
+  }
+
+  /* Stack search/filter controls vertically */
+  .card > div[style*="flex"] {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .card > div[style*="flex"] input,
+  .card > div[style*="flex"] select,
+  .card > div[style*="flex"] button {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn {
+    font-size: 0.85rem;
+    padding: 8px 12px;
+  }
+
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .header button {
+    width: 100%;
+  }
+
+  /* Toast notifications smaller on mobile */
+  #toast-container {
+    top: 10px !important;
+    right: 10px !important;
+    left: 10px !important;
+  }
+}
+
+/* Table sorting indicators */
+.sort-indicator {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  margin-left: 4px;
+}
+
+th[data-sort]:hover .sort-indicator {
+  opacity: 1;
+}
+
+th[data-dir="asc"] .sort-indicator,
+th[data-dir="desc"] .sort-indicator {
+  opacity: 1;
+  color: var(--primary);
 }

@@ -1,7 +1,7 @@
 // Wait for auth-common.js and dashboard.js to load
 await new Promise(resolve => {
   const checkReady = () => {
-    if (window.getUser && window.fetchJson && window.openModal) {
+    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils) {
       resolve();
     } else {
       setTimeout(checkReady, 50);
@@ -18,6 +18,18 @@ let overtimeData = [];
 let staffList = [];
 const user = getUser();
 
+// State management
+let currentPage = 1;
+let pageSize = 25;
+let sortField = 'event_date';
+let sortDirection = 'desc';
+let filters = {
+  search: '',
+  status: 'all',
+  startDate: '',
+  endDate: ''
+};
+
 // Display user info
 el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
@@ -33,13 +45,14 @@ async function loadStaff() {
 
 async function loadOvertime() {
   try {
+    loadingUtils.showTableLoader('overtimeTableBody', 7);
     const data = await fetchJson('/api/overtime');
     overtimeData = data || [];
-    renderTable();
-    updateMetrics();
+    applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load overtime:', err);
-    alert('Failed to load overtime data');
+    toast.error('Failed to load overtime data');
+    loadingUtils.hideTableLoader('overtimeTableBody', 'Failed to load data');
   }
 }
 
@@ -58,12 +71,48 @@ function updateMetrics() {
   }).reduce((sum, o) => sum + (parseFloat(o.hours) || 0), 0);
   
   el('totalOvertime').textContent = total;
-  el('pendingOvertime').textContent = pending;
-  el('paidOvertime').textContent = paid;
+  el('pendingCount').textContent = pending;
+  el('paidCount').textContent = paid;
   el('totalHours').textContent = totalHours.toFixed(1);
 }
 
-function renderTable() {
+function getFilteredData() {
+  let filtered = [...overtimeData];
+
+  // Apply search
+  if (filters.search) {
+    filtered = filterUtils.search(filtered, filters.search, ['staff_name', 'event_name', 'remarks']);
+  }
+
+  // Apply status filter
+  if (filters.status !== 'all') {
+    filtered = filterUtils.byField(filtered, 'status', filters.status);
+  }
+
+  // Apply date range filter
+  if (filters.startDate || filters.endDate) {
+    filtered = filterUtils.dateRange(filtered, 'event_date', filters.startDate, filters.endDate);
+  }
+
+  // Apply sorting
+  filtered = sortUtils.sort(filtered, sortField, sortDirection);
+
+  return filtered;
+}
+
+function applyFiltersAndRender() {
+  const filtered = getFilteredData();
+  const paginated = paginationUtils.paginate(filtered, currentPage, pageSize);
+  
+  renderTable(paginated.data);
+  updateMetrics();
+  paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+    currentPage = page;
+    applyFiltersAndRender();
+  });
+}
+
+function renderTable(data) {
   const tbody = el('overtimeTableBody');
   if (!tbody) return;
   
@@ -81,7 +130,12 @@ function renderTable() {
     }
   };
   
-  tbody.innerHTML = overtimeData.map(item => {
+  if (!data || data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding: 40px; color: var(--text-secondary);">No records found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = data.map(item => {
     const statusColors = {
       pending: 'background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
       paid: 'background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
@@ -96,7 +150,7 @@ function renderTable() {
     
     return `
       <tr>
-        <td>${item.event_date || '—'}</td>
+        <td>${dateUtils.format(item.event_date)}</td>
         <td>${item.staff_name || '—'}</td>
         <td>${item.event_name || '—'}</td>
         <td>${item.hours || 0} hrs</td>
@@ -158,11 +212,11 @@ async function deleteOvertime(id) {
   
   try {
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
-    alert('Overtime deleted successfully');
+    toast.success('Overtime deleted successfully');
     await loadOvertime();
   } catch (err) {
     console.error('Delete failed:', err);
-    alert('Failed to delete overtime: ' + err.message);
+    toast.error('Failed to delete overtime: ' + err.message);
   }
 };
 
@@ -233,23 +287,102 @@ document.addEventListener('modalSubmit', async (e) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      alert('Overtime added successfully');
+      toast.success('Overtime added successfully');
     } else if (context.action === 'edit' && context.id) {
       await fetchJson(`/api/overtime/${context.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
-      alert('Overtime updated successfully');
+      toast.success('Overtime updated successfully');
     }
     
     await loadOvertime();
   } catch (err) {
     console.error('Overtime submission failed:', err);
-    alert('Operation failed: ' + err.message);
+    toast.error('Operation failed: ' + err.message);
     throw err;
   }
 });
+
+// Search and filter handlers
+el('searchInput').addEventListener('input', (e) => {
+  filters.search = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('statusFilter').addEventListener('change', (e) => {
+  filters.status = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('startDateFilter').addEventListener('change', (e) => {
+  filters.startDate = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('endDateFilter').addEventListener('change', (e) => {
+  filters.endDate = e.target.value;
+  currentPage = 1;
+  applyFiltersAndRender();
+});
+
+el('clearFilters').addEventListener('click', () => {
+  filters = { search: '', status: 'all', startDate: '', endDate: '' };
+  el('searchInput').value = '';
+  el('statusFilter').value = 'all';
+  el('startDateFilter').value = '';
+  el('endDateFilter').value = '';
+  currentPage = 1;
+  applyFiltersAndRender();
+  toast.info('Filters cleared');
+});
+
+// Export handler
+el('exportBtn').addEventListener('click', () => {
+  const filtered = getFilteredData();
+  exportUtils.toCSV(filtered, 'overtime_records', [
+    { key: 'event_date', label: 'Date' },
+    { key: 'staff_name', label: 'Staff Name' },
+    { key: 'event_name', label: 'Event Name' },
+    { key: 'hours', label: 'Hours' },
+    { key: 'status', label: 'Status' },
+    { key: 'remarks', label: 'Remarks' }
+  ]);
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+  // Esc to close modal
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      document.getElementById('modalClose')?.click();
+    }
+  }
+  
+  // Ctrl+S to save form (if modal is open)
+  if (e.ctrlKey && e.key === 's') {
+    e.preventDefault();
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      document.getElementById('modalSave')?.click();
+    }
+  }
+});
+
+// Add sortable headers
+sortUtils.addSortableHeaders('overtimeTable', 
+  ['event_date', 'staff_name', 'event_name', 'hours', 'status'],
+  (field, direction) => {
+    sortField = field;
+    sortDirection = direction;
+    applyFiltersAndRender();
+  }
+);
 
 // Initialize
 await loadStaff();
