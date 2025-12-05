@@ -69,10 +69,7 @@ function initLogoutHandler() {
   if (logoutLink) {
     logoutLink.addEventListener('click', (e) => {
       e.preventDefault();
-      
-      if (confirm('Apakah Anda yakin ingin keluar?')) {
-        handleLogout();
-      }
+      handleLogout();
     });
   }
 }

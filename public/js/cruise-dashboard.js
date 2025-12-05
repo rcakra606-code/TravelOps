@@ -76,6 +76,20 @@ function renderTable() {
   const tbody = el('cruiseTableBody');
   if (!tbody) return;
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      editCruise(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      deleteCruise(id);
+    }
+  };
+  
   tbody.innerHTML = cruiseData.map(item => `
     <tr>
       <td>${item.cruise_brand || '—'}</td>
@@ -87,14 +101,14 @@ function renderTable() {
       <td>${item.reservation_code || '—'}</td>
       <td>${item.staff_name || '—'}</td>
       <td>
-        <button class="btn-edit" onclick="editCruise(${item.id})">✏️</button>
-        ${user.type !== 'basic' ? `<button class="btn-delete" onclick="deleteCruise(${item.id})">🗑️</button>` : ''}
+        <button class="btn-edit" data-id="${item.id}">✏️</button>
+        ${user.type !== 'basic' ? `<button class="btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');
 }
 
-window.editCruise = async function(id) {
+async function editCruise(id) {
   const item = cruiseData.find(c => c.id === id);
   if (!item) return;
   
@@ -155,7 +169,7 @@ window.editCruise = async function(id) {
   });
 };
 
-window.deleteCruise = async function(id) {
+async function deleteCruise(id) {
   if (!confirm('Are you sure you want to delete this cruise?')) return;
   
   try {

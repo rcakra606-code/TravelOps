@@ -67,6 +67,20 @@ function renderTable() {
   const tbody = el('overtimeTableBody');
   if (!tbody) return;
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      editOvertime(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      deleteOvertime(id);
+    }
+  };
+  
   tbody.innerHTML = overtimeData.map(item => {
     const statusColors = {
       pending: 'background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
@@ -76,8 +90,8 @@ function renderTable() {
     const statusBadge = `<span style="${statusColors[item.status] || statusColors.pending}">${item.status || 'pending'}</span>`;
     
     const actions = user.type === 'admin' 
-      ? `<button class="btn-edit" onclick="editOvertime(${item.id})">✏️</button>
-         <button class="btn-delete" onclick="deleteOvertime(${item.id})">🗑️</button>`
+      ? `<button class="btn-edit" data-id="${item.id}">✏️</button>
+         <button class="btn-delete" data-id="${item.id}">🗑️</button>`
       : '';
     
     return `
@@ -94,7 +108,7 @@ function renderTable() {
   }).join('');
 }
 
-window.editOvertime = async function(id) {
+async function editOvertime(id) {
   const item = overtimeData.find(o => o.id === id);
   if (!item) return;
   
@@ -139,7 +153,7 @@ window.editOvertime = async function(id) {
   });
 };
 
-window.deleteOvertime = async function(id) {
+async function deleteOvertime(id) {
   if (!confirm('Are you sure you want to delete this overtime record?')) return;
   
   try {
