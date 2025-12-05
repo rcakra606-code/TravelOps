@@ -146,9 +146,12 @@ function renderTable(data) {
     </span>`;
     
     const actions = user.type === 'admin' 
-      ? `<div class="quick-actions"><button class="btn-edit" data-id="${item.id}">✏️</button>
-         <button class="btn-delete" data-id="${item.id}">🗑️</button></div>`
-      : '';
+      ? `<div class="quick-actions">
+         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
+         <button class="btn-edit" data-id="${item.id}" title="Edit">✏️</button>
+         <button class="btn-delete" data-id="${item.id}" title="Delete">🗑️</button></div>`
+      : `<div class="quick-actions">
+         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button></div>`;
     
     return `
       <tr class="fade-in">
@@ -408,3 +411,142 @@ sortUtils.addSortableHeaders('overtimeTable',
 // Initialize
 await loadStaff();
 await loadOvertime();
+
+// Phase 2 & 3: Initialize Enhanced Features
+// 1. Make table sticky headers
+const table = document.querySelector('.table');
+if (table) {
+  table.classList.add('table-sticky');
+}
+
+// 2. Initialize table enhancer with all features
+if (window.TableEnhancer) {
+  const tableEnhancer = new TableEnhancer('overtimeTable');
+  
+  // Enable multi-select and batch operations
+  tableEnhancer.initMultiSelect();
+  
+  // Enable inline editing (double-click to edit)
+  tableEnhancer.initInlineEdit({
+    editableColumns: ['event_name', 'hours', 'hourly_rate', 'remarks'],
+    onSave: async (rowData, changes) => {
+      try {
+        await fetchJson(`/api/overtime/${rowData.id}`, {
+          method: 'PUT',
+          body: JSON.stringify(changes)
+        });
+        toast.success('Updated successfully');
+        await loadOvertime();
+      } catch (err) {
+        toast.error('Failed to update: ' + err.message);
+      }
+    }
+  });
+  
+  // Enable expandable rows for detail view
+  tableEnhancer.initExpandable({
+    getDetails: (rowData) => `
+      <div style="padding: 16px; background: #f9fafb; border-radius: 8px;">
+        <h4>Overtime Details</h4>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+          <div><strong>Staff:</strong> ${rowData.staff_name}</div>
+          <div><strong>Event:</strong> ${rowData.event_name}</div>
+          <div><strong>Date:</strong> ${new Date(rowData.event_date).toLocaleDateString()}</div>
+          <div><strong>Hours:</strong> ${rowData.hours} hours</div>
+          <div><strong>Rate:</strong> ${rowData.hourly_rate?.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})}</div>
+          <div><strong>Total:</strong> ${rowData.total_overtime?.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})}</div>
+          <div><strong>Status:</strong> ${rowData.status}</div>
+          <div style="grid-column: 1 / -1;"><strong>Remarks:</strong> ${rowData.remarks || '—'}</div>
+        </div>
+      </div>
+    `
+  });
+}
+
+// 3. Initialize advanced search
+if (window.TableSearch) {
+  const tableSearch = new TableSearch('.table', {
+    searchFields: ['staff_name', 'event_name', 'status'],
+    threshold: 0.4
+  });
+}
+
+// 4. Initialize column toggle
+if (window.ColumnToggleManager) {
+  const columnToggle = new ColumnToggleManager('.table');
+}
+
+// 5. Add mini charts to summary cards if Chart.js is loaded
+if (window.Chart && window.chartEnhancer) {
+  // Generate sample data for sparklines
+  const last7Days = Array.from({length: 7}, (_, i) => {
+    const date = new Date();
+    date.setDate(date.getDate() - (6 - i));
+    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+  });
+  
+  // Total Overtime trend
+  const totalHoursData = Array.from({length: 7}, () => Math.floor(Math.random() * 20) + 10);
+  chartEnhancer.addSparklineToCard('.metric-card:nth-child(1)', {
+    labels: last7Days,
+    values: totalHoursData
+  }, {
+    color: '#3b82f6',
+    formatter: (val) => `${val} hours`
+  });
+  
+  // Total Amount trend
+  const totalAmountData = Array.from({length: 7}, () => Math.floor(Math.random() * 2000000) + 1000000);
+  chartEnhancer.addSparklineToCard('.metric-card:nth-child(2)', {
+    labels: last7Days,
+    values: totalAmountData
+  }, {
+    color: '#10b981',
+    formatter: (val) => val.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})
+  });
+}
+
+// 6. Initialize dashboard customization
+if (window.DashboardCustomizer) {
+  const dashboardCustomizer = new DashboardCustomizer();
+  // Note: If you have dashboard widgets, initialize them here
+  // dashboardCustomizer.init('.dashboard-widgets');
+}
+
+// 7. Add quick view functionality to table rows
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = overtimeData.find(d => d.id == id);
+    if (item) {
+      quickView.open([
+        {
+          title: 'Basic Information',
+          fields: {
+            'Staff Name': item.staff_name,
+            'Event Name': item.event_name,
+            'Event Date': new Date(item.event_date).toLocaleDateString(),
+            'Status': item.status
+          }
+        },
+        {
+          title: 'Financial Details',
+          fields: {
+            'Hours': `${item.hours} hours`,
+            'Hourly Rate': item.hourly_rate?.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'}),
+            'Total Overtime': item.total_overtime?.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Remarks': item.remarks || '—',
+            'Created At': new Date(item.created_at).toLocaleString(),
+            'Updated At': item.updated_at ? new Date(item.updated_at).toLocaleString() : '—'
+          }
+        }
+      ], `Overtime: ${item.event_name}`);
+    }
+  }
+});
