@@ -176,161 +176,250 @@ async function editCruise(id) {
   const item = cruiseData.find(c => c.id === id);
   if (!item) return;
   
-  window.openModal({
-    title: 'Edit Cruise',
-    size: 'large',
-    bodyHtml: `
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Cruise Brand *</label>
-          <input type="text" name="cruise_brand" value="${item.cruise_brand || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Ship Name *</label>
-          <input type="text" name="ship_name" value="${item.ship_name || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Sailing Start *</label>
-          <input type="date" name="sailing_start" value="${item.sailing_start || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Sailing End *</label>
-          <input type="date" name="sailing_end" value="${item.sailing_end || ''}" required>
-        </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label>Route *</label>
-          <input type="text" name="route" value="${item.route || ''}" placeholder="e.g., Singapore - Penang - Langkawi" required>
-        </div>
-        <div class="form-group">
-          <label>PIC Name *</label>
-          <input type="text" name="pic_name" value="${item.pic_name || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Participant Names</label>
-          <input type="text" name="participant_names" value="${item.participant_names || ''}" placeholder="Comma separated">
-        </div>
-        <div class="form-group">
-          <label>Phone Number</label>
-          <input type="tel" name="phone_number" value="${item.phone_number || ''}">
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" value="${item.email || ''}">
-        </div>
-        <div class="form-group">
-          <label>Reservation Code</label>
-          <input type="text" name="reservation_code" value="${item.reservation_code || ''}">
-        </div>
-        <div class="form-group">
-          <label>Staff Name *</label>
-          <select name="staff_name" required>
-            ${staffList.map(s => `<option value="${s.name}" ${s.name === item.staff_name ? 'selected' : ''}>${s.name}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-    `,
-    context: { entity: 'cruise', action: 'edit', id: item.id }
-  });
-  
-  // Initialize auto-save for edit form
-  setTimeout(() => {
-    const form = document.querySelector('#modalContent form');
-    if (form && window.AutoSave) {
-      new AutoSave(form, 'cruise-edit-' + id);
+  CRUDModal.edit('Edit Cruise Booking', [
+    {
+      type: 'text',
+      name: 'cruise_brand',
+      label: 'Cruise Brand',
+      required: true,
+      icon: '🚢',
+      placeholder: 'e.g., Royal Caribbean'
+    },
+    {
+      type: 'text',
+      name: 'ship_name',
+      label: 'Ship Name',
+      required: true,
+      icon: '⚓',
+      placeholder: 'e.g., Symphony of the Seas'
+    },
+    {
+      type: 'date',
+      name: 'sailing_start',
+      label: 'Sailing Start',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'date',
+      name: 'sailing_end',
+      label: 'Sailing End',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'text',
+      name: 'route',
+      label: 'Route',
+      required: true,
+      fullWidth: true,
+      icon: '🗺️',
+      placeholder: 'e.g., Singapore - Penang - Langkawi'
+    },
+    {
+      type: 'text',
+      name: 'pic_name',
+      label: 'PIC Name',
+      required: true,
+      icon: '👤',
+      placeholder: 'Person in charge'
+    },
+    {
+      type: 'tags',
+      name: 'participant_names',
+      label: 'Participants',
+      placeholder: 'Type name and press Enter',
+      hint: 'Add participant names one by one'
+    },
+    {
+      type: 'tel',
+      name: 'phone_number',
+      label: 'Phone Number',
+      icon: '📞',
+      placeholder: '+62...'
+    },
+    {
+      type: 'email',
+      name: 'email',
+      label: 'Email',
+      icon: '📧',
+      placeholder: 'contact@example.com'
+    },
+    {
+      type: 'text',
+      name: 'reservation_code',
+      label: 'Reservation Code',
+      icon: '🎫',
+      placeholder: 'Booking reference'
+    },
+    {
+      type: 'select',
+      name: 'staff_name',
+      label: 'Staff Handling',
+      required: true,
+      options: staffList.map(s => ({ value: s.name, label: s.name }))
     }
-  }, 100);
+  ], item, async (formData) => {
+    // Convert tags array back to comma-separated string if needed
+    if (Array.isArray(formData.participant_names)) {
+      formData.participant_names = formData.participant_names.join(', ');
+    }
+    
+    await fetchJson(`/api/cruise/${item.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData)
+    });
+    toast.success('Cruise booking updated successfully');
+    await loadCruises();
+  }, {
+    entity: 'cruise',
+    size: 'large',
+    autoSave: true,
+    validation: {
+      cruise_brand: { required: true, minLength: 2 },
+      ship_name: { required: true, minLength: 2 },
+      sailing_start: { required: true },
+      sailing_end: { required: true },
+      route: { required: true, minLength: 5 },
+      pic_name: { required: true, minLength: 2 },
+      phone_number: { phone: true },
+      email: { email: true },
+      staff_name: { required: true }
+    }
+  });
 };
 
 async function deleteCruise(id) {
-  const confirmed = await confirmDialog.delete('this cruise booking');
-  if (!confirmed) return;
+  const item = cruiseData.find(c => c.id === id);
+  if (!item) return;
   
-  try {
+  const displayName = `${item.cruise_brand} - ${item.ship_name} (${item.sailing_start})`;
+  
+  CRUDModal.delete('Cruise Booking', displayName, async () => {
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
-    toast.success('Cruise deleted successfully');
+    toast.success('Cruise booking deleted successfully');
     await loadCruises();
-  } catch (err) {
-    console.error('Delete failed:', err);
-    toast.error('Failed to delete cruise: ' + err.message);
-  }
+  });
 };
 
 el('addCruiseBtn').addEventListener('click', () => {
-  window.openModal({
-    title: 'Add New Cruise',
-    size: 'large',
-    bodyHtml: `
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Cruise Brand *</label>
-          <input type="text" name="cruise_brand" placeholder="e.g., Royal Caribbean" required>
-        </div>
-        <div class="form-group">
-          <label>Ship Name *</label>
-          <input type="text" name="ship_name" placeholder="e.g., Symphony of the Seas" required>
-        </div>
-        <div class="form-group">
-          <label>Sailing Start *</label>
-          <input type="date" name="sailing_start" required>
-        </div>
-        <div class="form-group">
-          <label>Sailing End *</label>
-          <input type="date" name="sailing_end" required>
-        </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label>Route *</label>
-          <input type="text" name="route" placeholder="e.g., Singapore - Penang - Langkawi" required>
-        </div>
-        <div class="form-group">
-          <label>PIC Name *</label>
-          <input type="text" name="pic_name" placeholder="Person in charge" required>
-        </div>
-        <div class="form-group">
-          <label>Participant Names</label>
-          <input type="text" name="participant_names" placeholder="Comma separated names">
-        </div>
-        <div class="form-group">
-          <label>Phone Number</label>
-          <input type="tel" name="phone_number" placeholder="+62...">
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" name="email" placeholder="contact@example.com">
-        </div>
-        <div class="form-group">
-          <label>Reservation Code</label>
-          <input type="text" name="reservation_code" placeholder="Booking reference">
-        </div>
-        <div class="form-group">
-          <label>Staff Name *</label>
-          <select name="staff_name" required id="staffSelect">
-            <option value="">Select staff</option>
-            ${staffList.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-          </select>
-        </div>
-      </div>
-    `,
-    context: { entity: 'cruise', action: 'create' }
-  });
-  
-  setTimeout(() => {
-    if (user.type === 'basic') {
-      const select = document.getElementById('staffSelect');
-      if (select) {
-        select.value = user.name;
-        select.disabled = true;
-      }
+  CRUDModal.create('Add New Cruise Booking', [
+    {
+      type: 'text',
+      name: 'cruise_brand',
+      label: 'Cruise Brand',
+      required: true,
+      icon: '🚢',
+      placeholder: 'e.g., Royal Caribbean'
+    },
+    {
+      type: 'text',
+      name: 'ship_name',
+      label: 'Ship Name',
+      required: true,
+      icon: '⚓',
+      placeholder: 'e.g., Symphony of the Seas'
+    },
+    {
+      type: 'date',
+      name: 'sailing_start',
+      label: 'Sailing Start',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'date',
+      name: 'sailing_end',
+      label: 'Sailing End',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'text',
+      name: 'route',
+      label: 'Route',
+      required: true,
+      fullWidth: true,
+      icon: '🗺️',
+      placeholder: 'e.g., Singapore - Penang - Langkawi'
+    },
+    {
+      type: 'text',
+      name: 'pic_name',
+      label: 'PIC Name',
+      required: true,
+      icon: '👤',
+      placeholder: 'Person in charge'
+    },
+    {
+      type: 'tags',
+      name: 'participant_names',
+      label: 'Participants',
+      placeholder: 'Type name and press Enter',
+      hint: 'Add participant names one by one'
+    },
+    {
+      type: 'tel',
+      name: 'phone_number',
+      label: 'Phone Number',
+      icon: '📞',
+      placeholder: '+62...'
+    },
+    {
+      type: 'email',
+      name: 'email',
+      label: 'Email',
+      icon: '📧',
+      placeholder: 'contact@example.com'
+    },
+    {
+      type: 'text',
+      name: 'reservation_code',
+      label: 'Reservation Code',
+      icon: '🎫',
+      placeholder: 'Booking reference'
+    },
+    {
+      type: 'select',
+      name: 'staff_name',
+      label: 'Staff Handling',
+      required: true,
+      defaultValue: user.type === 'basic' ? user.name : '',
+      readonly: user.type === 'basic',
+      options: staffList.map(s => ({ value: s.name, label: s.name }))
+    }
+  ], async (formData) => {
+    // Convert tags array back to comma-separated string if needed
+    if (Array.isArray(formData.participant_names)) {
+      formData.participant_names = formData.participant_names.join(', ');
     }
     
-    // Initialize auto-save for create form
-    const form = document.querySelector('#modalContent form');
-    if (form && window.AutoSave) {
-      new AutoSave(form, 'cruise-create');
+    await fetchJson('/api/cruise', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    toast.success('Cruise booking added successfully');
+    await loadCruises();
+  }, {
+    entity: 'cruise',
+    size: 'large',
+    autoSave: true,
+    validation: {
+      cruise_brand: { required: true, minLength: 2 },
+      ship_name: { required: true, minLength: 2 },
+      sailing_start: { required: true },
+      sailing_end: { required: true },
+      route: { required: true, minLength: 5 },
+      pic_name: { required: true, minLength: 2 },
+      phone_number: { phone: true },
+      email: { email: true },
+      staff_name: { required: true }
     }
-  }, 100);
+  });
 });
 
-// Handle modal form submissions
+// Handle modal form submissions (legacy support)
 document.addEventListener('modalSubmit', async (e) => {
   const { data, context } = e.detail;
   if (context.entity !== 'cruise') return;
