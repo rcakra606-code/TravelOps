@@ -1,0 +1,308 @@
+/* ===================================
+   STATUS BADGES & COLOR CODING
+   Visual indicators for status
+   =================================== */
+
+/* Status badge base */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+  transition: all 0.2s ease;
+}
+
+/* Status dot */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Pending status */
+.status-pending {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.status-pending .status-dot {
+  background: #f59e0b;
+}
+
+/* Paid/Completed status */
+.status-paid,
+.status-completed {
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+  color: #065f46;
+  border: 1px solid #34d399;
+}
+
+.status-paid .status-dot,
+.status-completed .status-dot {
+  background: #10b981;
+}
+
+/* Cancelled status */
+.status-cancel,
+.status-cancelled {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.status-cancel .status-dot,
+.status-cancelled .status-dot {
+  background: #ef4444;
+}
+
+/* Active status */
+.status-active {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+  color: #1e40af;
+  border: 1px solid #60a5fa;
+}
+
+.status-active .status-dot {
+  background: #3b82f6;
+}
+
+/* Inactive status */
+.status-inactive {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.status-inactive .status-dot {
+  background: #6b7280;
+}
+
+/* Processing status */
+.status-processing {
+  background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+  color: #3730a3;
+  border: 1px solid #818cf8;
+}
+
+.status-processing .status-dot {
+  background: #6366f1;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+/* Overdue status */
+.status-overdue {
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+  color: #991b1b;
+  border: 1px solid #f87171;
+  animation: urgentPulse 2s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.status-overdue .status-dot {
+  background: #dc2626;
+}
+
+/* Priority badges */
+.priority-high {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  color: #991b1b;
+  border: 1px solid #f87171;
+}
+
+.priority-medium {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.priority-low {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  color: #065f46;
+  border: 1px solid #86efac;
+}
+
+/* Progress indicators */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e5e7eb;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6 0%, #2563eb 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+/* Progress with percentage */
+.progress-with-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-with-label .progress-bar {
+  flex: 1;
+}
+
+.progress-with-label .progress-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  min-width: 45px;
+  text-align: right;
+}
+
+/* Trend indicators */
+.trend-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.trend-up {
+  color: #065f46;
+  background: #d1fae5;
+}
+
+.trend-up::before {
+  content: '↑';
+  font-size: 1.1em;
+}
+
+.trend-down {
+  color: #991b1b;
+  background: #fee2e2;
+}
+
+.trend-down::before {
+  content: '↓';
+  font-size: 1.1em;
+}
+
+.trend-neutral {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.trend-neutral::before {
+  content: '→';
+  font-size: 1.1em;
+}
+
+/* Mini sparkline */
+.mini-sparkline {
+  display: inline-block;
+  width: 60px;
+  height: 20px;
+  vertical-align: middle;
+}
+
+/* Count badges */
+.count-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 8px;
+  background: var(--primary, #2563eb);
+  color: white;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.count-badge.success {
+  background: #10b981;
+}
+
+.count-badge.warning {
+  background: #f59e0b;
+}
+
+.count-badge.danger {
+  background: #ef4444;
+}
+
+.count-badge.info {
+  background: #06b6d4;
+}
+
+/* Icon badges */
+.icon-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1rem;
+  transition: transform 0.2s ease;
+}
+
+.icon-badge:hover {
+  transform: scale(1.1);
+}
+
+.icon-badge.success {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.icon-badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.icon-badge.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.icon-badge.info {
+  background: #dbeafe;
+  color: #1e40af;
+}

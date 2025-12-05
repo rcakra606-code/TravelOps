@@ -136,20 +136,22 @@ function renderTable(data) {
   }
   
   tbody.innerHTML = data.map(item => {
-    const statusColors = {
-      pending: 'background: #fef3c7; color: #92400e; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
-      paid: 'background: #d1fae5; color: #065f46; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;',
-      cancel: 'background: #fee2e2; color: #991b1b; padding: 4px 12px; border-radius: 12px; font-size: 0.85em; font-weight: 600;'
+    const statusBadgeClass = {
+      pending: 'status-badge status-pending',
+      paid: 'status-badge status-paid',
+      cancel: 'status-badge status-cancel'
     };
-    const statusBadge = `<span style="${statusColors[item.status] || statusColors.pending}">${item.status || 'pending'}</span>`;
+    const statusBadge = `<span class="${statusBadgeClass[item.status] || statusBadgeClass.pending}">
+      <span class="status-dot"></span>${item.status || 'pending'}
+    </span>`;
     
     const actions = user.type === 'admin' 
-      ? `<button class="btn-edit" data-id="${item.id}">✏️</button>
-         <button class="btn-delete" data-id="${item.id}">🗑️</button>`
+      ? `<div class="quick-actions"><button class="btn-edit" data-id="${item.id}">✏️</button>
+         <button class="btn-delete" data-id="${item.id}">🗑️</button></div>`
       : '';
     
     return `
-      <tr>
+      <tr class="fade-in">
         <td>${dateUtils.format(item.event_date)}</td>
         <td>${item.staff_name || '—'}</td>
         <td>${item.event_name || '—'}</td>

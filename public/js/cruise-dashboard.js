@@ -153,7 +153,7 @@ function renderTable(data) {
   }
   
   tbody.innerHTML = data.map(item => `
-    <tr>
+    <tr class="fade-in">
       <td>${item.cruise_brand || '—'}</td>
       <td>${item.ship_name || '—'}</td>
       <td>${dateUtils.format(item.sailing_start)}</td>
@@ -163,8 +163,10 @@ function renderTable(data) {
       <td>${item.reservation_code || '—'}</td>
       <td>${item.staff_name || '—'}</td>
       <td>
-        <button class="btn-edit" data-id="${item.id}">✏️</button>
-        ${user.type !== 'basic' ? `<button class="btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+        <div class="quick-actions">
+          <button class="btn-edit" data-id="${item.id}">✏️</button>
+          ${user.type !== 'basic' ? `<button class="btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+        </div>
       </td>
     </tr>
   `).join('');

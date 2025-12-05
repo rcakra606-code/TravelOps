@@ -8,9 +8,16 @@
   <link rel="stylesheet" href="/css/app-v2.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
 <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
 <div class="app">
   <aside class="sidebar">
@@ -131,6 +138,9 @@
 <script src="/js/utils.js"></script>
 <script src="/js/confirm-dialog.js"></script>
 <script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/table-enhancer.js"></script>
+<script src="/js/filter-manager.js"></script>
 <script type="module" src="/js/auth-common.js"></script>
 <script src="/js/logout-handler.js"></script>
 <script src="/js/dashboard.js"></script>
