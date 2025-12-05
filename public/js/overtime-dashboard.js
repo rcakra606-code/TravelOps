@@ -171,129 +171,167 @@ async function editOvertime(id) {
   const item = overtimeData.find(o => o.id === id);
   if (!item) return;
   
-  window.openModal({
-    title: 'Edit Overtime',
-    size: 'medium',
-    bodyHtml: `
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Staff *</label>
-          <select name="staff_name" required>
-            ${staffList.map(s => `<option value="${s.name}" ${s.name === item.staff_name ? 'selected' : ''}>${s.name}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Event Name *</label>
-          <input type="text" name="event_name" value="${item.event_name || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Date *</label>
-          <input type="date" name="event_date" value="${item.event_date || ''}" required>
-        </div>
-        <div class="form-group">
-          <label>Hours *</label>
-          <input type="number" name="hours" value="${item.hours || ''}" step="0.5" min="0" required>
-        </div>
-        <div class="form-group">
-          <label>Status *</label>
-          <select name="status" required>
-            <option value="pending" ${item.status === 'pending' ? 'selected' : ''}>Pending</option>
-            <option value="paid" ${item.status === 'paid' ? 'selected' : ''}>Paid</option>
-            <option value="cancel" ${item.status === 'cancel' ? 'selected' : ''}>Cancel</option>
-          </select>
-        </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label>Remarks</label>
-          <textarea name="remarks" rows="3">${item.remarks || ''}</textarea>
-        </div>
-      </div>
-    `,
-    context: { entity: 'overtime', action: 'edit', id: item.id }
-  });
-  
-  // Initialize auto-save for edit form
-  setTimeout(() => {
-    const form = document.querySelector('#modalContent form');
-    if (form && window.AutoSave) {
-      new AutoSave(form, 'overtime-edit-' + id);
+  CRUDModal.edit('Edit Overtime', [
+    {
+      type: 'select',
+      name: 'staff_name',
+      label: 'Staff',
+      required: true,
+      options: staffList.map(s => ({ value: s.name, label: s.name }))
+    },
+    {
+      type: 'text',
+      name: 'event_name',
+      label: 'Event Name',
+      required: true,
+      icon: '📅',
+      placeholder: 'e.g., Weekend tour support'
+    },
+    {
+      type: 'date',
+      name: 'event_date',
+      label: 'Date',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'number',
+      name: 'hours',
+      label: 'Hours',
+      required: true,
+      min: 0,
+      step: 0.5,
+      placeholder: 'e.g., 4.5'
+    },
+    {
+      type: 'select',
+      name: 'status',
+      label: 'Status',
+      required: true,
+      options: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'cancel', label: 'Cancelled' }
+      ]
+    },
+    {
+      type: 'textarea',
+      name: 'remarks',
+      label: 'Remarks',
+      fullWidth: true,
+      rows: 3,
+      maxlength: 500,
+      placeholder: 'Additional notes'
     }
-  }, 100);
+  ], item, async (formData) => {
+    await fetchJson(`/api/overtime/${item.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData)
+    });
+    toast.success('Overtime updated successfully');
+    await loadOvertime();
+  }, {
+    entity: 'overtime',
+    autoSave: true,
+    validation: {
+      staff_name: { required: true },
+      event_name: { required: true, minLength: 3 },
+      event_date: { required: true },
+      hours: { required: true, min: 0.5 },
+      status: { required: true }
+    }
+  });
 };
 
 async function deleteOvertime(id) {
-  const confirmed = await confirmDialog.delete('this overtime record');
-  if (!confirmed) return;
+  const item = overtimeData.find(o => o.id === id);
+  if (!item) return;
   
-  try {
+  CRUDModal.delete('Overtime', item.event_name, async () => {
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
     toast.success('Overtime deleted successfully');
     await loadOvertime();
-  } catch (err) {
-    console.error('Delete failed:', err);
-    toast.error('Failed to delete overtime: ' + err.message);
-  }
+  });
 };
 
 el('addOvertimeBtn').addEventListener('click', () => {
-  window.openModal({
-    title: 'Add Overtime',
-    size: 'medium',
-    bodyHtml: `
-      <div class="form-grid">
-        <div class="form-group">
-          <label>Staff *</label>
-          <select name="staff_name" required id="staffSelect">
-            <option value="">Select staff</option>
-            ${staffList.map(s => `<option value="${s.name}">${s.name}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Event Name *</label>
-          <input type="text" name="event_name" placeholder="e.g., Weekend tour support" required>
-        </div>
-        <div class="form-group">
-          <label>Date *</label>
-          <input type="date" name="event_date" required>
-        </div>
-        <div class="form-group">
-          <label>Hours *</label>
-          <input type="number" name="hours" step="0.5" min="0" placeholder="e.g., 4.5" required>
-        </div>
-        <div class="form-group">
-          <label>Status *</label>
-          <select name="status" required>
-            <option value="pending" selected>Pending</option>
-            <option value="paid">Paid</option>
-            <option value="cancel">Cancel</option>
-          </select>
-        </div>
-        <div class="form-group" style="grid-column: 1 / -1;">
-          <label>Remarks</label>
-          <textarea name="remarks" rows="3" placeholder="Additional notes"></textarea>
-        </div>
-      </div>
-    `,
-    context: { entity: 'overtime', action: 'create' }
+  CRUDModal.create('Add Overtime', [
+    {
+      type: 'select',
+      name: 'staff_name',
+      label: 'Staff',
+      required: true,
+      defaultValue: user.type === 'basic' ? user.name : '',
+      readonly: user.type === 'basic',
+      options: staffList.map(s => ({ value: s.name, label: s.name }))
+    },
+    {
+      type: 'text',
+      name: 'event_name',
+      label: 'Event Name',
+      required: true,
+      icon: '📅',
+      placeholder: 'e.g., Weekend tour support'
+    },
+    {
+      type: 'date',
+      name: 'event_date',
+      label: 'Date',
+      required: true,
+      quickDates: true
+    },
+    {
+      type: 'number',
+      name: 'hours',
+      label: 'Hours',
+      required: true,
+      min: 0,
+      step: 0.5,
+      placeholder: 'e.g., 4.5'
+    },
+    {
+      type: 'select',
+      name: 'status',
+      label: 'Status',
+      required: true,
+      defaultValue: 'pending',
+      options: [
+        { value: 'pending', label: 'Pending' },
+        { value: 'paid', label: 'Paid' },
+        { value: 'cancel', label: 'Cancelled' }
+      ]
+    },
+    {
+      type: 'textarea',
+      name: 'remarks',
+      label: 'Remarks',
+      fullWidth: true,
+      rows: 3,
+      maxlength: 500,
+      placeholder: 'Additional notes'
+    }
+  ], async (formData) => {
+    await fetchJson('/api/overtime', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    toast.success('Overtime added successfully');
+    await loadOvertime();
+  }, {
+    entity: 'overtime',
+    autoSave: true,
+    validation: {
+      staff_name: { required: true },
+      event_name: { required: true, minLength: 3 },
+      event_date: { required: true },
+      hours: { required: true, min: 0.5 },
+      status: { required: true }
+    }
   });
-  
-  setTimeout(() => {
-    if (user.type === 'basic') {
-      const select = document.getElementById('staffSelect');
-      if (select) {
-        select.value = user.name;
-        select.disabled = true;
-      }
-    }
-    
-    // Initialize auto-save for create form
-    const form = document.querySelector('#modalContent form');
-    if (form && window.AutoSave) {
-      new AutoSave(form, 'overtime-create');
-    }
-  }, 100);
 });
 
-// Handle modal form submissions
+// Handle modal form submissions (legacy support)
 document.addEventListener('modalSubmit', async (e) => {
   const { data, context } = e.detail;
   if (context.entity !== 'overtime') return;
