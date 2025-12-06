@@ -3,9 +3,25 @@
    Professional logout with confirmation + goodbye overlay
    ========================================================= */
 
-function handleLogout() {
+async function handleLogout() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || user.username || 'User';
+  
+  // Show confirmation dialog
+  if (window.confirmDialog) {
+    const confirmed = await window.confirmDialog.show({
+      title: 'Logout Confirmation',
+      message: `Are you sure you want to logout, ${userName}?`,
+      confirmText: 'Yes, Logout',
+      cancelText: 'Cancel',
+      confirmColor: '#ef4444',
+      icon: '👋'
+    });
+    
+    if (!confirmed) {
+      return; // User cancelled
+    }
+  }
   
   // Show logout toast
   if (window.toast) {
