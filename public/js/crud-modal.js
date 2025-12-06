@@ -112,22 +112,25 @@ class CRUDModal {
   /**
    * Show delete confirmation
    */
-  static delete(title, itemName, onConfirm) {
+  static async delete(title, itemName, onConfirm) {
     if (window.confirmDialog) {
-      window.confirmDialog({
+      const confirmed = await window.confirmDialog.show({
         title: `Delete ${title}?`,
         message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
         confirmText: 'Delete',
-        confirmClass: 'btn-danger',
-        onConfirm: async () => {
-          try {
-            await onConfirm();
-            toast.success(`${title} deleted successfully`);
-          } catch (error) {
-            toast.error(`Failed to delete: ${error.message}`);
-          }
-        }
+        cancelText: 'Cancel',
+        confirmColor: '#dc2626',
+        icon: '🗑️'
       });
+      
+      if (confirmed) {
+        try {
+          await onConfirm();
+          toast.success(`${title} deleted successfully`);
+        } catch (error) {
+          toast.error(`Failed to delete: ${error.message}`);
+        }
+      }
     }
   }
 
