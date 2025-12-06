@@ -111,14 +111,15 @@ setInterval(() => {
 /**
  * Proactively refresh token if it's been more than 10 minutes since last refresh
  * This keeps us well ahead of the 30-minute expiry
+ * @param {boolean} force - Force refresh regardless of time threshold
  */
-async function refreshTokenIfNeeded() {
+async function refreshTokenIfNeeded(force = false) {
   const token = localStorage.getItem('token');
   if (!token) return false;
   
   const timeSinceRefresh = Date.now() - lastTokenRefreshTime;
   
-  if (timeSinceRefresh > TOKEN_REFRESH_THRESHOLD) {
+  if (force || timeSinceRefresh > TOKEN_REFRESH_THRESHOLD) {
     try {
       const response = await fetch(api('/api/refresh'), {
         method: 'POST',
@@ -132,16 +133,18 @@ async function refreshTokenIfNeeded() {
           lastTokenRefreshTime = Date.now();
           lastActivityTime = Date.now();
           const remaining = getTokenRemainingMinutes();
-          console.log('🔄 Token proactively refreshed');
+          console.log(force ? '🔄 Token force refreshed' : '🔄 Token proactively refreshed');
           if (remaining != null) console.log(`[auth] New token remaining ~${remaining}m`);
           return true;
         }
       } else if (response.status === 401 || response.status === 403) {
         console.warn('Token refresh rejected, logging out...');
         handleSessionExpired();
+        return false;
       }
     } catch (err) {
       console.error('Proactive token refresh failed:', err);
+      return false;
     }
   }
   return false;
@@ -206,13 +209,33 @@ async function fetchJson(url, opts = {}) {
   
   // Only logout on 401 (invalid/expired token), not 403 (forbidden by permission)
   if (res.status === 401) {
+    // Try one token refresh before giving up
+    if (!url.includes('/api/refresh') && !url.includes('/api/login')) {
+      console.log('🔄 Got 401, attempting token refresh...');
+      const refreshed = await refreshTokenIfNeeded(true); // Force refresh
+      if (refreshed) {
+        console.log('✅ Token refreshed, retrying request...');
+        // Retry the request with new token
+        opts.headers = { 
+          ...(opts.headers || {}), 
+          ...getHeaders(!!opts.body)
+        };
+        const retryRes = await fetch(api(url), opts);
+        if (retryRes.ok) {
+          try { return await retryRes.json(); } catch { return null; }
+        }
+      }
+    }
+    
+    // If refresh failed or this is a refresh/login endpoint, logout
+    console.warn('Token refresh failed or not applicable, logging out...');
     toast.error('Sesi login telah berakhir. Silakan login kembali.');
     localStorage.clear();
     sessionStorage.clear();
     setTimeout(() => {
       location.href = '/login.html';
     }, 1500);
-    return;
+    throw new Error('Session expired');
   }
   
   // For 403, throw error to let caller handle it
@@ -221,7 +244,10 @@ async function fetchJson(url, opts = {}) {
     throw new Error(errorData.error || 'Akses ditolak');
   }
   
-  if (!res.ok) throw new Error(await res.text());
+  if (!res.ok) {
+    const errorText = await res.text();
+    throw new Error(errorText || `HTTP ${res.status}`);
+  }
   try { return await res.json(); } catch { return null; }
 }
 
