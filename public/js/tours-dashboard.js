@@ -599,21 +599,33 @@ function renderToursTable() {
   }
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No tours found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="17" class="text-center">No tours found</td></tr>';
     return;
   }
   
   tbody.innerHTML = filtered.map(item => {
     const region = regionsData.find(r => r.id === item.region_id);
+    const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
+    const formatDate = (val) => val ? new Date(val).toLocaleDateString('id-ID') : '—';
+    
     return `
     <tr class="table-row">
       <td><strong>${item.tour_code || '—'}</strong></td>
-      <td>${item.lead_passenger || '—'}</td>
-      <td>${item.departure_date || '—'}</td>
+      <td>${item.booking_code || '—'}</td>
+      <td>${formatDate(item.registration_date)}</td>
+      <td>${formatDate(item.departure_date)}</td>
       <td>${region ? region.region_name : '—'}</td>
+      <td>${item.lead_passenger || '—'}</td>
       <td class="text-center">${item.jumlah_peserta || 0}</td>
+      <td>${item.phone_number || '—'}</td>
+      <td>${item.email || '—'}</td>
       <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
       <td>${item.staff_name || '—'}</td>
+      <td class="text-right">${formatCurrency(item.tour_price)}</td>
+      <td class="text-right">${formatCurrency(item.sales_amount)}</td>
+      <td class="text-right">${formatCurrency(item.discount_amount)}</td>
+      <td class="text-right">${formatCurrency(item.profit_amount)}</td>
+      <td>${item.invoice_number || '—'}</td>
       <td class="actions">
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
