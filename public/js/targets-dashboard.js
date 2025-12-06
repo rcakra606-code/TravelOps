@@ -1,7 +1,7 @@
 // Wait for auth-common.js and dashboard.js to load
 await new Promise(resolve => {
   const checkReady = () => {
-    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils) {
+    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils && window.CRUDModal) {
       resolve();
     } else {
       setTimeout(checkReady, 50);

@@ -672,11 +672,16 @@ async function renderCharts() {
       welcomeMsg.textContent = `${greeting}, ${userName}! Kelola bisnis travel Anda dengan mudah`;
     }
 
-    // Update metrics
-    el('totalSales').textContent = formatCurrency(totalSales);
-    el('totalProfit').textContent = formatCurrency(totalProfit);
-    el('salesAchievement').textContent = `Achv: ${(totalSales / (targetSales || 1) * 100).toFixed(1)}%`;
-    el('profitAchievement').textContent = `Achv: ${(totalProfit / (targetProfit || 1) * 100).toFixed(1)}%`;
+    // Update metrics (only if elements exist)
+    const totalSalesEl = el('totalSales');
+    const totalProfitEl = el('totalProfit');
+    const salesAchievementEl = el('salesAchievement');
+    const profitAchievementEl = el('profitAchievement');
+    
+    if (totalSalesEl) totalSalesEl.textContent = formatCurrency(totalSales);
+    if (totalProfitEl) totalProfitEl.textContent = formatCurrency(totalProfit);
+    if (salesAchievementEl) salesAchievementEl.textContent = `Achv: ${(totalSales / (targetSales || 1) * 100).toFixed(1)}%`;
+    if (profitAchievementEl) profitAchievementEl.textContent = `Achv: ${(totalProfit / (targetProfit || 1) * 100).toFixed(1)}%`;
 
     // Calculate upcoming tours (next 30 days)
     const now = new Date();
@@ -687,7 +692,8 @@ async function renderCharts() {
       return depDate >= now && depDate <= thirtyDaysLater;
     }).sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
 
-    el('upcomingToursCount').textContent = upcomingTours.length;
+    const upcomingToursCountEl = el('upcomingToursCount');
+    if (upcomingToursCountEl) upcomingToursCountEl.textContent = upcomingTours.length;
 
     // Render upcoming tours table
     const upcomingTable = el('upcomingToursTable');
