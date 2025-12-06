@@ -174,13 +174,29 @@ async function renderDashboard() {
       console.log('Filtered docsData count (after processType filter):', docsData.length);
     }
     
-    // Destroy existing charts properly
-    Object.values(charts).forEach(c => {
-      if (c && typeof c.destroy === 'function') {
-        c.destroy();
+    // Destroy existing charts properly and clear canvas references
+    Object.keys(charts).forEach(key => {
+      if (charts[key] && typeof charts[key].destroy === 'function') {
+        try {
+          charts[key].destroy();
+        } catch (e) {
+          console.warn('Error destroying chart:', key, e);
+        }
+      }
+      delete charts[key];
+    });
+    
+    // Clear Chart.js instances from canvas elements
+    const canvasIds = ['chartDocumentsMonthly', 'chartProcessTypes', 'chartDocumentsPerStaff', 'chartProcessingTime', 'chartDocumentTypes', 'chartMonthlyTrend'];
+    canvasIds.forEach(id => {
+      const canvas = document.getElementById(id);
+      if (canvas) {
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+          existingChart.destroy();
+        }
       }
     });
-    charts = {};
     
     // Calculate metrics
     const totalDocs = docsData.length;

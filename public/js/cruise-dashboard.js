@@ -176,7 +176,7 @@ async function editCruise(id) {
   const item = cruiseData.find(c => c.id === id);
   if (!item) return;
   
-  CRUDModal.edit('Edit Cruise Booking', [
+  window.CRUDModal.edit('Edit Cruise Booking', [
     {
       type: 'text',
       name: 'cruise_brand',
@@ -295,7 +295,7 @@ async function deleteCruise(id) {
   
   const displayName = `${item.cruise_brand} - ${item.ship_name} (${item.sailing_start})`;
   
-  CRUDModal.delete('Cruise Booking', displayName, async () => {
+  window.CRUDModal.delete('Cruise Booking', displayName, async () => {
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
     toast.success('Cruise booking deleted successfully');
     await loadCruises();
@@ -303,7 +303,7 @@ async function deleteCruise(id) {
 };
 
 el('addCruiseBtn').addEventListener('click', () => {
-  CRUDModal.create('Add New Cruise Booking', [
+  window.CRUDModal.create('Add New Cruise Booking', [
     {
       type: 'text',
       name: 'cruise_brand',

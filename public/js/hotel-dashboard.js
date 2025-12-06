@@ -181,7 +181,7 @@ el('addHotelBtn').addEventListener('click', () => {
   console.log('regionsData:', regionsData);
   console.log('usersData:', usersData);
   
-  CRUDModal.create('Add Hotel Booking', [
+  window.CRUDModal.create('Add Hotel Booking', [
     { type: 'date', name: 'check_in', label: 'Check-In', required: true, quickDates: true },
     { type: 'date', name: 'check_out', label: 'Check-Out', required: true, quickDates: true },
     { type: 'text', name: 'hotel_name', label: 'Hotel Name', required: true, icon: '🏨', placeholder: 'e.g., Grand Hyatt Jakarta' },

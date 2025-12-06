@@ -654,13 +654,30 @@ async function renderCharts() {
     if (!metrics) return;
 
     const ctx = id => document.getElementById(id)?.getContext('2d');
-    // Destroy existing charts properly
-    Object.values(charts).forEach(c => {
-      if (c && typeof c.destroy === 'function') {
-        c.destroy();
+    
+    // Destroy existing charts properly and clear canvas references
+    Object.keys(charts).forEach(key => {
+      if (charts[key] && typeof charts[key].destroy === 'function') {
+        try {
+          charts[key].destroy();
+        } catch (e) {
+          console.warn('Error destroying chart:', key, e);
+        }
+      }
+      delete charts[key];
+    });
+    
+    // Clear Chart.js instances from canvas elements
+    const canvasIds = ['chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartSalesMonthly', 'chartTargetAchievement'];
+    canvasIds.forEach(id => {
+      const canvas = document.getElementById(id);
+      if (canvas) {
+        const existingChart = Chart.getChart(canvas);
+        if (existingChart) {
+          existingChart.destroy();
+        }
       }
     });
-    charts = {};
 
     const totalSales = metrics.sales?.total_sales || 0;
     const totalProfit = metrics.sales?.total_profit || 0;
@@ -1119,42 +1136,49 @@ window.addEventListener('DOMContentLoaded', () => {
   setInterval(renderCharts, 30000);
   if (getUser().type === 'admin') loadActivity();
   
-  // Wait for CRUD handlers to be ready
+  // Wait for CRUD handlers to be ready (only for single-dashboard.html)
   setTimeout(() => {
-    if (window.crudHandlers) {
-      console.log('✅ CRUD Handlers loaded successfully');
-      
-      // Wire up CRUD button handlers
-      el('addSalesBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddSalesModal();
-      });
-      el('addTourBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddTourModal();
-      });
-      el('addDocBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddDocModal();
-      });
-      el('addTargetBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddTargetModal();
-      });
-      el('addRegionBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddRegionModal();
-      });
-      el('addUserBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddUserModal();
-      });
-      el('addTelecomBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddTelecomModal();
-      });
-      
-      el('addHotelBookingBtn')?.addEventListener('click', () => {
-        window.crudHandlers.openAddHotelBookingModal();
-      });
-      
-      // Initialize CRUD handlers
-      window.crudHandlers.init();
+    // Check if any CRUD buttons exist (only on single-dashboard.html)
+    const hasCrudButtons = el('addSalesBtn') || el('addTourBtn') || el('addDocBtn');
+    
+    if (hasCrudButtons) {
+      if (window.crudHandlers) {
+        console.log('✅ CRUD Handlers loaded successfully');
+        
+        // Wire up CRUD button handlers
+        el('addSalesBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddSalesModal();
+        });
+        el('addTourBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddTourModal();
+        });
+        el('addDocBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddDocModal();
+        });
+        el('addTargetBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddTargetModal();
+        });
+        el('addRegionBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddRegionModal();
+        });
+        el('addUserBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddUserModal();
+        });
+        el('addTelecomBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddTelecomModal();
+        });
+        
+        el('addHotelBookingBtn')?.addEventListener('click', () => {
+          window.crudHandlers.openAddHotelBookingModal();
+        });
+        
+        // Initialize CRUD handlers
+        window.crudHandlers.init();
+      } else {
+        console.error('❌ CRUD Handlers not loaded (required for single dashboard)');
+      }
     } else {
-      console.error('❌ CRUD Handlers not loaded');
+      console.log('ℹ️ Specialized dashboard detected - using CRUDModal system');
     }
   }, 100);
 });

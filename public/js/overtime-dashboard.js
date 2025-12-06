@@ -171,7 +171,7 @@ async function editOvertime(id) {
   const item = overtimeData.find(o => o.id === id);
   if (!item) return;
   
-  CRUDModal.edit('Edit Overtime', [
+  window.CRUDModal.edit('Edit Overtime', [
     {
       type: 'select',
       name: 'staff_name',
@@ -247,7 +247,7 @@ async function deleteOvertime(id) {
   const item = overtimeData.find(o => o.id === id);
   if (!item) return;
   
-  CRUDModal.delete('Overtime', item.event_name, async () => {
+  window.CRUDModal.delete('Overtime', item.event_name, async () => {
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
     toast.success('Overtime deleted successfully');
     await loadOvertime();
@@ -255,7 +255,7 @@ async function deleteOvertime(id) {
 };
 
 el('addOvertimeBtn').addEventListener('click', () => {
-  CRUDModal.create('Add Overtime', [
+  window.CRUDModal.create('Add Overtime', [
     {
       type: 'select',
       name: 'staff_name',
