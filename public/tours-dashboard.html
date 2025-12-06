@@ -185,7 +185,17 @@
     <div class="card" style="margin-top: 20px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>📋 Tours Records</h3>
-        <div style="display: flex; gap: 10px;">
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <label style="display: flex; align-items: center; gap: 5px; font-size: 14px;">
+            Show
+            <select id="toursItemsPerPage" style="padding: 6px 8px; border: 1px solid var(--border-medium); border-radius: 4px;">
+              <option value="10">10</option>
+              <option value="25">25</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+            entries
+          </label>
           <input type="text" id="searchTours" placeholder="🔍 Search tours..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
           <button id="addTourBtn" class="btn btn-primary">+ Add Tour</button>
         </div>
@@ -219,6 +229,9 @@
           </tbody>
         </table>
       </div>
+      
+      <!-- Pagination Controls -->
+      <div id="toursPagination" style="margin-top: 20px;"></div>
     </div>
   </main>
 </div>
