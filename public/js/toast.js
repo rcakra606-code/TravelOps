@@ -10,25 +10,40 @@ class ToastManager {
   }
 
   init() {
-    // Create toast container if it doesn't exist
-    if (!this.container) {
-      this.container = document.createElement('div');
-      this.container.id = 'toast-container';
-      this.container.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 10000;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        pointer-events: none;
-      `;
-      document.body.appendChild(this.container);
+    // Wait for DOM to be ready
+    const createContainer = () => {
+      // Create toast container if it doesn't exist
+      if (!this.container) {
+        this.container = document.createElement('div');
+        this.container.id = 'toast-container';
+        this.container.style.cssText = `
+          position: fixed;
+          top: 20px;
+          right: 20px;
+          z-index: 10000;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
+          pointer-events: none;
+        `;
+        document.body.appendChild(this.container);
+      }
+    };
+
+    // Create immediately if body exists, otherwise wait for DOM ready
+    if (document.body) {
+      createContainer();
+    } else {
+      document.addEventListener('DOMContentLoaded', createContainer);
     }
   }
 
   show(message, type = 'info', duration = 4000) {
+    // Ensure container exists
+    if (!this.container) {
+      this.init();
+    }
+    
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
     
