@@ -654,6 +654,13 @@ async function renderCharts() {
     if (!metrics) return;
 
     const ctx = id => document.getElementById(id)?.getContext('2d');
+    const safeCreateChart = (canvasId, config) => {
+      const context = ctx(canvasId);
+      if (context) {
+        return new Chart(context, config);
+      }
+      return null;
+    };
     
     // Destroy existing charts properly and clear canvas references
     Object.keys(charts).forEach(key => {
@@ -787,7 +794,7 @@ async function renderCharts() {
     };
 
     // Sales Chart
-    charts.sales = new Chart(ctx('chartSalesTarget'), {
+    charts.sales = safeCreateChart('chartSalesTarget', {
       type: 'bar',
       data: {
         labels: ['Sales', 'Target Sales'],
@@ -828,7 +835,7 @@ async function renderCharts() {
     });
 
     // Profit Chart
-    charts.profit = new Chart(ctx('chartProfitTarget'), {
+    charts.profit = safeCreateChart('chartProfitTarget', {
       type: 'bar',
       data: {
         labels: ['Profit', 'Target Profit'],

@@ -114,7 +114,7 @@ class CRUDModal {
    */
   static delete(title, itemName, onConfirm) {
     if (window.confirmDialog) {
-      confirmDialog({
+      window.confirmDialog({
         title: `Delete ${title}?`,
         message: `Are you sure you want to delete "${itemName}"? This action cannot be undone.`,
         confirmText: 'Delete',
