@@ -174,8 +174,12 @@ async function renderDashboard() {
       console.log('Filtered docsData count (after processType filter):', docsData.length);
     }
     
-    // Destroy existing charts
-    Object.values(charts).forEach(c => c.destroy());
+    // Destroy existing charts properly
+    Object.values(charts).forEach(c => {
+      if (c && typeof c.destroy === 'function') {
+        c.destroy();
+      }
+    });
     charts = {};
     
     // Calculate metrics

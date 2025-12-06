@@ -192,8 +192,12 @@ async function renderDashboard() {
     
     if (!metrics) return;
     
-    // Destroy existing charts
-    Object.values(charts).forEach(c => c.destroy());
+    // Destroy existing charts properly
+    Object.values(charts).forEach(c => {
+      if (c && typeof c.destroy === 'function') {
+        c.destroy();
+      }
+    });
     charts = {};
     
     // Calculate metrics

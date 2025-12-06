@@ -2,8 +2,17 @@
 await new Promise(resolve => {
   const checkReady = () => {
     if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils && window.CRUDModal) {
+      console.log('✅ Telecom Dashboard: All dependencies loaded');
       resolve();
     } else {
+      console.log('⏳ Waiting for dependencies...', {
+        getUser: !!window.getUser,
+        fetchJson: !!window.fetchJson,
+        openModal: !!window.openModal,
+        toast: !!window.toast,
+        dateUtils: !!window.dateUtils,
+        CRUDModal: !!window.CRUDModal
+      });
       setTimeout(checkReady, 50);
     }
   };
@@ -125,10 +134,16 @@ function renderTable(data) {
 }
 
 window.editTelecom = async function(id) {
+  console.log('✏️ Edit Telecom called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = telecomData.find(t => t.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Telecom item not found:', id);
+    return;
+  }
   
-  CRUDModal.edit('Edit Telecom', [
+  console.log('Calling CRUDModal.edit for telecom:', item);
+  window.CRUDModal.edit('Edit Telecom', [
     { type: 'text', name: 'nama', label: 'Nama', required: true, icon: '👤' },
     { type: 'tel', name: 'no_telephone', label: 'No. Telephone', required: true, icon: '📞', placeholder: '+62...' },
     { type: 'text', name: 'type_product', label: 'Type Product', icon: '📦', placeholder: 'Jenis produk telecom' },
@@ -158,10 +173,16 @@ window.editTelecom = async function(id) {
 };
 
 window.deleteTelecom = async function(id) {
+  console.log('🗑️ Delete Telecom called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = telecomData.find(t => t.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Telecom item not found:', id);
+    return;
+  }
   
-  CRUDModal.delete('Telecom', `${item.nama} - ${item.no_telephone}`, async () => {
+  console.log('Calling CRUDModal.delete for telecom:', item);
+  window.CRUDModal.delete('Telecom', `${item.nama} - ${item.no_telephone}`, async () => {
     await fetchJson(`/api/telecom/${id}`, { method: 'DELETE' });
     window.toast.success('Telecom deleted');
     await loadTelecom();
@@ -169,7 +190,9 @@ window.deleteTelecom = async function(id) {
 };
 
 el('addTelecomBtn').addEventListener('click', () => {
-  CRUDModal.create('Add Telecom', [
+  console.log('📞 Add Telecom button clicked');
+  console.log('CRUDModal available:', !!window.CRUDModal);
+  window.CRUDModal.create('Add Telecom', [
     { type: 'text', name: 'nama', label: 'Nama', required: true, icon: '👤' },
     { type: 'tel', name: 'no_telephone', label: 'No. Telephone', required: true, icon: '📞', placeholder: '+62...' },
     { type: 'text', name: 'type_product', label: 'Type Product', icon: '📦', placeholder: 'Jenis produk telecom' },

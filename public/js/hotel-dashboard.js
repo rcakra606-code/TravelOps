@@ -2,8 +2,17 @@
 await new Promise(resolve => {
   const checkReady = () => {
     if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils && window.CRUDModal) {
+      console.log('✅ Hotel Dashboard: All dependencies loaded');
       resolve();
     } else {
+      console.log('⏳ Waiting for dependencies...', {
+        getUser: !!window.getUser,
+        fetchJson: !!window.fetchJson,
+        openModal: !!window.openModal,
+        toast: !!window.toast,
+        dateUtils: !!window.dateUtils,
+        CRUDModal: !!window.CRUDModal
+      });
       setTimeout(checkReady, 50);
     }
   };
@@ -112,10 +121,16 @@ function renderTable(data) {
 }
 
 window.editHotel = async function(id) {
+  console.log('✏️ Edit Hotel called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = hotelData.find(h => h.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Hotel item not found:', id);
+    return;
+  }
   
-  CRUDModal.edit('Edit Hotel Booking', [
+  console.log('Calling CRUDModal.edit for hotel:', item);
+  window.CRUDModal.edit('Edit Hotel Booking', [
     { type: 'date', name: 'check_in', label: 'Check-In', required: true, quickDates: true },
     { type: 'date', name: 'check_out', label: 'Check-Out', required: true, quickDates: true },
     { type: 'text', name: 'hotel_name', label: 'Hotel Name', required: true, icon: '🏨', placeholder: 'e.g., Grand Hyatt Jakarta' },
@@ -143,10 +158,16 @@ window.editHotel = async function(id) {
 };
 
 window.deleteHotel = async function(id) {
+  console.log('🗑️ Delete Hotel called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = hotelData.find(h => h.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Hotel item not found:', id);
+    return;
+  }
   
-  CRUDModal.delete('Hotel Booking', `${item.hotel_name} - ${item.confirmation_number || 'No confirmation'}`, async () => {
+  console.log('Calling CRUDModal.delete for hotel:', item);
+  window.CRUDModal.delete('Hotel Booking', `${item.hotel_name} - ${item.confirmation_number || 'No confirmation'}`, async () => {
     await fetchJson(`/api/hotel_bookings/${id}`, { method: 'DELETE' });
     window.toast.success('Hotel booking deleted');
     await loadHotel();
@@ -154,6 +175,12 @@ window.deleteHotel = async function(id) {
 };
 
 el('addHotelBtn').addEventListener('click', () => {
+  console.log('🏨 Add Hotel button clicked');
+  console.log('CRUDModal:', window.CRUDModal);
+  console.log('openModal:', window.openModal);
+  console.log('regionsData:', regionsData);
+  console.log('usersData:', usersData);
+  
   CRUDModal.create('Add Hotel Booking', [
     { type: 'date', name: 'check_in', label: 'Check-In', required: true, quickDates: true },
     { type: 'date', name: 'check_out', label: 'Check-Out', required: true, quickDates: true },

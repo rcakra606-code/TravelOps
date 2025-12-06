@@ -654,7 +654,12 @@ async function renderCharts() {
     if (!metrics) return;
 
     const ctx = id => document.getElementById(id)?.getContext('2d');
-    Object.values(charts).forEach(c => c.destroy());
+    // Destroy existing charts properly
+    Object.values(charts).forEach(c => {
+      if (c && typeof c.destroy === 'function') {
+        c.destroy();
+      }
+    });
     charts = {};
 
     const totalSales = metrics.sales?.total_sales || 0;

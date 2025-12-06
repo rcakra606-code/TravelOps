@@ -2,8 +2,17 @@
 await new Promise(resolve => {
   const checkReady = () => {
     if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils && window.CRUDModal) {
+      console.log('✅ Targets Dashboard: All dependencies loaded');
       resolve();
     } else {
+      console.log('⏳ Waiting for dependencies...', {
+        getUser: !!window.getUser,
+        fetchJson: !!window.fetchJson,
+        openModal: !!window.openModal,
+        toast: !!window.toast,
+        dateUtils: !!window.dateUtils,
+        CRUDModal: !!window.CRUDModal
+      });
       setTimeout(checkReady, 50);
     }
   };
@@ -134,10 +143,16 @@ function renderTable(data) {
 }
 
 async function editTarget(id) {
+  console.log('✏️ Edit Target called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = targetsData.find(t => t.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Target item not found:', id);
+    return;
+  }
   
-  CRUDModal.edit('Edit Target', [
+  console.log('Calling CRUDModal.edit for target:', item);
+  window.CRUDModal.edit('Edit Target', [
     {
       type: 'select',
       name: 'staff_name',
@@ -201,13 +216,19 @@ async function editTarget(id) {
 }
 
 async function deleteTarget(id) {
+  console.log('🗑️ Delete Target called with id:', id);
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = targetsData.find(t => t.id === id);
-  if (!item) return;
+  if (!item) {
+    console.error('Target item not found:', id);
+    return;
+  }
   
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const displayName = `${item.staff_name} - ${monthNames[item.month - 1]} ${item.year}`;
   
-  CRUDModal.delete('Target', displayName, async () => {
+  console.log('Calling CRUDModal.delete for target:', item);
+  window.CRUDModal.delete('Target', displayName, async () => {
     await fetchJson(`/api/targets/${id}`, { method: 'DELETE' });
     window.toast.success('Target deleted successfully');
     await loadTargets();
@@ -215,11 +236,13 @@ async function deleteTarget(id) {
 }
 
 el('addTargetBtn').addEventListener('click', () => {
+  console.log('🎯 Add Target button clicked');
+  console.log('CRUDModal available:', !!window.CRUDModal);
   const now = new Date();
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
   
-  CRUDModal.create('Add New Target', [
+  window.CRUDModal.create('Add New Target', [
     {
       type: 'select',
       name: 'staff_name',
