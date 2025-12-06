@@ -170,6 +170,36 @@
         <button id="exportDocumentsCSV" class="btn">⬇ Export Documents Data</button>
       </div>
     </div>
+
+    <!-- Documents Data Table with CRUD -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📋 Documents Records</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchDocuments" placeholder="🔍 Search documents..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="addDocumentBtn" class="btn btn-primary">+ Add Document</button>
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Receive Date</th>
+              <th>Guest Name</th>
+              <th>Process Type</th>
+              <th>Country</th>
+              <th>Estimated Done</th>
+              <th>Staff</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="documentsTableBody">
+            <tr><td colspan="7" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 

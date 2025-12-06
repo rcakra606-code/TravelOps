@@ -481,3 +481,130 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+/* =========================================================
+   CRUD FUNCTIONALITY WITH CRUDMODAL
+   ========================================================= */
+
+let salesDataForCRUD = [];
+let salesFilters = { search: '' };
+
+async function loadSalesData() {
+  try {
+    salesDataForCRUD = await window.fetchJson('/api/sales') || [];
+    renderSalesTable();
+  } catch (err) {
+    console.error('Failed to load sales:', err);
+    window.toast.error('Failed to load sales data');
+  }
+}
+
+function renderSalesTable() {
+  const tbody = el('salesTableBody');
+  if (!tbody) return;
+  
+  let filtered = [...salesDataForCRUD];
+  if (salesFilters.search) {
+    const search = salesFilters.search.toLowerCase();
+    filtered = filtered.filter(s => 
+      (s.invoice_no || '').toLowerCase().includes(search) ||
+      (s.staff_name || '').toLowerCase().includes(search) ||
+      (s.notes || '').toLowerCase().includes(search)
+    );
+  }
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No sales found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(item => `
+    <tr class="table-row">
+      <td>${item.transaction_date || '—'}</td>
+      <td><strong>${item.invoice_no || '—'}</strong></td>
+      <td>${item.staff_name || '—'}</td>
+      <td><span class="badge badge-${item.status === 'Paid' ? 'success' : item.status === 'Cancelled' ? 'danger' : 'warning'}">${item.status || 'Pending'}</span></td>
+      <td class="text-right"><strong>Rp ${(item.sales_amount || 0).toLocaleString('id-ID')}</strong></td>
+      <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
+      <td class="actions">
+        <button class="btn btn-sm" onclick="editSale(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteSale(${item.id})">🗑️</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.editSale = async function(id) {
+  const item = salesDataForCRUD.find(s => s.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.edit('Edit Sales', [
+    { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true, quickDates: true },
+    { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
+    { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+    { type: 'select', name: 'status', label: 'Status', required: true, options: [
+      { value: 'Pending', label: 'Pending' },
+      { value: 'Paid', label: 'Paid' },
+      { value: 'Cancelled', label: 'Cancelled' }
+    ]},
+    { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+  ], item, async (formData) => {
+    await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    window.toast.success('Sales updated successfully');
+    await Promise.all([loadSalesData(), renderDashboard()]);
+  }, {
+    entity: 'sales',
+    validation: { transaction_date: { required: true }, invoice_no: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
+  });
+};
+
+window.deleteSale = async function(id) {
+  const item = salesDataForCRUD.find(s => s.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.delete('Sales', `${item.invoice_no || 'this sale'}`, async () => {
+    await window.fetchJson(`/api/sales/${id}`, { method: 'DELETE' });
+    window.toast.success('Sales deleted successfully');
+    await Promise.all([loadSalesData(), renderDashboard()]);
+  });
+};
+
+if (el('addSaleBtn')) {
+  el('addSaleBtn').addEventListener('click', () => {
+    window.CRUDModal.create('Add Sales', [
+      { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true, quickDates: true },
+      { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
+      { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
+      { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+      { type: 'select', name: 'status', label: 'Status', required: true, options: [
+        { value: 'Pending', label: 'Pending' },
+        { value: 'Paid', label: 'Paid' },
+        { value: 'Cancelled', label: 'Cancelled' }
+      ]},
+      { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+    ], async (formData) => {
+      await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      window.toast.success('Sales added successfully');
+      await Promise.all([loadSalesData(), renderDashboard()]);
+    }, {
+      entity: 'sales',
+      validation: { transaction_date: { required: true }, invoice_no: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
+    });
+  });
+}
+
+if (el('searchSales')) {
+  el('searchSales').addEventListener('input', (e) => {
+    salesFilters.search = e.target.value;
+    renderSalesTable();
+  });
+}
+
+// Load sales data on page load
+loadSalesData();
+

@@ -1,13 +1,18 @@
 // Hotel Dashboard - Manage hotel bookings with CRUD improvements
 await new Promise(resolve => {
   const checkReady = () => {
-    if (window.getUser && window.fetchJson && window.CRUDModal && window.toast) resolve();
-    else setTimeout(checkReady, 50);
+    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils) {
+      resolve();
+    } else {
+      setTimeout(checkReady, 50);
+    }
   };
   checkReady();
 });
 
-const { getUser, fetchJson, toast, CRUDModal, filterUtils, sortUtils, loadingUtils } = window;
+const getUser = window.getUser;
+const fetchJson = window.fetchJson;
+const CRUDModal = window.CRUDModal;
 const el = id => document.getElementById(id);
 let hotelData = [];
 let regionsData = [];
@@ -37,13 +42,13 @@ async function loadUsers() {
 
 async function loadHotel() {
   try {
-    loadingUtils.showTableLoader('hotelTableBody', 8);
+    window.loadingUtils.showTableLoader('hotelTableBody', 8);
     hotelData = await fetchJson('/api/hotel_bookings') || [];
     applyFiltersAndRender();
   } catch (err) {
-    console.error('Failed to load hotel bookings:', err);
-    toast.error('Failed to load hotel data');
-    loadingUtils.hideTableLoader('hotelTableBody', 'Failed to load data');
+    console.error('Failed to load hotel:', err);
+    window.toast.error('Failed to load hotel data');
+    window.loadingUtils.hideTableLoader('hotelTableBody', 'Failed to load data');
   }
 }
 
@@ -71,7 +76,7 @@ function updateMetrics() {
 
 function applyFiltersAndRender() {
   let filtered = [...hotelData];
-  if (filters.search) filtered = filterUtils.search(filtered, filters.search, ['hotel_name', 'confirmation_number', 'guest_list', 'supplier_name']);
+  if (filters.search) filtered = window.filterUtils.search(filtered, filters.search, ['hotel_name', 'confirmation_number', 'guest_list', 'supplier_name']);
   if (filters.startDate) filtered = filtered.filter(h => !h.check_in || h.check_in >= filters.startDate);
   if (filters.endDate) filtered = filtered.filter(h => !h.check_out || h.check_out <= filters.endDate);
   
@@ -122,7 +127,7 @@ window.editHotel = async function(id) {
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], item, async (formData) => {
     await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
-    toast.success('Hotel booking updated');
+    window.toast.success('Hotel booking updated');
     await loadHotel();
   }, {
     entity: 'hotel',
@@ -143,7 +148,7 @@ window.deleteHotel = async function(id) {
   
   CRUDModal.delete('Hotel Booking', `${item.hotel_name} - ${item.confirmation_number || 'No confirmation'}`, async () => {
     await fetchJson(`/api/hotel_bookings/${id}`, { method: 'DELETE' });
-    toast.success('Hotel booking deleted');
+    window.toast.success('Hotel booking deleted');
     await loadHotel();
   });
 };
@@ -161,7 +166,7 @@ el('addHotelBtn').addEventListener('click', () => {
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], async (formData) => {
     await fetchJson('/api/hotel_bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    toast.success('Hotel booking added');
+    window.toast.success('Hotel booking added');
     await loadHotel();
   }, {
     entity: 'hotel',
@@ -191,8 +196,9 @@ el('exportHotelBtn').addEventListener('click', () => {
   a.download = `hotel_bookings_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success('Exported');
+  window.toast.success('Exported');
 });
 
 // Initialize
 Promise.all([loadRegions(), loadUsers()]).then(() => loadHotel());
+

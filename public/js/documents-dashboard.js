@@ -492,3 +492,139 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+/* =========================================================
+   CRUD FUNCTIONALITY WITH CRUDMODAL
+   ========================================================= */
+
+let documentsDataForCRUD = [];
+let documentsFilters = { search: '' };
+
+async function loadDocumentsData() {
+  try {
+    documentsDataForCRUD = await window.fetchJson('/api/documents') || [];
+    renderDocumentsTable();
+  } catch (err) {
+    console.error('Failed to load documents:', err);
+    window.toast.error('Failed to load documents data');
+  }
+}
+
+function renderDocumentsTable() {
+  const tbody = el('documentsTableBody');
+  if (!tbody) return;
+  
+  let filtered = [...documentsDataForCRUD];
+  if (documentsFilters.search) {
+    const search = documentsFilters.search.toLowerCase();
+    filtered = filtered.filter(d => 
+      (d.guest_name || '').toLowerCase().includes(search) ||
+      (d.passport_country || '').toLowerCase().includes(search) ||
+      (d.staff_name || '').toLowerCase().includes(search) ||
+      (d.booking_code || '').toLowerCase().includes(search)
+    );
+  }
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No documents found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(item => `
+    <tr class="table-row">
+      <td>${item.receive_date || '—'}</td>
+      <td><strong>${item.guest_name || '—'}</strong></td>
+      <td><span class="badge badge-${item.process_type === 'Kilat' ? 'warning' : 'info'}">${item.process_type || 'Normal'}</span></td>
+      <td>${item.passport_country || '—'}</td>
+      <td>${item.estimated_done || '—'}</td>
+      <td>${item.staff_name || '—'}</td>
+      <td class="actions">
+        <button class="btn btn-sm" onclick="editDocument(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteDocument(${item.id})">🗑️</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+}
+
+window.editDocument = async function(id) {
+  const item = documentsDataForCRUD.find(d => d.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.edit('Edit Document', [
+    { type: 'date', name: 'receive_date', label: 'Receive Date', required: true, quickDates: true },
+    { type: 'date', name: 'send_date', label: 'Send Date', quickDates: true },
+    { type: 'text', name: 'guest_name', label: 'Guest Name', required: true, icon: '👤', placeholder: 'Nama Tamu' },
+    { type: 'text', name: 'passport_country', label: 'Passport/Visa Country', icon: '🌍', placeholder: 'Country name' },
+    { type: 'select', name: 'process_type', label: 'Process Type', required: true, options: [
+      { value: 'Normal', label: 'Normal' },
+      { value: 'Kilat', label: 'Kilat' }
+    ]},
+    { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
+    { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'INV-001' },
+    { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
+    { type: 'date', name: 'estimated_done', label: 'Estimated Done', quickDates: true },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+    { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
+    { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+  ], item, async (formData) => {
+    await window.fetchJson(`/api/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    window.toast.success('Document updated successfully');
+    await Promise.all([loadDocumentsData(), renderDashboard()]);
+  }, {
+    entity: 'documents',
+    size: 'large',
+    validation: { receive_date: { required: true }, guest_name: { required: true }, process_type: { required: true }, staff_name: { required: true } }
+  });
+};
+
+window.deleteDocument = async function(id) {
+  const item = documentsDataForCRUD.find(d => d.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.delete('Document', `${item.guest_name || 'this document'}`, async () => {
+    await window.fetchJson(`/api/documents/${id}`, { method: 'DELETE' });
+    window.toast.success('Document deleted successfully');
+    await Promise.all([loadDocumentsData(), renderDashboard()]);
+  });
+};
+
+if (el('addDocumentBtn')) {
+  el('addDocumentBtn').addEventListener('click', () => {
+    window.CRUDModal.create('Add Document', [
+      { type: 'date', name: 'receive_date', label: 'Receive Date', required: true, quickDates: true },
+      { type: 'date', name: 'send_date', label: 'Send Date', quickDates: true },
+      { type: 'text', name: 'guest_name', label: 'Guest Name', required: true, icon: '👤', placeholder: 'Nama Tamu' },
+      { type: 'text', name: 'passport_country', label: 'Passport/Visa Country', icon: '🌍', placeholder: 'Country name' },
+      { type: 'select', name: 'process_type', label: 'Process Type', required: true, options: [
+        { value: 'Normal', label: 'Normal' },
+        { value: 'Kilat', label: 'Kilat' }
+      ]},
+      { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
+      { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'INV-001' },
+      { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
+      { type: 'date', name: 'estimated_done', label: 'Estimated Done', quickDates: true },
+      { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+      { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
+      { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+    ], async (formData) => {
+      await window.fetchJson('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      window.toast.success('Document added successfully');
+      await Promise.all([loadDocumentsData(), renderDashboard()]);
+    }, {
+      entity: 'documents',
+      size: 'large',
+      validation: { receive_date: { required: true }, guest_name: { required: true }, process_type: { required: true }, staff_name: { required: true } }
+    });
+  });
+}
+
+if (el('searchDocuments')) {
+  el('searchDocuments').addEventListener('input', (e) => {
+    documentsFilters.search = e.target.value;
+    renderDocumentsTable();
+  });
+}
+
+// Load documents data on page load
+loadDocumentsData();
+

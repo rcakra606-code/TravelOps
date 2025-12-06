@@ -180,6 +180,37 @@
         <button id="exportToursCSV" class="btn">⬇ Export Tours Data</button>
       </div>
     </div>
+
+    <!-- Tours Data Table with CRUD -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📋 Tours Records</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchTours" placeholder="🔍 Search tours..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="addTourBtn" class="btn btn-primary">+ Add Tour</button>
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Tour Code</th>
+              <th>Lead Passenger</th>
+              <th>Departure</th>
+              <th>Region</th>
+              <th>Participants</th>
+              <th>Status</th>
+              <th>Staff</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="toursTableBody">
+            <tr><td colspan="8" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </main>
 </div>
 

@@ -1,13 +1,18 @@
 // Telecom Dashboard - Manage telecom with CRUD improvements
 await new Promise(resolve => {
   const checkReady = () => {
-    if (window.getUser && window.fetchJson && window.CRUDModal && window.toast) resolve();
-    else setTimeout(checkReady, 50);
+    if (window.getUser && window.fetchJson && window.openModal && window.toast && window.dateUtils) {
+      resolve();
+    } else {
+      setTimeout(checkReady, 50);
+    }
   };
   checkReady();
 });
 
-const { getUser, fetchJson, toast, CRUDModal, filterUtils, sortUtils, loadingUtils } = window;
+const getUser = window.getUser;
+const fetchJson = window.fetchJson;
+const CRUDModal = window.CRUDModal;
 const el = id => document.getElementById(id);
 let telecomData = [];
 let regionsData = [];
@@ -37,13 +42,13 @@ async function loadUsers() {
 
 async function loadTelecom() {
   try {
-    loadingUtils.showTableLoader('telecomTableBody', 9);
+    window.loadingUtils.showTableLoader('telecomTableBody', 9);
     telecomData = await fetchJson('/api/telecom') || [];
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load telecom:', err);
-    toast.error('Failed to load telecom data');
-    loadingUtils.hideTableLoader('telecomTableBody', 'Failed to load data');
+    window.toast.error('Failed to load telecom data');
+    window.loadingUtils.hideTableLoader('telecomTableBody', 'Failed to load data');
   }
 }
 
@@ -78,7 +83,7 @@ function updateMetrics() {
 
 function applyFiltersAndRender() {
   let filtered = [...telecomData];
-  if (filters.search) filtered = filterUtils.search(filtered, filters.search, ['nama', 'no_telephone', 'type_product', 'bank', 'nama_rekening']);
+  if (filters.search) filtered = window.filterUtils.search(filtered, filters.search, ['nama', 'no_telephone', 'type_product', 'bank', 'nama_rekening']);
   if (filters.startDate) filtered = filtered.filter(t => !t.tanggal_mulai || t.tanggal_mulai >= filters.startDate);
   if (filters.endDate) filtered = filtered.filter(t => !t.tanggal_selesai || t.tanggal_selesai <= filters.endDate);
   if (filters.deposit) filtered = filtered.filter(t => t.deposit === filters.deposit);
@@ -144,7 +149,7 @@ window.editTelecom = async function(id) {
     { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian', quickDates: true }
   ], item, async (formData) => {
     await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
-    toast.success('Telecom updated');
+    window.toast.success('Telecom updated');
     await loadTelecom();
   }, {
     entity: 'telecom',
@@ -158,7 +163,7 @@ window.deleteTelecom = async function(id) {
   
   CRUDModal.delete('Telecom', `${item.nama} - ${item.no_telephone}`, async () => {
     await fetchJson(`/api/telecom/${id}`, { method: 'DELETE' });
-    toast.success('Telecom deleted');
+    window.toast.success('Telecom deleted');
     await loadTelecom();
   });
 };
@@ -185,7 +190,7 @@ el('addTelecomBtn').addEventListener('click', () => {
     { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian', quickDates: true }
   ], async (formData) => {
     await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    toast.success('Telecom added');
+    window.toast.success('Telecom added');
     await loadTelecom();
   }, {
     entity: 'telecom',
@@ -208,8 +213,9 @@ el('exportTelecomBtn').addEventListener('click', () => {
   a.download = `telecom_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success('Exported');
+  window.toast.success('Exported');
 });
 
 // Initialize
 Promise.all([loadRegions(), loadUsers()]).then(() => loadTelecom());
+

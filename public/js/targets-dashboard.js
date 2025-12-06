@@ -12,6 +12,7 @@ await new Promise(resolve => {
 
 const getUser = window.getUser;
 const fetchJson = window.fetchJson;
+const CRUDModal = window.CRUDModal;
 
 const el = id => document.getElementById(id);
 let targetsData = [];
@@ -44,14 +45,14 @@ async function loadStaff() {
 
 async function loadTargets() {
   try {
-    loadingUtils.showTableLoader('targetsTableBody', 6);
+    window.loadingUtils.showTableLoader('targetsTableBody', 6);
     const data = await fetchJson('/api/targets');
     targetsData = data || [];
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load targets:', err);
-    toast.error('Failed to load targets data');
-    loadingUtils.hideTableLoader('targetsTableBody', 'Failed to load data');
+    window.toast.error('Failed to load targets data');
+    window.loadingUtils.hideTableLoader('targetsTableBody', 'Failed to load data');
   }
 }
 
@@ -82,7 +83,7 @@ function getFilteredData() {
 
   // Apply search
   if (filters.search) {
-    filtered = filterUtils.search(filtered, filters.search, ['staff_name']);
+    filtered = window.filterUtils.search(filtered, filters.search, ['staff_name']);
   }
 
   // Apply month filter
@@ -96,7 +97,7 @@ function getFilteredData() {
   }
 
   // Apply sorting
-  filtered = sortUtils.sort(filtered, sortField, sortDirection);
+  filtered = window.sortUtils.sort(filtered, sortField, sortDirection);
 
   return filtered;
 }
@@ -185,7 +186,7 @@ async function editTarget(id) {
       method: 'PUT',
       body: JSON.stringify(formData)
     });
-    toast.success('Target updated successfully');
+    window.toast.success('Target updated successfully');
     await loadTargets();
   }, {
     entity: 'target',
@@ -208,7 +209,7 @@ async function deleteTarget(id) {
   
   CRUDModal.delete('Target', displayName, async () => {
     await fetchJson(`/api/targets/${id}`, { method: 'DELETE' });
-    toast.success('Target deleted successfully');
+    window.toast.success('Target deleted successfully');
     await loadTargets();
   });
 }
@@ -273,7 +274,7 @@ el('addTargetBtn').addEventListener('click', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
-    toast.success('Target added successfully');
+    window.toast.success('Target added successfully');
     await loadTargets();
   }, {
     entity: 'target',
@@ -308,7 +309,7 @@ el('exportTargetsBtn').addEventListener('click', () => {
   a.download = `targets_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  toast.success('Targets exported successfully');
+  window.toast.success('Targets exported successfully');
 });
 
 // Initialize
@@ -322,3 +323,4 @@ init();
 // Expose functions globally
 window.editTarget = editTarget;
 window.deleteTarget = deleteTarget;
+

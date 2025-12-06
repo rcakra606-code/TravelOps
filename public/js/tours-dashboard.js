@@ -531,3 +531,159 @@ window.addEventListener('DOMContentLoaded', async () => {
     });
   }
 });
+
+/* =========================================================
+   CRUD FUNCTIONALITY WITH CRUDMODAL
+   ========================================================= */
+
+let toursDataForCRUD = [];
+let toursFilters = { search: '' };
+
+async function loadToursData() {
+  try {
+    toursDataForCRUD = await window.fetchJson('/api/tours') || [];
+    renderToursTable();
+  } catch (err) {
+    console.error('Failed to load tours:', err);
+    window.toast.error('Failed to load tours data');
+  }
+}
+
+function renderToursTable() {
+  const tbody = el('toursTableBody');
+  if (!tbody) return;
+  
+  let filtered = [...toursDataForCRUD];
+  if (toursFilters.search) {
+    const search = toursFilters.search.toLowerCase();
+    filtered = filtered.filter(t => 
+      (t.tour_code || '').toLowerCase().includes(search) ||
+      (t.lead_passenger || '').toLowerCase().includes(search) ||
+      (t.staff_name || '').toLowerCase().includes(search) ||
+      (t.booking_code || '').toLowerCase().includes(search)
+    );
+  }
+  
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No tours found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(item => {
+    const region = regionsData.find(r => r.id === item.region_id);
+    return `
+    <tr class="table-row">
+      <td><strong>${item.tour_code || '—'}</strong></td>
+      <td>${item.lead_passenger || '—'}</td>
+      <td>${item.departure_date || '—'}</td>
+      <td>${region ? region.region_name : '—'}</td>
+      <td class="text-center">${item.jumlah_peserta || 0}</td>
+      <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
+      <td>${item.staff_name || '—'}</td>
+      <td class="actions">
+        <button class="btn btn-sm" onclick="editTour(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteTour(${item.id})">🗑️</button>` : ''}
+      </td>
+    </tr>
+  `;
+  }).join('');
+}
+
+window.editTour = async function(id) {
+  const item = toursDataForCRUD.find(t => t.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.edit('Edit Tour', [
+    { type: 'date', name: 'registration_date', label: 'Registration Date', required: true, quickDates: true },
+    { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
+    { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
+    { type: 'date', name: 'departure_date', label: 'Departure Date', required: true, quickDates: true },
+    { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
+    { type: 'select', name: 'status', label: 'Status', required: true, options: [
+      { value: 'belum jalan', label: 'Belum Jalan' },
+      { value: 'sudah jalan', label: 'Sudah Jalan' },
+      { value: 'tidak jalan', label: 'Tidak Jalan' }
+    ]},
+    { type: 'text', name: 'lead_passenger', label: 'Lead Passenger', required: true, icon: '👤' },
+    { type: 'number', name: 'jumlah_peserta', label: 'Participants', required: true, min: 1, defaultValue: 1 },
+    { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
+    { type: 'email', name: 'email', label: 'Email', icon: '📧', placeholder: 'email@example.com' },
+    { type: 'textarea', name: 'all_passengers', label: 'All Passengers', fullWidth: true, rows: 2, placeholder: 'Comma separated list' },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+    { type: 'currency', name: 'tour_price', label: 'Tour Price', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'sales_amount', label: 'Sales Amount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'discount_amount', label: 'Discount Amount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'profit_amount', label: 'Profit Amount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'text', name: 'discount_remarks', label: 'Discount Remarks', placeholder: 'Keterangan diskon' },
+    { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
+    { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
+  ], item, async (formData) => {
+    await window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    window.toast.success('Tour updated successfully');
+    await Promise.all([loadToursData(), renderDashboard()]);
+  }, {
+    entity: 'tours',
+    size: 'large',
+    validation: { registration_date: { required: true }, tour_code: { required: true }, departure_date: { required: true }, region_id: { required: true }, lead_passenger: { required: true }, jumlah_peserta: { required: true, min: 1 }, staff_name: { required: true } }
+  });
+};
+
+window.deleteTour = async function(id) {
+  const item = toursDataForCRUD.find(t => t.id === id);
+  if (!item) return;
+  
+  window.CRUDModal.delete('Tour', `${item.tour_code || 'this tour'} - ${item.lead_passenger}`, async () => {
+    await window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' });
+    window.toast.success('Tour deleted successfully');
+    await Promise.all([loadToursData(), renderDashboard()]);
+  });
+};
+
+if (el('addTourBtn')) {
+  el('addTourBtn').addEventListener('click', () => {
+    window.CRUDModal.create('Add Tour', [
+      { type: 'date', name: 'registration_date', label: 'Registration Date', required: true, quickDates: true },
+      { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
+      { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
+      { type: 'date', name: 'departure_date', label: 'Departure Date', required: true, quickDates: true },
+      { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
+      { type: 'select', name: 'status', label: 'Status', required: true, options: [
+        { value: 'belum jalan', label: 'Belum Jalan' },
+        { value: 'sudah jalan', label: 'Sudah Jalan' },
+        { value: 'tidak jalan', label: 'Tidak Jalan' }
+      ]},
+      { type: 'text', name: 'lead_passenger', label: 'Lead Passenger', required: true, icon: '👤' },
+      { type: 'number', name: 'jumlah_peserta', label: 'Participants', required: true, min: 1, defaultValue: 1 },
+      { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
+      { type: 'email', name: 'email', label: 'Email', icon: '📧', placeholder: 'email@example.com' },
+      { type: 'textarea', name: 'all_passengers', label: 'All Passengers', fullWidth: true, rows: 2, placeholder: 'Comma separated list' },
+      { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+      { type: 'currency', name: 'tour_price', label: 'Tour Price', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'sales_amount', label: 'Sales Amount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'discount_amount', label: 'Discount Amount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'profit_amount', label: 'Profit Amount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'text', name: 'discount_remarks', label: 'Discount Remarks', placeholder: 'Keterangan diskon' },
+      { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
+      { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
+    ], async (formData) => {
+      await window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      window.toast.success('Tour added successfully');
+      await Promise.all([loadToursData(), renderDashboard()]);
+    }, {
+      entity: 'tours',
+      size: 'large',
+      validation: { registration_date: { required: true }, tour_code: { required: true }, departure_date: { required: true }, region_id: { required: true }, lead_passenger: { required: true }, jumlah_peserta: { required: true, min: 1 }, staff_name: { required: true } }
+    });
+  });
+}
+
+if (el('searchTours')) {
+  el('searchTours').addEventListener('input', (e) => {
+    toursFilters.search = e.target.value;
+    renderToursTable();
+  });
+}
+
+// Load tours data on page load
+loadToursData();
+
