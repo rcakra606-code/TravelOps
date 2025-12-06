@@ -211,12 +211,20 @@ async function editTarget(id) {
       step: 100000
     }
   ], item, async (formData) => {
-    await fetchJson(`/api/targets/${item.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(formData)
-    });
-    window.toast.success('Target updated successfully');
-    await loadTargets();
+    try {
+      console.log('Submitting target update:', formData);
+      const response = await fetchJson(`/api/targets/${item.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      console.log('Target update response:', response);
+      window.toast.success('Target updated successfully');
+      await loadTargets();
+    } catch (error) {
+      console.error('Target update error:', error);
+      window.toast.error('Failed to update target: ' + (error.message || 'Unknown error'));
+    }
   }, {
     entity: 'target',
     validation: {
@@ -306,13 +314,20 @@ el('addTargetBtn').addEventListener('click', () => {
       placeholder: 'e.g., 2000000'
     }
   ], async (formData) => {
-    await fetchJson('/api/targets', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    window.toast.success('Target added successfully');
-    await loadTargets();
+    try {
+      console.log('Submitting new target:', formData);
+      const response = await fetchJson('/api/targets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+      console.log('Target create response:', response);
+      window.toast.success('Target added successfully');
+      await loadTargets();
+    } catch (error) {
+      console.error('Target create error:', error);
+      window.toast.error('Failed to add target: ' + (error.message || 'Unknown error'));
+    }
   }, {
     entity: 'target',
     validation: {
