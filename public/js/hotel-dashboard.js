@@ -100,6 +100,20 @@ function renderTable(data) {
     return;
   }
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editHotel(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteHotel(id);
+    }
+  };
+  
   tbody.innerHTML = data.map(item => {
     const region = regionsData.find(r => r.id === item.region_id);
     return `
@@ -112,8 +126,8 @@ function renderTable(data) {
       <td>${(item.guest_list || '').substring(0, 30)}${item.guest_list && item.guest_list.length > 30 ? '...' : ''}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editHotel(${item.id})">✏️ Edit</button>
-        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteHotel(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `;

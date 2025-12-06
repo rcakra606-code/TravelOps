@@ -108,6 +108,20 @@ function renderTable(data) {
     return;
   }
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editTelecom(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteTelecom(id);
+    }
+  };
+  
   tbody.innerHTML = data.map(item => {
     const region = regionsData.find(r => r.id === item.region_id);
     const depositBadge = item.deposit === 'sudah' 
@@ -125,8 +139,8 @@ function renderTable(data) {
       <td>${item.staff_name || '—'}</td>
       <td>${depositBadge}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editTelecom(${item.id})">✏️ Edit</button>
-        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteTelecom(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `;

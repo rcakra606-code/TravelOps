@@ -573,6 +573,20 @@ function renderToursTable() {
   const tbody = el('toursTableBody');
   if (!tbody) return;
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editTour(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteTour(id);
+    }
+  };
+  
   let filtered = [...toursDataForCRUD];
   if (toursFilters.search) {
     const search = toursFilters.search.toLowerCase();
@@ -601,8 +615,8 @@ function renderToursTable() {
       <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editTour(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteTour(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `;

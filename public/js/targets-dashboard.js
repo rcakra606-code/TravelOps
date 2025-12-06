@@ -124,6 +124,20 @@ function renderTable(data) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-center">No targets found</td></tr>';
     return;
   }
+  
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editTarget(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteTarget(id);
+    }
+  };
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   
@@ -135,8 +149,8 @@ function renderTable(data) {
       <td class="text-right"><strong>Rp ${(item.target_sales || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right"><strong>Rp ${(item.target_profit || 0).toLocaleString('id-ID')}</strong></td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editTarget(${item.id})">✏️ Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="window.deleteTarget(${item.id})">🗑️ Delete</button>
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️ Delete</button>
       </td>
     </tr>
   `).join('');

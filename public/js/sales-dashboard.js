@@ -523,6 +523,20 @@ function renderSalesTable() {
   const tbody = el('salesTableBody');
   if (!tbody) return;
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editSale(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteSale(id);
+    }
+  };
+  
   let filtered = [...salesDataForCRUD];
   if (salesFilters.search) {
     const search = salesFilters.search.toLowerCase();
@@ -547,8 +561,8 @@ function renderSalesTable() {
       <td class="text-right"><strong>Rp ${(item.sales_amount || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editSale(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteSale(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');

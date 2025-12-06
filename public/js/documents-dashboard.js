@@ -534,6 +534,20 @@ function renderDocumentsTable() {
   const tbody = el('documentsTableBody');
   if (!tbody) return;
   
+  // Event delegation for edit/delete buttons
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.btn-edit');
+    const deleteBtn = e.target.closest('.btn-delete');
+    
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      window.editDocument(id);
+    } else if (deleteBtn) {
+      const id = parseInt(deleteBtn.dataset.id);
+      window.deleteDocument(id);
+    }
+  };
+  
   let filtered = [...documentsDataForCRUD];
   if (documentsFilters.search) {
     const search = documentsFilters.search.toLowerCase();
@@ -559,8 +573,8 @@ function renderDocumentsTable() {
       <td>${item.estimated_done || '—'}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="window.editDocument(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteDocument(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');
