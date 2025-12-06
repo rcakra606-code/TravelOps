@@ -105,7 +105,21 @@
   </main>
 </div>
 
-<div id="modal" class="modal"></div>
+<div id="modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title"></div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script src="/js/toast.js"></script>
 <script src="/js/utils.js"></script>

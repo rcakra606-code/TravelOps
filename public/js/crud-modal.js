@@ -64,13 +64,9 @@ class CRUDModal {
    * Show edit modal with FormBuilder
    */
   static edit(title, fields, data, onSubmit, options = {}) {
-    console.log('CRUDModal.edit called with:', { title, fieldsCount: fields.length, data, options });
     const formBuilder = new FormBuilder();
     formBuilder.addFields(fields);
-    console.log('FormBuilder created with fields:', fields.length);
     const formHtml = formBuilder.build(data);
-    console.log('FormBuilder.build returned HTML length:', formHtml.length);
-    console.log('Calling window.openModal, available:', !!window.openModal);
 
     window.openModal({
       title: `✏️ ${title}`,

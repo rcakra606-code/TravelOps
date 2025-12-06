@@ -215,18 +215,12 @@ const modalForm = el('modalForm');
 const modalClose = el('modalClose');
 
 function openModal({ title, bodyHtml, context, size = 'medium' }) {
-  console.log('openModal called with:', { title, bodyHtmlLength: bodyHtml?.length, context, size });
-  console.log('Modal elements:', { modal: !!modal, modalTitle: !!modalTitle, modalBody: !!modalBody });
-  
   // Reset form state
   if (modalForm) modalForm.reset();
   
   // Set modal content
   if (modalTitle) modalTitle.textContent = title;
-  if (modalBody) {
-    modalBody.innerHTML = bodyHtml;
-    console.log('modalBody.innerHTML set, length:', modalBody.innerHTML.length);
-  }
+  if (modalBody) modalBody.innerHTML = bodyHtml;
   if (modal) modal.dataset.context = JSON.stringify(context || {});
   if (modal) modal.dataset.dirty = 'false';
   
@@ -235,10 +229,7 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
   if (modalCard) modalCard.className = `modal-card modal-${size}`;
   
   // Show modal with animation
-  if (modal) {
-    modal.classList.add('active');
-    console.log('Modal classList after adding active:', modal.classList.toString());
-  }
+  if (modal) modal.classList.add('active');
   
   // Focus first input
   setTimeout(() => {
