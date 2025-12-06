@@ -72,6 +72,10 @@ class ConfirmDialog {
             from { opacity: 0; }
             to { opacity: 1; }
           }
+          @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+          }
           @keyframes slideUp {
             from { transform: translateY(20px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }

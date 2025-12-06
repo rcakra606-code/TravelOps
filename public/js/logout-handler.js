@@ -7,14 +7,9 @@ async function handleLogout() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || user.username || 'User';
   
-  console.log('handleLogout called');
-  console.log('window.confirmDialog:', window.confirmDialog);
-  console.log('window.confirmDialog.show:', window.confirmDialog?.show);
-  
   // Show confirmation dialog
   let confirmed = false;
   if (window.confirmDialog && typeof window.confirmDialog.show === 'function') {
-    console.log('Using confirmDialog.show()');
     try {
       confirmed = await window.confirmDialog.show({
         title: 'Logout Confirmation',
@@ -24,21 +19,16 @@ async function handleLogout() {
         confirmColor: '#ef4444',
         icon: '👋'
       });
-      console.log('confirmDialog result:', confirmed);
     } catch (error) {
       console.error('confirmDialog error:', error);
       confirmed = confirm(`Are you sure you want to logout, ${userName}?`);
     }
   } else {
-    console.log('Using native confirm');
     // Fallback to native confirm
     confirmed = confirm(`Are you sure you want to logout, ${userName}?`);
   }
   
-  console.log('Logout confirmed:', confirmed);
-  
   if (!confirmed) {
-    console.log('Logout cancelled');
     return; // User cancelled
   }
   
