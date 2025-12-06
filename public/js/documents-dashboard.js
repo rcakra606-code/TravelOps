@@ -559,8 +559,8 @@ function renderDocumentsTable() {
       <td>${item.estimated_done || '—'}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editDocument(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteDocument(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm" onclick="window.editDocument(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteDocument(${item.id})">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');

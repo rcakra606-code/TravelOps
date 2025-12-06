@@ -125,8 +125,8 @@ function renderTable(data) {
       <td>${item.staff_name || '—'}</td>
       <td>${depositBadge}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editTelecom(${item.id})">✏️ Edit</button>
-        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteTelecom(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm" onclick="window.editTelecom(${item.id})">✏️ Edit</button>
+        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteTelecom(${item.id})">🗑️</button>` : ''}
       </td>
     </tr>
   `;

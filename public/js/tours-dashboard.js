@@ -601,8 +601,8 @@ function renderToursTable() {
       <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editTour(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteTour(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm" onclick="window.editTour(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteTour(${item.id})">🗑️</button>` : ''}
       </td>
     </tr>
   `;

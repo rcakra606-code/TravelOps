@@ -547,8 +547,8 @@ function renderSalesTable() {
       <td class="text-right"><strong>Rp ${(item.sales_amount || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editSale(${item.id})">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteSale(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm" onclick="window.editSale(${item.id})">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteSale(${item.id})">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');

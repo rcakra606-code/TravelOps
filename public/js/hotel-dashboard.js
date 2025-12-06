@@ -112,8 +112,8 @@ function renderTable(data) {
       <td>${(item.guest_list || '').substring(0, 30)}${item.guest_list && item.guest_list.length > 30 ? '...' : ''}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editHotel(${item.id})">✏️ Edit</button>
-        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="deleteHotel(${item.id})">🗑️</button>` : ''}
+        <button class="btn btn-sm" onclick="window.editHotel(${item.id})">✏️ Edit</button>
+        ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger" onclick="window.deleteHotel(${item.id})">🗑️</button>` : ''}
       </td>
     </tr>
   `;

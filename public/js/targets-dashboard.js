@@ -135,8 +135,8 @@ function renderTable(data) {
       <td class="text-right"><strong>Rp ${(item.target_sales || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right"><strong>Rp ${(item.target_profit || 0).toLocaleString('id-ID')}</strong></td>
       <td class="actions">
-        <button class="btn btn-sm" onclick="editTarget(${item.id})">✏️ Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteTarget(${item.id})">🗑️ Delete</button>
+        <button class="btn btn-sm" onclick="window.editTarget(${item.id})">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="window.deleteTarget(${item.id})">🗑️ Delete</button>
       </td>
     </tr>
   `).join('');
