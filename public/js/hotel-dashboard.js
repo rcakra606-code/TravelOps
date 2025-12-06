@@ -102,14 +102,18 @@ function renderTable(data) {
   
   // Event delegation for edit/delete buttons
   tbody.onclick = (e) => {
+    console.log('Hotel tbody clicked:', e.target);
     const editBtn = e.target.closest('.btn-edit');
     const deleteBtn = e.target.closest('.btn-delete');
+    console.log('Edit button found:', editBtn, 'Delete button found:', deleteBtn);
     
     if (editBtn) {
       const id = parseInt(editBtn.dataset.id);
+      console.log('Calling editHotel with id:', id);
       window.editHotel(id);
     } else if (deleteBtn) {
       const id = parseInt(deleteBtn.dataset.id);
+      console.log('Calling deleteHotel with id:', id);
       window.deleteHotel(id);
     }
   };
