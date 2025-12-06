@@ -30,6 +30,8 @@ class FormBuilder {
    * Generate form HTML
    */
   build(data = {}) {
+    console.log('FormBuilder.build() called with data:', data);
+    console.log('Fields:', this.fields.map(f => f.name));
     const formHtml = `
       <div class="enhanced-form">
         ${this.fields.map((field, index) => this.renderField(field, data, index)).join('')}
@@ -43,6 +45,7 @@ class FormBuilder {
    */
   renderField(field, data, index) {
     const value = data[field.name] || field.defaultValue || '';
+    console.log(`Field ${field.name}: data[${field.name}] = ${data[field.name]}, using value: ${value}`);
     const required = field.required ? '*' : '';
     const gridClass = field.fullWidth ? 'form-field-full' : 'form-field';
     const fieldId = `field-${field.name}-${index}`;
