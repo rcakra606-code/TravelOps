@@ -44,7 +44,7 @@ class CRUDModal {
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!validator.validate()) {
-              toast.error('Please fix the errors in the form');
+              window.toast.error('Please fix the errors in the form');
               return;
             }
             
@@ -88,7 +88,7 @@ class CRUDModal {
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!validator.validate()) {
-              toast.error('Please fix the errors in the form');
+              window.toast.error('Please fix the errors in the form');
               return;
             }
             
@@ -126,9 +126,9 @@ class CRUDModal {
       if (confirmed) {
         try {
           await onConfirm();
-          toast.success(`${title} deleted successfully`);
+          window.toast.success(`${title} deleted successfully`);
         } catch (error) {
-          toast.error(`Failed to delete: ${error.message}`);
+          window.toast.error(`Failed to delete: ${error.message}`);
         }
       }
     }
@@ -210,7 +210,7 @@ class CRUDModal {
         if (step.validation) {
           const validator = new FormValidator(form, step.validation);
           if (!validator.validate()) {
-            toast.error('Please fix the errors before continuing');
+            window.toast.error('Please fix the errors before continuing');
             return;
           }
         }
@@ -229,9 +229,9 @@ class CRUDModal {
           try {
             await onSubmit(this.formData);
             window.closeModal();
-            toast.success('Saved successfully!');
+            window.toast.success('Saved successfully!');
           } catch (error) {
-            toast.error('Failed to save: ' + error.message);
+            window.toast.error('Failed to save: ' + error.message);
             nextBtn.disabled = false;
             nextBtn.textContent = 'Submit ✓';
           }
@@ -294,9 +294,9 @@ class CRUDModal {
       await onSubmit(data);
       
       window.closeModal();
-      toast.success('Saved successfully!');
+      window.toast.success('Saved successfully!');
     } catch (error) {
-      toast.error('Failed to save: ' + error.message);
+      window.toast.error('Failed to save: ' + error.message);
       
       if (submitBtn) {
         submitBtn.disabled = false;
