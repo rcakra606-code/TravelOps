@@ -87,7 +87,10 @@ class ConfirmDialog {
       this.overlay.appendChild(dialog);
       document.body.appendChild(this.overlay);
 
-      // Handle buttons
+      // Handle buttons - use querySelector on dialog element instead of document
+      const confirmBtn = dialog.querySelector('#confirmOk');
+      const cancelBtn = dialog.querySelector('#confirmCancel');
+      
       const handleClose = (confirmed) => {
         this.overlay.style.animation = 'fadeOut 0.2s ease';
         setTimeout(() => {
@@ -99,8 +102,8 @@ class ConfirmDialog {
         }, 200);
       };
 
-      document.getElementById('confirmOk').onclick = () => handleClose(true);
-      document.getElementById('confirmCancel').onclick = () => handleClose(false);
+      if (confirmBtn) confirmBtn.onclick = () => handleClose(true);
+      if (cancelBtn) cancelBtn.onclick = () => handleClose(false);
       
       // ESC key to cancel
       const escHandler = (e) => {
