@@ -39,12 +39,24 @@ document.addEventListener('DOMContentLoaded', () => {
       const user = await res.json();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', user.token);
+      
+      // Show success toast
+      if (window.toast) {
+        window.toast.success(`Welcome back, ${user.name || user.username}! 👋`);
+      }
+      
       loginContainer.style.transform = 'scale(0.95)';
       loginContainer.style.opacity = '0';
       setTimeout(()=>{ window.location.href = '/single-dashboard.html'; },300);
     } catch(err){
       console.error('Login error:', err);
       loginContainer.classList.remove('loading');
+      
+      // Show error toast
+      if (window.toast) {
+        window.toast.error(err?.message || 'Username atau password salah.');
+      }
+      
       errorMsg.style.display = 'block';
       errorMsg.textContent = err?.message || 'Username atau password salah.';
       loginContainer.style.animation = 'none';

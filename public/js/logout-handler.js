@@ -7,6 +7,11 @@ function handleLogout() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   const userName = user.name || user.username || 'User';
   
+  // Show logout toast
+  if (window.toast) {
+    window.toast.info(`Logging out... Goodbye ${userName}! 👋`, 1500);
+  }
+  
   // Show goodbye overlay immediately
   const overlay = document.createElement('div');
   overlay.style.cssText = `
