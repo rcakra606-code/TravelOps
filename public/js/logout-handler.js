@@ -8,8 +8,9 @@ async function handleLogout() {
   const userName = user.name || user.username || 'User';
   
   // Show confirmation dialog
-  if (window.confirmDialog) {
-    const confirmed = await window.confirmDialog.show({
+  let confirmed = false;
+  if (window.confirmDialog && window.confirmDialog.show) {
+    confirmed = await window.confirmDialog.show({
       title: 'Logout Confirmation',
       message: `Are you sure you want to logout, ${userName}?`,
       confirmText: 'Yes, Logout',
@@ -17,15 +18,13 @@ async function handleLogout() {
       confirmColor: '#ef4444',
       icon: '👋'
     });
-    
-    if (!confirmed) {
-      return; // User cancelled
-    }
+  } else {
+    // Fallback to native confirm
+    confirmed = confirm(`Are you sure you want to logout, ${userName}?`);
   }
   
-  // Show logout toast
-  if (window.toast) {
-    window.toast.info(`Logging out... Goodbye ${userName}! 👋`, 1500);
+  if (!confirmed) {
+    return; // User cancelled
   }
   
   // Show goodbye overlay immediately
