@@ -160,13 +160,29 @@ class FormBuilder {
   renderDateTimeInput(field, value, fieldId) {
     const attrs = this.buildAttributes(field);
     
+    // Format date value to match input type requirements
+    let formattedValue = value;
+    if (value) {
+      if (field.type === 'date') {
+        // Convert ISO datetime to yyyy-MM-dd
+        formattedValue = value.split('T')[0];
+      } else if (field.type === 'datetime-local') {
+        // Convert ISO datetime to yyyy-MM-ddThh:mm
+        formattedValue = value.substring(0, 16);
+      } else if (field.type === 'time') {
+        // Extract time portion hh:mm
+        const timePart = value.includes('T') ? value.split('T')[1] : value;
+        formattedValue = timePart.substring(0, 5);
+      }
+    }
+    
     return `
       <div class="input-wrapper date-input-wrapper">
         <input 
           type="${field.type}" 
           id="${fieldId}"
           name="${field.name}"
-          value="${value}"
+          value="${formattedValue}"
           ${field.min ? `min="${field.min}"` : ''}
           ${field.max ? `max="${field.max}"` : ''}
           ${attrs}
