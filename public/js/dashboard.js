@@ -447,9 +447,9 @@ if (modalForm) {
       const formData = new FormData(modalForm);
       const data = Object.fromEntries(formData.entries());
       
-      // Validate required fields using validationUtils
+      // Validate required fields
       const requiredFields = Array.from(modalForm.querySelectorAll('[required]'));
-      const missingFields = requiredFields.filter(field => !validationUtils.validateRequired(field.value));
+      const missingFields = requiredFields.filter(field => !field.value || !field.value.trim());
       
       if (missingFields.length > 0) {
         const fieldNames = missingFields.map(f => f.name || f.placeholder || 'field').join(', ');
@@ -461,7 +461,7 @@ if (modalForm) {
       // Validate email fields
       const emailFields = Array.from(modalForm.querySelectorAll('input[type="email"]'));
       for (const field of emailFields) {
-        if (field.value && !validationUtils.validateEmail(field.value)) {
+        if (field.value && !validationUtils.isValidEmail(field.value)) {
           toast.error(`Invalid email format: ${field.value}`);
           if (modal) modal.classList.remove('loading');
           return;
@@ -471,7 +471,7 @@ if (modalForm) {
       // Validate phone fields
       const phoneFields = Array.from(modalForm.querySelectorAll('input[type="tel"]'));
       for (const field of phoneFields) {
-        if (field.value && !validationUtils.validatePhone(field.value)) {
+        if (field.value && !validationUtils.isValidPhone(field.value)) {
           toast.error(`Invalid phone format: ${field.value}`);
           if (modal) modal.classList.remove('loading');
           return;
