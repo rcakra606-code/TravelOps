@@ -83,8 +83,6 @@ function updateMetrics() {
   el('activeMonth').textContent = activeMonth;
   el('avgSalesTarget').textContent = 'Rp ' + Math.round(avgSales).toLocaleString('id-ID');
   el('avgProfitTarget').textContent = 'Rp ' + Math.round(avgProfit).toLocaleString('id-ID');
-  
-  el('metricsRow').style.display = 'grid';
 }
 
 function getFilteredData() {

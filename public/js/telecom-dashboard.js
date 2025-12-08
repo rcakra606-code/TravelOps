@@ -87,7 +87,6 @@ function updateMetrics() {
   el('activeSubscriptions').textContent = active;
   el('monthlyCost').textContent = depositSudah + ' Sudah / ' + depositBelum + ' Belum';
   el('yearTotal').textContent = 'Rp ' + Math.round(totalDeposit).toLocaleString('id-ID');
-  el('metricsRow').style.display = 'grid';
 }
 
 function applyFiltersAndRender() {

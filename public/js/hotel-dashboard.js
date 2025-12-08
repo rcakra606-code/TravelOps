@@ -80,7 +80,6 @@ function updateMetrics() {
   el('activeBookings').textContent = active;
   el('totalNights').textContent = totalNights;
   el('totalCost').textContent = avgNights + ' nights/booking';
-  el('metricsRow').style.display = 'grid';
 }
 
 function applyFiltersAndRender() {
