@@ -732,9 +732,19 @@ window.editTour = async function(id) {
     { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
     { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
   ], item, async (formData) => {
-    await window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
-    window.toast.success('Tour updated successfully');
-    await Promise.all([loadToursData(), renderDashboard()]);
+    try {
+      console.log('Submitting tour update:', formData);
+      await window.fetchJson(`/api/tours/${item.id}`, { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData) 
+      });
+      window.toast.success('Tour updated successfully');
+      await Promise.all([loadToursData(), renderDashboard()]);
+    } catch (error) {
+      console.error('Tour update error:', error);
+      window.toast.error('Failed to update tour: ' + (error.message || 'Unknown error'));
+    }
   }, {
     entity: 'tours',
     size: 'large',
@@ -780,9 +790,19 @@ if (el('addTourBtn')) {
       { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
       { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
     ], async (formData) => {
-      await window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-      window.toast.success('Tour added successfully');
-      await Promise.all([loadToursData(), renderDashboard()]);
+      try {
+        console.log('Submitting new tour:', formData);
+        await window.fetchJson('/api/tours', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify(formData) 
+        });
+        window.toast.success('Tour added successfully');
+        await Promise.all([loadToursData(), renderDashboard()]);
+      } catch (error) {
+        console.error('Tour create error:', error);
+        window.toast.error('Failed to add tour: ' + (error.message || 'Unknown error'));
+      }
     }, {
       entity: 'tours',
       size: 'large',
