@@ -313,6 +313,7 @@ export async function createApp() {
     app.post(`/api/${t}`, authMiddleware(), async (req,res)=>{
       try {
         if (t === 'targets') console.log('📊 Targets POST request:', req.body);
+        if (t === 'tours') console.log('🧳 Tours POST request:', req.body);
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
         if (t === 'users' && req.body.password) {
           if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil dan angka' });
@@ -321,6 +322,11 @@ export async function createApp() {
         // Auto-set overtime status to 'pending' for new records
         if (t === 'overtime' && !req.body.status) {
           req.body.status = 'pending';
+        }
+        // Check for duplicate tour_code
+        if (t === 'tours' && req.body.tour_code) {
+          const existing = await db.get('SELECT id FROM tours WHERE tour_code=?', [req.body.tour_code]);
+          if (existing) return res.status(400).json({ error: `Tour code "${req.body.tour_code}" already exists` });
         }
         if (staffOwnedTables.has(t)) {
           if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
@@ -335,9 +341,11 @@ export async function createApp() {
         const placeholders = keys.map(()=>'?').join(',');
         const sql = `INSERT INTO ${t} (${keys.join(',')}) VALUES (${placeholders})`;
         if (t === 'targets') console.log('📊 Targets SQL:', sql, values);
+        if (t === 'tours') console.log('🧳 Tours SQL:', sql, values);
         const result = await db.run(sql, values);
         await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(req.body));
         if (t === 'targets') console.log('✅ Targets created:', result.lastID);
+        if (t === 'tours') console.log('✅ Tours created:', result.lastID);
         res.json({ id: result.lastID });
       } catch (error) {
         console.error(`POST /api/${t} error:`, error);

@@ -12,6 +12,13 @@ const el = id => document.getElementById(id);
   const user = window.getUser();
   el('userName').textContent = user.name || user.username || '—';
   el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+  
+  // Verify toast is available
+  if (window.toast) {
+    console.log('✅ Toast system initialized on tours dashboard');
+  } else {
+    console.error('❌ Toast system NOT available on tours dashboard');
+  }
 })();
 
 /* === CHARTS STORAGE === */
