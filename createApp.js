@@ -645,16 +645,15 @@ export async function createApp() {
 // REPORT GENERATION FUNCTIONS
 // ============================================
 async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
-  const dateField = isPg ? 'created_at' : 'created_at';
   let conditions = [];
   let params = [];
   
   if (from) {
-    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
+    conditions.push(isPg ? `transaction_date >= $${params.length + 1}::date` : `date(transaction_date) >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
+    conditions.push(isPg ? `transaction_date <= $${params.length + 1}::date` : `date(transaction_date) <= ?`);
     params.push(to);
   }
   if (staff) {
@@ -687,22 +686,22 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   // Chart data - sales trend by month
   const trendData = await db.all(
     isPg
-      ? `SELECT TO_CHAR(created_at, 'YYYY-MM') as month, SUM(sales_amount) as total
+      ? `SELECT TO_CHAR(transaction_date::date, 'YYYY-MM') as month, SUM(sales_amount) as total
          FROM sales s ${whereClause}
-         GROUP BY TO_CHAR(created_at, 'YYYY-MM')
+         GROUP BY TO_CHAR(transaction_date::date, 'YYYY-MM')
          ORDER BY month`
-      : `SELECT strftime('%Y-%m', created_at) as month, SUM(sales_amount) as total
+      : `SELECT strftime('%Y-%m', transaction_date) as month, SUM(sales_amount) as total
          FROM sales s ${whereClause}
-         GROUP BY strftime('%Y-%m', created_at)
+         GROUP BY strftime('%Y-%m', transaction_date)
          ORDER BY month`,
     params
   );
   
   // Sales by region
   const regionData = await db.all(
-    `SELECT r.region_name, SUM(s.sales_amount) as total
+    `SELECT COALESCE(r.region_name, 'Unknown') as region_name, SUM(s.sales_amount) as total
      FROM sales s
-     JOIN regions r ON r.id = s.region_id
+     LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
      GROUP BY r.region_name`,
     params
@@ -712,9 +711,9 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   const tableData = await db.all(
     `SELECT s.*, r.region_name
      FROM sales s
-     JOIN regions r ON r.id = s.region_id
+     LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.created_at DESC
+     ORDER BY s.transaction_date DESC
      LIMIT 100`,
     params
   );
@@ -740,11 +739,11 @@ async function generateSalesDetailed(db, isPg, { from, to, staff, region }) {
   let params = [];
   
   if (from) {
-    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
+    conditions.push(isPg ? `transaction_date >= $${params.length + 1}::date` : `date(transaction_date) >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
+    conditions.push(isPg ? `transaction_date <= $${params.length + 1}::date` : `date(transaction_date) <= ?`);
     params.push(to);
   }
   if (staff) {
@@ -780,9 +779,9 @@ async function generateSalesDetailed(db, isPg, { from, to, staff, region }) {
   const tableData = await db.all(
     `SELECT s.*, r.region_name
      FROM sales s
-     JOIN regions r ON r.id = s.region_id
+     LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.created_at DESC`,
+     ORDER BY s.transaction_date DESC`,
     params
   );
   
