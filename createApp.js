@@ -311,51 +311,68 @@ export async function createApp() {
       }
     });
     app.post(`/api/${t}`, authMiddleware(), async (req,res)=>{
-      if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
-      if (t === 'users' && req.body.password) {
-        if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil dan angka' });
-        req.body.password = await bcrypt.hash(req.body.password, 10);
+      try {
+        if (t === 'targets') console.log('📊 Targets POST request:', req.body);
+        if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+        if (t === 'users' && req.body.password) {
+          if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil dan angka' });
+          req.body.password = await bcrypt.hash(req.body.password, 10);
+        }
+        // Auto-set overtime status to 'pending' for new records
+        if (t === 'overtime' && !req.body.status) {
+          req.body.status = 'pending';
+        }
+        if (staffOwnedTables.has(t)) {
+          if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
+        }
+        // Sales: allow optional region_id, but validate if provided
+        if (t === 'sales' && req.body.region_id) {
+          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        }
+        const keys = Object.keys(req.body);
+        const values = Object.values(req.body);
+        const placeholders = keys.map(()=>'?').join(',');
+        const sql = `INSERT INTO ${t} (${keys.join(',')}) VALUES (${placeholders})`;
+        if (t === 'targets') console.log('📊 Targets SQL:', sql, values);
+        const result = await db.run(sql, values);
+        await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(req.body));
+        if (t === 'targets') console.log('✅ Targets created:', result.lastID);
+        res.json({ id: result.lastID });
+      } catch (error) {
+        console.error(`POST /api/${t} error:`, error);
+        res.status(500).json({ error: error.message || 'Failed to create record' });
       }
-      // Auto-set overtime status to 'pending' for new records
-      if (t === 'overtime' && !req.body.status) {
-        req.body.status = 'pending';
-      }
-      if (staffOwnedTables.has(t)) {
-        if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
-      }
-      // Sales: allow optional region_id, but validate if provided
-      if (t === 'sales' && req.body.region_id) {
-        const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
-        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
-      }
-      const keys = Object.keys(req.body);
-      const values = Object.values(req.body);
-      const placeholders = keys.map(()=>'?').join(',');
-      const sql = `INSERT INTO ${t} (${keys.join(',')}) VALUES (${placeholders})`;
-      const result = await db.run(sql, values);
-      await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(req.body));
-      res.json({ id: result.lastID });
     });
     app.put(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
-      if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
-      // Overtime edit is admin-only
-      if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
-      if (req.user.type === 'basic') {
-        const record = await db.get(`SELECT * FROM ${t} WHERE id=?`, [req.params.id]);
-        if (!record) return res.status(404).json({ error:'Not found' });
-        if ('staff_name' in record && record.staff_name !== req.user.name) return res.status(403).json({ error:'Unauthorized edit (ownership mismatch)' });
-        if ('staff_name' in record && 'staff_name' in req.body) req.body.staff_name = record.staff_name;
+      try {
+        if (t === 'targets') console.log('📊 Targets PUT request:', req.params.id, req.body);
+        if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+        // Overtime edit is admin-only
+        if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
+        if (req.user.type === 'basic') {
+          const record = await db.get(`SELECT * FROM ${t} WHERE id=?`, [req.params.id]);
+          if (!record) return res.status(404).json({ error:'Not found' });
+          if ('staff_name' in record && record.staff_name !== req.user.name) return res.status(403).json({ error:'Unauthorized edit (ownership mismatch)' });
+          if ('staff_name' in record && 'staff_name' in req.body) req.body.staff_name = record.staff_name;
+        }
+        if (t === 'sales' && 'region_id' in req.body && req.body.region_id) {
+          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        }
+        const keys = Object.keys(req.body);
+        const values = Object.values(req.body);
+        const set = keys.map(k=>`${k}=?`).join(',');
+        const sql = `UPDATE ${t} SET ${set} WHERE id=?`;
+        if (t === 'targets') console.log('📊 Targets UPDATE SQL:', sql, [...values, req.params.id]);
+        await db.run(sql, [...values, req.params.id]);
+        await logActivity(req.user.username, 'UPDATE', t, req.params.id, JSON.stringify(req.body));
+        if (t === 'targets') console.log('✅ Targets updated:', req.params.id);
+        res.json({ updated:true });
+      } catch (error) {
+        console.error(`PUT /api/${t}/:id error:`, error);
+        res.status(500).json({ error: error.message || 'Failed to update record' });
       }
-      if (t === 'sales' && 'region_id' in req.body && req.body.region_id) {
-        const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
-        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
-      }
-      const keys = Object.keys(req.body);
-      const values = Object.values(req.body);
-      const set = keys.map(k=>`${k}=?`).join(',');
-      await db.run(`UPDATE ${t} SET ${set} WHERE id=?`, [...values, req.params.id]);
-      await logActivity(req.user.username, 'UPDATE', t, req.params.id, JSON.stringify(req.body));
-      res.json({ updated:true });
     });
     app.delete(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
       // Overtime delete is admin-only
