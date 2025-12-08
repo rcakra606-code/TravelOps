@@ -52,39 +52,60 @@
         <h2>🎯 Sales & Profit Targets</h2>
         <div class="small">Kelola target penjualan dan profit per staff</div>
       </div>
-      <button id="addTargetBtn" class="btn btn-primary">+ Add Target</button>
     </div>
 
-    <div id="metricsRow" class="metrics" style="display: none;">
-      <div class="metric-card">
-        <div class="label">Total Targets</div>
-        <div class="value" id="totalTargets">0</div>
+    <!-- Filter Section -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Targets Analytics</h3>
+        <button id="targetsFilterBtn" class="btn">🔍 Filter</button>
       </div>
-      <div class="metric-card">
-        <div class="label">Active Month</div>
-        <div class="value" id="activeMonth">—</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Avg Sales Target</div>
-        <div class="value" id="avgSalesTarget">Rp 0</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Avg Profit Target</div>
-        <div class="value" id="avgProfitTarget">Rp 0</div>
-      </div>
-    </div>
+      
+      <!-- Metrics Row -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Targets</div>
+          <div class="metric-value" id="totalTargets">0</div>
+          <div class="metric-subtitle">Target records</div>
+        </div>
 
-    <div class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <h3>Targets List</h3>
-        <div style="display: flex; gap: 12px;">
-          <input type="search" id="searchTargets" placeholder="Search..." class="search-input">
-          <button id="filterTargetsBtn" class="btn">🔍 Filter</button>
-          <button id="exportTargetsBtn" class="btn">📥 Export</button>
+        <div class="metric-card">
+          <div class="metric-title">Current Month</div>
+          <div class="metric-value" id="activeMonth">—</div>
+          <div class="metric-subtitle">Active period</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Avg Sales Target</div>
+          <div class="metric-value" id="avgSalesTarget">Rp 0</div>
+          <div class="metric-subtitle">Per staff average</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Avg Profit Target</div>
+          <div class="metric-value" id="avgProfitTarget">Rp 0</div>
+          <div class="metric-subtitle">Per staff average</div>
         </div>
       </div>
-      <div class="table-container">
-        <table class="data-table">
+
+      <!-- Export Button -->
+      <div style="text-align: right; margin-top: 20px;">
+        <button id="exportTargetsBtn" class="btn">⬇ Export Targets Data</button>
+      </div>
+    </div>
+
+    <!-- Targets Data Table with CRUD -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📋 Targets Records</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchTargets" placeholder="🔍 Search targets..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="addTargetBtn" class="btn btn-primary">+ Add Target</button>
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
           <thead>
             <tr>
               <th>Staff Name</th>
@@ -100,7 +121,6 @@
           </tbody>
         </table>
       </div>
-      <div id="targetsPagination"></div>
     </div>
   </main>
 </div>

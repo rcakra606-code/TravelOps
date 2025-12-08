@@ -671,6 +671,7 @@ function renderToursTable() {
       <td class="text-right">${formatCurrency(item.sales_amount)}</td>
       <td class="text-right">${formatCurrency(item.profit_amount)}</td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
@@ -867,6 +868,57 @@ if (el('toursItemsPerPage')) {
     renderToursTable();
   });
 }
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = toursDataForCRUD.find(t => t.id == id);
+    if (item) {
+      window.quickView.open([
+        {
+          title: 'Tour Information',
+          fields: {
+            'Tour Code': item.tour_code || '—',
+            'Tour Name': item.tour_name || '—',
+            'Guest Name': item.guest_name || '—',
+            'Registration Date': item.registration_date || '—',
+            'Departure Date': item.departure_date || '—',
+            'Destination': item.destination || '—'
+          }
+        },
+        {
+          title: 'Participant Details',
+          fields: {
+            'Adult': item.adult_count || 0,
+            'Child': item.child_count || 0,
+            'Infant': item.infant_count || 0,
+            'Total Participants': (item.adult_count || 0) + (item.child_count || 0) + (item.infant_count || 0),
+            'Staff Name': item.staff_name || '—',
+            'Region': item.region_name || '—'
+          }
+        },
+        {
+          title: 'Financial Details',
+          fields: {
+            'Sales Amount': formatCurrency(item.sales_amount),
+            'Profit Amount': formatCurrency(item.profit_amount),
+            'Profit Margin': item.sales_amount ? ((item.profit_amount / item.sales_amount) * 100).toFixed(2) + '%' : '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Tour ID': item.id
+          }
+        }
+      ], `Tour: ${item.tour_code || item.tour_name}`);
+    }
+  }
+});
 
 // Load tours data on page load
 loadToursData();

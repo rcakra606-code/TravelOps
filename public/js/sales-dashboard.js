@@ -561,6 +561,7 @@ function renderSalesTable() {
       <td class="text-right"><strong>Rp ${(item.sales_amount || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
@@ -577,6 +578,7 @@ window.editSale = async function(id) {
     { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
     { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+    { type: 'select', name: 'region_id', label: 'Region', required: false, options: [{ value: '', label: 'No Region' }, ...regionsData.map(r => ({ value: r.id, label: r.region_name }))] },
     { type: 'select', name: 'status', label: 'Status', required: true, options: [
       { value: 'Pending', label: 'Pending' },
       { value: 'Paid', label: 'Paid' },
@@ -613,6 +615,7 @@ if (el('addSaleBtn')) {
       { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
       { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
       { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
+      { type: 'select', name: 'region_id', label: 'Region', required: false, options: [{ value: '', label: 'No Region' }, ...regionsData.map(r => ({ value: r.id, label: r.region_name }))] },
       { type: 'select', name: 'status', label: 'Status', required: true, options: [
         { value: 'Pending', label: 'Pending' },
         { value: 'Paid', label: 'Paid' },
@@ -638,6 +641,46 @@ if (el('searchSales')) {
     renderSalesTable();
   });
 }
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = salesDataForCRUD.find(s => s.id == id);
+    if (item) {
+      window.quickView.open([
+        {
+          title: 'Transaction Information',
+          fields: {
+            'Invoice Number': item.invoice_no || '—',
+            'Unique Code': item.unique_code || '—',
+            'Transaction Date': item.transaction_date || '—',
+            'Staff Name': item.staff_name || '—',
+            'Region': item.region_name || '—',
+            'Status': item.status || 'Pending'
+          }
+        },
+        {
+          title: 'Financial Details',
+          fields: {
+            'Sales Amount': (item.sales_amount || 0).toLocaleString('id-ID', {style: 'currency', currency: 'IDR'}),
+            'Profit Amount': (item.profit_amount || 0).toLocaleString('id-ID', {style: 'currency', currency: 'IDR'}),
+            'Profit Margin': item.sales_amount ? ((item.profit_amount / item.sales_amount) * 100).toFixed(2) + '%' : '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Sale ID': item.id
+          }
+        }
+      ], `Sale: ${item.invoice_no}`);
+    }
+  }
+});
 
 // Load sales data on page load
 loadSalesData();

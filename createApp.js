@@ -332,9 +332,14 @@ export async function createApp() {
           if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
         }
         // Sales: allow optional region_id, but validate if provided
-        if (t === 'sales' && req.body.region_id) {
-          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
-          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        if (t === 'sales') {
+          // Convert empty string to null for region_id
+          if (req.body.region_id === '' || req.body.region_id === null) {
+            req.body.region_id = null;
+          } else if (req.body.region_id) {
+            const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+            if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+          }
         }
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
@@ -364,9 +369,14 @@ export async function createApp() {
           if ('staff_name' in record && record.staff_name !== req.user.name) return res.status(403).json({ error:'Unauthorized edit (ownership mismatch)' });
           if ('staff_name' in record && 'staff_name' in req.body) req.body.staff_name = record.staff_name;
         }
-        if (t === 'sales' && 'region_id' in req.body && req.body.region_id) {
-          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
-          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        if (t === 'sales' && 'region_id' in req.body) {
+          // Convert empty string to null for region_id
+          if (req.body.region_id === '' || req.body.region_id === null) {
+            req.body.region_id = null;
+          } else if (req.body.region_id) {
+            const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+            if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+          }
         }
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);

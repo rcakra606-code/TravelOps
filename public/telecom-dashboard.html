@@ -52,39 +52,60 @@
         <h2>📞 Telecom Expenses</h2>
         <div class="small">Kelola pengeluaran telepon, internet, dan komunikasi</div>
       </div>
-      <button id="addTelecomBtn" class="btn btn-primary">+ Add Expense</button>
     </div>
 
-    <div id="metricsRow" class="metrics" style="display: none;">
-      <div class="metric-card">
-        <div class="label">Total Expenses</div>
-        <div class="value" id="totalExpenses">0</div>
+    <!-- Filter Section -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Telecom Analytics</h3>
+        <button id="telecomFilterBtn" class="btn">🔍 Filter</button>
       </div>
-      <div class="metric-card">
-        <div class="label">Active Subscriptions</div>
-        <div class="value" id="activeSubscriptions">0</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Monthly Cost</div>
-        <div class="value" id="monthlyCost">Rp 0</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">This Year Total</div>
-        <div class="value" id="yearTotal">Rp 0</div>
-      </div>
-    </div>
+      
+      <!-- Metrics Row -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Expenses</div>
+          <div class="metric-value" id="totalExpenses">0</div>
+          <div class="metric-subtitle">Expense records</div>
+        </div>
 
-    <div class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <h3>Telecom Expenses</h3>
-        <div style="display: flex; gap: 12px;">
-          <input type="search" id="searchTelecom" placeholder="Search..." class="search-input">
-          <button id="filterTelecomBtn" class="btn">🔍 Filter</button>
-          <button id="exportTelecomBtn" class="btn">📥 Export</button>
+        <div class="metric-card">
+          <div class="metric-title">Active Subscriptions</div>
+          <div class="metric-value" id="activeSubscriptions">0</div>
+          <div class="metric-subtitle">Currently active</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Monthly Cost</div>
+          <div class="metric-value" id="monthlyCost">Rp 0</div>
+          <div class="metric-subtitle">Average per month</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">This Year Total</div>
+          <div class="metric-value" id="yearTotal">Rp 0</div>
+          <div class="metric-subtitle">Year to date</div>
         </div>
       </div>
-      <div class="table-container">
-        <table class="data-table">
+
+      <!-- Export Button -->
+      <div style="text-align: right; margin-top: 20px;">
+        <button id="exportTelecomBtn" class="btn">⬇ Export Telecom Data</button>
+      </div>
+    </div>
+
+    <!-- Telecom Data Table with CRUD -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📋 Telecom Records</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchTelecom" placeholder="🔍 Search expenses..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="addTelecomBtn" class="btn btn-primary">+ Add Expense</button>
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
           <thead>
             <tr>
               <th>Jenis</th>
@@ -102,7 +123,6 @@
           </tbody>
         </table>
       </div>
-      <div id="telecomPagination"></div>
     </div>
   </main>
 </div>

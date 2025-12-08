@@ -149,6 +149,7 @@ function renderTable(data) {
       <td class="text-right"><strong>Rp ${(item.target_sales || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right"><strong>Rp ${(item.target_profit || 0).toLocaleString('id-ID')}</strong></td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         <button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️ Delete</button>
       </td>
@@ -364,6 +365,43 @@ el('exportTargetsBtn').addEventListener('click', () => {
   a.click();
   URL.revokeObjectURL(url);
   window.toast.success('Targets exported successfully');
+});
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = targetsData.find(t => t.id == id);
+    if (item) {
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      window.quickView.open([
+        {
+          title: 'Target Information',
+          fields: {
+            'Staff Name': item.staff_name || '—',
+            'Period': `${monthNames[item.month - 1] || '—'} ${item.year || '—'}`,
+            'Month': item.month || '—',
+            'Year': item.year || '—'
+          }
+        },
+        {
+          title: 'Target Details',
+          fields: {
+            'Sales Target': (item.target_sales || 0).toLocaleString('id-ID', {style: 'currency', currency: 'IDR'}),
+            'Profit Target': (item.target_profit || 0).toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})
+          }
+        },
+        {
+          title: 'Record Info',
+          fields: {
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Target ID': item.id
+          }
+        }
+      ], `Target: ${item.staff_name} - ${monthNames[item.month - 1]} ${item.year}`);
+    }
+  }
 });
 
 // Initialize

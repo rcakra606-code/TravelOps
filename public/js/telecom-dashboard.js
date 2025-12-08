@@ -139,6 +139,7 @@ function renderTable(data) {
       <td>${item.staff_name || '—'}</td>
       <td>${depositBadge}</td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
@@ -236,6 +237,54 @@ el('addTelecomBtn').addEventListener('click', () => {
 });
 
 el('searchTelecom').addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = telecomData.find(t => t.id == id);
+    if (item) {
+      const region = regionsData.find(r => r.id === item.region_id);
+      window.quickView.open([
+        {
+          title: 'Telecom Information',
+          fields: {
+            'Name': item.nama || '—',
+            'Phone Number': item.no_telephone || '—',
+            'Type/Product': item.type_product || '—',
+            'Region': region ? region.region_name : '—',
+            'Staff Name': item.staff_name || '—'
+          }
+        },
+        {
+          title: 'Service Period',
+          fields: {
+            'Start Date': item.tanggal_mulai || '—',
+            'End Date': item.tanggal_selesai || 'Ongoing',
+            'Duration': item.tanggal_mulai && item.tanggal_selesai ? 
+              Math.ceil((new Date(item.tanggal_selesai) - new Date(item.tanggal_mulai)) / (1000 * 60 * 60 * 24)) + ' days' : '—'
+          }
+        },
+        {
+          title: 'Deposit Details',
+          fields: {
+            'Deposit Status': item.deposit || '—',
+            'Deposit Amount': item.jumlah_deposit ? 'Rp ' + item.jumlah_deposit.toLocaleString('id-ID') : '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Telecom ID': item.id
+          }
+        }
+      ], `Telecom: ${item.nama || item.no_telephone}`);
+    }
+  }
+});
 
 el('exportTelecomBtn').addEventListener('click', () => {
   const csv = [['Nama', 'No Telephone', 'Type Product', 'Region', 'Tanggal Mulai', 'Tanggal Selesai', 'Staff', 'Deposit', 'Jumlah Deposit'], 

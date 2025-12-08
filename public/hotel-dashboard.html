@@ -52,39 +52,60 @@
         <h2>🏨 Hotel Bookings</h2>
         <div class="small">Kelola reservasi hotel untuk tour dan perjalanan</div>
       </div>
-      <button id="addHotelBtn" class="btn btn-primary">+ Add Booking</button>
     </div>
 
-    <div id="metricsRow" class="metrics" style="display: none;">
-      <div class="metric-card">
-        <div class="label">Total Bookings</div>
-        <div class="value" id="totalBookings">0</div>
+    <!-- Filter Section -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>Hotel Analytics</h3>
+        <button id="hotelFilterBtn" class="btn">🔍 Filter</button>
       </div>
-      <div class="metric-card">
-        <div class="label">Active Bookings</div>
-        <div class="value" id="activeBookings">0</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Total Room Nights</div>
-        <div class="value" id="totalNights">0</div>
-      </div>
-      <div class="metric-card">
-        <div class="label">Total Cost</div>
-        <div class="value" id="totalCost">Rp 0</div>
-      </div>
-    </div>
+      
+      <!-- Metrics Row -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Bookings</div>
+          <div class="metric-value" id="totalBookings">0</div>
+          <div class="metric-subtitle">Booking records</div>
+        </div>
 
-    <div class="card" style="margin-top: 24px;">
-      <div class="card-header">
-        <h3>Hotel Bookings List</h3>
-        <div style="display: flex; gap: 12px;">
-          <input type="search" id="searchHotel" placeholder="Search..." class="search-input">
-          <button id="filterHotelBtn" class="btn">🔍 Filter</button>
-          <button id="exportHotelBtn" class="btn">📥 Export</button>
+        <div class="metric-card">
+          <div class="metric-title">Active Bookings</div>
+          <div class="metric-value" id="activeBookings">0</div>
+          <div class="metric-subtitle">Currently active</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Total Room Nights</div>
+          <div class="metric-value" id="totalNights">0</div>
+          <div class="metric-subtitle">Accumulated nights</div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-title">Total Cost</div>
+          <div class="metric-value" id="totalCost">Rp 0</div>
+          <div class="metric-subtitle">Total expenditure</div>
         </div>
       </div>
-      <div class="table-container">
-        <table class="data-table">
+
+      <!-- Export Button -->
+      <div style="text-align: right; margin-top: 20px;">
+        <button id="exportHotelBtn" class="btn">⬇ Export Hotel Data</button>
+      </div>
+    </div>
+
+    <!-- Hotel Data Table with CRUD -->
+    <div class="card" style="margin-top: 20px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <h3>📋 Hotel Records</h3>
+        <div style="display: flex; gap: 10px;">
+          <input type="text" id="searchHotel" placeholder="🔍 Search bookings..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="addHotelBtn" class="btn btn-primary">+ Add Booking</button>
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
           <thead>
             <tr>
               <th>Hotel Name</th>
@@ -102,7 +123,6 @@
           </tbody>
         </table>
       </div>
-      <div id="hotelPagination"></div>
     </div>
   </main>
 </div>

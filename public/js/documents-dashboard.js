@@ -573,6 +573,7 @@ function renderDocumentsTable() {
       <td>${item.estimated_done || '—'}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
@@ -658,6 +659,46 @@ if (el('searchDocuments')) {
     renderDocumentsTable();
   });
 }
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = documentsDataForCRUD.find(d => d.id == id);
+    if (item) {
+      window.quickView.open([
+        {
+          title: 'Guest Information',
+          fields: {
+            'Guest Name': item.guest_name || '—',
+            'Passport Number': item.passport_number || '—',
+            'Passport Country': item.passport_country || '—',
+            'Phone Number': item.phone_number || '—'
+          }
+        },
+        {
+          title: 'Processing Details',
+          fields: {
+            'Process Type': item.process_type || 'Normal',
+            'Receive Date': item.receive_date || '—',
+            'Estimated Done': item.estimated_done || '—',
+            'Status': item.status || 'Pending',
+            'Staff Name': item.staff_name || '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Document ID': item.id
+          }
+        }
+      ], `Document: ${item.guest_name}`);
+    }
+  }
+});
 
 // Load documents data on page load
 loadDocumentsData();

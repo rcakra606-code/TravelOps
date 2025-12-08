@@ -126,6 +126,7 @@ function renderTable(data) {
       <td>${(item.guest_list || '').substring(0, 30)}${item.guest_list && item.guest_list.length > 30 ? '...' : ''}</td>
       <td>${item.staff_name || '—'}</td>
       <td class="actions">
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${user.type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
@@ -223,6 +224,55 @@ el('addHotelBtn').addEventListener('click', () => {
 });
 
 el('searchHotel').addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = hotelData.find(h => h.id == id);
+    if (item) {
+      const region = regionsData.find(r => r.id === item.region_id);
+      const nights = item.check_in && item.check_out ? 
+        Math.ceil((new Date(item.check_out) - new Date(item.check_in)) / (1000 * 60 * 60 * 24)) : 0;
+      window.quickView.open([
+        {
+          title: 'Hotel Information',
+          fields: {
+            'Hotel Name': item.hotel_name || '—',
+            'Region': region ? region.region_name : '—',
+            'Confirmation Number': item.confirmation_number || '—',
+            'Staff Name': item.staff_name || '—'
+          }
+        },
+        {
+          title: 'Booking Details',
+          fields: {
+            'Check-In': item.check_in || '—',
+            'Check-Out': item.check_out || '—',
+            'Total Nights': nights + ' night' + (nights !== 1 ? 's' : ''),
+            'Guest List': item.guest_list || '—'
+          }
+        },
+        {
+          title: 'Supplier Information',
+          fields: {
+            'Supplier Code': item.supplier_code || '—',
+            'Supplier Name': item.supplier_name || '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Booking ID': item.id
+          }
+        }
+      ], `Hotel: ${item.hotel_name}`);
+    }
+  }
+});
 
 el('exportHotelBtn').addEventListener('click', () => {
   const csv = [['Check In', 'Check Out', 'Hotel Name', 'Region', 'Confirmation', 'Guest List', 'Supplier Code', 'Supplier Name', 'Staff'], 

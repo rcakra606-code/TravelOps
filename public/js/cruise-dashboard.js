@@ -164,6 +164,7 @@ function renderTable(data) {
       <td>${item.staff_name || '—'}</td>
       <td>
         <div class="quick-actions">
+          <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
           <button class="btn-edit" data-id="${item.id}">✏️</button>
           ${user.type !== 'basic' ? `<button class="btn-delete" data-id="${item.id}">🗑️</button>` : ''}
         </div>
@@ -536,6 +537,55 @@ sortUtils.addSortableHeaders('cruiseTable',
     applyFiltersAndRender();
   }
 );
+
+// Quick View functionality
+document.addEventListener('click', (e) => {
+  const viewBtn = e.target.closest('[data-action="quick-view"]');
+  if (viewBtn && window.quickView) {
+    const id = viewBtn.dataset.id;
+    const item = cruiseData.find(c => c.id == id);
+    if (item) {
+      const nights = item.sailing_start && item.sailing_end ? 
+        Math.ceil((new Date(item.sailing_end) - new Date(item.sailing_start)) / (1000 * 60 * 60 * 24)) : 0;
+      window.quickView.open([
+        {
+          title: 'Cruise Information',
+          fields: {
+            'Cruise Brand': item.cruise_brand || '—',
+            'Ship Name': item.ship_name || '—',
+            'Reservation Code': item.reservation_code || '—',
+            'PIC Name': item.pic_name || '—',
+            'Staff Name': item.staff_name || '—'
+          }
+        },
+        {
+          title: 'Sailing Details',
+          fields: {
+            'Sailing Start': dateUtils.format(item.sailing_start),
+            'Sailing End': dateUtils.format(item.sailing_end),
+            'Duration': nights + ' night' + (nights !== 1 ? 's' : ''),
+            'Route': item.route || '—'
+          }
+        },
+        {
+          title: 'Passenger Information',
+          fields: {
+            'Guest List': item.guest_list || '—',
+            'Cabin Type': item.cabin_type || '—'
+          }
+        },
+        {
+          title: 'Additional Info',
+          fields: {
+            'Notes': item.notes || '—',
+            'Created At': item.created_at ? new Date(item.created_at).toLocaleString() : '—',
+            'Cruise ID': item.id
+          }
+        }
+      ], `Cruise: ${item.ship_name || item.cruise_brand}`);
+    }
+  }
+});
 
 await loadStaff();
 await loadCruises();
