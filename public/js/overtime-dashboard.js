@@ -514,37 +514,7 @@ if (window.ColumnToggleManager) {
   const columnToggle = new ColumnToggleManager('.table');
 }
 
-// 5. Add mini charts to summary cards if Chart.js is loaded
-if (window.Chart && window.chartEnhancer) {
-  // Generate sample data for sparklines
-  const last7Days = Array.from({length: 7}, (_, i) => {
-    const date = new Date();
-    date.setDate(date.getDate() - (6 - i));
-    return date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
-  });
-  
-  // Total Overtime trend
-  const totalHoursData = Array.from({length: 7}, () => Math.floor(Math.random() * 20) + 10);
-  chartEnhancer.addSparklineToCard('.metric-card:nth-child(1)', {
-    labels: last7Days,
-    values: totalHoursData
-  }, {
-    color: '#3b82f6',
-    formatter: (val) => `${val} hours`
-  });
-  
-  // Total Amount trend
-  const totalAmountData = Array.from({length: 7}, () => Math.floor(Math.random() * 2000000) + 1000000);
-  chartEnhancer.addSparklineToCard('.metric-card:nth-child(2)', {
-    labels: last7Days,
-    values: totalAmountData
-  }, {
-    color: '#10b981',
-    formatter: (val) => val.toLocaleString('id-ID', {style: 'currency', currency: 'IDR'})
-  });
-}
-
-// 6. Initialize dashboard customization
+// 5. Initialize dashboard customization
 if (window.DashboardCustomizer) {
   const dashboardCustomizer = new DashboardCustomizer();
   // Note: If you have dashboard widgets, initialize them here
