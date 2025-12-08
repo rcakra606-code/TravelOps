@@ -112,6 +112,55 @@ async function initializePage() {
   
   // Set report generation date
   document.getElementById('reportDate').textContent = new Date().toLocaleString();
+  
+  // Update hero stats
+  updateHeroStats();
+  
+  // Setup quick report buttons
+  document.querySelectorAll('.quick-report-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const reportType = btn.dataset.report;
+      const period = btn.dataset.period;
+      
+      // Set form values
+      document.getElementById('reportType').value = reportType;
+      document.getElementById('quickPeriod').value = period;
+      setQuickPeriod(period);
+      
+      // Generate report
+      setTimeout(() => generateReport(), 100);
+      
+      // Visual feedback
+      btn.style.transform = 'scale(0.95)';
+      setTimeout(() => btn.style.transform = '', 200);
+    });
+  });
+}
+
+function updateHeroStats() {
+  // Count total reports (from localStorage or default)
+  const reportCount = localStorage.getItem('totalReportsGenerated') || '0';
+  document.getElementById('heroTotalReports').textContent = reportCount;
+  
+  // Last update time
+  const lastUpdate = localStorage.getItem('lastReportTime');
+  if (lastUpdate) {
+    const date = new Date(parseInt(lastUpdate));
+    const now = new Date();
+    const diffMinutes = Math.floor((now - date) / 60000);
+    
+    if (diffMinutes < 1) {
+      document.getElementById('heroLastUpdate').textContent = 'Just now';
+    } else if (diffMinutes < 60) {
+      document.getElementById('heroLastUpdate').textContent = `${diffMinutes}m ago`;
+    } else if (diffMinutes < 1440) {
+      document.getElementById('heroLastUpdate').textContent = `${Math.floor(diffMinutes / 60)}h ago`;
+    } else {
+      document.getElementById('heroLastUpdate').textContent = `${Math.floor(diffMinutes / 1440)}d ago`;
+    }
+  } else {
+    document.getElementById('heroLastUpdate').textContent = 'Never';
+  }
 }
 
 function setupEventListeners() {
@@ -289,6 +338,12 @@ async function generateReport() {
     
     // Render the report
     renderReport(reportType, reportData);
+    
+    // Update report counter
+    const currentCount = parseInt(localStorage.getItem('totalReportsGenerated') || '0');
+    localStorage.setItem('totalReportsGenerated', (currentCount + 1).toString());
+    localStorage.setItem('lastReportTime', Date.now().toString());
+    updateHeroStats();
     
     // Enable export buttons
     const exportButtons = ['exportPdfBtn', 'exportExcelBtn', 'exportCsvBtn', 'printBtn'];
