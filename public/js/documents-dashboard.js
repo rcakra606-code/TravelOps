@@ -585,8 +585,8 @@ window.editDocument = async function(id) {
   if (!item) return;
   
   window.CRUDModal.edit('Edit Document', [
-    { type: 'date', name: 'receive_date', label: 'Receive Date', required: true, quickDates: true },
-    { type: 'date', name: 'send_date', label: 'Send Date', quickDates: true },
+    { type: 'date', name: 'receive_date', label: 'Receive Date', required: true },
+    { type: 'date', name: 'send_date', label: 'Send Date' },
     { type: 'text', name: 'guest_name', label: 'Guest Name', required: true, icon: '👤', placeholder: 'Nama Tamu' },
     { type: 'text', name: 'passport_country', label: 'Passport/Visa Country', icon: '🌍', placeholder: 'Country name' },
     { type: 'select', name: 'process_type', label: 'Process Type', required: true, options: [
@@ -596,7 +596,7 @@ window.editDocument = async function(id) {
     { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
     { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'INV-001' },
     { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
-    { type: 'date', name: 'estimated_done', label: 'Estimated Done', quickDates: true },
+    { type: 'date', name: 'estimated_done', label: 'Estimated Done' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
     { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
     { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
@@ -625,8 +625,8 @@ window.deleteDocument = async function(id) {
 if (el('addDocumentBtn')) {
   el('addDocumentBtn').addEventListener('click', () => {
     window.CRUDModal.create('Add Document', [
-      { type: 'date', name: 'receive_date', label: 'Receive Date', required: true, quickDates: true },
-      { type: 'date', name: 'send_date', label: 'Send Date', quickDates: true },
+      { type: 'date', name: 'receive_date', label: 'Receive Date', required: true },
+      { type: 'date', name: 'send_date', label: 'Send Date' },
       { type: 'text', name: 'guest_name', label: 'Guest Name', required: true, icon: '👤', placeholder: 'Nama Tamu' },
       { type: 'text', name: 'passport_country', label: 'Passport/Visa Country', icon: '🌍', placeholder: 'Country name' },
       { type: 'select', name: 'process_type', label: 'Process Type', required: true, options: [
@@ -636,7 +636,7 @@ if (el('addDocumentBtn')) {
       { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
       { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'INV-001' },
       { type: 'tel', name: 'phone_number', label: 'Phone Number', icon: '📞', placeholder: '+62...' },
-      { type: 'date', name: 'estimated_done', label: 'Estimated Done', quickDates: true },
+      { type: 'date', name: 'estimated_done', label: 'Estimated Done' },
       { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
       { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
       { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }

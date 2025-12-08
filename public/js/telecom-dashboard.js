@@ -162,20 +162,20 @@ window.editTelecom = async function(id) {
     { type: 'tel', name: 'no_telephone', label: 'No. Telephone', required: true, icon: '📞', placeholder: '+62...' },
     { type: 'text', name: 'type_product', label: 'Type Product', icon: '📦', placeholder: 'Jenis produk telecom' },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
-    { type: 'date', name: 'tanggal_mulai', label: 'Tanggal Mulai', required: true, quickDates: true },
-    { type: 'date', name: 'tanggal_selesai', label: 'Tanggal Selesai', quickDates: true, hint: 'Kosongkan jika masih aktif' },
+    { type: 'date', name: 'tanggal_mulai', label: 'Tanggal Mulai', required: true },
+    { type: 'date', name: 'tanggal_selesai', label: 'Tanggal Selesai', hint: 'Kosongkan jika masih aktif' },
     { type: 'text', name: 'no_rekening', label: 'No. Rekening', icon: '💳', placeholder: 'Nomor rekening' },
     { type: 'text', name: 'bank', label: 'Bank', icon: '🏦', placeholder: 'Nama bank' },
     { type: 'text', name: 'nama_rekening', label: 'Nama Rekening', icon: '👤', placeholder: 'Nama pemilik rekening' },
-    { type: 'date', name: 'estimasi_pengambilan', label: 'Estimasi Pengambilan', quickDates: true },
+    { type: 'date', name: 'estimasi_pengambilan', label: 'Estimasi Pengambilan' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
     { type: 'select', name: 'deposit', label: 'Deposit Status', required: true, options: [
       { value: 'sudah', label: 'Sudah' },
       { value: 'belum', label: 'Belum' }
     ]},
     { type: 'currency', name: 'jumlah_deposit', label: 'Jumlah Deposit', currency: 'Rp', min: 0 },
-    { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan', quickDates: true },
-    { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian', quickDates: true }
+    { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan' },
+    { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian' }
   ], item, async (formData) => {
     await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom updated');
@@ -211,20 +211,20 @@ el('addTelecomBtn').addEventListener('click', () => {
     { type: 'tel', name: 'no_telephone', label: 'No. Telephone', required: true, icon: '📞', placeholder: '+62...' },
     { type: 'text', name: 'type_product', label: 'Type Product', icon: '📦', placeholder: 'Jenis produk telecom' },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
-    { type: 'date', name: 'tanggal_mulai', label: 'Tanggal Mulai', required: true, quickDates: true },
-    { type: 'date', name: 'tanggal_selesai', label: 'Tanggal Selesai', quickDates: true, hint: 'Kosongkan jika masih aktif' },
+    { type: 'date', name: 'tanggal_mulai', label: 'Tanggal Mulai', required: true },
+    { type: 'date', name: 'tanggal_selesai', label: 'Tanggal Selesai', hint: 'Kosongkan jika masih aktif' },
     { type: 'text', name: 'no_rekening', label: 'No. Rekening', icon: '💳', placeholder: 'Nomor rekening' },
     { type: 'text', name: 'bank', label: 'Bank', icon: '🏦', placeholder: 'Nama bank' },
     { type: 'text', name: 'nama_rekening', label: 'Nama Rekening', icon: '👤', placeholder: 'Nama pemilik rekening' },
-    { type: 'date', name: 'estimasi_pengambilan', label: 'Estimasi Pengambilan', quickDates: true },
+    { type: 'date', name: 'estimasi_pengambilan', label: 'Estimasi Pengambilan' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
     { type: 'select', name: 'deposit', label: 'Deposit Status', required: true, options: [
       { value: 'sudah', label: 'Sudah' },
       { value: 'belum', label: 'Belum' }
     ]},
     { type: 'currency', name: 'jumlah_deposit', label: 'Jumlah Deposit', currency: 'Rp', min: 0 },
-    { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan', quickDates: true },
-    { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian', quickDates: true }
+    { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan' },
+    { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian' }
   ], async (formData) => {
     await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom added');

@@ -198,14 +198,14 @@ async function editCruise(id) {
       name: 'sailing_start',
       label: 'Sailing Start',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'date',
       name: 'sailing_end',
       label: 'Sailing End',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'text',
@@ -325,14 +325,14 @@ el('addCruiseBtn').addEventListener('click', () => {
       name: 'sailing_start',
       label: 'Sailing Start',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'date',
       name: 'sailing_end',
       label: 'Sailing End',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'text',

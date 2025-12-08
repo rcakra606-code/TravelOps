@@ -573,7 +573,7 @@ window.editSale = async function(id) {
   if (!item) return;
   
   window.CRUDModal.edit('Edit Sales', [
-    { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true, quickDates: true },
+    { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true },
     { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
     { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
@@ -609,7 +609,7 @@ window.deleteSale = async function(id) {
 if (el('addSaleBtn')) {
   el('addSaleBtn').addEventListener('click', () => {
     window.CRUDModal.create('Add Sales', [
-      { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true, quickDates: true },
+      { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true },
       { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
       { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
       { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },

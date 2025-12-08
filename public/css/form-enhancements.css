@@ -7,8 +7,9 @@
 .enhanced-form {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 24px;
-  padding: 4px;
+  gap: 20px;
+  padding: 8px 4px;
+  max-width: 100%;
 }
 
 .form-field {
@@ -27,11 +28,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: var(--text-secondary, #4b5563);
-  margin-bottom: 8px;
-  letter-spacing: 0.3px;
+  color: var(--text-primary, #1f2937);
+  margin-bottom: 6px;
+  letter-spacing: 0.2px;
 }
 
 .required-star {
@@ -99,29 +100,32 @@
 /* Enhanced Form Controls */
 .form-control {
   width: 100%;
-  padding: 12px 14px;
-  border: 2px solid var(--border-medium, #e5e7eb);
-  border-radius: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid var(--border-medium, #e5e7eb);
+  border-radius: 8px;
   font-size: 0.95rem;
   background: var(--card, #fff);
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
   color: var(--text-primary, #111827);
+  line-height: 1.5;
 }
 
 .form-control:hover {
   border-color: var(--border, #cbd5e1);
+  background: var(--card, #fff);
 }
 
 .form-control:focus {
   border-color: var(--primary, #3b82f6);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.08);
   outline: none;
   background: var(--card, #fff);
 }
 
 .form-control::placeholder {
   color: var(--muted, #9ca3af);
+  opacity: 0.7;
 }
 
 .form-control:disabled {
@@ -132,34 +136,43 @@
 
 /* Field Hints */
 .field-hint {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 0.8125rem;
   color: var(--muted, #6b7280);
   line-height: 1.4;
+  font-style: italic;
 }
 
 /* Field Errors */
 .field-error {
-  margin-top: 6px;
+  margin-top: 4px;
   font-size: 0.8125rem;
   color: #ef4444;
   font-weight: 500;
   display: flex;
   align-items: center;
   gap: 4px;
+  animation: shake 0.3s;
 }
 
 .field-error::before {
   content: "⚠";
+  font-size: 1rem;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
 }
 
 .form-field.has-error .form-control {
   border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(239, 68, 68, 0.02);
 }
 
 .form-field.has-error .form-control:focus {
-  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.08);
 }
 
 /* Select Enhancement */

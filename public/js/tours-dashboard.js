@@ -742,10 +742,10 @@ window.editTour = async function(id) {
   if (!item) return;
   
   window.CRUDModal.edit('Edit Tour', [
-    { type: 'date', name: 'registration_date', label: 'Registration Date', required: true, quickDates: true },
+    { type: 'date', name: 'registration_date', label: 'Registration Date', required: true },
     { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
     { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
-    { type: 'date', name: 'departure_date', label: 'Departure Date', required: true, quickDates: true },
+    { type: 'date', name: 'departure_date', label: 'Departure Date', required: true },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
     { type: 'select', name: 'status', label: 'Status', required: true, options: [
       { value: 'belum jalan', label: 'Belum Jalan' },
@@ -803,10 +803,10 @@ window.deleteTour = async function(id) {
 if (el('addTourBtn')) {
   el('addTourBtn').addEventListener('click', () => {
     window.CRUDModal.create('Add Tour', [
-      { type: 'date', name: 'registration_date', label: 'Registration Date', required: true, quickDates: true },
+      { type: 'date', name: 'registration_date', label: 'Registration Date', required: true },
       { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
       { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
-      { type: 'date', name: 'departure_date', label: 'Departure Date', required: true, quickDates: true },
+      { type: 'date', name: 'departure_date', label: 'Departure Date', required: true },
       { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
       { type: 'select', name: 'status', label: 'Status', required: true, options: [
         { value: 'belum jalan', label: 'Belum Jalan' },

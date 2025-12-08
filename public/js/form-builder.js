@@ -185,20 +185,11 @@ class FormBuilder {
           ${attrs}
           class="form-control"
         >
-        ${field.quickDates ? this.renderQuickDates(field) : ''}
       </div>
     `;
   }
 
-  renderQuickDates(field) {
-    return `
-      <div class="quick-dates">
-        <button type="button" class="quick-date-btn" data-offset="0">Today</button>
-        <button type="button" class="quick-date-btn" data-offset="-1">Yesterday</button>
-        <button type="button" class="quick-date-btn" data-offset="+1">Tomorrow</button>
-      </div>
-    `;
-  }
+
 
   renderSelect(field, value, fieldId) {
     const attrs = this.buildAttributes(field);
@@ -536,17 +527,6 @@ class FormBuilder {
           e.target.parentElement.remove();
           updateHidden();
         }
-      });
-    });
-
-    // Quick date buttons
-    formElement.querySelectorAll('.quick-date-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const offset = parseInt(btn.dataset.offset);
-        const dateInput = btn.closest('.date-input-wrapper').querySelector('input[type="date"]');
-        const date = new Date();
-        date.setDate(date.getDate() + offset);
-        dateInput.value = date.toISOString().split('T')[0];
       });
     });
 

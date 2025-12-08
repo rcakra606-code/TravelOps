@@ -145,8 +145,8 @@ window.editHotel = async function(id) {
   
   console.log('Calling CRUDModal.edit for hotel:', item);
   window.CRUDModal.edit('Edit Hotel Booking', [
-    { type: 'date', name: 'check_in', label: 'Check-In', required: true, quickDates: true },
-    { type: 'date', name: 'check_out', label: 'Check-Out', required: true, quickDates: true },
+    { type: 'date', name: 'check_in', label: 'Check-In', required: true },
+    { type: 'date', name: 'check_out', label: 'Check-Out', required: true },
     { type: 'text', name: 'hotel_name', label: 'Hotel Name', required: true, icon: '🏨', placeholder: 'e.g., Grand Hyatt Jakarta' },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
     { type: 'text', name: 'confirmation_number', label: 'Confirmation Number', icon: '🔖', placeholder: 'Booking confirmation number' },
@@ -196,8 +196,8 @@ el('addHotelBtn').addEventListener('click', () => {
   console.log('usersData:', usersData);
   
   window.CRUDModal.create('Add Hotel Booking', [
-    { type: 'date', name: 'check_in', label: 'Check-In', required: true, quickDates: true },
-    { type: 'date', name: 'check_out', label: 'Check-Out', required: true, quickDates: true },
+    { type: 'date', name: 'check_in', label: 'Check-In', required: true },
+    { type: 'date', name: 'check_out', label: 'Check-Out', required: true },
     { type: 'text', name: 'hotel_name', label: 'Hotel Name', required: true, icon: '🏨', placeholder: 'e.g., Grand Hyatt Jakarta' },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
     { type: 'text', name: 'confirmation_number', label: 'Confirmation Number', icon: '🔖', placeholder: 'Booking confirmation number' },

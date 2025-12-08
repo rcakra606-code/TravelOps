@@ -192,7 +192,7 @@ async function editOvertime(id) {
       name: 'event_date',
       label: 'Date',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'number',
@@ -278,7 +278,7 @@ el('addOvertimeBtn').addEventListener('click', () => {
       name: 'event_date',
       label: 'Date',
       required: true,
-      quickDates: true
+      
     },
     {
       type: 'number',
