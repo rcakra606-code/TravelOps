@@ -435,15 +435,15 @@ export async function createApp() {
       // Execute queries with independent parameter arrays
   const salesQuery = buildWhere('transaction_date', { allowRegion: false });
       const sales = await db.get(
-        `SELECT SUM(sales_amount) AS total_sales, SUM(profit_amount) AS total_profit FROM sales ${salesQuery.where}`,
+        `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales ${salesQuery.where}`,
         salesQuery.params
       );
       
-      const targets = await db.get('SELECT SUM(target_sales) AS target_sales, SUM(target_profit) AS target_profit FROM targets');
+      const targets = await db.get('SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets');
       
       const toursQuery = buildWhere('departure_date');
       const participants = await db.get(
-        `SELECT SUM(jumlah_peserta) AS total_participants FROM tours ${toursQuery.where}`,
+        `SELECT COALESCE(SUM(jumlah_peserta), 0) AS total_participants FROM tours ${toursQuery.where}`,
         toursQuery.params
       );
       

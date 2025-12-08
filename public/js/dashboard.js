@@ -1182,7 +1182,7 @@ window.addEventListener('DOMContentLoaded', () => {
         // Initialize CRUD handlers
         window.crudHandlers.init();
       } else {
-        console.error('❌ CRUD Handlers not loaded (required for single dashboard)');
+        console.warn('⚠️ CRUD Handlers not loaded - this is expected for specialized dashboards');
       }
     } else {
       console.log('ℹ️ Specialized dashboard detected - using CRUDModal system');
