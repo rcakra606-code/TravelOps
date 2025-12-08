@@ -245,8 +245,13 @@ async function fetchJson(url, opts = {}) {
   }
   
   if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || `HTTP ${res.status}`);
+    // Try to parse error response as JSON first (for validation errors like duplicate tour_code)
+    const errorData = await res.json().catch(async () => {
+      // Fallback to text if not JSON
+      const errorText = await res.text();
+      return { error: errorText || `HTTP ${res.status}` };
+    });
+    throw new Error(errorData.error || errorData.message || `HTTP ${res.status}`);
   }
   try { return await res.json(); } catch { return null; }
 }

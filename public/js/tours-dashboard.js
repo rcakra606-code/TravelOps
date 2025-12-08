@@ -541,8 +541,37 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   await populateFilterDropdowns();
   renderDashboard();
-  setInterval(renderDashboard, 60000); // Refresh every minute
   
+  // Auto-refresh with visual indicator
+  let lastRefresh = Date.now();
+  setInterval(() => {
+    const now = Date.now();
+    if (now - lastRefresh >= 60000) {
+      lastRefresh = now;
+      renderDashboard();
+      // Show subtle refresh indicator
+      const indicator = document.createElement('div');
+      indicator.textContent = '🔄 Data refreshed';
+      indicator.style.cssText = 'position:fixed;top:70px;right:20px;padding:8px 16px;background:var(--success);color:white;border-radius:6px;font-size:12px;z-index:9999;animation:fadeInOut 2s;';
+      document.body.appendChild(indicator);
+      setTimeout(() => indicator.remove(), 2000);
+    }
+  }, 60000);
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Alt+N to add new tour
+    if (e.altKey && e.key === 'n' && !e.target.matches('input, textarea, select')) {
+      e.preventDefault();
+      const addBtn = el('addTourBtn');
+      if (addBtn) addBtn.click();
+    }
+    // Escape to close modal
+    if (e.key === 'Escape' && document.querySelector('.modal.active')) {
+      window.closeModal?.();
+    }
+  });
+
   // Dark mode toggle
   const savedTheme = localStorage.getItem('theme') || 'light';
   document.documentElement.setAttribute('data-theme', savedTheme);
@@ -568,6 +597,10 @@ let toursFilters = { search: '' };
 let toursPagination = { currentPage: 1, itemsPerPage: 10 };
 
 async function loadToursData() {
+  const tbody = el('toursTableBody');
+  if (tbody && tbody.rows.length === 1) {
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center">⏳ Loading tours data...</td></tr>';
+  }
   try {
     toursDataForCRUD = await window.fetchJson('/api/tours') || [];
     toursPagination.currentPage = 1; // Reset to first page
@@ -615,11 +648,11 @@ function renderToursTable() {
   const paginatedData = filtered.slice(startIndex, endIndex);
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="17" class="text-center">No tours found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center">No tours found</td></tr>';
     renderToursPagination(0, 0);
     return;
   }
-  
+
   tbody.innerHTML = paginatedData.map(item => {
     const region = regionsData.find(r => r.id === item.region_id);
     const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
@@ -628,21 +661,15 @@ function renderToursTable() {
     return `
     <tr class="table-row">
       <td><strong>${item.tour_code || '—'}</strong></td>
-      <td>${item.booking_code || '—'}</td>
       <td>${formatDate(item.registration_date)}</td>
       <td>${formatDate(item.departure_date)}</td>
       <td>${region ? region.region_name : '—'}</td>
       <td>${item.lead_passenger || '—'}</td>
       <td class="text-center">${item.jumlah_peserta || 0}</td>
-      <td>${item.phone_number || '—'}</td>
-      <td>${item.email || '—'}</td>
       <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
       <td>${item.staff_name || '—'}</td>
-      <td class="text-right">${formatCurrency(item.tour_price)}</td>
       <td class="text-right">${formatCurrency(item.sales_amount)}</td>
-      <td class="text-right">${formatCurrency(item.discount_amount)}</td>
       <td class="text-right">${formatCurrency(item.profit_amount)}</td>
-      <td>${item.invoice_number || '—'}</td>
       <td class="actions">
         <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
         ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
@@ -753,6 +780,7 @@ window.editTour = async function(id) {
     } catch (error) {
       console.error('Tour update error:', error);
       window.toast.error('Failed to update tour: ' + (error.message || 'Unknown error'));
+      throw error; // Re-throw to keep modal open
     }
   }, {
     entity: 'tours',
@@ -813,6 +841,7 @@ if (el('addTourBtn')) {
       } catch (error) {
         console.error('Tour create error:', error);
         window.toast.error('Failed to add tour: ' + (error.message || 'Unknown error'));
+        throw error; // Re-throw to keep modal open
       }
     }, {
       entity: 'tours',

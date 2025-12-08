@@ -177,7 +177,7 @@ window.editTelecom = async function(id) {
     { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan', quickDates: true },
     { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian', quickDates: true }
   ], item, async (formData) => {
-    await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom updated');
     await loadTelecom();
   }, {

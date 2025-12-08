@@ -224,6 +224,7 @@ async function editTarget(id) {
     } catch (error) {
       console.error('Target update error:', error);
       window.toast.error('Failed to update target: ' + (error.message || 'Unknown error'));
+      throw error; // Re-throw to keep modal open
     }
   }, {
     entity: 'target',
@@ -327,6 +328,7 @@ el('addTargetBtn').addEventListener('click', () => {
     } catch (error) {
       console.error('Target create error:', error);
       window.toast.error('Failed to add target: ' + (error.message || 'Unknown error'));
+      throw error; // Re-throw to keep modal open
     }
   }, {
     entity: 'target',

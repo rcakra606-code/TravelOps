@@ -282,9 +282,16 @@ class CRUDModal {
     const submitBtn = form.querySelector('[type="submit"]');
     const originalText = submitBtn?.textContent;
     
+    // Prevent double submission
+    if (submitBtn && submitBtn.disabled) {
+      console.log('Form already submitting, ignoring duplicate request');
+      return;
+    }
+    
     if (submitBtn) {
       submitBtn.disabled = true;
       submitBtn.textContent = 'Saving...';
+      submitBtn.style.opacity = '0.6';
     }
 
     try {
@@ -294,14 +301,19 @@ class CRUDModal {
       await onSubmit(data);
       
       window.closeModal();
-      window.toast.success('Saved successfully!');
+      // Note: Success toast is shown by the onSubmit callback for specific messages
     } catch (error) {
-      window.toast.error('Failed to save: ' + error.message);
+      // Note: Error toast is shown by the onSubmit callback for specific messages
+      console.error('Form submission error:', error);
       
       if (submitBtn) {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
+        submitBtn.style.opacity = '1';
       }
+      
+      // Re-throw to let caller handle it if needed
+      throw error;
     }
   }
 

@@ -155,7 +155,7 @@ window.editHotel = async function(id) {
     { type: 'text', name: 'supplier_name', label: 'Supplier Name', icon: '🏢', placeholder: 'Hotel supplier name' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], item, async (formData) => {
-    await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Hotel booking updated');
     await loadHotel();
   }, {
