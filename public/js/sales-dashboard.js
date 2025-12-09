@@ -599,6 +599,10 @@ window.editSale = async function(id) {
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
     { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
   ], item, async (formData) => {
+    // Clean currency fields
+    ['sales_amount', 'profit_amount'].forEach(field => {
+      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+    });
     await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Sales updated successfully');
     await Promise.all([loadSalesData(), renderDashboard()]);
@@ -636,6 +640,10 @@ if (el('addSaleBtn')) {
       { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
       { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
     ], async (formData) => {
+      // Clean currency fields
+      ['sales_amount', 'profit_amount'].forEach(field => {
+        if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      });
       await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Sales added successfully');
       await Promise.all([loadSalesData(), renderDashboard()]);

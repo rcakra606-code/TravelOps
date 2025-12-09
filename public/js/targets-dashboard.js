@@ -214,21 +214,19 @@ async function editTarget(id) {
       step: 100000
     }
   ], item, async (formData) => {
-    try {
-      console.log('Submitting target update:', formData);
-      const response = await fetchJson(`/api/targets/${item.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      console.log('Target update response:', response);
-      window.toast.success('Target updated successfully');
-      await loadTargets();
-    } catch (error) {
-      console.error('Target update error:', error);
-      window.toast.error('Failed to update target: ' + (error.message || 'Unknown error'));
-      throw error; // Re-throw to keep modal open
-    }
+    console.log('Submitting target update:', formData);
+    // Clean currency fields
+    ['target_sales', 'target_profit'].forEach(field => {
+      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+    });
+    const response = await fetchJson(`/api/targets/${item.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    console.log('Target update response:', response);
+    window.toast.success('Target updated successfully');
+    await loadTargets();
   }, {
     entity: 'target',
     validation: {
@@ -318,21 +316,19 @@ el('addTargetBtn').addEventListener('click', () => {
       placeholder: 'e.g., 2000000'
     }
   ], async (formData) => {
-    try {
-      console.log('Submitting new target:', formData);
-      const response = await fetchJson('/api/targets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-      console.log('Target create response:', response);
-      window.toast.success('Target added successfully');
-      await loadTargets();
-    } catch (error) {
-      console.error('Target create error:', error);
-      window.toast.error('Failed to add target: ' + (error.message || 'Unknown error'));
-      throw error; // Re-throw to keep modal open
-    }
+    console.log('Submitting new target:', formData);
+    // Clean currency fields
+    ['target_sales', 'target_profit'].forEach(field => {
+      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+    });
+    const response = await fetchJson('/api/targets', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    console.log('Target create response:', response);
+    window.toast.success('Target added successfully');
+    await loadTargets();
   }, {
     entity: 'target',
     validation: {

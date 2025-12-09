@@ -181,6 +181,10 @@ window.editTelecom = async function(id) {
     { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan' },
     { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian' }
   ], item, async (formData) => {
+    // Clean currency fields
+    if (formData.jumlah_deposit) {
+      formData.jumlah_deposit = parseFloat(String(formData.jumlah_deposit).replace(/,/g, '')) || 0;
+    }
     await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom updated');
     await loadTelecom();
@@ -230,6 +234,10 @@ el('addTelecomBtn').addEventListener('click', () => {
     { type: 'date', name: 'tanggal_pengambilan', label: 'Tanggal Pengambilan' },
     { type: 'date', name: 'tanggal_pengembalian', label: 'Tanggal Pengembalian' }
   ], async (formData) => {
+    // Clean currency fields
+    if (formData.jumlah_deposit) {
+      formData.jumlah_deposit = parseFloat(String(formData.jumlah_deposit).replace(/,/g, '')) || 0;
+    }
     await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom added');
     await loadTelecom();
