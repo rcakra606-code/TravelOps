@@ -17,9 +17,15 @@ class FormValidator {
     this.errors = {};
     let isValid = true;
 
+    console.log('🔍 Validation starting - form element:', this.form);
+    console.log('🔍 Form ID:', this.form?.id, '| Form fields count:', this.form?.elements?.length);
+
     Object.entries(this.rules).forEach(([fieldName, fieldRules]) => {
       const field = this.form.querySelector(`[name="${fieldName}"]`);
-      if (!field) return;
+      if (!field) {
+        console.log(`⚠️ Field "${fieldName}" not found in form!`);
+        return;
+      }
 
       const value = this.getFieldValue(field);
       const fieldErrors = this.validateField(field, value, fieldRules);
