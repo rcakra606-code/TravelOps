@@ -54,6 +54,10 @@ class CRUDModal {
           
           form.addEventListener('submit', async (e) => {
             console.log('🔧 Form submit event triggered (with validation)');
+            console.log('🔧 Submit - Form element:', form);
+            console.log('🔧 Submit - All forms on page:', document.querySelectorAll('form').length);
+            console.log('🔧 Submit - registration_date field value BEFORE validation:', form.querySelector('[name="registration_date"]')?.value);
+            console.log('🔧 Submit - tour_code field value BEFORE validation:', form.querySelector('[name="tour_code"]')?.value);
             e.preventDefault();
             const isValid = validator.validate();
             console.log('🔧 Validation result:', isValid);
