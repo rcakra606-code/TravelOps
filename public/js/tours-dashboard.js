@@ -168,12 +168,9 @@ async function populateFilterDropdowns() {
 
 /* === RENDER DASHBOARD === */
 async function renderDashboard() {
-  console.log('🔄 renderDashboard called from:', new Error().stack);
-  
   // Don't refresh if modal is open (user might be filling a form)
   const modal = document.getElementById('modal');
   if (modal && modal.classList.contains('active')) {
-    console.log('⏸️ Skipping renderDashboard - modal is open');
     return;
   }
   
@@ -835,11 +832,6 @@ window.deleteTour = async function(id) {
 if (el('addTourBtn')) {
   console.log('✅ Add Tour button found in DOM');
   el('addTourBtn').addEventListener('click', () => {
-    console.log('🎯 Add Tour clicked - regionsData:', regionsData.length, 'usersData:', usersData.length);
-    console.log('🎯 regionsData:', regionsData);
-    console.log('🎯 usersData:', usersData);
-    console.log('🎯 CRUDModal available:', !!window.CRUDModal);
-    console.log('🎯 About to call CRUDModal.create...');
     
     try {
       window.CRUDModal.create('Add Tour', [
@@ -901,7 +893,6 @@ if (el('addTourBtn')) {
       size: 'large',
       validation: { registration_date: { required: true }, tour_code: { required: true }, departure_date: { required: true }, region_id: { required: true }, lead_passenger: { required: true }, jumlah_peserta: { required: true, min: 1 }, staff_name: { required: true } }
     });
-    console.log('🎯 CRUDModal.create call completed');
     } catch (error) {
       console.error('❌ ERROR calling CRUDModal.create:', error);
       console.error('❌ Error stack:', error.stack);

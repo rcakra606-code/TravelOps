@@ -17,15 +17,9 @@ class FormValidator {
     this.errors = {};
     let isValid = true;
 
-    console.log('🔍 Validation starting - form element:', this.form);
-    console.log('🔍 Form ID:', this.form?.id, '| Form fields count:', this.form?.elements?.length);
-
     Object.entries(this.rules).forEach(([fieldName, fieldRules]) => {
       const field = this.form.querySelector(`[name="${fieldName}"]`);
-      if (!field) {
-        console.log(`⚠️ Field "${fieldName}" not found in form!`);
-        return;
-      }
+      if (!field) return;
 
       const value = this.getFieldValue(field);
       const fieldErrors = this.validateField(field, value, fieldRules);
@@ -33,16 +27,11 @@ class FormValidator {
       if (fieldErrors.length > 0) {
         this.errors[fieldName] = fieldErrors;
         isValid = false;
-        console.log(`❌ Validation failed for field "${fieldName}":`, fieldErrors[0], '| Value:', value);
         this.showFieldError(field, fieldErrors[0]);
       } else {
         this.clearFieldError(field);
       }
     });
-
-    if (!isValid) {
-      console.log('❌ Form validation failed. Errors:', this.errors);
-    }
 
     return isValid;
   }
@@ -128,9 +117,7 @@ class FormValidator {
       const checked = this.form.querySelector(`[name="${field.name}"]:checked`);
       return checked ? checked.value : '';
     } else {
-      const value = field.value.trim();
-      console.log(`📝 Getting value for field "${field.name}" (type: ${field.type}):`, value);
-      return value;
+      return field.value.trim();
     }
   }
 

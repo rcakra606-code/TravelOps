@@ -40,132 +40,57 @@ class CRUDModal {
 
     setTimeout(() => {
       const form = document.querySelector('#modalForm');
-      console.log('🔧 CRUDModal.create: Form found?', !!form);
-      console.log('🔧 modalBody exists?', !!document.querySelector('#modalBody'));
-      console.log('🔧 modalBody innerHTML length:', document.querySelector('#modalBody')?.innerHTML?.length);
       if (form) {
         FormBuilder.enhance(form);
         
         // Setup validation
         if (options.validation) {
-          console.log('🔧 CRUDModal.create: Setting up validation with rules:', options.validation);
           const validator = new FormValidator(form, options.validation);
           validator.setupRealtimeValidation();
           
-          // Count existing listeners (for debugging)
-          const existingListeners = form.eventListeners ? form.eventListeners('submit').length : 'unknown';
-          console.log('🔧 Existing submit listeners before adding:', existingListeners);
-          
-          // Add MOUSEDOWN listener to submit button - fires BEFORE click/submit
+          // Capture form values at click to work around browser clearing issue
           const submitButton = form.querySelector('[type="submit"]');
           if (submitButton) {
-            submitButton.addEventListener('mousedown', (e) => {
-              console.log('🖱️🖱️🖱️ MOUSEDOWN (before click) - capturing values NOW');
-              const regDateAtMousedown = form.querySelector('[name="registration_date"]');
-              const tourCodeAtMousedown = form.querySelector('[name="tour_code"]');
-              const depDateAtMousedown = form.querySelector('[name="departure_date"]');
-              const leadPassAtMousedown = form.querySelector('[name="lead_passenger"]');
-              console.log('🖱️ MOUSEDOWN - registration_date:', regDateAtMousedown?.value);
-              console.log('🖱️ MOUSEDOWN - tour_code:', tourCodeAtMousedown?.value);
-              console.log('🖱️ MOUSEDOWN - departure_date:', depDateAtMousedown?.value);
-              console.log('🖱️ MOUSEDOWN - lead_passenger:', leadPassAtMousedown?.value);
-              
-              // Store in dataset for potential recovery
-              e.target.dataset.mousedownValues = JSON.stringify({
-                registration_date: regDateAtMousedown?.value || '',
-                tour_code: tourCodeAtMousedown?.value || '',
-                departure_date: depDateAtMousedown?.value || '',
-                lead_passenger: leadPassAtMousedown?.value || ''
-              });
-            });
             
             submitButton.addEventListener('click', (e) => {
-              console.log('🖱️ SUBMIT BUTTON CLICKED - capturing values at click moment');
-              const regDateAtClick = form.querySelector('[name="registration_date"]');
-              const tourCodeAtClick = form.querySelector('[name="tour_code"]');
-              console.log('🖱️ At click - registration_date value:', regDateAtClick?.value);
-              console.log('🖱️ At click - tour_code value:', tourCodeAtClick?.value);
-              console.log('🖱️ At click - registration_date element:', regDateAtClick);
-              
-              // WORKAROUND: Store all form values at click to restore later
+              // Capture all form values at click (before they get cleared)
               const formData = new FormData(form);
               const capturedData = {};
               for (const [key, value] of formData.entries()) {
-                if (value) {  // Only capture non-empty values
+                if (value) {
                   capturedData[key] = value;
                 }
               }
               
-              // Also capture from DOM directly as backup
+              // Backup: capture from DOM directly
               form.querySelectorAll('input, select, textarea').forEach(field => {
                 if (field.name && field.value && !capturedData[field.name]) {
                   capturedData[field.name] = field.value;
                 }
               });
               
-              console.log('💾 Captured form data at click:', capturedData);
               e.target.dataset.clickValues = JSON.stringify(capturedData);
             });
           }
           
           form.addEventListener('submit', async (e) => {
-            // Log IMMEDIATELY before preventDefault to catch any pre-submit clearing
-            const regDateFieldBefore = form.querySelector('[name="registration_date"]');
-            const tourCodeFieldBefore = form.querySelector('[name="tour_code"]');
-            
-            // Check if modalBody is inside the form
-            const modalBody = document.getElementById('modalBody');
-            const isModalBodyInsideForm = form.contains(modalBody);
-            console.log('⚡ BEFORE preventDefault - modalBody is inside form?', isModalBodyInsideForm);
-            console.log('⚡ BEFORE preventDefault - registration_date field found?', !!regDateFieldBefore);
-            console.log('⚡ BEFORE preventDefault - registration_date value:', regDateFieldBefore?.value);
-            console.log('⚡ BEFORE preventDefault - tour_code value:', tourCodeFieldBefore?.value);
-            
             e.preventDefault();
-            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
+            e.stopImmediatePropagation();
             
-            // WORKAROUND: Restore values captured during click
+            // Restore values captured during click (workaround for browser clearing issue)
             const submitButton = form.querySelector('[type="submit"]');
             if (submitButton?.dataset.clickValues) {
               const capturedValues = JSON.parse(submitButton.dataset.clickValues);
-              console.log('🔄 Restoring values from click capture:', capturedValues);
-              
               Object.keys(capturedValues).forEach(fieldName => {
                 const field = form.querySelector(`[name="${fieldName}"]`);
-                if (field && !field.value) {  // Only restore if currently empty
-                  console.log(`🔄 Restoring ${fieldName}:`, capturedValues[fieldName]);
+                if (field && !field.value) {
                   field.value = capturedValues[fieldName];
                 }
               });
             }
             
-            console.log('🔧 Form submit event triggered (with validation)');
-            console.log('🔧 Submit - Form element:', form);
-            console.log('🔧 Submit - All forms on page:', document.querySelectorAll('form').length);
-            
-            // Check if this is still the same form from the validator
-            console.log('🔧 Validator form element:', validator.form);
-            console.log('🔧 Are they the same element?', form === validator.form);
-            
-            // Get the actual input elements AFTER preventDefault
-            const regDateField = form.querySelector('[name="registration_date"]');
-            const tourCodeField = form.querySelector('[name="tour_code"]');
-            const departField = form.querySelector('[name="departure_date"]');
-            const leadField = form.querySelector('[name="lead_passenger"]');
-            
-            console.log('🔧 Submit - registration_date element:', regDateField);
-            console.log('🔧 Submit - registration_date value:', regDateField?.value);
-            console.log('🔧 Submit - registration_date type:', regDateField?.type);
-            console.log('🔧 Submit - tour_code value:', tourCodeField?.value);
-            console.log('🔧 Submit - departure_date value:', departField?.value);
-            console.log('🔧 Submit - lead_passenger value:', leadField?.value);
-            
-            // Check attributes
-            console.log('🔧 Submit - registration_date getAttribute("value"):', regDateField?.getAttribute('value'));
             const isValid = validator.validate();
-            console.log('🔧 Validation result:', isValid);
             if (!isValid) {
-              console.log('🔧 Validation failed, not calling handleSubmit');
               window.toast.error('Please fix the errors in the form');
               return;
             }
