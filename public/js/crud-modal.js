@@ -317,6 +317,7 @@ class CRUDModal {
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
       
+      console.log('🚀 FormData entries:', Array.from(formData.entries()));
       console.log('🚀 Calling onSubmit callback with data:', data);
       await onSubmit(data);
       

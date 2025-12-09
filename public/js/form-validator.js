@@ -122,7 +122,9 @@ class FormValidator {
       const checked = this.form.querySelector(`[name="${field.name}"]:checked`);
       return checked ? checked.value : '';
     } else {
-      return field.value.trim();
+      const value = field.value.trim();
+      console.log(`📝 Getting value for field "${field.name}" (type: ${field.type}):`, value);
+      return value;
     }
   }
 
