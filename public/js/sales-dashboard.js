@@ -322,31 +322,6 @@ async function renderDashboard() {
       }
     }
     
-    // Sales per Region Chart
-    if (salesData) {
-      const regionData = {};
-      salesData.forEach(sale => {
-        if (sale.region_name) {
-          regionData[sale.region_name] = (regionData[sale.region_name] || 0) + (parseFloat(sale.sales_amount) || 0);
-        }
-      });
-      
-      const ctxRegion = document.getElementById('chartSalesRegion')?.getContext('2d');
-      if (ctxRegion) {
-        charts.region = new Chart(ctxRegion, {
-          type: 'pie',
-          data: {
-            labels: Object.keys(regionData),
-            datasets: [{
-              data: Object.values(regionData),
-              backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-            }]
-          },
-          options: commonOptions
-        });
-      }
-    }
-    
     // Top 5 Staff Chart
     if (salesData) {
       const staffData = {};
@@ -429,42 +404,6 @@ async function renderDashboard() {
     toast.error('Error loading dashboard: ' + err.message);
   }
 }
-
-/* === EXPORT CSV === */
-el('exportSalesCSV')?.addEventListener('click', async () => {
-  try {
-    const data = await window.fetchJson('/api/sales');
-    if (!data || !data.length) {
-      toast.warning('Tidak ada data untuk di-export');
-      return;
-    }
-    
-    const headers = ['ID', 'Transaction Date', 'Invoice No', 'Client Name', 'Sales Amount', 'Profit Amount', 'Region', 'Staff', 'Created At'];
-    const rows = data.map(d => [
-      d.id,
-      d.transaction_date || '',
-      d.invoice_no || '',
-      d.client_name || '',
-      d.sales_amount || 0,
-      d.profit_amount || 0,
-      d.region_name || '',
-      d.staff_name || '',
-      d.created_at || ''
-    ]);
-    
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sales_export_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  } catch (err) {
-    console.error('Export error:', err);
-    toast.error('Error exporting data: ' + err.message);
-  }
-});
 
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', async () => {
