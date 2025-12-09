@@ -478,8 +478,13 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Handle modal submissions for filters
   document.addEventListener('modalSubmit', (e) => {
+    console.log('🔍 modalSubmit event received:', e.detail);
     const { data, context } = e.detail;
-    if (context.entity === 'sales' && context.action === 'filter') {
+    console.log('📋 Context:', context);
+    console.log('📊 Data:', data);
+    
+    if (context && context.entity === 'sales' && context.action === 'filter') {
+      console.log('✅ Filter submission detected - preventing default');
       e.preventDefault();
       applySalesFilters(data);
     }
