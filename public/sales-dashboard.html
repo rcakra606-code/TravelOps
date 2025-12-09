@@ -153,7 +153,11 @@
         <h3>📋 Sales Records</h3>
         <div style="display: flex; gap: 10px;">
           <input type="text" id="searchSales" placeholder="🔍 Search sales..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="downloadSalesTemplateBtn" class="btn btn-secondary" title="Download CSV Template">📥 Template</button>
+          <button id="importSalesBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
+          <button id="exportSalesBtn" class="btn btn-secondary" title="Export to CSV">💾 Export</button>
           <button id="addSaleBtn" class="btn btn-primary">+ Add Sale</button>
+          <input type="file" id="importSalesFileInput" accept=".csv" style="display:none;">
         </div>
       </div>
       

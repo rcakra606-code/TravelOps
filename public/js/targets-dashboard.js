@@ -402,6 +402,95 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Download CSV Template
+el('downloadTemplateBtn').addEventListener('click', () => {
+  const csv = 'staff_name,month,year,target_sales,target_profit\n"John Doe",1,2025,10000000,2000000\n"Jane Smith",1,2025,15000000,3000000';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'targets_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  window.toast.success('Template downloaded');
+});
+
+// Export Targets to CSV
+el('exportTargetsBtn').addEventListener('click', () => {
+  if (!targetsData || targetsData.length === 0) {
+    window.toast.error('No data to export');
+    return;
+  }
+  
+  const headers = 'staff_name,month,year,target_sales,target_profit';
+  const rows = targetsData.map(t => 
+    `"${t.staff_name}",${t.month},${t.year},${t.target_sales || 0},${t.target_profit || 0}`
+  ).join('\n');
+  
+  const csv = headers + '\n' + rows;
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `targets_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  window.toast.success(`Exported ${targetsData.length} targets`);
+});
+
+// Import Targets from CSV
+el('importTargetsBtn').addEventListener('click', () => {
+  el('importFileInput').click();
+});
+
+el('importFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    try {
+      const csv = event.target.result;
+      const lines = csv.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      let imported = 0;
+      let errors = 0;
+      
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
+          const target = {
+            staff_name: values[0],
+            month: parseInt(values[1]),
+            year: parseInt(values[2]),
+            target_sales: parseFloat(values[3]) || 0,
+            target_profit: parseFloat(values[4]) || 0
+          };
+          
+          await fetchJson('/api/targets', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(target)
+          });
+          imported++;
+        } catch (err) {
+          console.error(`Error importing row ${i}:`, err);
+          errors++;
+        }
+      }
+      
+      await loadTargets();
+      window.toast.success(`Imported ${imported} targets${errors > 0 ? `, ${errors} errors` : ''}`);
+      e.target.value = '';
+    } catch (error) {
+      console.error('Import failed:', error);
+      window.toast.error('Import failed: ' + error.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
 // Initialize
 async function init() {
   await loadStaff();
@@ -413,4 +502,5 @@ init();
 // Expose functions globally
 window.editTarget = editTarget;
 window.deleteTarget = deleteTarget;
+
 

@@ -701,6 +701,100 @@ document.addEventListener('click', (e) => {
   }
 });
 
+// Download CSV Template
+el('downloadSalesTemplateBtn').addEventListener('click', () => {
+  const csv = 'transaction_date,invoice_no,unique_code,staff_name,region_id,status,sales_amount,profit_amount,notes\n"2025-12-09","INV-001","UC-001","John Doe",1,"Paid",10000000,2000000,"Sample sale"\n"2025-12-09","INV-002","UC-002","Jane Smith",2,"Pending",15000000,3000000,"Another sample"';
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sales_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  window.toast.success('Template downloaded');
+});
+
+// Export Sales to CSV
+el('exportSalesBtn').addEventListener('click', () => {
+  if (!salesDataForCRUD || salesDataForCRUD.length === 0) {
+    window.toast.error('No data to export');
+    return;
+  }
+  
+  const headers = 'transaction_date,invoice_no,unique_code,staff_name,region_id,status,sales_amount,profit_amount,notes';
+  const rows = salesDataForCRUD.map(s => 
+    `"${s.transaction_date}","${s.invoice_no}","${s.unique_code || ''}","${s.staff_name}",${s.region_id || ''},"${s.status}",${s.sales_amount || 0},${s.profit_amount || 0},"${(s.notes || '').replace(/"/g, '""')}"`
+  ).join('\n');
+  
+  const csv = headers + '\n' + rows;
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `sales_export_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  window.toast.success(`Exported ${salesDataForCRUD.length} sales records`);
+});
+
+// Import Sales from CSV
+el('importSalesBtn').addEventListener('click', () => {
+  el('importSalesFileInput').click();
+});
+
+el('importSalesFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = async (event) => {
+    try {
+      const csv = event.target.result;
+      const lines = csv.split('\n').filter(line => line.trim());
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      
+      let imported = 0;
+      let errors = 0;
+      
+      for (let i = 1; i < lines.length; i++) {
+        try {
+          const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
+          const sale = {
+            transaction_date: values[0],
+            invoice_no: values[1],
+            unique_code: values[2] || null,
+            staff_name: values[3],
+            region_id: values[4] ? parseInt(values[4]) : null,
+            status: values[5] || 'Pending',
+            sales_amount: parseFloat(values[6]) || 0,
+            profit_amount: parseFloat(values[7]) || 0,
+            notes: values[8] || null
+          };
+          
+          await window.fetchJson('/api/sales', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(sale)
+          });
+          imported++;
+        } catch (err) {
+          console.error(`Error importing row ${i}:`, err);
+          errors++;
+        }
+      }
+      
+      await Promise.all([loadSalesData(), renderDashboard()]);
+      window.toast.success(`Imported ${imported} sales records${errors > 0 ? `, ${errors} errors` : ''}`);
+      e.target.value = '';
+    } catch (error) {
+      console.error('Import failed:', error);
+      window.toast.error('Import failed: ' + error.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
 // Load sales data on page load
 loadSalesData();
+
 

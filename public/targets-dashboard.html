@@ -100,7 +100,11 @@
         <h3>📋 Targets Records</h3>
         <div style="display: flex; gap: 10px;">
           <input type="text" id="searchTargets" placeholder="🔍 Search targets..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="downloadTemplateBtn" class="btn btn-secondary" title="Download CSV Template">📥 Template</button>
+          <button id="importTargetsBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
+          <button id="exportTargetsBtn" class="btn btn-secondary" title="Export to CSV">💾 Export</button>
           <button id="addTargetBtn" class="btn btn-primary">+ Add Target</button>
+          <input type="file" id="importFileInput" accept=".csv" style="display:none;">
         </div>
       </div>
       
