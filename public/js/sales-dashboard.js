@@ -19,7 +19,6 @@ let charts = {};
 /* === FILTER STATE === */
 let filterState = {
   staff: 'all',
-  region: 'all',
   period: 'all',
   month: '',
   year: ''
@@ -49,13 +48,6 @@ function openSalesFilterModal() {
     bodyHtml: `
       <div class="form-grid">
         ${staffDropdown}
-        <div class="form-group">
-          <label>Region</label>
-          <select name="region">
-            <option value="all">Semua</option>
-            ${regionsData.map(r => `<option value="${r.id}" ${filterState.region == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
-          </select>
-        </div>
         <div class="form-group">
           <label>Periode</label>
           <select name="period" id="modalFilterPeriod">
@@ -101,7 +93,6 @@ function openSalesFilterModal() {
 function resetSalesFilters() {
   filterState = {
     staff: 'all',
-    region: 'all',
     period: 'all',
     month: '',
     year: ''
@@ -113,7 +104,6 @@ function resetSalesFilters() {
 function applySalesFilters(formData) {
   console.log('Applying filters with data:', formData);
   filterState.staff = formData.staff || 'all';
-  filterState.region = formData.region || 'all';
   filterState.period = formData.period || 'all';
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
@@ -166,7 +156,6 @@ async function renderDashboard() {
     }
     
     let staff = filterState.staff !== 'all' ? filterState.staff : '';
-    const region = filterState.region !== 'all' ? filterState.region : '';
     
     // For basic users, always filter to their own data
     if (user.type === 'basic') {
@@ -177,7 +166,6 @@ async function renderDashboard() {
     if (month) params.month = month;
     if (year) params.year = year;
     if (staff) params.staff = staff;
-    if (region) params.region = region;
     
     console.log('Rendering dashboard with params:', params);
     const q = new URLSearchParams(params).toString();
