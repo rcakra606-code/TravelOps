@@ -323,10 +323,10 @@ export async function createApp() {
         if (t === 'overtime' && !req.body.status) {
           req.body.status = 'pending';
         }
-        // Check for duplicate tour_code
-        if (t === 'tours' && req.body.tour_code) {
-          const existing = await db.get('SELECT id FROM tours WHERE tour_code=?', [req.body.tour_code]);
-          if (existing) return res.status(400).json({ error: `Tour code "${req.body.tour_code}" already exists` });
+        // Check for duplicate booking_code (only if provided)
+        if (t === 'tours' && req.body.booking_code) {
+          const existing = await db.get('SELECT id FROM tours WHERE booking_code=?', [req.body.booking_code]);
+          if (existing) return res.status(400).json({ error: `Booking code "${req.body.booking_code}" already exists` });
         }
         if (staffOwnedTables.has(t)) {
           if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
