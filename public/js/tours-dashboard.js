@@ -847,17 +847,26 @@ if (el('addTourBtn')) {
       { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
       { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
     ], async (formData) => {
+      console.log('🔥 TOUR CALLBACK STARTED');
+      console.log('🔥 FormData received:', formData);
+      console.log('🔥 FormData keys:', Object.keys(formData));
+      console.log('🔥 FormData region_id:', formData.region_id);
+      console.log('🔥 FormData staff_name:', formData.staff_name);
+      
       try {
-        console.log('Submitting new tour:', formData);
-        await window.fetchJson('/api/tours', { 
+        console.log('🔥 About to call API...');
+        const response = await window.fetchJson('/api/tours', { 
           method: 'POST', 
           headers: { 'Content-Type': 'application/json' }, 
           body: JSON.stringify(formData) 
         });
+        console.log('🔥 API Response:', response);
         window.toast.success('Tour added successfully');
         await Promise.all([loadToursData(), renderDashboard()]);
       } catch (error) {
-        console.error('Tour create error:', error);
+        console.error('🔥 ERROR in tour create:', error);
+        console.error('🔥 ERROR message:', error.message);
+        console.error('🔥 ERROR stack:', error.stack);
         window.toast.error('Failed to add tour: ' + (error.message || 'Unknown error'));
         throw error; // Re-throw to keep modal open
       }
