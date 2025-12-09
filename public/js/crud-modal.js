@@ -86,6 +86,25 @@ class CRUDModal {
               console.log('🖱️ At click - registration_date value:', regDateAtClick?.value);
               console.log('🖱️ At click - tour_code value:', tourCodeAtClick?.value);
               console.log('🖱️ At click - registration_date element:', regDateAtClick);
+              
+              // WORKAROUND: Store all form values at click to restore later
+              const formData = new FormData(form);
+              const capturedData = {};
+              for (const [key, value] of formData.entries()) {
+                if (value) {  // Only capture non-empty values
+                  capturedData[key] = value;
+                }
+              }
+              
+              // Also capture from DOM directly as backup
+              form.querySelectorAll('input, select, textarea').forEach(field => {
+                if (field.name && field.value && !capturedData[field.name]) {
+                  capturedData[field.name] = field.value;
+                }
+              });
+              
+              console.log('💾 Captured form data at click:', capturedData);
+              e.target.dataset.clickValues = JSON.stringify(capturedData);
             });
           }
           
@@ -104,6 +123,21 @@ class CRUDModal {
             
             e.preventDefault();
             e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
+            
+            // WORKAROUND: Restore values captured during click
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton?.dataset.clickValues) {
+              const capturedValues = JSON.parse(submitButton.dataset.clickValues);
+              console.log('🔄 Restoring values from click capture:', capturedValues);
+              
+              Object.keys(capturedValues).forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field && !field.value) {  // Only restore if currently empty
+                  console.log(`🔄 Restoring ${fieldName}:`, capturedValues[fieldName]);
+                  field.value = capturedValues[fieldName];
+                }
+              });
+            }
             
             console.log('🔧 Form submit event triggered (with validation)');
             console.log('🔧 Submit - Form element:', form);
