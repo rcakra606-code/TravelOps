@@ -818,7 +818,8 @@ if (el('addTourBtn')) {
     console.log('🎯 CRUDModal available:', !!window.CRUDModal);
     console.log('🎯 About to call CRUDModal.create...');
     
-    window.CRUDModal.create('Add Tour', [
+    try {
+      window.CRUDModal.create('Add Tour', [
       { type: 'date', name: 'registration_date', label: 'Registration Date', required: true },
       { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
       { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
@@ -860,6 +861,11 @@ if (el('addTourBtn')) {
       size: 'large',
       validation: { registration_date: { required: true }, tour_code: { required: true }, departure_date: { required: true }, region_id: { required: true }, lead_passenger: { required: true }, jumlah_peserta: { required: true, min: 1 }, staff_name: { required: true } }
     });
+    console.log('🎯 CRUDModal.create call completed');
+    } catch (error) {
+      console.error('❌ ERROR calling CRUDModal.create:', error);
+      console.error('❌ Error stack:', error.stack);
+    }
   });
 }
 
