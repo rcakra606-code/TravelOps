@@ -169,6 +169,14 @@ async function populateFilterDropdowns() {
 /* === RENDER DASHBOARD === */
 async function renderDashboard() {
   console.log('🔄 renderDashboard called from:', new Error().stack);
+  
+  // Don't refresh if modal is open (user might be filling a form)
+  const modal = document.getElementById('modal');
+  if (modal && modal.classList.contains('active')) {
+    console.log('⏸️ Skipping renderDashboard - modal is open');
+    return;
+  }
+  
   try {
     const user = window.getUser();
     
