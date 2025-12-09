@@ -587,6 +587,7 @@ window.editSale = async function(id) {
   window.CRUDModal.edit('Edit Sales', [
     { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
     { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
     { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
       { value: 'Printed', label: 'Printed' },
       { value: 'Settled', label: 'Settled' },
@@ -596,7 +597,8 @@ window.editSale = async function(id) {
     ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
     { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
-  ], item, async (formData) => {
+  ], item, async (formData) => {rofit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
+  ], async (formData) => {
     // Clean currency fields
     ['sales_amount', 'profit_amount'].forEach(field => {
       if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
@@ -609,9 +611,8 @@ window.editSale = async function(id) {
       formData.profit_amount = 0;
     }
     
-    // Keep original transaction_date and staff_name
+    // Keep original transaction_date
     formData.transaction_date = item.transaction_date;
-    formData.staff_name = item.staff_name;
     
     await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Sales updated successfully');
@@ -638,6 +639,7 @@ if (el('addSaleBtn')) {
     window.CRUDModal.create('Add Sales', [
       { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
       { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+      { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
       { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
         { value: 'Printed', label: 'Printed' },
         { value: 'Settled', label: 'Settled' },
@@ -662,10 +664,6 @@ if (el('addSaleBtn')) {
       
       // Auto-set transaction_date to today
       formData.transaction_date = new Date().toISOString().split('T')[0];
-      
-      // Auto-set staff_name from current user
-      const user = window.getUser();
-      formData.staff_name = user.name || user.username;
       
       await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Sales added successfully');
@@ -726,7 +724,7 @@ document.addEventListener('click', (e) => {
 
 // Download CSV Template
 el('downloadSalesTemplateBtn').addEventListener('click', () => {
-  const csv = 'invoice_no,unique_code,status,sales_amount,profit_amount\n"INV-001","UC-001","Printed",10000000,2000000\n"INV-002","UC-002","Settled",15000000,3000000\n"INV-003","","Pending",0,0';
+  const csv = 'invoice_no,unique_code,staff_name,status,sales_amount,profit_amount\n"INV-001","UC-001","John Doe","Printed",10000000,2000000\n"INV-002","UC-002","Jane Smith","Settled",15000000,3000000\n"INV-003","","John Doe","Pending",0,0';
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -744,9 +742,9 @@ el('exportSalesBtn').addEventListener('click', () => {
     return;
   }
   
-  const headers = 'invoice_no,unique_code,status,sales_amount,profit_amount';
+  const headers = 'invoice_no,unique_code,staff_name,status,sales_amount,profit_amount';
   const rows = salesDataForCRUD.map(s => 
-    `"${s.invoice_no}","${s.unique_code || ''}","${s.status}",${s.sales_amount || 0},${s.profit_amount || 0}`
+    `"${s.invoice_no}","${s.unique_code || ''}","${s.staff_name}","${s.status}",${s.sales_amount || 0},${s.profit_amount || 0}`
   ).join('\n');
   
   const csv = headers + '\n' + rows;
@@ -776,7 +774,6 @@ el('importSalesFileInput').addEventListener('change', async (e) => {
       const lines = csv.split('\n').filter(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
-      const user = window.getUser();
       const today = new Date().toISOString().split('T')[0];
       
       let imported = 0;
@@ -786,18 +783,18 @@ el('importSalesFileInput').addEventListener('change', async (e) => {
         try {
           const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
           
-          const status = values[2] || 'Pending';
+          const status = values[3] || 'Pending';
           const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
           
           const sale = {
             transaction_date: today,
             invoice_no: values[0],
             unique_code: values[1] || null,
-            staff_name: user.name || user.username,
+            staff_name: values[2],
             region_id: null,
             status: status,
-            sales_amount: recordableStatuses.includes(status) ? (parseFloat(values[3]) || 0) : 0,
-            profit_amount: recordableStatuses.includes(status) ? (parseFloat(values[4]) || 0) : 0,
+            sales_amount: recordableStatuses.includes(status) ? (parseFloat(values[4]) || 0) : 0,
+            profit_amount: recordableStatuses.includes(status) ? (parseFloat(values[5]) || 0) : 0,
             notes: null
           };
           
