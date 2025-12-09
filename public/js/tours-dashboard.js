@@ -90,7 +90,8 @@ function openToursFilterModal() {
         </div>
       </div>
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button type="button" class="btn" data-reset-tours-filters>Reset Filters</button>
+        <button type="button" class="btn btn-secondary" data-reset-tours-filters>Reset Filters</button>
+        <button type="submit" class="btn btn-primary">Apply Filters</button>
       </div>
     `,
     context: { entity: 'tours', action: 'filter' }
