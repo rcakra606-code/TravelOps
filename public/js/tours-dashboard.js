@@ -168,6 +168,7 @@ async function populateFilterDropdowns() {
 
 /* === RENDER DASHBOARD === */
 async function renderDashboard() {
+  console.log('🔄 renderDashboard called from:', new Error().stack);
   try {
     const user = window.getUser();
     
