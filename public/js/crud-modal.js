@@ -56,6 +56,39 @@ class CRUDModal {
           const existingListeners = form.eventListeners ? form.eventListeners('submit').length : 'unknown';
           console.log('🔧 Existing submit listeners before adding:', existingListeners);
           
+          // Add MOUSEDOWN listener to submit button - fires BEFORE click/submit
+          const submitButton = form.querySelector('[type="submit"]');
+          if (submitButton) {
+            submitButton.addEventListener('mousedown', (e) => {
+              console.log('🖱️🖱️🖱️ MOUSEDOWN (before click) - capturing values NOW');
+              const regDateAtMousedown = form.querySelector('[name="registration_date"]');
+              const tourCodeAtMousedown = form.querySelector('[name="tour_code"]');
+              const depDateAtMousedown = form.querySelector('[name="departure_date"]');
+              const leadPassAtMousedown = form.querySelector('[name="lead_passenger"]');
+              console.log('🖱️ MOUSEDOWN - registration_date:', regDateAtMousedown?.value);
+              console.log('🖱️ MOUSEDOWN - tour_code:', tourCodeAtMousedown?.value);
+              console.log('🖱️ MOUSEDOWN - departure_date:', depDateAtMousedown?.value);
+              console.log('🖱️ MOUSEDOWN - lead_passenger:', leadPassAtMousedown?.value);
+              
+              // Store in dataset for potential recovery
+              e.target.dataset.mousedownValues = JSON.stringify({
+                registration_date: regDateAtMousedown?.value || '',
+                tour_code: tourCodeAtMousedown?.value || '',
+                departure_date: depDateAtMousedown?.value || '',
+                lead_passenger: leadPassAtMousedown?.value || ''
+              });
+            });
+            
+            submitButton.addEventListener('click', (e) => {
+              console.log('🖱️ SUBMIT BUTTON CLICKED - capturing values at click moment');
+              const regDateAtClick = form.querySelector('[name="registration_date"]');
+              const tourCodeAtClick = form.querySelector('[name="tour_code"]');
+              console.log('🖱️ At click - registration_date value:', regDateAtClick?.value);
+              console.log('🖱️ At click - tour_code value:', tourCodeAtClick?.value);
+              console.log('🖱️ At click - registration_date element:', regDateAtClick);
+            });
+          }
+          
           form.addEventListener('submit', async (e) => {
             // Log IMMEDIATELY before preventDefault to catch any pre-submit clearing
             const regDateFieldBefore = form.querySelector('[name="registration_date"]');
