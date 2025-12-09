@@ -39,7 +39,7 @@ class CRUDModal {
     console.log('🔧 openModal called, waiting 100ms for DOM...');
 
     setTimeout(() => {
-      const form = document.querySelector('#modalBody form');
+      const form = document.querySelector('#modalForm');
       console.log('🔧 CRUDModal.create: Form found?', !!form);
       console.log('🔧 modalBody exists?', !!document.querySelector('#modalBody'));
       console.log('🔧 modalBody innerHTML length:', document.querySelector('#modalBody')?.innerHTML?.length);
@@ -95,7 +95,7 @@ class CRUDModal {
     });
 
     setTimeout(() => {
-      const form = document.querySelector('#modalBody form');
+      const form = document.querySelector('#modalForm');
       if (form) {
         FormBuilder.enhance(form);
         
@@ -215,8 +215,7 @@ class CRUDModal {
   }
 
   setupMultiStepHandlers(onSubmit) {
-    const container = document.querySelector('#modalBody');
-    const form = container.querySelector('form');
+    const form = document.querySelector('#modalForm');
     
     FormBuilder.enhance(form);
 
