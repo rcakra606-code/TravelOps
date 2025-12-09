@@ -56,8 +56,20 @@ class CRUDModal {
             console.log('🔧 Form submit event triggered (with validation)');
             console.log('🔧 Submit - Form element:', form);
             console.log('🔧 Submit - All forms on page:', document.querySelectorAll('form').length);
-            console.log('🔧 Submit - registration_date field value BEFORE validation:', form.querySelector('[name="registration_date"]')?.value);
-            console.log('🔧 Submit - tour_code field value BEFORE validation:', form.querySelector('[name="tour_code"]')?.value);
+            
+            // Get the actual input elements
+            const regDateField = form.querySelector('[name="registration_date"]');
+            const tourCodeField = form.querySelector('[name="tour_code"]');
+            const departField = form.querySelector('[name="departure_date"]');
+            const leadField = form.querySelector('[name="lead_passenger"]');
+            
+            console.log('🔧 Submit - registration_date element:', regDateField);
+            console.log('🔧 Submit - registration_date value:', regDateField?.value);
+            console.log('🔧 Submit - registration_date type:', regDateField?.type);
+            console.log('🔧 Submit - tour_code value:', tourCodeField?.value);
+            console.log('🔧 Submit - departure_date value:', departField?.value);
+            console.log('🔧 Submit - lead_passenger value:', leadField?.value);
+            
             e.preventDefault();
             e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             const isValid = validator.validate();
