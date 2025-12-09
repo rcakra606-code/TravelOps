@@ -39,10 +39,10 @@ class CRUDModal {
     console.log('🔧 openModal called, waiting 100ms for DOM...');
 
     setTimeout(() => {
-      const form = document.querySelector('#modalContent form');
+      const form = document.querySelector('#modalBody form');
       console.log('🔧 CRUDModal.create: Form found?', !!form);
-      console.log('🔧 modalContent exists?', !!document.querySelector('#modalContent'));
-      console.log('🔧 modalContent innerHTML length:', document.querySelector('#modalContent')?.innerHTML?.length);
+      console.log('🔧 modalBody exists?', !!document.querySelector('#modalBody'));
+      console.log('🔧 modalBody innerHTML length:', document.querySelector('#modalBody')?.innerHTML?.length);
       if (form) {
         FormBuilder.enhance(form);
         
@@ -95,7 +95,7 @@ class CRUDModal {
     });
 
     setTimeout(() => {
-      const form = document.querySelector('#modalContent form');
+      const form = document.querySelector('#modalBody form');
       if (form) {
         FormBuilder.enhance(form);
         
@@ -215,7 +215,7 @@ class CRUDModal {
   }
 
   setupMultiStepHandlers(onSubmit) {
-    const container = document.querySelector('#modalContent');
+    const container = document.querySelector('#modalBody');
     const form = container.querySelector('form');
     
     FormBuilder.enhance(form);
@@ -280,7 +280,7 @@ class CRUDModal {
 
   updateStepView() {
     const modalTitle = document.querySelector('.modal-title');
-    const modalContent = document.querySelector('#modalContent');
+    const modalContent = document.querySelector('#modalBody');
     
     if (modalTitle) {
       modalTitle.textContent = `Create - Step ${this.currentStep + 1} of ${this.steps.length}`;
