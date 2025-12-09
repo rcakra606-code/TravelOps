@@ -279,6 +279,7 @@ class CRUDModal {
    * Handle form submission
    */
   static async handleSubmit(form, onSubmit) {
+    console.log('🚀 CRUDModal.handleSubmit CALLED');
     const submitBtn = form.querySelector('[type="submit"]');
     const originalText = submitBtn?.textContent;
     
@@ -298,13 +299,15 @@ class CRUDModal {
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
       
+      console.log('🚀 Calling onSubmit callback with data:', data);
       await onSubmit(data);
       
+      console.log('🚀 onSubmit completed successfully, closing modal');
       window.closeModal();
       // Note: Success toast is shown by the onSubmit callback for specific messages
     } catch (error) {
       // Note: Error toast is shown by the onSubmit callback for specific messages
-      console.error('Form submission error:', error);
+      console.error('🚀 Form submission error:', error);
       
       if (submitBtn) {
         submitBtn.disabled = false;
