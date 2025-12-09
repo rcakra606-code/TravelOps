@@ -326,6 +326,16 @@ class CRUDModal {
       const modal = document.querySelector('#modal');
       if (modal) modal.dataset.dirty = 'false';
       
+      // Reset submit button immediately for better UX
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        submitBtn.style.opacity = '1';
+      }
+      
+      // Reset form immediately so it's ready for next use
+      form.reset();
+      
       window.closeModal(true); // Pass true to indicate confirmed close
       // Note: Success toast is shown by the onSubmit callback for specific messages
     } catch (error) {

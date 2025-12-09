@@ -276,6 +276,14 @@ function closeModal(confirmed = false) {
 function performModalClose() {
   if (!modal) return;
   
+  // Immediately clean up form state for faster reopening
+  if (modalForm) {
+    modalForm.reset();
+    // Remove any validation error states
+    modalForm.querySelectorAll('.error').forEach(el => el.classList.remove('error'));
+    modalForm.querySelectorAll('.error-message').forEach(el => el.remove());
+  }
+  
   // Add closing animation
   modal.classList.add('closing');
   
@@ -283,6 +291,7 @@ function performModalClose() {
     modal.classList.remove('active', 'closing');
     if (modalBody) modalBody.innerHTML = '';
     delete modal.dataset.context;
+    delete modal.dataset.dirty;
     
     // Trigger onClose callback if exists
     if (modal.dataset.onClose) {
@@ -292,6 +301,7 @@ function performModalClose() {
       } catch (err) {
         console.error('Modal close callback error:', err);
       }
+      delete modal.dataset.onClose;
     }
   }, 200);
 }
