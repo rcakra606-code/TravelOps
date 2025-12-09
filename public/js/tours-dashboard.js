@@ -810,10 +810,14 @@ window.deleteTour = async function(id) {
 };
 
 if (el('addTourBtn')) {
+  console.log('✅ Add Tour button found in DOM');
   el('addTourBtn').addEventListener('click', () => {
     console.log('🎯 Add Tour clicked - regionsData:', regionsData.length, 'usersData:', usersData.length);
     console.log('🎯 regionsData:', regionsData);
     console.log('🎯 usersData:', usersData);
+    console.log('🎯 CRUDModal available:', !!window.CRUDModal);
+    console.log('🎯 About to call CRUDModal.create...');
+    
     window.CRUDModal.create('Add Tour', [
       { type: 'date', name: 'registration_date', label: 'Registration Date', required: true },
       { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
