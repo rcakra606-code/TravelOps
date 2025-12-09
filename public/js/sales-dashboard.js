@@ -540,8 +540,7 @@ window.editSale = async function(id) {
     ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
     { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
-  ], item, async (formData) => {rofit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
-  ], async (formData) => {
+  ], item, async (formData) => {
     // Clean currency fields
     ['sales_amount', 'profit_amount'].forEach(field => {
       if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
