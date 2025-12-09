@@ -341,6 +341,11 @@ export async function createApp() {
             if (!r) return res.status(400).json({ error: 'Invalid region_id' });
           }
         }
+        // Tours: validate required region_id
+        if (t === 'tours' && req.body.region_id) {
+          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        }
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
         const placeholders = keys.map(()=>'?').join(',');
@@ -377,6 +382,11 @@ export async function createApp() {
             const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
             if (!r) return res.status(400).json({ error: 'Invalid region_id' });
           }
+        }
+        // Tours: validate required region_id
+        if (t === 'tours' && 'region_id' in req.body && req.body.region_id) {
+          const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
+          if (!r) return res.status(400).json({ error: 'Invalid region_id' });
         }
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
