@@ -52,10 +52,20 @@ class CRUDModal {
           const validator = new FormValidator(form, options.validation);
           validator.setupRealtimeValidation();
           
+          // Count existing listeners (for debugging)
+          const existingListeners = form.eventListeners ? form.eventListeners('submit').length : 'unknown';
+          console.log('🔧 Existing submit listeners before adding:', existingListeners);
+          
           form.addEventListener('submit', async (e) => {
             // Log IMMEDIATELY before preventDefault to catch any pre-submit clearing
             const regDateFieldBefore = form.querySelector('[name="registration_date"]');
             const tourCodeFieldBefore = form.querySelector('[name="tour_code"]');
+            
+            // Check if modalBody is inside the form
+            const modalBody = document.getElementById('modalBody');
+            const isModalBodyInsideForm = form.contains(modalBody);
+            console.log('⚡ BEFORE preventDefault - modalBody is inside form?', isModalBodyInsideForm);
+            console.log('⚡ BEFORE preventDefault - registration_date field found?', !!regDateFieldBefore);
             console.log('⚡ BEFORE preventDefault - registration_date value:', regDateFieldBefore?.value);
             console.log('⚡ BEFORE preventDefault - tour_code value:', tourCodeFieldBefore?.value);
             
