@@ -391,6 +391,9 @@ function initializeModalInputs() {
     });
   });
 
+  // DISABLED: Date input conversion causes issues with CRUDModal validation
+  // HTML5 date inputs work fine natively
+  /*
   // Allow manual typing for date fields: convert to text with pattern YYYY-MM-DD
   const dateInputs = modalBody.querySelectorAll('input[type="date"]');
   dateInputs.forEach(d => {
@@ -427,6 +430,7 @@ function initializeModalInputs() {
       }
     });
   });
+  */
 }
 
 // Export modal functions globally
