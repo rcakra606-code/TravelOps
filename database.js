@@ -131,6 +131,7 @@ async function createSchema(db) {
     booking_code TEXT,
     tour_price ${num()} DEFAULT 0,
     sales_amount ${num()} DEFAULT 0,
+    total_nominal_sales ${num()} DEFAULT 0,
     profit_amount ${num()} DEFAULT 0,
     discount_amount ${num()} DEFAULT 0,
     discount_remarks TEXT,

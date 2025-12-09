@@ -49,6 +49,10 @@ async function loadStaff() {
     staffList = users || [];
   } catch (err) {
     console.error('Failed to load staff:', err);
+    // If user is basic and can't access /api/users, use their own name
+    if (user.type === 'basic') {
+      staffList = [{ name: user.name || user.username }];
+    }
   }
 }
 

@@ -136,6 +136,17 @@ async function populateFilterDropdowns() {
     regionsData = regions || [];
   } catch (err) {
     console.error('Error loading filter data:', err);
+    // If user is basic and can't access /api/users, use their own name
+    const user = window.getUser();
+    if (user.type === 'basic') {
+      usersData = [{ name: user.name || user.username }];
+    }
+    // Try to at least load regions
+    try {
+      regionsData = await window.fetchJson('/api/regions') || [];
+    } catch (e) {
+      regionsData = [];
+    }
   }
 }
 
