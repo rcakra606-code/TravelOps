@@ -124,29 +124,28 @@ function applySalesFilters(formData) {
 }
 
 async function populateFilterDropdowns() {
+  const user = window.getUser();
+  
+  // Load users independently
   try {
-    const [users, regions] = await Promise.all([
-      window.fetchJson('/api/users'),
-      window.fetchJson('/api/regions')
-    ]);
-    
+    const users = await window.fetchJson('/api/users');
     usersData = users || [];
-    regionsData = regions || [];
-    usersData = users || [];
-    regionsData = regions || [];
   } catch (err) {
-    console.error('Error loading filter data:', err);
-    // If user is basic and can't access /api/users, use their own name
-    const user = window.getUser();
+    console.error('Error loading users:', err);
     if (user.type === 'basic') {
       usersData = [{ name: user.name || user.username }];
+    } else {
+      usersData = [];
     }
-    // Try to at least load regions
-    try {
-      regionsData = await window.fetchJson('/api/regions') || [];
-    } catch (e) {
-      regionsData = [];
-    }
+  }
+  
+  // Load regions independently
+  try {
+    const regions = await window.fetchJson('/api/regions');
+    regionsData = regions || [];
+  } catch (err) {
+    console.error('Error loading regions:', err);
+    regionsData = [];
   }
 }
 
