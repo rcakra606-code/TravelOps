@@ -57,6 +57,10 @@ class CRUDModal {
             console.log('🔧 Submit - Form element:', form);
             console.log('🔧 Submit - All forms on page:', document.querySelectorAll('form').length);
             
+            // Check if this is still the same form from the validator
+            console.log('🔧 Validator form element:', validator.form);
+            console.log('🔧 Are they the same element?', form === validator.form);
+            
             // Get the actual input elements
             const regDateField = form.querySelector('[name="registration_date"]');
             const tourCodeField = form.querySelector('[name="tour_code"]');
@@ -69,6 +73,9 @@ class CRUDModal {
             console.log('🔧 Submit - tour_code value:', tourCodeField?.value);
             console.log('🔧 Submit - departure_date value:', departField?.value);
             console.log('🔧 Submit - lead_passenger value:', leadField?.value);
+            
+            // Check attributes
+            console.log('🔧 Submit - registration_date getAttribute("value"):', regDateField?.getAttribute('value'));
             
             e.preventDefault();
             e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
