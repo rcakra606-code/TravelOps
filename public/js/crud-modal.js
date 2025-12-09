@@ -321,7 +321,12 @@ class CRUDModal {
       await onSubmit(data);
       
       console.log('🚀 onSubmit completed successfully, closing modal');
-      window.closeModal();
+      
+      // Mark form as clean before closing to prevent unsaved changes prompt
+      const modal = document.querySelector('#modal');
+      if (modal) modal.dataset.dirty = 'false';
+      
+      window.closeModal(true); // Pass true to indicate confirmed close
       // Note: Success toast is shown by the onSubmit callback for specific messages
     } catch (error) {
       // Note: Error toast is shown by the onSubmit callback for specific messages
