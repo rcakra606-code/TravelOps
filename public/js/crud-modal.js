@@ -59,6 +59,7 @@ class CRUDModal {
             console.log('🔧 Submit - registration_date field value BEFORE validation:', form.querySelector('[name="registration_date"]')?.value);
             console.log('🔧 Submit - tour_code field value BEFORE validation:', form.querySelector('[name="tour_code"]')?.value);
             e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             const isValid = validator.validate();
             console.log('🔧 Validation result:', isValid);
             if (!isValid) {
@@ -74,6 +75,7 @@ class CRUDModal {
           form.addEventListener('submit', async (e) => {
             console.log('🔧 Form submit event triggered (no validation)');
             e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         }
@@ -110,6 +112,7 @@ class CRUDModal {
           
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             if (!validator.validate()) {
               window.toast.error('Please fix the errors in the form');
               return;
@@ -120,6 +123,7 @@ class CRUDModal {
         } else {
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         }
