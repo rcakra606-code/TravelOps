@@ -33,29 +33,39 @@ class CRUDModal {
 
     setTimeout(() => {
       const form = document.querySelector('#modalContent form');
+      console.log('🔧 CRUDModal.create: Form found?', !!form);
       if (form) {
         FormBuilder.enhance(form);
         
         // Setup validation
         if (options.validation) {
+          console.log('🔧 CRUDModal.create: Setting up validation with rules:', options.validation);
           const validator = new FormValidator(form, options.validation);
           validator.setupRealtimeValidation();
           
           form.addEventListener('submit', async (e) => {
+            console.log('🔧 Form submit event triggered (with validation)');
             e.preventDefault();
-            if (!validator.validate()) {
+            const isValid = validator.validate();
+            console.log('🔧 Validation result:', isValid);
+            if (!isValid) {
+              console.log('🔧 Validation failed, not calling handleSubmit');
               window.toast.error('Please fix the errors in the form');
               return;
             }
             
+            console.log('🔧 Validation passed, calling handleSubmit');
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         } else {
           form.addEventListener('submit', async (e) => {
+            console.log('🔧 Form submit event triggered (no validation)');
             e.preventDefault();
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         }
+      } else {
+        console.error('🔧 CRUDModal.create: Form NOT found in modal!');
       }
     }, 100);
   }
