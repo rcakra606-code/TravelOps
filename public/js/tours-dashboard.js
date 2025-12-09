@@ -784,6 +784,20 @@ window.editTour = async function(id) {
     { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
   ], item, async (formData) => {
     console.log('Submitting tour update:', formData);
+    
+    // Clean currency fields - remove commas and convert to numbers
+    const currencyFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
+    currencyFields.forEach(field => {
+      if (formData[field]) {
+        formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      }
+    });
+    
+    // Convert jumlah_peserta to integer
+    if (formData.jumlah_peserta) {
+      formData.jumlah_peserta = parseInt(formData.jumlah_peserta) || 1;
+    }
+    
     await window.fetchJson(`/api/tours/${item.id}`, { 
       method: 'PUT', 
       headers: { 'Content-Type': 'application/json' },
@@ -848,6 +862,23 @@ if (el('addTourBtn')) {
     ], async (formData) => {
       console.log('🔥 TOUR CALLBACK STARTED');
       console.log('🔥 FormData received:', formData);
+      
+      // Clean currency fields - remove commas and convert to numbers
+      const currencyFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
+      currencyFields.forEach(field => {
+        if (formData[field]) {
+          // Remove commas and convert to number
+          formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+        }
+      });
+      
+      // Convert jumlah_peserta to integer
+      if (formData.jumlah_peserta) {
+        formData.jumlah_peserta = parseInt(formData.jumlah_peserta) || 1;
+      }
+      
+      console.log('🔥 Cleaned FormData:', formData);
+      
       await window.fetchJson('/api/tours', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
