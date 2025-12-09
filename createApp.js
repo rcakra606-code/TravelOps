@@ -328,6 +328,15 @@ export async function createApp() {
           const existing = await db.get('SELECT id FROM tours WHERE booking_code=?', [req.body.booking_code]);
           if (existing) return res.status(400).json({ error: `Booking code "${req.body.booking_code}" already exists` });
         }
+        // Tours: convert empty strings to null for numeric fields
+        if (t === 'tours') {
+          const numericFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
+          numericFields.forEach(field => {
+            if (req.body[field] === '' || req.body[field] === null || req.body[field] === undefined) {
+              req.body[field] = null;
+            }
+          });
+        }
         if (staffOwnedTables.has(t)) {
           if (req.user.type === 'basic') req.body.staff_name = req.user.name; else if (!req.body.staff_name) req.body.staff_name = req.user.name;
         }
@@ -387,6 +396,15 @@ export async function createApp() {
         if (t === 'tours' && 'region_id' in req.body && req.body.region_id) {
           const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
           if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+        }
+        // Tours: convert empty strings to null for numeric fields
+        if (t === 'tours') {
+          const numericFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
+          numericFields.forEach(field => {
+            if (field in req.body && (req.body[field] === '' || req.body[field] === null || req.body[field] === undefined)) {
+              req.body[field] = null;
+            }
+          });
         }
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
