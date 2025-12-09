@@ -14,6 +14,8 @@ class CRUDModal {
    * Show create modal with FormBuilder
    */
   static create(title, fields, onSubmit, options = {}) {
+    console.log('🔧 CRUDModal.create called with title:', title);
+    console.log('🔧 Fields count:', fields?.length);
     const modal = new CRUDModal();
     
     if (options.multiStep) {
@@ -23,6 +25,9 @@ class CRUDModal {
     const formBuilder = new FormBuilder();
     formBuilder.addFields(fields);
     const formHtml = formBuilder.build();
+    
+    console.log('🔧 FormBuilder.build() returned HTML length:', formHtml?.length);
+    console.log('🔧 FormHTML preview:', formHtml?.substring(0, 200));
 
     window.openModal({
       title: `➕ ${title}`,
@@ -30,10 +35,14 @@ class CRUDModal {
       bodyHtml: formHtml,
       context: { entity: options.entity, action: 'create' }
     });
+    
+    console.log('🔧 openModal called, waiting 100ms for DOM...');
 
     setTimeout(() => {
       const form = document.querySelector('#modalContent form');
       console.log('🔧 CRUDModal.create: Form found?', !!form);
+      console.log('🔧 modalContent exists?', !!document.querySelector('#modalContent'));
+      console.log('🔧 modalContent innerHTML length:', document.querySelector('#modalContent')?.innerHTML?.length);
       if (form) {
         FormBuilder.enhance(form);
         
