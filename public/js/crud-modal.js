@@ -53,6 +53,15 @@ class CRUDModal {
           validator.setupRealtimeValidation();
           
           form.addEventListener('submit', async (e) => {
+            // Log IMMEDIATELY before preventDefault to catch any pre-submit clearing
+            const regDateFieldBefore = form.querySelector('[name="registration_date"]');
+            const tourCodeFieldBefore = form.querySelector('[name="tour_code"]');
+            console.log('⚡ BEFORE preventDefault - registration_date value:', regDateFieldBefore?.value);
+            console.log('⚡ BEFORE preventDefault - tour_code value:', tourCodeFieldBefore?.value);
+            
+            e.preventDefault();
+            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
+            
             console.log('🔧 Form submit event triggered (with validation)');
             console.log('🔧 Submit - Form element:', form);
             console.log('🔧 Submit - All forms on page:', document.querySelectorAll('form').length);
@@ -61,7 +70,7 @@ class CRUDModal {
             console.log('🔧 Validator form element:', validator.form);
             console.log('🔧 Are they the same element?', form === validator.form);
             
-            // Get the actual input elements
+            // Get the actual input elements AFTER preventDefault
             const regDateField = form.querySelector('[name="registration_date"]');
             const tourCodeField = form.querySelector('[name="tour_code"]');
             const departField = form.querySelector('[name="departure_date"]');
@@ -76,9 +85,6 @@ class CRUDModal {
             
             // Check attributes
             console.log('🔧 Submit - registration_date getAttribute("value"):', regDateField?.getAttribute('value'));
-            
-            e.preventDefault();
-            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             const isValid = validator.validate();
             console.log('🔧 Validation result:', isValid);
             if (!isValid) {
