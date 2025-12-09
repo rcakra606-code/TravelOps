@@ -215,6 +215,8 @@ const modalForm = el('modalForm');
 const modalClose = el('modalClose');
 
 function openModal({ title, bodyHtml, context, size = 'medium' }) {
+  console.log('🚪 openModal called - title:', title, '| Modal already active?', modal?.classList.contains('active'));
+  
   // Reset form state
   if (modalForm) modalForm.reset();
   
