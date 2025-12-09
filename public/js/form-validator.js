@@ -27,11 +27,16 @@ class FormValidator {
       if (fieldErrors.length > 0) {
         this.errors[fieldName] = fieldErrors;
         isValid = false;
+        console.log(`❌ Validation failed for field "${fieldName}":`, fieldErrors[0], '| Value:', value);
         this.showFieldError(field, fieldErrors[0]);
       } else {
         this.clearFieldError(field);
       }
     });
+
+    if (!isValid) {
+      console.log('❌ Form validation failed. Errors:', this.errors);
+    }
 
     return isValid;
   }
