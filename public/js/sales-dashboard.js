@@ -585,24 +585,34 @@ window.editSale = async function(id) {
   if (!item) return;
   
   window.CRUDModal.edit('Edit Sales', [
-    { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true },
     { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
-    { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
-    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
-    { type: 'select', name: 'region_id', label: 'Region', required: false, options: [{ value: '', label: 'No Region' }, ...regionsData.map(r => ({ value: r.id, label: r.region_name }))] },
-    { type: 'select', name: 'status', label: 'Status', required: true, options: [
+    { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+    { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
+      { value: 'Printed', label: 'Printed' },
+      { value: 'Settled', label: 'Settled' },
+      { value: 'Invoiced', label: 'Invoiced' },
       { value: 'Pending', label: 'Pending' },
-      { value: 'Paid', label: 'Paid' },
       { value: 'Cancelled', label: 'Cancelled' }
-    ]},
+    ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
     { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+    { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
   ], item, async (formData) => {
     // Clean currency fields
     ['sales_amount', 'profit_amount'].forEach(field => {
       if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
     });
+    
+    // Auto-set amounts to 0 if status is not Printed/Settled/Invoiced
+    const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
+    if (!recordableStatuses.includes(formData.status)) {
+      formData.sales_amount = 0;
+      formData.profit_amount = 0;
+    }
+    
+    // Keep original transaction_date and staff_name
+    formData.transaction_date = item.transaction_date;
+    formData.staff_name = item.staff_name;
+    
     await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Sales updated successfully');
     await Promise.all([loadSalesData(), renderDashboard()]);
@@ -626,24 +636,37 @@ window.deleteSale = async function(id) {
 if (el('addSaleBtn')) {
   el('addSaleBtn').addEventListener('click', () => {
     window.CRUDModal.create('Add Sales', [
-      { type: 'date', name: 'transaction_date', label: 'Transaction Date', required: true },
       { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
-      { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001' },
-      { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
-      { type: 'select', name: 'region_id', label: 'Region', required: false, options: [{ value: '', label: 'No Region' }, ...regionsData.map(r => ({ value: r.id, label: r.region_name }))] },
-      { type: 'select', name: 'status', label: 'Status', required: true, options: [
+      { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+      { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
+        { value: 'Printed', label: 'Printed' },
+        { value: 'Settled', label: 'Settled' },
+        { value: 'Invoiced', label: 'Invoiced' },
         { value: 'Pending', label: 'Pending' },
-        { value: 'Paid', label: 'Paid' },
         { value: 'Cancelled', label: 'Cancelled' }
-      ]},
+      ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
       { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
+      { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
     ], async (formData) => {
       // Clean currency fields
       ['sales_amount', 'profit_amount'].forEach(field => {
         if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
       });
+      
+      // Auto-set amounts to 0 if status is not Printed/Settled/Invoiced
+      const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
+      if (!recordableStatuses.includes(formData.status)) {
+        formData.sales_amount = 0;
+        formData.profit_amount = 0;
+      }
+      
+      // Auto-set transaction_date to today
+      formData.transaction_date = new Date().toISOString().split('T')[0];
+      
+      // Auto-set staff_name from current user
+      const user = window.getUser();
+      formData.staff_name = user.name || user.username;
+      
       await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Sales added successfully');
       await Promise.all([loadSalesData(), renderDashboard()]);
@@ -703,7 +726,7 @@ document.addEventListener('click', (e) => {
 
 // Download CSV Template
 el('downloadSalesTemplateBtn').addEventListener('click', () => {
-  const csv = 'transaction_date,invoice_no,unique_code,staff_name,region_id,status,sales_amount,profit_amount,notes\n"2025-12-09","INV-001","UC-001","John Doe",1,"Paid",10000000,2000000,"Sample sale"\n"2025-12-09","INV-002","UC-002","Jane Smith",2,"Pending",15000000,3000000,"Another sample"';
+  const csv = 'invoice_no,unique_code,status,sales_amount,profit_amount\n"INV-001","UC-001","Printed",10000000,2000000\n"INV-002","UC-002","Settled",15000000,3000000\n"INV-003","","Pending",0,0';
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -721,9 +744,9 @@ el('exportSalesBtn').addEventListener('click', () => {
     return;
   }
   
-  const headers = 'transaction_date,invoice_no,unique_code,staff_name,region_id,status,sales_amount,profit_amount,notes';
+  const headers = 'invoice_no,unique_code,status,sales_amount,profit_amount';
   const rows = salesDataForCRUD.map(s => 
-    `"${s.transaction_date}","${s.invoice_no}","${s.unique_code || ''}","${s.staff_name}",${s.region_id || ''},"${s.status}",${s.sales_amount || 0},${s.profit_amount || 0},"${(s.notes || '').replace(/"/g, '""')}"`
+    `"${s.invoice_no}","${s.unique_code || ''}","${s.status}",${s.sales_amount || 0},${s.profit_amount || 0}`
   ).join('\n');
   
   const csv = headers + '\n' + rows;
@@ -753,22 +776,29 @@ el('importSalesFileInput').addEventListener('change', async (e) => {
       const lines = csv.split('\n').filter(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
+      const user = window.getUser();
+      const today = new Date().toISOString().split('T')[0];
+      
       let imported = 0;
       let errors = 0;
       
       for (let i = 1; i < lines.length; i++) {
         try {
           const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
+          
+          const status = values[2] || 'Pending';
+          const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
+          
           const sale = {
-            transaction_date: values[0],
-            invoice_no: values[1],
-            unique_code: values[2] || null,
-            staff_name: values[3],
-            region_id: values[4] ? parseInt(values[4]) : null,
-            status: values[5] || 'Pending',
-            sales_amount: parseFloat(values[6]) || 0,
-            profit_amount: parseFloat(values[7]) || 0,
-            notes: values[8] || null
+            transaction_date: today,
+            invoice_no: values[0],
+            unique_code: values[1] || null,
+            staff_name: user.name || user.username,
+            region_id: null,
+            status: status,
+            sales_amount: recordableStatuses.includes(status) ? (parseFloat(values[3]) || 0) : 0,
+            profit_amount: recordableStatuses.includes(status) ? (parseFloat(values[4]) || 0) : 0,
+            notes: null
           };
           
           await window.fetchJson('/api/sales', {
