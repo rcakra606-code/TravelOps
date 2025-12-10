@@ -420,6 +420,17 @@ class CRUDModal {
     }
 
     try {
+      // DEBUG: Check form values before collecting
+      console.log('🔍 Checking form values before FormData collection:');
+      const regField = form.querySelector('[name="registration_date"]');
+      const tourCodeField = form.querySelector('[name="tour_code"]');
+      const regionField = form.querySelector('[name="region_id"]');
+      const staffField = form.querySelector('[name="staff_name"]');
+      console.log('  registration_date:', regField?.value);
+      console.log('  tour_code:', tourCodeField?.value);
+      console.log('  region_id:', regionField?.value);
+      console.log('  staff_name:', staffField?.value);
+      
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
       
