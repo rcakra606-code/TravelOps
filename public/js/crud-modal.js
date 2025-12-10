@@ -403,13 +403,11 @@ class CRUDModal {
    * Handle form submission
    */
   static async handleSubmit(form, onSubmit) {
-    console.log('🚀 CRUDModal.handleSubmit CALLED');
     const submitBtn = form.querySelector('[type="submit"]');
     const originalText = submitBtn?.textContent;
     
     // Prevent double submission
     if (submitBtn && submitBtn.disabled) {
-      console.log('Form already submitting, ignoring duplicate request');
       return;
     }
     
@@ -420,31 +418,10 @@ class CRUDModal {
     }
 
     try {
-      // DEBUG: Check form values before collecting
-      console.log('🔍 Checking form values before FormData collection:');
-      const regField = form.querySelector('[name="registration_date"]');
-      const tourCodeField = form.querySelector('[name="tour_code"]');
-      const regionField = form.querySelector('[name="region_id"]');
-      const staffField = form.querySelector('[name="staff_name"]');
-      const participantsField = form.querySelector('[name="jumlah_peserta"]');
-      const leadPassField = form.querySelector('[name="lead_passenger"]');
-      const depDateField = form.querySelector('[name="departure_date"]');
-      console.log('  registration_date:', regField?.value);
-      console.log('  tour_code:', tourCodeField?.value);
-      console.log('  region_id:', regionField?.value);
-      console.log('  staff_name:', staffField?.value);
-      console.log('  jumlah_peserta:', participantsField?.value, '(type:', participantsField?.type, ')');
-      console.log('  lead_passenger:', leadPassField?.value);
-      console.log('  departure_date:', depDateField?.value);
-      
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
       
-      console.log('🚀 FormData entries:', Array.from(formData.entries()));
-      console.log('🚀 Calling onSubmit callback with data:', data);
       await onSubmit(data);
-      
-      console.log('🚀 onSubmit completed successfully, closing modal');
       
       // Mark form as clean before closing to prevent unsaved changes prompt
       const modal = document.querySelector('#modal');
