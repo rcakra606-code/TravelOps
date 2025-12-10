@@ -139,9 +139,46 @@ class CRUDModal {
           const validator = new FormValidator(form, options.validation);
           validator.setupRealtimeValidation();
           
+          // Capture form values at click to work around browser clearing issue
+          const submitButton = form.querySelector('[type="submit"]');
+          if (submitButton) {
+            submitButton.addEventListener('click', (e) => {
+              // Capture all form values at click (before they get cleared)
+              const formData = new FormData(form);
+              const capturedData = {};
+              for (const [key, value] of formData.entries()) {
+                if (value) {
+                  capturedData[key] = value;
+                }
+              }
+              
+              // Backup: capture from DOM directly (important for selects)
+              form.querySelectorAll('input, select, textarea').forEach(field => {
+                if (field.name && field.value) {
+                  capturedData[field.name] = field.value;
+                }
+              });
+              
+              e.target.dataset.clickValues = JSON.stringify(capturedData);
+            });
+          }
+          
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
+            e.stopImmediatePropagation();
+            
+            // Restore values captured during click (workaround for browser clearing issue)
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton?.dataset.clickValues) {
+              const capturedValues = JSON.parse(submitButton.dataset.clickValues);
+              Object.keys(capturedValues).forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                  field.value = capturedValues[fieldName];
+                }
+              });
+            }
+            
             if (!validator.validate()) {
               window.toast.error('Please fix the errors in the form');
               return;
@@ -150,9 +187,41 @@ class CRUDModal {
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         } else {
+          // No validation - still need value capture/restore
+          const submitButton = form.querySelector('[type="submit"]');
+          if (submitButton) {
+            submitButton.addEventListener('click', (e) => {
+              const formData = new FormData(form);
+              const capturedData = {};
+              for (const [key, value] of formData.entries()) {
+                if (value) {
+                  capturedData[key] = value;
+                }
+              }
+              form.querySelectorAll('input, select, textarea').forEach(field => {
+                if (field.name && field.value) {
+                  capturedData[field.name] = field.value;
+                }
+              });
+              e.target.dataset.clickValues = JSON.stringify(capturedData);
+            });
+          }
+          
           form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
+            e.stopImmediatePropagation();
+            
+            const submitButton = form.querySelector('[type="submit"]');
+            if (submitButton?.dataset.clickValues) {
+              const capturedValues = JSON.parse(submitButton.dataset.clickValues);
+              Object.keys(capturedValues).forEach(fieldName => {
+                const field = form.querySelector(`[name="${fieldName}"]`);
+                if (field) {
+                  field.value = capturedValues[fieldName];
+                }
+              });
+            }
+            
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         }
