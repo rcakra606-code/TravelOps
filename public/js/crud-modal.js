@@ -62,9 +62,10 @@ class CRUDModal {
                 }
               }
               
-              // Backup: capture from DOM directly
+              // Backup: capture from DOM directly (important for selects)
               form.querySelectorAll('input, select, textarea').forEach(field => {
-                if (field.name && field.value && !capturedData[field.name]) {
+                if (field.name && field.value) {
+                  // Always capture, even if FormData already has it
                   capturedData[field.name] = field.value;
                 }
               });
@@ -83,7 +84,8 @@ class CRUDModal {
               const capturedValues = JSON.parse(submitButton.dataset.clickValues);
               Object.keys(capturedValues).forEach(fieldName => {
                 const field = form.querySelector(`[name="${fieldName}"]`);
-                if (field && !field.value) {
+                if (field) {
+                  // Always restore captured values (don't check if empty)
                   field.value = capturedValues[fieldName];
                 }
               });
