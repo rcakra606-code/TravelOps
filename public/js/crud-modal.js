@@ -426,10 +426,16 @@ class CRUDModal {
       const tourCodeField = form.querySelector('[name="tour_code"]');
       const regionField = form.querySelector('[name="region_id"]');
       const staffField = form.querySelector('[name="staff_name"]');
+      const participantsField = form.querySelector('[name="jumlah_peserta"]');
+      const leadPassField = form.querySelector('[name="lead_passenger"]');
+      const depDateField = form.querySelector('[name="departure_date"]');
       console.log('  registration_date:', regField?.value);
       console.log('  tour_code:', tourCodeField?.value);
       console.log('  region_id:', regionField?.value);
       console.log('  staff_name:', staffField?.value);
+      console.log('  jumlah_peserta:', participantsField?.value, '(type:', participantsField?.type, ')');
+      console.log('  lead_passenger:', leadPassField?.value);
+      console.log('  departure_date:', depDateField?.value);
       
       const formData = new FormData(form);
       const data = Object.fromEntries(formData.entries());
