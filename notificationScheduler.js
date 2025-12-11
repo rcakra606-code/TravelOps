@@ -107,7 +107,7 @@ async function checkAndSendReminders() {
       const daysUntil = Math.ceil((departureDate - today) / (1000 * 60 * 60 * 24));
       
       // Check if this tour needs a reminder today
-      if (REMINDER_DAYS.includes(daysUntil)) {
+      if (TOUR_REMINDER_DAYS.includes(daysUntil)) {
         // Check if reminder was already sent for this day
         const alreadySent = await checkReminderSent(tour.id, daysUntil);
         
