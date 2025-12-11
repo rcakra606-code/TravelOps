@@ -115,8 +115,18 @@ function getFilteredData() {
 
 function applyFiltersAndRender() {
   const filtered = getFilteredData();
+  
+  // Apply pagination
+  const paginated = window.paginationUtils.paginate(filtered, currentPage, pageSize);
+  
   updateMetrics();
-  renderTable(filtered);
+  renderTable(paginated.data);
+  
+  // Render pagination controls
+  window.paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+    currentPage = page;
+    applyFiltersAndRender();
+  });
 }
 
 function renderTable(data) {

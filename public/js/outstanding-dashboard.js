@@ -21,6 +21,10 @@ let filterState = {
   dateTo: ''
 };
 
+// Pagination state
+let currentPage = 1;
+const pageSize = 25;
+
 /* === FILTER MANAGEMENT === */
 function openOutstandingFilterModal() {
   const now = new Date();
@@ -201,12 +205,20 @@ function renderTable() {
   
   const filtered = getFilteredData();
   
-  if (filtered.length === 0) {
+  // Apply pagination
+  const paginated = window.paginationUtils.paginate(filtered, currentPage, pageSize);
+  
+  if (paginated.data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center">No outstanding records found</td></tr>';
+    // Still render pagination to show total
+    window.paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+      currentPage = page;
+      renderTable();
+    });
     return;
   }
   
-  tbody.innerHTML = filtered.map(item => {
+  tbody.innerHTML = paginated.data.map(item => {
     const invoice = parseFloat(item.nominal_invoice) || 0;
     const firstPayment = parseFloat(item.pembayaran_pertama) || 0;
     const discount = parseFloat(item.pembayaran_kedua) || 0;
@@ -227,6 +239,12 @@ function renderTable() {
       </td>
     </tr>
   `}).join('');
+  
+  // Render pagination controls
+  window.paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+    currentPage = page;
+    renderTable();
+  });
 }
 
 /* === CRUD OPERATIONS === */

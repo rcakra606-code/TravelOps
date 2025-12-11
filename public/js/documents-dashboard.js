@@ -608,6 +608,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 let documentsDataForCRUD = [];
 let documentsFilters = { search: '' };
+let documentsCurrentPage = 1;
+const documentsPageSize = 25;
 
 async function loadDocumentsData() {
   try {
@@ -648,12 +650,20 @@ function renderDocumentsTable() {
     );
   }
   
-  if (filtered.length === 0) {
+  // Apply pagination
+  const paginated = window.paginationUtils.paginate(filtered, documentsCurrentPage, documentsPageSize);
+  
+  if (paginated.data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" class="text-center">No documents found</td></tr>';
+    // Still render pagination to show total
+    window.paginationUtils.renderPaginationControls('documentsPaginationControls', paginated, (page) => {
+      documentsCurrentPage = page;
+      renderDocumentsTable();
+    });
     return;
   }
   
-  tbody.innerHTML = filtered.map(item => `
+  tbody.innerHTML = paginated.data.map(item => `
     <tr class="table-row">
       <td>${item.receive_date || '—'}</td>
       <td><strong>${item.guest_name || '—'}</strong></td>
@@ -668,6 +678,12 @@ function renderDocumentsTable() {
       </td>
     </tr>
   `).join('');
+  
+  // Render pagination controls
+  window.paginationUtils.renderPaginationControls('documentsPaginationControls', paginated, (page) => {
+    documentsCurrentPage = page;
+    renderDocumentsTable();
+  });
 }
 
 window.editDocument = async function(id) {

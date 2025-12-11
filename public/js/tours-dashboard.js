@@ -751,7 +751,8 @@ window.addEventListener('DOMContentLoaded', async () => {
 
 let toursDataForCRUD = [];
 let toursFilters = { search: '' };
-let toursPagination = { currentPage: 1, itemsPerPage: 10 };
+let toursCurrentPage = 1;
+const toursPageSize = 25;
 
 async function loadToursData() {
   const tbody = el('toursTableBody');
@@ -760,7 +761,7 @@ async function loadToursData() {
   }
   try {
     toursDataForCRUD = await window.fetchJson('/api/tours') || [];
-    toursPagination.currentPage = 1; // Reset to first page
+    toursCurrentPage = 1; // Reset to first page
     renderToursTable();
   } catch (err) {
     console.error('Failed to load tours:', err);
@@ -797,20 +798,19 @@ function renderToursTable() {
     );
   }
   
-  // Calculate pagination
-  const totalItems = filtered.length;
-  const totalPages = Math.ceil(totalItems / toursPagination.itemsPerPage);
-  const startIndex = (toursPagination.currentPage - 1) * toursPagination.itemsPerPage;
-  const endIndex = startIndex + toursPagination.itemsPerPage;
-  const paginatedData = filtered.slice(startIndex, endIndex);
+  // Apply pagination using shared utility
+  const paginated = window.paginationUtils.paginate(filtered, toursCurrentPage, toursPageSize);
   
-  if (filtered.length === 0) {
+  if (paginated.data.length === 0) {
     tbody.innerHTML = '<tr><td colspan="11" class="text-center">No tours found</td></tr>';
-    renderToursPagination(0, 0);
+    window.paginationUtils.renderPaginationControls('toursPagination', paginated, (page) => {
+      toursCurrentPage = page;
+      renderToursTable();
+    });
     return;
   }
 
-  tbody.innerHTML = paginatedData.map(item => {
+  tbody.innerHTML = paginated.data.map(item => {
     const region = regionsData.find(r => r.id === item.region_id);
     const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
     const formatDate = (val) => val ? new Date(val).toLocaleDateString('id-ID') : '—';
@@ -836,62 +836,10 @@ function renderToursTable() {
   `;
   }).join('');
   
-  renderToursPagination(totalItems, totalPages);
-}
-
-function renderToursPagination(totalItems, totalPages) {
-  const paginationDiv = el('toursPagination');
-  if (!paginationDiv) return;
-  
-  if (totalPages <= 1) {
-    paginationDiv.innerHTML = '';
-    return;
-  }
-  
-  const { currentPage } = toursPagination;
-  let paginationHtml = '<div class="pagination">';
-  
-  // Previous button
-  paginationHtml += `<button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} data-page="${currentPage - 1}">« Previous</button>`;
-  
-  // Page numbers
-  const maxVisiblePages = 5;
-  let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
-  let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-  
-  if (endPage - startPage < maxVisiblePages - 1) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-  }
-  
-  if (startPage > 1) {
-    paginationHtml += `<button class="pagination-btn" data-page="1">1</button>`;
-    if (startPage > 2) paginationHtml += `<span class="pagination-ellipsis">...</span>`;
-  }
-  
-  for (let i = startPage; i <= endPage; i++) {
-    paginationHtml += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-  }
-  
-  if (endPage < totalPages) {
-    if (endPage < totalPages - 1) paginationHtml += `<span class="pagination-ellipsis">...</span>`;
-    paginationHtml += `<button class="pagination-btn" data-page="${totalPages}">${totalPages}</button>`;
-  }
-  
-  // Next button
-  paginationHtml += `<button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} data-page="${currentPage + 1}">Next »</button>`;
-  
-  paginationHtml += `</div>`;
-  paginationHtml += `<div class="pagination-info">Showing ${((currentPage - 1) * toursPagination.itemsPerPage) + 1}-${Math.min(currentPage * toursPagination.itemsPerPage, totalItems)} of ${totalItems} tours</div>`;
-  
-  paginationDiv.innerHTML = paginationHtml;
-  
-  // Add event listeners
-  paginationDiv.querySelectorAll('.pagination-btn[data-page]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.disabled) return;
-      toursPagination.currentPage = parseInt(btn.dataset.page);
-      renderToursTable();
-    });
+  // Render pagination controls using shared utility
+  window.paginationUtils.renderPaginationControls('toursPagination', paginated, (page) => {
+    toursCurrentPage = page;
+    renderToursTable();
   });
 }
 

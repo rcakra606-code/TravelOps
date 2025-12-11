@@ -28,6 +28,10 @@ let regionsData = [];
 let usersData = [];
 const user = getUser();
 
+// Pagination state
+let currentPage = 1;
+const pageSize = 25;
+
 el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 
@@ -100,8 +104,17 @@ function applyFiltersAndRender() {
   if (filters.endDate) filtered = filtered.filter(t => !t.tanggal_selesai || t.tanggal_selesai <= filters.endDate);
   if (filters.deposit) filtered = filtered.filter(t => t.deposit === filters.deposit);
   
+  // Apply pagination
+  const paginated = window.paginationUtils.paginate(filtered, currentPage, pageSize);
+  
   updateMetrics();
-  renderTable(filtered);
+  renderTable(paginated.data);
+  
+  // Render pagination controls
+  window.paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
+    currentPage = page;
+    applyFiltersAndRender();
+  });
 }
 
 function renderTable(data) {
