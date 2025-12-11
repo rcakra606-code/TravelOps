@@ -149,8 +149,8 @@ async function checkAndSendReminders() {
 /**
  * Get all upcoming tours from database
  */
-function getUpcomingTours() {
-  return new Promise((resolve, reject) => {
+async function getUpcomingTours() {
+  try {
     const today = new Date().toISOString().split('T')[0];
     
     const sql = `
@@ -169,64 +169,53 @@ function getUpcomingTours() {
       ORDER BY t.departure_date ASC
     `;
 
-    db.all(sql, [today], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows || []);
-      }
-    });
-  });
+    const rows = await db.all(sql, [today]);
+    return rows || [];
+  } catch (err) {
+    logger.error('Error getting upcoming tours:', err);
+    return [];
+  }
 }
 
 /**
  * Check if a reminder has already been sent
  */
-function checkReminderSent(tourId, daysUntil) {
-  return new Promise((resolve, reject) => {
+async function checkReminderSent(tourId, daysUntil) {
+  try {
     // First, ensure the table exists
-    db.run(getCreateTableSQL(), (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    await db.run(getCreateTableSQL());
 
-      // Check if reminder exists
-      const sql = `
-        SELECT COUNT(*) as count 
-        FROM email_reminders 
-        WHERE tour_id = ? AND days_until_departure = ?
-      `;
+    // Check if reminder exists
+    const sql = `
+      SELECT COUNT(*) as count 
+      FROM email_reminders 
+      WHERE tour_id = ? AND days_until_departure = ?
+    `;
 
-      db.get(sql, [tourId, daysUntil], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row.count > 0);
-        }
-      });
-    });
-  });
+    const row = await db.get(sql, [tourId, daysUntil]);
+    return row && row.count > 0;
+  } catch (err) {
+    logger.error('Error checking reminder sent:', err);
+    return false;
+  }
 }
 
 /**
  * Record that a reminder was sent
  */
-function recordReminderSent(tourId, daysUntil) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      INSERT OR IGNORE INTO email_reminders (tour_id, days_until_departure)
-      VALUES (?, ?)
-    `;
+async function recordReminderSent(tourId, daysUntil) {
+  try {
+    // Handle INSERT OR IGNORE for both SQLite and Postgres
+    const isPostgres = db.dialect === 'postgres';
+    const sql = isPostgres
+      ? `INSERT INTO email_reminders (tour_id, days_until_departure) VALUES (?, ?) ON CONFLICT (tour_id, days_until_departure) DO NOTHING`
+      : `INSERT OR IGNORE INTO email_reminders (tour_id, days_until_departure) VALUES (?, ?)`;
 
-    db.run(sql, [tourId, daysUntil], function(err) {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(this.lastID);
-      }
-    });
-  });
+    await db.run(sql, [tourId, daysUntil]);
+  } catch (err) {
+    logger.error('Error recording reminder sent:', err);
+    throw err;
+  }
 }
 
 /**
@@ -247,40 +236,34 @@ async function manualTrigger() {
 /**
  * Get reminder statistics
  */
-function getReminderStats() {
-  return new Promise((resolve, reject) => {
+async function getReminderStats() {
+  try {
     // First ensure the table exists
-    db.run(getCreateTableSQL(), (err) => {
-      if (err) {
-        logger.error('Error creating email_reminders table:', err);
-        // Return empty array instead of rejecting
-        resolve([]);
-        return;
-      }
+    await db.run(getCreateTableSQL());
 
-      // Now get the statistics
-      const sql = `
-        SELECT 
-          days_until_departure,
-          COUNT(*) as count,
-          DATE(sent_at) as sent_date
-        FROM email_reminders
-        GROUP BY days_until_departure, DATE(sent_at)
-        ORDER BY sent_date DESC, days_until_departure DESC
-        LIMIT 50
-      `;
+    // Handle date formatting for both SQLite and Postgres
+    const isPostgres = db.dialect === 'postgres';
+    const dateFunc = isPostgres ? "DATE(sent_at)" : "DATE(sent_at)";
+    
+    // Now get the statistics
+    const sql = `
+      SELECT 
+        days_until_departure,
+        COUNT(*) as count,
+        ${dateFunc} as sent_date
+      FROM email_reminders
+      GROUP BY days_until_departure, ${dateFunc}
+      ORDER BY sent_date DESC, days_until_departure DESC
+      LIMIT 50
+    `;
 
-      db.all(sql, [], (err, rows) => {
-        if (err) {
-          logger.error('Error fetching reminder stats:', err);
-          // Return empty array instead of rejecting
-          resolve([]);
-        } else {
-          resolve(rows || []);
-        }
-      });
-    });
-  });
+    const rows = await db.all(sql, []);
+    return rows || [];
+  } catch (err) {
+    logger.error('Error fetching reminder stats:', err);
+    // Return empty array instead of throwing
+    return [];
+  }
 }
 
 /**
@@ -355,8 +338,8 @@ async function checkAndSendCruiseReminders() {
 /**
  * Get all upcoming cruises from database
  */
-function getUpcomingCruises() {
-  return new Promise((resolve, reject) => {
+async function getUpcomingCruises() {
+  try {
     const today = new Date().toISOString().split('T')[0];
     
     const sql = `
@@ -371,21 +354,19 @@ function getUpcomingCruises() {
       ORDER BY c.sailing_start ASC
     `;
 
-    db.all(sql, [today], (err, rows) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(rows || []);
-      }
-    });
-  });
+    const rows = await db.all(sql, [today]);
+    return rows || [];
+  } catch (err) {
+    logger.error('Error getting upcoming cruises:', err);
+    return [];
+  }
 }
 
 /**
  * Check if a cruise reminder has already been sent
  */
-function checkCruiseReminderSent(cruiseId, daysUntil) {
-  return new Promise((resolve, reject) => {
+async function checkCruiseReminderSent(cruiseId, daysUntil) {
+  try {
     // First, ensure the table exists
     const createTableSql = db.dialect === 'postgres' 
       ? `CREATE TABLE IF NOT EXISTS cruise_reminders (
@@ -403,44 +384,39 @@ function checkCruiseReminderSent(cruiseId, daysUntil) {
           UNIQUE(cruise_id, days_until_sailing)
         )`;
 
-    db.run(createTableSql, (err) => {
-      if (err) {
-        reject(err);
-        return;
-      }
+    await db.run(createTableSql);
 
-      // Check if reminder exists
-      const sql = `
-        SELECT COUNT(*) as count 
-        FROM cruise_reminders 
-        WHERE cruise_id = ? AND days_until_sailing = ?
-      `;
+    // Check if reminder exists
+    const sql = `
+      SELECT COUNT(*) as count 
+      FROM cruise_reminders 
+      WHERE cruise_id = ? AND days_until_sailing = ?
+    `;
 
-      db.get(sql, [cruiseId, daysUntil], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row.count > 0);
-        }
-      });
-    });
-  });
+    const row = await db.get(sql, [cruiseId, daysUntil]);
+    return row && row.count > 0;
+  } catch (err) {
+    logger.error('Error checking cruise reminder sent:', err);
+    return false;
+  }
 }
 
 /**
  * Record that a cruise reminder was sent
  */
-function recordCruiseReminderSent(cruiseId, daysUntil) {
-  return new Promise((resolve, reject) => {
-    const sql = `INSERT INTO cruise_reminders (cruise_id, days_until_sailing) VALUES (?, ?)`;
-    db.run(sql, [cruiseId, daysUntil], (err) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve();
-      }
-    });
-  });
+async function recordCruiseReminderSent(cruiseId, daysUntil) {
+  try {
+    // Handle INSERT OR IGNORE for both SQLite and Postgres
+    const isPostgres = db.dialect === 'postgres';
+    const sql = isPostgres
+      ? `INSERT INTO cruise_reminders (cruise_id, days_until_sailing) VALUES (?, ?) ON CONFLICT (cruise_id, days_until_sailing) DO NOTHING`
+      : `INSERT OR IGNORE INTO cruise_reminders (cruise_id, days_until_sailing) VALUES (?, ?)`;
+
+    await db.run(sql, [cruiseId, daysUntil]);
+  } catch (err) {
+    logger.error('Error recording cruise reminder sent:', err);
+    throw err;
+  }
 }
 
 export {
