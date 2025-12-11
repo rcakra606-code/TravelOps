@@ -503,31 +503,84 @@ async function renderDashboard() {
 /* === EXPORT CSV === */
 el('exportToursCSV')?.addEventListener('click', async () => {
   try {
-    const data = await window.fetchJson('/api/tours');
+    // Apply current filters to export
+    const { staff, region, period, month, year, dateType } = filterState;
+    const params = {};
+    if (staff !== 'all') params.staff = staff;
+    if (region !== 'all') params.region = region;
+    if (period === 'month' && month) params.month = month;
+    if (period === 'year' && year) params.year = year;
+    if (dateType) params.dateType = dateType;
+    
+    const q = new URLSearchParams(params).toString();
+    const data = await window.fetchJson('/api/tours' + (q ? '?' + q : ''));
+    
     if (!data || !data.length) {
       toast.warning('Tidak ada data untuk di-export');
       return;
     }
     
-    const headers = ['ID', 'Tour Name', 'Departure Date', 'Participants', 'Region', 'Staff', 'Created At'];
+    // Get region names for mapping
+    const regionList = await window.fetchJson('/api/regions');
+    const regionMap = Object.fromEntries((regionList || []).map(r => [String(r.id), r.region_name]));
+    
+    // Comprehensive headers with all tour fields
+    const headers = [
+      'ID', 'Registration Date', 'Lead Passenger', 'All Passengers', 'Tour Code', 
+      'Region', 'Departure Date', 'Booking Code', 'Tour Price', 'Sales Amount', 
+      'Total Nominal Sales', 'Profit Amount', 'Discount Amount', 'Discount Remarks',
+      'Staff', 'Participants', 'Phone', 'Email', 'Status', 'Payment Link', 
+      'Invoice Number', 'Created At'
+    ];
+    
     const rows = data.map(d => [
-      d.id,
-      d.tour_name || '',
+      d.id || '',
+      d.registration_date || '',
+      d.lead_passenger || '',
+      (d.all_passengers || '').replace(/,/g, ';'), // Replace commas with semicolons to avoid CSV issues
+      d.tour_code || '',
+      regionMap[String(d.region_id)] || '',
       d.departure_date || '',
-      d.jumlah_peserta || 0,
-      d.region_name || '',
+      d.booking_code || '',
+      d.tour_price || 0,
+      d.sales_amount || 0,
+      d.total_nominal_sales || 0,
+      d.profit_amount || 0,
+      d.discount_amount || 0,
+      (d.discount_remarks || '').replace(/,/g, ';'),
       d.staff_name || '',
+      d.jumlah_peserta || 0,
+      d.phone_number || '',
+      d.email || '',
+      d.status || '',
+      d.link_pelunasan_tour || '',
+      d.invoice_number || '',
       d.created_at || ''
     ]);
     
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
+    // Properly escape CSV fields (wrap in quotes if contains comma, quote, or newline)
+    const escapeCsvField = (field) => {
+      const str = String(field);
+      if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    
+    const csv = [
+      headers.map(escapeCsvField).join(','),
+      ...rows.map(row => row.map(escapeCsvField).join(','))
+    ].join('\n');
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `tours_export_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
+    
+    toast.success(`${data.length} tours exported successfully`);
   } catch (err) {
     console.error('Export error:', err);
     toast.error('Error exporting data: ' + err.message);

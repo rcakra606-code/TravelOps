@@ -311,6 +311,7 @@ async function createSchema(db) {
   await ensureColumn('sales', 'status', "TEXT DEFAULT 'Pending'");
   await ensureColumn('sales', 'notes', 'TEXT');
   await ensureColumn('sales', 'region_id', 'INTEGER');
+  await ensureColumn('sales', 'month', 'TEXT'); // Format: YYYY-MM for monthly reporting
   await ensureColumn('sales', 'created_at', isPg ? 'TIMESTAMPTZ DEFAULT NOW()' : 'TEXT DEFAULT (datetime(\'now\'))');
 
   // Documents: all columns used by frontend

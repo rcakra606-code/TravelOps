@@ -701,12 +701,13 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   let conditions = [];
   let params = [];
   
+  // Use transaction_date for filtering (convert from and to dates)
   if (from) {
-    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
+    conditions.push(isPg ? `s.transaction_date >= $${params.length + 1}::date` : `date(s.transaction_date) >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
+    conditions.push(isPg ? `s.transaction_date <= $${params.length + 1}::date` : `date(s.transaction_date) <= ?`);
     params.push(to);
   }
   if (staff) {
@@ -734,14 +735,18 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   // Calculate profit margin
   summary.profitMargin = summary.totalSales > 0 ? (summary.totalProfit / summary.totalSales) * 100 : 0;
   
-  // Chart data - sales & profit by month
+  // Chart data - sales & profit by month (extract month from transaction_date)
+  const monthGrouping = isPg 
+    ? `TO_CHAR(s.transaction_date::date, 'YYYY-MM')`
+    : `strftime('%Y-%m', s.transaction_date)`;
+  
   const trendData = await db.all(
-    `SELECT s.month, 
+    `SELECT ${monthGrouping} as month, 
       SUM(s.sales_amount) as totalSales,
       SUM(s.profit_amount) as totalProfit
      FROM sales s ${whereClause}
-     GROUP BY s.month
-     ORDER BY s.month`,
+     GROUP BY ${monthGrouping}
+     ORDER BY ${monthGrouping}`,
     params
   );
   
@@ -759,13 +764,13 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   
   // Table data - all sales records
   const tableData = await db.all(
-    `SELECT s.id, s.month, s.staff_name, s.sales_amount, s.profit_amount, 
+    `SELECT s.id, s.transaction_date, ${monthGrouping} as month, s.staff_name, s.sales_amount, s.profit_amount, 
       r.region_name,
       s.created_at, s.created_by, s.updated_at, s.updated_by
      FROM sales s
      LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.month DESC, s.created_at DESC
+     ORDER BY s.transaction_date DESC, s.created_at DESC
      LIMIT 100`,
     params
   );
@@ -1027,11 +1032,11 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
   let params = [];
   
   if (from) {
-    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
+    conditions.push(isPg ? `s.transaction_date >= $${params.length + 1}::date` : `date(s.transaction_date) >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
+    conditions.push(isPg ? `s.transaction_date <= $${params.length + 1}::date` : `date(s.transaction_date) <= ?`);
     params.push(to);
   }
   if (region) {
@@ -1139,11 +1144,11 @@ async function generateExecutiveSummary(db, isPg, { from, to }) {
   let salesParams = [];
   
   if (from) {
-    salesConditions.push(isPg ? `month >= $${salesParams.length + 1}` : `month >= ?`);
+    salesConditions.push(isPg ? `transaction_date >= $${salesParams.length + 1}::date` : `date(transaction_date) >= ?`);
     salesParams.push(from);
   }
   if (to) {
-    salesConditions.push(isPg ? `month <= $${salesParams.length + 1}` : `month <= ?`);
+    salesConditions.push(isPg ? `transaction_date <= $${salesParams.length + 1}::date` : `date(transaction_date) <= ?`);
     salesParams.push(to);
   }
   
