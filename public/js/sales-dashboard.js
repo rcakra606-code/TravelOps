@@ -173,10 +173,22 @@ async function renderDashboard() {
       staff = user.name || user.username;
     }
     
-    // Build parameters for current month achievement (always current month)
+    // Determine which month/year to use for achievement metrics
+    // If filter is applied, use filtered month; otherwise use current month
+    let metricsMonth, metricsYear;
+    if (filterState.month) {
+      const [y, m] = filterState.month.split('-');
+      metricsMonth = m;
+      metricsYear = y;
+    } else {
+      metricsMonth = String(now.getMonth() + 1).padStart(2, '0');
+      metricsYear = String(now.getFullYear());
+    }
+    
+    // Build parameters for achievement (filtered month or current month)
     const achievementParams = {
-      month: String(now.getMonth() + 1).padStart(2, '0'),
-      year: String(now.getFullYear())
+      month: metricsMonth,
+      year: metricsYear
     };
     if (staff) achievementParams.staff = staff;
     
@@ -258,6 +270,26 @@ async function renderDashboard() {
     const targetProfit = achievementMetrics?.targets?.target_profit || 0;
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
     
+    // Update active filter badge
+    const filterBadge = el('activeFilterBadge');
+    if (filterBadge) {
+      if (filterState.month || (filterState.staff && filterState.staff !== 'all')) {
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let filterText = [];
+        if (filterState.month) {
+          const [y, m] = filterState.month.split('-');
+          filterText.push(`📅 ${monthNames[parseInt(m) - 1]} ${y}`);
+        }
+        if (filterState.staff && filterState.staff !== 'all') {
+          filterText.push(`👤 ${filterState.staff}`);
+        }
+        filterBadge.textContent = filterText.join(' • ');
+        filterBadge.style.display = 'inline-block';
+      } else {
+        filterBadge.style.display = 'none';
+      }
+    }
+    
     // Update metrics display
     if (el('totalSales')) el('totalSales').textContent = window.formatCurrency(totalSales);
     if (el('totalProfit')) el('totalProfit').textContent = window.formatCurrency(totalProfit);
@@ -299,13 +331,19 @@ async function renderDashboard() {
       }
     };
     
-    // 1. Sales Achievement Chart (Current Month vs Target)
+    // Format month label for charts
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const displayMonthLabel = filterState.month 
+      ? `${monthNames[parseInt(metricsMonth) - 1]} ${metricsYear}`
+      : 'Current Month';
+    
+    // 1. Sales Achievement Chart (Selected Month vs Target)
     const ctxSalesTarget = document.getElementById('chartSalesTarget')?.getContext('2d');
     if (ctxSalesTarget) {
       charts.salesTarget = new Chart(ctxSalesTarget, {
         type: 'bar',
         data: {
-          labels: ['Current Month', 'Target'],
+          labels: [displayMonthLabel, 'Target'],
           datasets: [{
             label: 'Sales (Rp)',
             data: [totalSales, targetSales],
@@ -317,13 +355,13 @@ async function renderDashboard() {
       });
     }
     
-    // 2. Profit Achievement Chart (Current Month vs Target)
+    // 2. Profit Achievement Chart (Selected Month vs Target)
     const ctxProfitTarget = document.getElementById('chartProfitTarget')?.getContext('2d');
     if (ctxProfitTarget) {
       charts.profitTarget = new Chart(ctxProfitTarget, {
         type: 'bar',
         data: {
-          labels: ['Current Month', 'Target'],
+          labels: [displayMonthLabel, 'Target'],
           datasets: [{
             label: 'Profit (Rp)',
             data: [totalProfit, targetProfit],

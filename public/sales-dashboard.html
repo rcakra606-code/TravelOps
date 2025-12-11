@@ -60,8 +60,11 @@
     </div>
 
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3>Sales Analytics</h3>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <h3 style="margin:0;">Sales Analytics</h3>
+          <span id="activeFilterBadge" class="badge badge-info" style="display:none;font-size:12px;"></span>
+        </div>
         <button id="salesFilterBtn" class="btn">🔍 Filter</button>
       </div>
       
