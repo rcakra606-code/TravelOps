@@ -610,6 +610,38 @@ export async function createApp() {
 
   app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
 
+  // Debug endpoint to check data counts
+  app.get('/api/debug/data-counts', authMiddleware(), async (req, res) => {
+    try {
+      const salesCount = await db.get('SELECT COUNT(*) as count FROM sales');
+      const toursCount = await db.get('SELECT COUNT(*) as count FROM tours');
+      const cruisesCount = await db.get('SELECT COUNT(*) as count FROM cruises');
+      const hotelsCount = await db.get('SELECT COUNT(*) as count FROM hotels');
+      const documentsCount = await db.get('SELECT COUNT(*) as count FROM documents');
+      
+      // Get sample sales records
+      const sampleSales = await db.all('SELECT id, transaction_date, staff_name, sales_amount, profit_amount FROM sales LIMIT 5');
+      const sampleTours = await db.all('SELECT id, tour_code, departure_date, lead_passenger FROM tours LIMIT 5');
+      
+      res.json({
+        counts: {
+          sales: salesCount.count,
+          tours: toursCount.count,
+          cruises: cruisesCount.count,
+          hotels: hotelsCount.count,
+          documents: documentsCount.count
+        },
+        samples: {
+          sales: sampleSales,
+          tours: sampleTours
+        }
+      });
+    } catch (err) {
+      logger.error({ err }, 'Failed to get data counts');
+      res.status(500).json({ error: 'Failed to get data counts', details: err.message });
+    }
+  });
+
   // Email Notification Endpoints (Admin only)
   app.post('/api/email/test', authMiddleware(), async (req, res) => {
     if (req.user.type !== 'admin') {
