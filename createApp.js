@@ -599,6 +599,198 @@ export async function createApp() {
   app.post('/api/admin/seed', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const username = req.body.username || process.env.ADMIN_USERNAME || 'admin'; const name = req.body.name || 'Administrator'; const email = req.body.email || 'admin@example.com'; const password = req.body.password || process.env.ADMIN_PASSWORD || 'Admin1234!'; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); const existing = await db.get('SELECT * FROM users WHERE username=?',[username]); if (existing){ await db.run('UPDATE users SET password=?, name=?, email=?, type=? WHERE id=?',[hashed, name, email,'admin', existing.id]); await logActivity(req.user.username,'ADMIN_SEED_UPDATE','users',existing.id,`Updated admin user ${username}`); return res.json({ ok:true, updated:true }); } else { const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)',[username, hashed, name, email,'admin']); await logActivity(req.user.username,'ADMIN_SEED_CREATE','users',r.lastID,`Created admin user ${username}`); return res.json({ ok:true, created:true, id:r.lastID }); } });
 
   // ============================================
+  // DASHBOARD SUMMARY API - Consolidated metrics from all modules
+  // ============================================
+  app.get('/api/dashboard-summary', authMiddleware(), async (req, res) => {
+    try {
+      const { compare } = req.query; // 'month' or 'year'
+      const isPg = db.dialect === 'postgres';
+      const now = new Date();
+      const currentMonth = now.getMonth() + 1;
+      const currentYear = now.getFullYear();
+      
+      // Helper to format month/year for SQLite
+      const formatMonth = (m) => String(m).padStart(2, '0');
+      
+      // Current period queries
+      const monthParam = formatMonth(currentMonth);
+      const yearParam = String(currentYear);
+      
+      // Build date range for current month
+      const monthStart = `${currentYear}-${monthParam}-01`;
+      const monthEnd = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
+      
+      // Sales current month
+      const salesCurrent = await db.get(
+        isPg 
+          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
+          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
+        [monthParam, yearParam]
+      );
+      
+      // Targets current month
+      const targetsCurrent = await db.get(
+        isPg
+          ? `SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets WHERE month=$1 AND year=$2`
+          : `SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets WHERE month=? AND year=?`,
+        [currentMonth, currentYear]
+      );
+      
+      // Documents - pending (not completed)
+      const pendingDocs = await db.get(
+        `SELECT COUNT(*) AS count FROM documents WHERE (process_type IS NULL OR process_type != 'Completed')`
+      );
+      
+      // Outstanding invoices (total and sum)
+      const outstanding = await db.get(
+        `SELECT COUNT(*) AS count, COALESCE(SUM(nominal_invoice - COALESCE(pembayaran_pertama, 0) - COALESCE(pembayaran_kedua, 0)), 0) AS total_outstanding FROM outstanding`
+      );
+      
+      // Upcoming tours (next 30 days)
+      const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      const todayStr = now.toISOString().split('T')[0];
+      const upcomingTours = await db.get(
+        isPg
+          ? `SELECT COUNT(*) AS count FROM tours WHERE departure_date >= $1 AND departure_date <= $2`
+          : `SELECT COUNT(*) AS count FROM tours WHERE departure_date >= ? AND departure_date <= ?`,
+        [todayStr, thirtyDaysLater]
+      );
+      
+      // Upcoming cruise (next 30 days)
+      const upcomingCruise = await db.get(
+        isPg
+          ? `SELECT COUNT(*) AS count FROM cruise WHERE embark_date >= $1 AND embark_date <= $2`
+          : `SELECT COUNT(*) AS count FROM cruise WHERE embark_date >= ? AND embark_date <= ?`,
+        [todayStr, thirtyDaysLater]
+      );
+      
+      // Hotel bookings this month
+      const hotelBookings = await db.get(
+        isPg
+          ? `SELECT COUNT(*) AS count FROM hotel_bookings WHERE TO_CHAR(check_in, 'MM')=$1 AND TO_CHAR(check_in, 'YYYY')=$2`
+          : `SELECT COUNT(*) AS count FROM hotel_bookings WHERE strftime('%m', check_in)=? AND strftime('%Y', check_in)=?`,
+        [monthParam, yearParam]
+      );
+      
+      // Telecom rentals this month
+      const telecomRentals = await db.get(
+        isPg
+          ? `SELECT COUNT(*) AS count FROM telecom WHERE TO_CHAR(tanggal_mulai, 'MM')=$1 AND TO_CHAR(tanggal_mulai, 'YYYY')=$2`
+          : `SELECT COUNT(*) AS count FROM telecom WHERE strftime('%m', tanggal_mulai)=? AND strftime('%Y', tanggal_mulai)=?`,
+        [monthParam, yearParam]
+      );
+      
+      // YTD Summary
+      const ytdSales = await db.get(
+        isPg
+          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE TO_CHAR(transaction_date, 'YYYY')=$1`
+          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE strftime('%Y', transaction_date)=?`,
+        [yearParam]
+      );
+      
+      const ytdTargets = await db.get(
+        isPg
+          ? `SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets WHERE year=$1`
+          : `SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets WHERE year=?`,
+        [currentYear]
+      );
+      
+      // Comparison data
+      let comparison = null;
+      if (compare === 'month') {
+        // Previous month
+        const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+        const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+        const prevMonthParam = formatMonth(prevMonth);
+        const prevYearParam = String(prevYear);
+        
+        const salesPrev = await db.get(
+          isPg 
+            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
+            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
+          [prevMonthParam, prevYearParam]
+        );
+        
+        comparison = {
+          period: `${prevMonth}/${prevYear}`,
+          salesChange: salesPrev.total_sales ? ((salesCurrent.total_sales - salesPrev.total_sales) / salesPrev.total_sales * 100).toFixed(1) : null,
+          profitChange: salesPrev.total_profit ? ((salesCurrent.total_profit - salesPrev.total_profit) / salesPrev.total_profit * 100).toFixed(1) : null,
+          prevSales: salesPrev.total_sales,
+          prevProfit: salesPrev.total_profit
+        };
+      } else if (compare === 'year') {
+        // Same month last year
+        const prevYearParam = String(currentYear - 1);
+        
+        const salesPrev = await db.get(
+          isPg 
+            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
+            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
+          [monthParam, prevYearParam]
+        );
+        
+        comparison = {
+          period: `${currentMonth}/${currentYear - 1}`,
+          salesChange: salesPrev.total_sales ? ((salesCurrent.total_sales - salesPrev.total_sales) / salesPrev.total_sales * 100).toFixed(1) : null,
+          profitChange: salesPrev.total_profit ? ((salesCurrent.total_profit - salesPrev.total_profit) / salesPrev.total_profit * 100).toFixed(1) : null,
+          prevSales: salesPrev.total_sales,
+          prevProfit: salesPrev.total_profit
+        };
+      }
+      
+      // Staff leaderboard (top 10 by sales this month)
+      const staffLeaderboard = await db.all(
+        isPg
+          ? `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2 AND staff_name IS NOT NULL GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`
+          : `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=? AND staff_name IS NOT NULL GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`,
+        [monthParam, yearParam]
+      );
+      
+      res.json({
+        currentPeriod: {
+          month: currentMonth,
+          year: currentYear,
+          label: `${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][currentMonth-1]} ${currentYear}`
+        },
+        sales: {
+          current: salesCurrent.total_sales,
+          target: targetsCurrent.target_sales,
+          achievement: targetsCurrent.target_sales ? (salesCurrent.total_sales / targetsCurrent.target_sales * 100).toFixed(1) : 0,
+          count: salesCurrent.count
+        },
+        profit: {
+          current: salesCurrent.total_profit,
+          target: targetsCurrent.target_profit,
+          achievement: targetsCurrent.target_profit ? (salesCurrent.total_profit / targetsCurrent.target_profit * 100).toFixed(1) : 0
+        },
+        ytd: {
+          sales: ytdSales.total_sales,
+          profit: ytdSales.total_profit,
+          targetSales: ytdTargets.target_sales,
+          targetProfit: ytdTargets.target_profit,
+          salesAchievement: ytdTargets.target_sales ? (ytdSales.total_sales / ytdTargets.target_sales * 100).toFixed(1) : 0,
+          profitAchievement: ytdTargets.target_profit ? (ytdSales.total_profit / ytdTargets.target_profit * 100).toFixed(1) : 0,
+          transactionCount: ytdSales.count
+        },
+        modules: {
+          pendingDocuments: pendingDocs.count,
+          upcomingTours: upcomingTours.count,
+          upcomingCruise: upcomingCruise.count,
+          outstandingInvoices: outstanding.count,
+          outstandingAmount: outstanding.total_outstanding,
+          hotelBookings: hotelBookings.count,
+          telecomRentals: telecomRentals.count
+        },
+        comparison,
+        staffLeaderboard
+      });
+    } catch (err) {
+      logger.error({ err, stack: err.stack }, 'Dashboard summary error');
+      res.status(500).json({ error: 'Failed to fetch dashboard summary', details: err.message });
+    }
+  });
+
+  // ============================================
   // REPORTS API - ADMIN & SEMI-ADMIN ONLY
   // ============================================
   app.get('/api/reports/:reportType', authMiddleware(), async (req, res) => {

@@ -19,7 +19,10 @@ let charts = {};
 /* === FILTER STATE === */
 let filterState = {
   staff: 'all',
-  month: '' // YYYY-MM format
+  month: '', // YYYY-MM format
+  useCustomRange: false,
+  dateFrom: '',
+  dateTo: ''
 };
 
 let regionsData = [];
@@ -60,8 +63,11 @@ function openSalesFilterModal() {
           <button type="button" class="quick-filter-chip ${filterState.month === lastMonthStr ? 'active' : ''}" data-quick-month="${lastMonthStr}">
             📆 Last Month
           </button>
-          <button type="button" class="quick-filter-chip ${!filterState.month ? 'active' : ''}" data-quick-month="">
+          <button type="button" class="quick-filter-chip ${filterState.useCustomRange ? '' : (!filterState.month ? 'active' : '')}" data-quick-month="">
             📊 All Time
+          </button>
+          <button type="button" class="quick-filter-chip ${filterState.useCustomRange ? 'active' : ''}" data-custom-range>
+            📅 Custom Range
           </button>
         </div>
         
@@ -71,10 +77,27 @@ function openSalesFilterModal() {
             ${staffDropdown}
             <div class="filter-group">
               <label><span class="icon">📅</span> Select Month</label>
-              <input type="month" name="month" value="${filterState.month || ''}">
+              <input type="month" name="month" value="${filterState.month || ''}" id="monthFilter">
             </div>
           </div>
         </div>
+        
+        <!-- Custom Date Range Section -->
+        <div class="filter-section" id="customDateRange" style="display: ${filterState.useCustomRange ? 'block' : 'none'};">
+          <div class="filter-section-title">📅 Custom Date Range</div>
+          <div class="filter-grid">
+            <div class="filter-group">
+              <label><span class="icon">📆</span> From Date</label>
+              <input type="date" name="dateFrom" value="${filterState.dateFrom || ''}">
+            </div>
+            <div class="filter-group">
+              <label><span class="icon">📆</span> To Date</label>
+              <input type="date" name="dateTo" value="${filterState.dateTo || ''}">
+            </div>
+          </div>
+        </div>
+        
+        <input type="hidden" name="useCustomRange" value="${filterState.useCustomRange ? '1' : ''}">
         
         <div class="filter-footer">
           <div class="filter-footer-left">
@@ -100,20 +123,47 @@ function openSalesFilterModal() {
         e.preventDefault();
         const monthVal = btn.dataset.quickMonth;
         const monthInput = document.querySelector('input[name="month"]');
+        const customRangeSection = document.getElementById('customDateRange');
+        const useCustomRangeInput = document.querySelector('input[name="useCustomRange"]');
+        
         if (monthInput) monthInput.value = monthVal;
+        if (customRangeSection) customRangeSection.style.display = 'none';
+        if (useCustomRangeInput) useCustomRangeInput.value = '';
         
         // Update active state
-        document.querySelectorAll('[data-quick-month]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[data-quick-month], [data-custom-range]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
       });
     });
+    
+    // Custom range toggle
+    const customRangeBtn = document.querySelector('[data-custom-range]');
+    if (customRangeBtn) {
+      customRangeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const customRangeSection = document.getElementById('customDateRange');
+        const monthInput = document.querySelector('input[name="month"]');
+        const useCustomRangeInput = document.querySelector('input[name="useCustomRange"]');
+        
+        if (customRangeSection) customRangeSection.style.display = 'block';
+        if (monthInput) monthInput.value = '';
+        if (useCustomRangeInput) useCustomRangeInput.value = '1';
+        
+        // Update active state
+        document.querySelectorAll('[data-quick-month], [data-custom-range]').forEach(b => b.classList.remove('active'));
+        customRangeBtn.classList.add('active');
+      });
+    }
   }, 100);
 }
 
 function resetSalesFilters() {
   filterState = {
     staff: 'all',
-    month: ''
+    month: '',
+    useCustomRange: false,
+    dateFrom: '',
+    dateTo: ''
   };
   if (window.closeModal) window.closeModal();
   renderDashboard();
@@ -123,6 +173,9 @@ function applySalesFilters(formData) {
   console.log('Applying filters with data:', formData);
   filterState.staff = formData.staff || 'all';
   filterState.month = formData.month || '';
+  filterState.useCustomRange = formData.useCustomRange === '1';
+  filterState.dateFrom = formData.dateFrom || '';
+  filterState.dateTo = formData.dateTo || '';
   
   console.log('Updated filterState:', filterState);
   if (window.closeModal) window.closeModal();
@@ -330,6 +383,9 @@ async function renderDashboard() {
         }
       }
     };
+    
+    // Store trendData globally for drill-down access
+    window._salesTrendData = trendData;
     
     // Format month label for charts
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -558,7 +614,24 @@ async function renderDashboard() {
               labels: sortedMonths,
               datasets: datasets
             },
-            options: commonOptions
+            options: {
+              ...commonOptions,
+              onClick: (event, elements) => {
+                if (elements.length > 0 && window.drillDownUtils) {
+                  const index = elements[0].index;
+                  const clickedMonth = sortedMonths[index];
+                  const monthData = trendData.filter(s => {
+                    const month = s.transaction_date?.substring(0, 7) || s.month;
+                    return month === clickedMonth;
+                  });
+                  window.drillDownUtils.showDrillDown(
+                    `Sales Details - ${clickedMonth}`,
+                    monthData,
+                    ['transaction_date', 'staff_name', 'customer_name', 'product_name', 'sales_amount', 'profit_amount']
+                  );
+                }
+              }
+            }
           });
         }
       }

@@ -307,6 +307,7 @@ function editOutstanding(id) {
     
     await window.fetchJson(`/api/outstanding/${item.id}`, { 
       method: 'PUT', 
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData) 
     });
     window.toast?.success('Outstanding record updated successfully');

@@ -20,7 +20,58 @@
 <link rel="stylesheet" href="/css/empty-states.css">
 <link rel="stylesheet" href="/css/form-enhancements.css">
 <link rel="stylesheet" href="/css/crud-enhancements.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .comparison-btn {
+    padding: 8px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .comparison-btn:hover {
+    background: var(--bg-alt);
+    border-color: var(--primary);
+  }
+  .comparison-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .metric-change {
+    margin-top: 8px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .metric-change.positive {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+  .metric-change.negative {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  .leaderboard-rank {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+  }
+  .leaderboard-rank.gold { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; }
+  .leaderboard-rank.silver { background: linear-gradient(135deg, #9ca3af, #6b7280); color: white; }
+  .leaderboard-rank.bronze { background: linear-gradient(135deg, #d97706, #b45309); color: white; }
+  .leaderboard-rank.normal { background: var(--bg-alt); color: var(--text-secondary); }
+</style>
 </head>
 <body>
 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
@@ -68,24 +119,100 @@
     <p style="margin: 0; font-size: 18px; opacity: 0.95;" id="welcomeMessage">Kelola bisnis travel Anda dengan mudah</p>
   </div>
 
+  <!-- === COMPARISON TOGGLE === -->
+  <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--bg-alt); border-radius: 12px; border: 1px solid var(--border-light);">
+    <span style="font-weight: 600; color: var(--text-secondary);">📊 Compare with:</span>
+    <div style="display: flex; gap: 8px;">
+      <button id="compareNone" class="comparison-btn active" onclick="setComparison('')">Current Only</button>
+      <button id="compareMonth" class="comparison-btn" onclick="setComparison('month')">vs Last Month</button>
+      <button id="compareYear" class="comparison-btn" onclick="setComparison('year')">vs Last Year</button>
+    </div>
+    <span id="comparisonLabel" style="margin-left: auto; font-size: 14px; color: var(--text-secondary);"></span>
+  </div>
+
   <!-- === QUICK METRICS === -->
   <div class="dashboard-metrics" style="margin-bottom: 24px;">
     <div class="metric-card" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white;">
-      <div class="metric-title" style="color: rgba(255,255,255,0.9);">Total Sales</div>
+      <div class="metric-title" style="color: rgba(255,255,255,0.9);">💰 Total Sales</div>
       <div class="metric-value" id="totalSales" style="color: white;">Rp 0</div>
       <div class="metric-subtitle" id="salesAchievement" style="color: rgba(255,255,255,0.85);">-</div>
+      <div id="salesChange" class="metric-change" style="display: none;"></div>
     </div>
 
     <div class="metric-card" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white;">
-      <div class="metric-title" style="color: rgba(255,255,255,0.9);">Total Profit</div>
+      <div class="metric-title" style="color: rgba(255,255,255,0.9);">📈 Total Profit</div>
       <div class="metric-value" id="totalProfit" style="color: white;">Rp 0</div>
       <div class="metric-subtitle" id="profitAchievement" style="color: rgba(255,255,255,0.85);">-</div>
+      <div id="profitChange" class="metric-change" style="display: none;"></div>
     </div>
 
     <div class="metric-card" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white;">
-      <div class="metric-title" style="color: rgba(255,255,255,0.9);">Upcoming Tours</div>
+      <div class="metric-title" style="color: rgba(255,255,255,0.9);">🧳 Upcoming Tours</div>
       <div class="metric-value" id="upcomingToursCount" style="color: white;">0</div>
       <div class="metric-subtitle" style="color: rgba(255,255,255,0.85);">Dalam 30 hari</div>
+    </div>
+
+    <div class="metric-card" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); color: white;">
+      <div class="metric-title" style="color: rgba(255,255,255,0.9);">📋 Outstanding</div>
+      <div class="metric-value" id="outstandingCount" style="color: white;">0</div>
+      <div class="metric-subtitle" id="outstandingAmount" style="color: rgba(255,255,255,0.85);">Rp 0</div>
+    </div>
+  </div>
+
+  <!-- === ADDITIONAL METRICS ROW === -->
+  <div class="dashboard-metrics" style="margin-bottom: 24px;">
+    <div class="metric-card">
+      <div class="metric-title">📄 Pending Documents</div>
+      <div class="metric-value" id="pendingDocsCount">0</div>
+      <div class="metric-subtitle">Perlu diproses</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">🚢 Upcoming Cruise</div>
+      <div class="metric-value" id="upcomingCruiseCount">0</div>
+      <div class="metric-subtitle">Dalam 30 hari</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">🏨 Hotel Bookings</div>
+      <div class="metric-value" id="hotelBookingsCount">0</div>
+      <div class="metric-subtitle">Bulan ini</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-title">📞 Telecom Rentals</div>
+      <div class="metric-value" id="telecomRentalsCount">0</div>
+      <div class="metric-subtitle">Bulan ini</div>
+    </div>
+  </div>
+
+  <!-- === YTD SUMMARY === -->
+  <div style="background: linear-gradient(135deg, #1e293b 0%, #334155 100%); padding: 24px; border-radius: 12px; color: white; margin-bottom: 24px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+      <h3 style="margin: 0; font-size: 18px;">📅 Year-to-Date Summary <span id="ytdYear" style="font-weight: normal; opacity: 0.8;"></span></h3>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+      <div>
+        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">YTD Sales</div>
+        <div id="ytdSales" style="font-size: 24px; font-weight: 700;">Rp 0</div>
+        <div style="font-size: 12px; opacity: 0.7;">Target: <span id="ytdTargetSales">Rp 0</span></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">YTD Profit</div>
+        <div id="ytdProfit" style="font-size: 24px; font-weight: 700;">Rp 0</div>
+        <div style="font-size: 12px; opacity: 0.7;">Target: <span id="ytdTargetProfit">Rp 0</span></div>
+      </div>
+      <div>
+        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">Sales Achievement</div>
+        <div id="ytdSalesAchievement" style="font-size: 24px; font-weight: 700;">0%</div>
+        <div style="height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin-top: 8px;">
+          <div id="ytdSalesBar" style="height: 100%; background: #10b981; width: 0%; transition: width 0.5s;"></div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size: 13px; opacity: 0.8; margin-bottom: 4px;">Profit Achievement</div>
+        <div id="ytdProfitAchievement" style="font-size: 24px; font-weight: 700;">0%</div>
+        <div style="height: 6px; background: rgba(255,255,255,0.2); border-radius: 3px; overflow: hidden; margin-top: 8px;">
+          <div id="ytdProfitBar" style="height: 100%; background: #10b981; width: 0%; transition: width 0.5s;"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -113,6 +240,31 @@
       <div class="chart-subtitle">Sales performance over time</div>
     </div>
     <canvas id="chartSalesMonthly" style="max-height: 300px;"></canvas>
+  </div>
+
+  <!-- === STAFF LEADERBOARD === -->
+  <div class="chart-container" style="margin-bottom: 24px;">
+    <div class="chart-header">
+      <div class="chart-title">🏆 Staff Performance Leaderboard</div>
+      <div class="chart-subtitle">Top performers this month</div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 50px;">Rank</th>
+            <th>Staff Name</th>
+            <th style="text-align: right;">Total Sales</th>
+            <th style="text-align: right;">Total Profit</th>
+            <th style="text-align: center;">Transactions</th>
+            <th style="text-align: right;">Avg/Transaction</th>
+          </tr>
+        </thead>
+        <tbody id="staffLeaderboardTable">
+          <tr><td colspan="6" style="text-align: center; padding: 20px; color: #9ca3af;">Memuat data...</td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- === UPCOMING TOURS NOTIFICATION === -->

@@ -4,22 +4,17 @@
    ========================================================= */
 
 // Authentication now handled globally by auth-common.js
+// api, getHeaders, fetchJson provided by auth-common.js
 
 /* === PAGE DETECTION === */
 const isReportsPage = window.location.pathname.includes('reports-dashboard');
 
-/* === GLOBAL HELPERS === */
-const api = p => p.startsWith('/') ? p : '/' + p;
+/* === GLOBAL HELPERS (local to this module) === */
 const el = id => document.getElementById(id);
 const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
-
-const getHeaders = (json = true) => {
-  const h = {};
-  const token = localStorage.getItem('token');
-  if (token) h['Authorization'] = 'Bearer ' + token;
-  if (json) h['Content-Type'] = 'application/json';
-  return h;
-};
+// Use globals from auth-common.js
+const api = window.api;
+const getHeaders = window.getHeaders;
 
 // Token refresh & fetchJson now provided by auth-common.js
 // Keep local formatting helpers only
@@ -636,6 +631,9 @@ async function refreshAll() {
     // Refresh charts
     await renderCharts();
     
+    // Refresh dashboard summary
+    await loadDashboardSummary();
+    
     // Refresh CRUD data if handlers are loaded
     if (window.crudHandlers) {
       await Promise.all([
@@ -981,6 +979,113 @@ async function renderCharts() {
   }
 }
 
+/* === DASHBOARD SUMMARY (Enhanced Metrics) === */
+let currentComparison = '';
+
+window.setComparison = async function(type) {
+  currentComparison = type;
+  
+  // Update button states
+  document.querySelectorAll('.comparison-btn').forEach(btn => {
+    btn.classList.toggle('active', 
+      (type === '' && btn.id === 'compareNone') ||
+      (type === 'month' && btn.id === 'compareMonth') ||
+      (type === 'year' && btn.id === 'compareYear')
+    );
+  });
+  
+  await loadDashboardSummary();
+};
+
+async function loadDashboardSummary() {
+  try {
+    const query = currentComparison ? `?compare=${currentComparison}` : '';
+    const summary = await fetchJson('/api/dashboard-summary' + query);
+    if (!summary) return;
+    
+    // Update current period metrics
+    if (el('totalSales')) el('totalSales').textContent = formatCurrency(summary.sales.current);
+    if (el('totalProfit')) el('totalProfit').textContent = formatCurrency(summary.profit.current);
+    if (el('salesAchievement')) el('salesAchievement').textContent = `Achv: ${summary.sales.achievement}%`;
+    if (el('profitAchievement')) el('profitAchievement').textContent = `Achv: ${summary.profit.achievement}%`;
+    if (el('upcomingToursCount')) el('upcomingToursCount').textContent = summary.modules.upcomingTours;
+    
+    // Update module counts
+    if (el('outstandingCount')) el('outstandingCount').textContent = summary.modules.outstandingInvoices;
+    if (el('outstandingAmount')) el('outstandingAmount').textContent = formatCurrency(summary.modules.outstandingAmount);
+    if (el('pendingDocsCount')) el('pendingDocsCount').textContent = summary.modules.pendingDocuments;
+    if (el('upcomingCruiseCount')) el('upcomingCruiseCount').textContent = summary.modules.upcomingCruise;
+    if (el('hotelBookingsCount')) el('hotelBookingsCount').textContent = summary.modules.hotelBookings;
+    if (el('telecomRentalsCount')) el('telecomRentalsCount').textContent = summary.modules.telecomRentals;
+    
+    // Update YTD Summary
+    if (el('ytdYear')) el('ytdYear').textContent = `(${summary.currentPeriod.year})`;
+    if (el('ytdSales')) el('ytdSales').textContent = formatCurrency(summary.ytd.sales);
+    if (el('ytdProfit')) el('ytdProfit').textContent = formatCurrency(summary.ytd.profit);
+    if (el('ytdTargetSales')) el('ytdTargetSales').textContent = formatCurrency(summary.ytd.targetSales);
+    if (el('ytdTargetProfit')) el('ytdTargetProfit').textContent = formatCurrency(summary.ytd.targetProfit);
+    if (el('ytdSalesAchievement')) el('ytdSalesAchievement').textContent = `${summary.ytd.salesAchievement}%`;
+    if (el('ytdProfitAchievement')) el('ytdProfitAchievement').textContent = `${summary.ytd.profitAchievement}%`;
+    if (el('ytdSalesBar')) el('ytdSalesBar').style.width = `${Math.min(parseFloat(summary.ytd.salesAchievement), 100)}%`;
+    if (el('ytdProfitBar')) el('ytdProfitBar').style.width = `${Math.min(parseFloat(summary.ytd.profitAchievement), 100)}%`;
+    
+    // Update comparison data
+    const salesChangeEl = el('salesChange');
+    const profitChangeEl = el('profitChange');
+    const comparisonLabel = el('comparisonLabel');
+    
+    if (summary.comparison) {
+      if (comparisonLabel) comparisonLabel.textContent = `vs ${summary.comparison.period}`;
+      
+      if (salesChangeEl && summary.comparison.salesChange !== null) {
+        const salesChange = parseFloat(summary.comparison.salesChange);
+        salesChangeEl.style.display = 'inline-block';
+        salesChangeEl.className = `metric-change ${salesChange >= 0 ? 'positive' : 'negative'}`;
+        salesChangeEl.textContent = `${salesChange >= 0 ? '↑' : '↓'} ${Math.abs(salesChange)}%`;
+      }
+      
+      if (profitChangeEl && summary.comparison.profitChange !== null) {
+        const profitChange = parseFloat(summary.comparison.profitChange);
+        profitChangeEl.style.display = 'inline-block';
+        profitChangeEl.className = `metric-change ${profitChange >= 0 ? 'positive' : 'negative'}`;
+        profitChangeEl.textContent = `${profitChange >= 0 ? '↑' : '↓'} ${Math.abs(profitChange)}%`;
+      }
+    } else {
+      if (salesChangeEl) salesChangeEl.style.display = 'none';
+      if (profitChangeEl) profitChangeEl.style.display = 'none';
+      if (comparisonLabel) comparisonLabel.textContent = summary.currentPeriod.label;
+    }
+    
+    // Update Staff Leaderboard
+    const leaderboardTable = el('staffLeaderboardTable');
+    if (leaderboardTable && summary.staffLeaderboard) {
+      if (summary.staffLeaderboard.length === 0) {
+        leaderboardTable.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #9ca3af;">No sales data this month</td></tr>';
+      } else {
+        leaderboardTable.innerHTML = summary.staffLeaderboard.map((staff, index) => {
+          const rank = index + 1;
+          const rankClass = rank === 1 ? 'gold' : rank === 2 ? 'silver' : rank === 3 ? 'bronze' : 'normal';
+          const avgSale = staff.transaction_count > 0 ? staff.total_sales / staff.transaction_count : 0;
+          
+          return `
+            <tr>
+              <td><div class="leaderboard-rank ${rankClass}">${rank}</div></td>
+              <td><strong>${staff.staff_name}</strong></td>
+              <td style="text-align: right;">${formatCurrency(staff.total_sales)}</td>
+              <td style="text-align: right;">${formatCurrency(staff.total_profit)}</td>
+              <td style="text-align: center;">${staff.transaction_count}</td>
+              <td style="text-align: right;">${formatCurrency(avgSale)}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
+    
+  } catch (err) {
+    console.error('loadDashboardSummary error', err);
+  }
+}
+
 /* === ACTIVITY LOG === */
 async function loadActivity() {
   if (getUser().type !== 'admin') return;
@@ -1253,6 +1358,7 @@ window.addEventListener('DOMContentLoaded', () => {
   populateFilterDropdowns();
   
   renderCharts();
+  loadDashboardSummary(); // Load enhanced dashboard summary
   setInterval(renderCharts, 30000);
   if (getUser().type === 'admin') loadActivity();
   

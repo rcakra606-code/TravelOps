@@ -470,6 +470,108 @@ const performanceUtils = {
 };
 
 /* =========================================================
+   DRILL-DOWN MODAL UTILITY
+   Shows underlying records when clicking on chart elements
+   ========================================================= */
+const drillDownUtils = {
+  /**
+   * Show a drill-down modal with data table
+   * @param {string} title - Modal title
+   * @param {Array} data - Array of records to display
+   * @param {Array} columns - Column definitions [{key, label, format?}]
+   */
+  showDrillDown(title, data, columns) {
+    if (!data || data.length === 0) {
+      window.toast?.info('No records found');
+      return;
+    }
+    
+    // Format cell value based on column definition
+    const formatValue = (value, format) => {
+      if (value === null || value === undefined) return '-';
+      if (format === 'currency') {
+        return 'Rp ' + Number(value).toLocaleString('id-ID');
+      }
+      if (format === 'date') {
+        return new Date(value).toLocaleDateString('id-ID');
+      }
+      if (format === 'percent') {
+        return Number(value).toFixed(1) + '%';
+      }
+      return value;
+    };
+    
+    // Generate table HTML
+    const tableHtml = `
+      <div style="max-height: 60vh; overflow-y: auto;">
+        <table class="table" style="width: 100%;">
+          <thead>
+            <tr>
+              ${columns.map(col => `<th style="position: sticky; top: 0; background: var(--bg-alt); z-index: 10;">${col.label}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${data.map(row => `
+              <tr>
+                ${columns.map(col => `<td>${formatValue(row[col.key], col.format)}</td>`).join('')}
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top: 16px; padding: 12px; background: var(--bg-alt); border-radius: 8px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-weight: 600;">Total: ${data.length} records</span>
+        <button type="button" class="btn" onclick="window.drillDownUtils.exportToCsv('${title}', window._drillDownData, ${JSON.stringify(columns).replace(/"/g, '&quot;')})">
+          💾 Export CSV
+        </button>
+      </div>
+    `;
+    
+    // Store data for export
+    window._drillDownData = data;
+    
+    // Show modal
+    window.openModal({
+      title: `📊 ${title}`,
+      size: 'large',
+      bodyHtml: tableHtml,
+      context: { entity: 'drilldown', action: 'view' }
+    });
+  },
+  
+  /**
+   * Export drill-down data to CSV
+   */
+  exportToCsv(title, data, columns) {
+    if (!data || data.length === 0) return;
+    
+    const headers = columns.map(col => col.label).join(',');
+    const rows = data.map(row => {
+      return columns.map(col => {
+        let val = row[col.key] || '';
+        val = String(val).replace(/"/g, '""');
+        if (val.includes(',') || val.includes('\n')) {
+          val = `"${val}"`;
+        }
+        return val;
+      }).join(',');
+    });
+    
+    const csv = headers + '\n' + rows.join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `${title.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().split('T')[0]}.csv`;
+    link.click();
+    
+    window.toast?.success('CSV exported successfully');
+  }
+};
+
+// Export utilities
+window.drillDownUtils = drillDownUtils;
+
+/* =========================================================
    LOCAL STORAGE UTILITIES
    ========================================================= */
 const storageUtils = {

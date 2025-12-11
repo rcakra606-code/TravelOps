@@ -352,6 +352,8 @@ function getUser() {
 }
 
 // Export functions globally
+window.api = api;
+window.getHeaders = getHeaders;
 window.fetchJson = fetchJson;
 window.formatCurrency = formatCurrency;
 window.formatNumberWithCommas = formatNumberWithCommas;
