@@ -19,9 +19,7 @@ let charts = {};
 /* === FILTER STATE === */
 let filterState = {
   staff: 'all',
-  period: 'all',
-  month: '',
-  year: ''
+  month: '' // YYYY-MM format
 };
 
 let regionsData = [];
@@ -30,39 +28,28 @@ let usersData = [];
 /* === FILTER MANAGEMENT === */
 function openSalesFilterModal() {
   const user = window.getUser();
-  const isBasicUser = user.type === 'basic';
+  const isAdmin = user.type === 'admin';
   
-  const staffDropdown = isBasicUser ? '' : `
+  // Only show staff filter for admin users
+  const staffDropdown = isAdmin ? `
     <div class="form-group">
       <label>Staff</label>
       <select name="staff">
-        <option value="all">Semua</option>
+        <option value="all">All Staff</option>
         ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
       </select>
     </div>
-  `;
+  ` : '';
   
   window.openModal({
-    title: 'Filter Sales Analytics',
+    title: 'Filter Sales Data',
     size: 'medium',
     bodyHtml: `
       <div class="form-grid">
         ${staffDropdown}
         <div class="form-group">
-          <label>Periode</label>
-          <select name="period" id="modalFilterPeriod">
-            <option value="all" ${filterState.period === 'all' ? 'selected' : ''}>Semua</option>
-            <option value="month" ${filterState.period === 'month' ? 'selected' : ''}>Bulan</option>
-            <option value="year" ${filterState.period === 'year' ? 'selected' : ''}>Tahun</option>
-          </select>
-        </div>
-        <div class="form-group" id="monthGroup" style="display:${filterState.period === 'month' ? 'block' : 'none'}">
-          <label>Pilih Bulan</label>
+          <label>Month</label>
           <input type="month" name="month" value="${filterState.month || ''}">
-        </div>
-        <div class="form-group" id="yearGroup" style="display:${filterState.period === 'year' ? 'block' : 'none'}">
-          <label>Pilih Tahun</label>
-          <input type="number" name="year" min="2020" max="2100" value="${filterState.year || ''}" placeholder="YYYY">
         </div>
       </div>
       <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
@@ -72,31 +59,12 @@ function openSalesFilterModal() {
     `,
     context: { entity: 'sales', action: 'filter' }
   });
-  
-  // Handle period change to show/hide month/year inputs
-  setTimeout(() => {
-    const periodSelect = document.getElementById('modalFilterPeriod');
-    const monthGroup = document.getElementById('monthGroup');
-    const yearGroup = document.getElementById('yearGroup');
-    
-    if (periodSelect) {
-      periodSelect.addEventListener('change', (e) => {
-        const val = e.target.value;
-        monthGroup.style.display = val === 'month' ? 'block' : 'none';
-        yearGroup.style.display = val === 'year' ? 'block' : 'none';
-        monthGroup.style.display = val === 'month' ? 'block' : 'none';
-        yearGroup.style.display = val === 'year' ? 'block' : 'none';
-      });
-    }
-  }, 100);
 }
 
 function resetSalesFilters() {
   filterState = {
     staff: 'all',
-    period: 'all',
-    month: '',
-    year: ''
+    month: ''
   };
   if (window.closeModal) window.closeModal();
   renderDashboard();
@@ -105,9 +73,7 @@ function resetSalesFilters() {
 function applySalesFilters(formData) {
   console.log('Applying filters with data:', formData);
   filterState.staff = formData.staff || 'all';
-  filterState.period = formData.period || 'all';
   filterState.month = formData.month || '';
-  filterState.year = formData.year || '';
   
   console.log('Updated filterState:', filterState);
   if (window.closeModal) window.closeModal();
@@ -145,45 +111,72 @@ async function renderDashboard() {
   try {
     const user = window.getUser();
     
+    // Default to current month
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
     let month = '';
     let year = '';
+    let staff = '';
     
-    if (filterState.period === 'month' && filterState.month) {
+    // Apply month filter if set, otherwise default to current month
+    if (filterState.month) {
       const [y, m] = filterState.month.split('-');
       month = m;
       year = y;
-    } else if (filterState.period === 'year' && filterState.year) {
-      year = filterState.year;
+    } else {
+      const [y, m] = currentMonth.split('-');
+      month = m;
+      year = y;
     }
     
-    let staff = filterState.staff !== 'all' ? filterState.staff : '';
-    
-    // For basic users, always filter to their own data
-    if (user.type === 'basic') {
+    // For admin, use filter; for staff/semi-admin, auto-filter to their own data
+    if (user.type === 'admin') {
+      staff = filterState.staff !== 'all' ? filterState.staff : '';
+    } else {
       staff = user.name || user.username;
     }
     
-    const params = {};
-    if (month) params.month = month;
-    if (year) params.year = year;
-    if (staff) params.staff = staff;
+    // Build parameters for current month data (achievement)
+    const currentParams = {
+      month: String(now.getMonth() + 1).padStart(2, '0'),
+      year: String(now.getFullYear())
+    };
+    if (staff) currentParams.staff = staff;
     
-    console.log('Rendering dashboard with params:', params);
-    const q = new URLSearchParams(params).toString();
-    console.log('Query string:', q);
+    // Build parameters for trend data (filtered month or all time)
+    const trendParams = {};
+    if (staff) trendParams.staff = staff;
+    // Don't add month/year to trend params to get all historical data
     
-    // Fetch sales data and metrics
-    const [salesData, metrics] = await Promise.all([
-      window.fetchJson('/api/sales' + (q ? '?' + q : '')),
-      window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
+    // Build parameters for top staff (filtered by month if set)
+    const topStaffParams = {};
+    if (filterState.month) {
+      const [y, m] = filterState.month.split('-');
+      topStaffParams.month = m;
+      topStaffParams.year = y;
+    }
+    
+    console.log('Current month params:', currentParams);
+    console.log('Trend params:', trendParams);
+    console.log('Top staff params:', topStaffParams);
+    
+    const currentQ = new URLSearchParams(currentParams).toString();
+    const trendQ = new URLSearchParams(trendParams).toString();
+    const topStaffQ = new URLSearchParams(topStaffParams).toString();
+    
+    // Fetch data
+    const [currentMetrics, trendData, topStaffData] = await Promise.all([
+      window.fetchJson('/api/metrics?' + currentQ),
+      window.fetchJson('/api/sales?' + trendQ),
+      window.fetchJson('/api/sales?' + topStaffQ)
     ]);
     
-    console.log('Received salesData count:', salesData?.length || 0);
-    console.log('Received metrics:', metrics);
+    console.log('Current metrics:', currentMetrics);
+    console.log('Trend data count:', trendData?.length || 0);
+    console.log('Top staff data count:', topStaffData?.length || 0);
     
-    if (!metrics) return;
-    
-    // Destroy existing charts properly and clear canvas references
+    // Destroy existing charts
     Object.keys(charts).forEach(key => {
       if (charts[key] && typeof charts[key].destroy === 'function') {
         try {
@@ -195,8 +188,8 @@ async function renderDashboard() {
       delete charts[key];
     });
     
-    // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesMonthly', 'chartTopStaff', 'chartMarginTrend'];
+    // Clear Chart.js instances
+    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesTrend', 'chartProfitTrend', 'chartTopStaff'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -207,19 +200,20 @@ async function renderDashboard() {
       }
     });
     
-    // Update metrics
-    const totalSales = metrics.sales?.total_sales || 0;
-    const totalProfit = metrics.sales?.total_profit || 0;
-    const targetSales = metrics.targets?.target_sales || 0;
-    const targetProfit = metrics.targets?.target_profit || 0;
+    // Calculate current month metrics
+    const totalSales = currentMetrics.sales?.total_sales || 0;
+    const totalProfit = currentMetrics.sales?.total_profit || 0;
+    const targetSales = currentMetrics.targets?.target_sales || 0;
+    const targetProfit = currentMetrics.targets?.target_profit || 0;
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
     
+    // Update metrics display
     el('totalSales').textContent = window.formatCurrency(totalSales);
     el('totalProfit').textContent = window.formatCurrency(totalProfit);
     el('profitMargin').textContent = profitMargin + '%';
-    el('totalTransactions').textContent = salesData?.length || 0;
-    el('salesAchievement').textContent = `Target: ${(totalSales / (targetSales || 1) * 100).toFixed(1)}%`;
-    el('profitAchievement').textContent = `Target: ${(totalProfit / (targetProfit || 1) * 100).toFixed(1)}%`;
+    el('totalTransactions').textContent = trendData?.length || 0;
+    el('salesAchievement').textContent = `Target: ${targetSales > 0 ? (totalSales / targetSales * 100).toFixed(1) : 0}%`;
+    el('profitAchievement').textContent = `Target: ${targetProfit > 0 ? (totalProfit / targetProfit * 100).toFixed(1) : 0}%`;
     
     // Chart options
     const commonOptions = {
@@ -229,81 +223,92 @@ async function renderDashboard() {
         legend: { position: 'top' },
         tooltip: {
           backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          padding: 12
+          padding: 12,
+          callbacks: {
+            label: function(context) {
+              let label = context.dataset.label || '';
+              if (label) {
+                label += ': ';
+              }
+              if (context.parsed.y !== null) {
+                label += new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(context.parsed.y);
+              }
+              return label;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            callback: value => 'Rp ' + value.toLocaleString('id-ID')
+          }
         }
       }
     };
     
-    // Sales vs Target Chart
+    // 1. Sales Achievement Chart (Current Month vs Target)
     const ctxSalesTarget = document.getElementById('chartSalesTarget')?.getContext('2d');
     if (ctxSalesTarget) {
       charts.salesTarget = new Chart(ctxSalesTarget, {
         type: 'bar',
         data: {
-          labels: ['Sales', 'Target'],
+          labels: ['Current Month', 'Target'],
           datasets: [{
-            label: 'Amount (Rp)',
+            label: 'Sales (Rp)',
             data: [totalSales, targetSales],
-            backgroundColor: ['#10b981', '#6b7280'],
+            backgroundColor: ['#10b981', '#d1d5db'],
             borderRadius: 8
           }]
         },
-        options: {
-          ...commonOptions,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+        options: commonOptions
       });
     }
     
-    // Profit vs Target Chart
+    // 2. Profit Achievement Chart (Current Month vs Target)
     const ctxProfitTarget = document.getElementById('chartProfitTarget')?.getContext('2d');
     if (ctxProfitTarget) {
       charts.profitTarget = new Chart(ctxProfitTarget, {
         type: 'bar',
         data: {
-          labels: ['Profit', 'Target'],
+          labels: ['Current Month', 'Target'],
           datasets: [{
-            label: 'Amount (Rp)',
+            label: 'Profit (Rp)',
             data: [totalProfit, targetProfit],
-            backgroundColor: ['#3b82f6', '#6b7280'],
+            backgroundColor: ['#3b82f6', '#d1d5db'],
             borderRadius: 8
           }]
         },
-        options: {
-          ...commonOptions,
-          scales: {
-            y: { beginAtZero: true }
-          }
-        }
+        options: commonOptions
       });
     }
     
-    // Sales per Month Chart
-    if (salesData && salesData.length > 0) {
-      const monthlyData = {};
-      salesData.forEach(sale => {
+    // 3. Sales Trend (Month to Month)
+    if (trendData && trendData.length > 0) {
+      const monthlySales = {};
+      trendData.forEach(sale => {
         if (sale.transaction_date) {
           const month = sale.transaction_date.substring(0, 7); // YYYY-MM
-          monthlyData[month] = (monthlyData[month] || 0) + (parseFloat(sale.sales_amount) || 0);
+          monthlySales[month] = (monthlySales[month] || 0) + (parseFloat(sale.sales_amount) || 0);
         }
       });
       
-      const sortedMonths = Object.keys(monthlyData).sort();
-      const ctxMonthly = document.getElementById('chartSalesMonthly')?.getContext('2d');
-      if (ctxMonthly) {
-        charts.monthly = new Chart(ctxMonthly, {
+      const sortedMonths = Object.keys(monthlySales).sort();
+      const ctxSalesTrend = document.getElementById('chartSalesTrend')?.getContext('2d');
+      if (ctxSalesTrend) {
+        charts.salesTrend = new Chart(ctxSalesTrend, {
           type: 'line',
           data: {
             labels: sortedMonths,
             datasets: [{
               label: 'Sales (Rp)',
-              data: sortedMonths.map(m => monthlyData[m]),
+              data: sortedMonths.map(m => monthlySales[m]),
               borderColor: '#10b981',
               backgroundColor: 'rgba(16, 185, 129, 0.1)',
               fill: true,
-              tension: 0.4
+              tension: 0.4,
+              borderWidth: 2
             }]
           },
           options: commonOptions
@@ -311,86 +316,75 @@ async function renderDashboard() {
       }
     }
     
-    // Top 5 Staff Chart
-    if (salesData) {
-      const staffData = {};
-      salesData.forEach(sale => {
-        if (sale.staff_name) {
-          staffData[sale.staff_name] = (staffData[sale.staff_name] || 0) + (parseFloat(sale.sales_amount) || 0);
+    // 4. Profit Trend (Month to Month)
+    if (trendData && trendData.length > 0) {
+      const monthlyProfit = {};
+      trendData.forEach(sale => {
+        if (sale.transaction_date) {
+          const month = sale.transaction_date.substring(0, 7);
+          monthlyProfit[month] = (monthlyProfit[month] || 0) + (parseFloat(sale.profit_amount) || 0);
         }
       });
       
-      const sortedStaff = Object.entries(staffData)
+      const sortedMonths = Object.keys(monthlyProfit).sort();
+      const ctxProfitTrend = document.getElementById('chartProfitTrend')?.getContext('2d');
+      if (ctxProfitTrend) {
+        charts.profitTrend = new Chart(ctxProfitTrend, {
+          type: 'line',
+          data: {
+            labels: sortedMonths,
+            datasets: [{
+              label: 'Profit (Rp)',
+              data: sortedMonths.map(m => monthlyProfit[m]),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2
+            }]
+          },
+          options: commonOptions
+        });
+      }
+    }
+    
+    // 5. Top 5 Staff by Sales (Filtered by Month if Set)
+    if (topStaffData && topStaffData.length > 0 && user.type === 'admin') {
+      const staffSales = {};
+      topStaffData.forEach(sale => {
+        if (sale.staff_name) {
+          staffSales[sale.staff_name] = (staffSales[sale.staff_name] || 0) + (parseFloat(sale.sales_amount) || 0);
+        }
+      });
+      
+      const sortedStaff = Object.entries(staffSales)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
       
-      const ctxStaff = document.getElementById('chartTopStaff')?.getContext('2d');
-      if (ctxStaff) {
-        charts.topStaff = new Chart(ctxStaff, {
+      const ctxTopStaff = document.getElementById('chartTopStaff')?.getContext('2d');
+      if (ctxTopStaff && sortedStaff.length > 0) {
+        charts.topStaff = new Chart(ctxTopStaff, {
           type: 'bar',
           data: {
             labels: sortedStaff.map(s => s[0]),
             datasets: [{
               label: 'Sales (Rp)',
               data: sortedStaff.map(s => s[1]),
-              backgroundColor: '#3b82f6',
+              backgroundColor: '#8b5cf6',
               borderRadius: 8
             }]
           },
           options: {
             ...commonOptions,
-            indexAxis: 'y',
-            scales: {
-              x: { beginAtZero: true }
-            }
+            indexAxis: 'y'
           }
-        });
-      }
-    }
-    
-    // Profit Margin Trend
-    if (salesData && salesData.length > 0) {
-      const monthlyMargin = {};
-      salesData.forEach(sale => {
-        if (sale.transaction_date) {
-          const month = sale.transaction_date.substring(0, 7);
-          if (!monthlyMargin[month]) {
-            monthlyMargin[month] = { sales: 0, profit: 0 };
-          }
-          monthlyMargin[month].sales += parseFloat(sale.sales_amount) || 0;
-          monthlyMargin[month].profit += parseFloat(sale.profit_amount) || 0;
-        }
-      });
-      
-      const sortedMonths = Object.keys(monthlyMargin).sort();
-      const margins = sortedMonths.map(m => {
-        const data = monthlyMargin[m];
-        return data.sales > 0 ? ((data.profit / data.sales) * 100).toFixed(1) : 0;
-      });
-      
-      const ctxMargin = document.getElementById('chartMarginTrend')?.getContext('2d');
-      if (ctxMargin) {
-        charts.margin = new Chart(ctxMargin, {
-          type: 'line',
-          data: {
-            labels: sortedMonths,
-            datasets: [{
-              label: 'Profit Margin (%)',
-              data: margins,
-              borderColor: '#8b5cf6',
-              backgroundColor: 'rgba(139, 92, 246, 0.1)',
-              fill: true,
-              tension: 0.4
-            }]
-          },
-          options: commonOptions
         });
       }
     }
     
   } catch (err) {
     console.error('Error rendering dashboard:', err);
-    toast.error('Error loading dashboard: ' + err.message);
+    window.toast?.error('Error loading dashboard: ' + err.message);
   }
 }
 
