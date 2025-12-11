@@ -5,21 +5,21 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Outstanding Dashboard - TravelOps</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/app-v2.css">
-  <link rel="stylesheet" href="/css/dashboard.css">
-  <link rel="stylesheet" href="/css/modal.css">
-  <link rel="stylesheet" href="/css/table-enhancements.css">
-  <link rel="stylesheet" href="/css/filter-enhancements.css">
-  <link rel="stylesheet" href="/css/status-badges.css">
-  <link rel="stylesheet" href="/css/animations.css">
-  <link rel="stylesheet" href="/css/mobile-responsive.css">
-  <link rel="stylesheet" href="/css/dashboard-customization.css">
-  <link rel="stylesheet" href="/css/empty-states.css">
-  <link rel="stylesheet" href="/css/filters.css">
-  <link rel="stylesheet" href="/css/form-enhancements.css">
-  <link rel="stylesheet" href="/css/crud-enhancements.css">
-  <link rel="stylesheet" href="/css/filter-modal.css">
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/app-v2.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/modal.css">
+<link rel="stylesheet" href="/css/table-enhancements.css">
+<link rel="stylesheet" href="/css/filter-enhancements.css">
+<link rel="stylesheet" href="/css/status-badges.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/mobile-responsive.css">
+<link rel="stylesheet" href="/css/dashboard-customization.css">
+<link rel="stylesheet" href="/css/empty-states.css">
+<link rel="stylesheet" href="/css/filters.css">
+<link rel="stylesheet" href="/css/form-enhancements.css">
+<link rel="stylesheet" href="/css/crud-enhancements.css">
+<link rel="stylesheet" href="/css/filter-modal.css">
 </head>
 <body>
 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
@@ -28,60 +28,56 @@
 <div class="app">
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
-    <nav class="nav-menu">
-      <a href="/single-dashboard.html" class="nav-item">📊 Dashboard</a>
-      <a href="/sales-dashboard.html" class="nav-item">💰 Sales</a>
-      <a href="/tours-dashboard.html" class="nav-item">🧳 Tours</a>
-      <a href="/documents-dashboard.html" class="nav-item">📄 Documents</a>
-      <a href="/targets-dashboard.html" class="nav-item">🎯 Targets</a>
-      <a href="/telecom-dashboard.html" class="nav-item">📱 Telecom</a>
-      <a href="/hotel-dashboard.html" class="nav-item">🏨 Hotel</a>
-      <a href="/overtime-dashboard.html" class="nav-item">⏰ Overtime</a>
-      <a href="/cruise-dashboard.html" class="nav-item">🚢 Cruise</a>
-      <a href="/outstanding-dashboard.html" class="nav-item active">📋 Outstanding</a>
-      <a href="/reports-dashboard.html" class="nav-item">📈 Reports</a>
-      <a href="/logout.html" class="nav-item logout">🚪 Logout</a>
-    </nav>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html" class="active">📋 Outstanding</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
   </aside>
-  
-  <main class="main-content">
-    <header class="header">
-      <h1 class="page-title">📋 Outstanding Records</h1>
-      <div class="user-info">
-        <span id="userName">Loading...</span>
-        <span id="userRole" class="badge badge-info">—</span>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>📋 Outstanding Records</h2>
+        <div class="small">Kelola data invoice outstanding</div>
       </div>
-    </header>
+    </div>
 
     <!-- Summary Cards -->
-    <div class="metrics-grid" style="margin-bottom: 24px;">
+    <div class="dashboard-metrics" style="margin-bottom: 24px;">
       <div class="metric-card">
-        <div class="metric-icon">📋</div>
-        <div class="metric-content">
-          <div class="metric-value" id="totalRecords">0</div>
-          <div class="metric-label">Total Records</div>
-        </div>
+        <div class="metric-title">📋 Total Records</div>
+        <div class="metric-value" id="totalRecords">0</div>
+        <div class="metric-subtitle">Jumlah invoice</div>
       </div>
       <div class="metric-card">
-        <div class="metric-icon">💰</div>
-        <div class="metric-content">
-          <div class="metric-value" id="totalInvoice">Rp 0</div>
-          <div class="metric-label">Total Invoice</div>
-        </div>
+        <div class="metric-title">💰 Total Invoice</div>
+        <div class="metric-value" id="totalInvoice">Rp 0</div>
+        <div class="metric-subtitle">Nilai invoice</div>
       </div>
       <div class="metric-card">
-        <div class="metric-icon">✅</div>
-        <div class="metric-content">
-          <div class="metric-value" id="totalFirstPayment">Rp 0</div>
-          <div class="metric-label">Total First Payment</div>
-        </div>
+        <div class="metric-title">✅ Total Paid</div>
+        <div class="metric-value" id="totalFirstPayment">Rp 0</div>
+        <div class="metric-subtitle">Pembayaran pertama</div>
       </div>
       <div class="metric-card">
-        <div class="metric-icon">🔖</div>
-        <div class="metric-content">
-          <div class="metric-value" id="totalDiscount">Rp 0</div>
-          <div class="metric-label">Total Discount</div>
-        </div>
+        <div class="metric-title">🔖 Total Discount</div>
+        <div class="metric-value" id="totalDiscount">Rp 0</div>
+        <div class="metric-subtitle">Potongan/discount</div>
       </div>
     </div>
 
@@ -90,11 +86,11 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
         <h3>📋 Outstanding Records</h3>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <input type="text" id="searchOutstanding" placeholder="🔍 Search records..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px; min-width: 200px;">
-          <button id="outstandingFilterBtn" class="btn btn-secondary">🔍 Filter</button>
-          <button id="downloadOutstandingTemplateBtn" class="btn btn-secondary" title="Download CSV Template">📥 Template</button>
-          <button id="importOutstandingBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
-          <button id="exportOutstandingBtn" class="btn btn-secondary" title="Export to CSV">💾 Export</button>
+          <input type="text" id="searchOutstanding" placeholder="🔍 Search records..." class="form-control" style="min-width: 200px;">
+          <button id="outstandingFilterBtn" class="btn">🔍 Filter</button>
+          <button id="downloadOutstandingTemplateBtn" class="btn" title="Download CSV Template">📥 Template</button>
+          <button id="importOutstandingBtn" class="btn" title="Import from CSV">📤 Import</button>
+          <button id="exportOutstandingBtn" class="btn" title="Export to CSV">💾 Export</button>
           <button id="addOutstandingBtn" class="btn btn-primary">+ Add Record</button>
           <input type="file" id="importOutstandingFileInput" accept=".csv" style="display:none;">
         </div>
