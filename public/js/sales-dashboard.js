@@ -156,7 +156,7 @@ async function renderDashboard() {
     const trendQ = new URLSearchParams(trendParams).toString();
     const topStaffQ = new URLSearchParams(topStaffParams).toString();
     
-    // Fetch data - also get targets for trend charts
+    // Fetch data - also get targets for trend charts (staff filter uses 'staff' param like sales)
     const [achievementMetrics, trendData, topStaffData, targetsData] = await Promise.all([
       window.fetchJson('/api/metrics?' + achievementQ),
       window.fetchJson('/api/sales?' + trendQ),
@@ -202,20 +202,20 @@ async function renderDashboard() {
       }
     });
     
-    // Calculate current month metrics
-    const totalSales = achievementMetrics.sales?.total_sales || 0;
-    const totalProfit = achievementMetrics.sales?.total_profit || 0;
-    const targetSales = achievementMetrics.targets?.target_sales || 0;
-    const targetProfit = achievementMetrics.targets?.target_profit || 0;
+    // Calculate current month metrics with proper null checks
+    const totalSales = achievementMetrics?.sales?.total_sales || 0;
+    const totalProfit = achievementMetrics?.sales?.total_profit || 0;
+    const targetSales = achievementMetrics?.targets?.target_sales || 0;
+    const targetProfit = achievementMetrics?.targets?.target_profit || 0;
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
     
     // Update metrics display
-    el('totalSales').textContent = window.formatCurrency(totalSales);
-    el('totalProfit').textContent = window.formatCurrency(totalProfit);
-    el('profitMargin').textContent = profitMargin + '%';
-    el('totalTransactions').textContent = trendData?.length || 0;
-    el('salesAchievement').textContent = `Target: ${targetSales > 0 ? (totalSales / targetSales * 100).toFixed(1) : 0}%`;
-    el('profitAchievement').textContent = `Target: ${targetProfit > 0 ? (totalProfit / targetProfit * 100).toFixed(1) : 0}%`;
+    if (el('totalSales')) el('totalSales').textContent = window.formatCurrency(totalSales);
+    if (el('totalProfit')) el('totalProfit').textContent = window.formatCurrency(totalProfit);
+    if (el('profitMargin')) el('profitMargin').textContent = profitMargin + '%';
+    if (el('totalTransactions')) el('totalTransactions').textContent = trendData?.length || 0;
+    if (el('salesAchievement')) el('salesAchievement').textContent = `Target: ${targetSales > 0 ? (totalSales / targetSales * 100).toFixed(1) : 0}%`;
+    if (el('profitAchievement')) el('profitAchievement').textContent = `Target: ${targetProfit > 0 ? (totalProfit / targetProfit * 100).toFixed(1) : 0}%`;
     
     // Chart options
     const commonOptions = {
@@ -305,21 +305,20 @@ async function renderDashboard() {
       
       const sortedMonths = Object.keys(monthlySales).sort();
       if (sortedMonths.length > 0) {
-        // Build monthly targets mapping
+        // Build monthly targets mapping from integer month/year fields
         const monthlyTargets = {};
-        if (targetsData && Array.isArray(targetsData)) {
+        if (targetsData && Array.isArray(targetsData) && targetsData.length > 0) {
+          console.log('Processing targets for sales chart:', targetsData.length, 'records');
           targetsData.forEach(target => {
-            let month = null;
-            if (target.month) {
-              // month is in YYYY-MM format
-              month = target.month;
-            } else if (target.target_month) {
-              month = target.target_month;
-            }
-            if (month) {
-              monthlyTargets[month] = (monthlyTargets[month] || 0) + (parseFloat(target.target_sales) || 0);
+            if (target.month && target.year) {
+              // Build YYYY-MM format from integer fields
+              const monthStr = `${target.year}-${String(target.month).padStart(2, '0')}`;
+              monthlyTargets[monthStr] = (monthlyTargets[monthStr] || 0) + (parseFloat(target.target_sales) || 0);
             }
           });
+          console.log('Built monthly targets:', monthlyTargets);
+        } else {
+          console.log('No targets data available for sales trend');
         }
         
         const ctxSalesTrend = document.getElementById('chartSalesTrend')?.getContext('2d');
@@ -382,21 +381,22 @@ async function renderDashboard() {
       
       const sortedMonths = Object.keys(monthlyProfit).sort();
       if (sortedMonths.length > 0) {
-        // Build monthly profit targets (13% of sales target)
+        // Build monthly profit targets from integer month/year fields
         const monthlyProfitTargets = {};
-        if (targetsData && Array.isArray(targetsData)) {
+        if (targetsData && Array.isArray(targetsData) && targetsData.length > 0) {
+          console.log('Processing targets for profit chart:', targetsData.length, 'records');
           targetsData.forEach(target => {
-            let month = null;
-            if (target.month) {
-              month = target.month;
-            } else if (target.target_month) {
-              month = target.target_month;
-            }
-            if (month) {
+            if (target.month && target.year) {
+              // Build YYYY-MM format from integer fields
+              const monthStr = `${target.year}-${String(target.month).padStart(2, '0')}`;
+              // Use target_profit if available, otherwise calculate 13% of target_sales
               const targetProfit = (parseFloat(target.target_profit) || (parseFloat(target.target_sales) || 0) * 0.13);
-              monthlyProfitTargets[month] = (monthlyProfitTargets[month] || 0) + targetProfit;
+              monthlyProfitTargets[monthStr] = (monthlyProfitTargets[monthStr] || 0) + targetProfit;
             }
           });
+          console.log('Built monthly profit targets:', monthlyProfitTargets);
+        } else {
+          console.log('No targets data available for profit trend');
         }
         
         const ctxProfitTrend = document.getElementById('chartProfitTrend')?.getContext('2d');
@@ -575,9 +575,9 @@ function renderSalesTable() {
   if (salesFilters.search) {
     const search = salesFilters.search.toLowerCase();
     filtered = filtered.filter(s => 
-      (s.invoice_no || '').toLowerCase().includes(search) ||
       (s.staff_name || '').toLowerCase().includes(search) ||
-      (s.notes || '').toLowerCase().includes(search)
+      (s.month || '').toLowerCase().includes(search) ||
+      (s.transaction_date || '').toLowerCase().includes(search)
     );
   }
   
