@@ -508,7 +508,45 @@ export async function createApp() {
         salesQuery.params
       );
       
-      const targets = await db.get('SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets');
+      // Filter targets by month/year and staff (targets don't have a date field, use month/year integers)
+      const targetsParams = [];
+      const targetsConditions = [];
+      
+      if (month) {
+        if (isPg) {
+          targetsConditions.push(`month=$${targetsParams.length+1}::INTEGER`);
+          targetsParams.push(parseInt(month));
+        } else {
+          targetsConditions.push(`month=?`);
+          targetsParams.push(parseInt(month));
+        }
+      }
+      
+      if (year) {
+        if (isPg) {
+          targetsConditions.push(`year=$${targetsParams.length+1}::INTEGER`);
+          targetsParams.push(parseInt(year));
+        } else {
+          targetsConditions.push(`year=?`);
+          targetsParams.push(parseInt(year));
+        }
+      }
+      
+      if (staff) {
+        if (isPg) {
+          targetsConditions.push(`staff_name=$${targetsParams.length+1}::TEXT`);
+          targetsParams.push(staff);
+        } else {
+          targetsConditions.push(`staff_name=?`);
+          targetsParams.push(staff);
+        }
+      }
+      
+      const targetsWhere = targetsConditions.length ? 'WHERE ' + targetsConditions.join(' AND ') : '';
+      const targets = await db.get(
+        `SELECT COALESCE(SUM(target_sales), 0) AS target_sales, COALESCE(SUM(target_profit), 0) AS target_profit FROM targets ${targetsWhere}`,
+        targetsParams
+      );
       
       const toursQuery = buildWhere('departure_date');
       const participants = await db.get(
