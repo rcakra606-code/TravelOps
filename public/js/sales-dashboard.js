@@ -30,10 +30,16 @@ function openSalesFilterModal() {
   const user = window.getUser();
   const isAdmin = user.type === 'admin';
   
+  // Generate month options for quick select
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+  
   // Only show staff filter for admin users
   const staffDropdown = isAdmin ? `
-    <div class="form-group">
-      <label>Staff</label>
+    <div class="filter-group">
+      <label><span class="icon">👤</span> Staff</label>
       <select name="staff">
         <option value="all">All Staff</option>
         ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
@@ -42,23 +48,66 @@ function openSalesFilterModal() {
   ` : '';
   
   window.openModal({
-    title: 'Filter Sales Data',
+    title: '🔍 Filter Sales Data',
     size: 'medium',
     bodyHtml: `
-      <div class="form-grid">
-        ${staffDropdown}
-        <div class="form-group">
-          <label>Month</label>
-          <input type="month" name="month" value="${filterState.month || ''}">
+      <div class="filter-modal-content">
+        <!-- Quick Filters -->
+        <div class="quick-filters">
+          <button type="button" class="quick-filter-chip ${filterState.month === currentMonth ? 'active' : ''}" data-quick-month="${currentMonth}">
+            📅 This Month
+          </button>
+          <button type="button" class="quick-filter-chip ${filterState.month === lastMonthStr ? 'active' : ''}" data-quick-month="${lastMonthStr}">
+            📆 Last Month
+          </button>
+          <button type="button" class="quick-filter-chip ${!filterState.month ? 'active' : ''}" data-quick-month="">
+            📊 All Time
+          </button>
         </div>
-      </div>
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button type="button" class="btn btn-secondary" data-reset-sales-filters>Reset Filters</button>
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
+        
+        <div class="filter-section">
+          <div class="filter-section-title">Filter Options</div>
+          <div class="filter-grid">
+            ${staffDropdown}
+            <div class="filter-group">
+              <label><span class="icon">📅</span> Select Month</label>
+              <input type="month" name="month" value="${filterState.month || ''}">
+            </div>
+          </div>
+        </div>
+        
+        <div class="filter-footer">
+          <div class="filter-footer-left">
+            <button type="button" class="btn-reset-filter" data-reset-sales-filters>
+              🔄 Reset Filters
+            </button>
+          </div>
+          <div class="filter-footer-right">
+            <button type="submit" class="btn-apply-filter">
+              ✓ Apply Filters
+            </button>
+          </div>
+        </div>
       </div>
     `,
     context: { entity: 'sales', action: 'filter' }
   });
+  
+  // Setup quick filter clicks
+  setTimeout(() => {
+    document.querySelectorAll('[data-quick-month]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const monthVal = btn.dataset.quickMonth;
+        const monthInput = document.querySelector('input[name="month"]');
+        if (monthInput) monthInput.value = monthVal;
+        
+        // Update active state
+        document.querySelectorAll('[data-quick-month]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  }, 100);
 }
 
 function resetSalesFilters() {

@@ -214,8 +214,17 @@ const modalBody = el('modalBody');
 const modalForm = el('modalForm');
 const modalClose = el('modalClose');
 
+// Store the current submit handler to remove it later
+let currentModalSubmitHandler = null;
+
 function openModal({ title, bodyHtml, context, size = 'medium' }) {
   console.log('🚪 openModal called - title:', title, '| context:', JSON.stringify(context));
+  
+  // Remove previous submit handler if exists
+  if (modalForm && currentModalSubmitHandler) {
+    modalForm.removeEventListener('submit', currentModalSubmitHandler);
+    currentModalSubmitHandler = null;
+  }
   
   // Reset form state
   if (modalForm) modalForm.reset();
@@ -250,8 +259,8 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
       el.addEventListener('change', markDirty, { once: false });
     });
     
-    // Setup form submit handler to dispatch modalSubmit event
-    modalForm.addEventListener('submit', (e) => {
+    // Create new submit handler
+    currentModalSubmitHandler = (e) => {
       e.preventDefault();
       e.stopPropagation();
       
@@ -273,7 +282,10 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
         console.log('⚠️ modalSubmit was not handled by any listener');
         closeModal(true);
       }
-    });
+    };
+    
+    // Attach the submit handler
+    modalForm.addEventListener('submit', currentModalSubmitHandler);
   }
 }
 
@@ -302,6 +314,12 @@ function closeModal(confirmed = false) {
 
 function performModalClose() {
   if (!modal) return;
+  
+  // Clean up submit handler
+  if (modalForm && currentModalSubmitHandler) {
+    modalForm.removeEventListener('submit', currentModalSubmitHandler);
+    currentModalSubmitHandler = null;
+  }
   
   // Immediately clean up form state for faster reopening
   if (modalForm) {

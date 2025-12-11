@@ -32,50 +32,96 @@ function openDocumentsFilterModal() {
   const user = window.getUser();
   const isBasicUser = user.type === 'basic';
   
+  // Generate month options for quick select
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+  
   const staffDropdown = isBasicUser ? '' : `
-    <div class="form-group">
-      <label>Staff</label>
+    <div class="filter-group">
+      <label><span class="icon">👤</span> Staff</label>
       <select name="staff">
-        <option value="all">Semua</option>
+        <option value="all">All Staff</option>
         ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
       </select>
     </div>
   `;
   
   window.openModal({
-    title: 'Filter Documents Analytics',
+    title: '🔍 Filter Documents Analytics',
     size: 'medium',
     bodyHtml: `
-      <div class="form-grid">
-        ${staffDropdown}
-        <div class="form-group">
-          <label>Tipe Proses</label>
-          <select name="processType">
-            <option value="all" ${filterState.processType === 'all' ? 'selected' : ''}>Semua</option>
-            <option value="normal" ${filterState.processType === 'normal' ? 'selected' : ''}>Normal</option>
-            <option value="kilat" ${filterState.processType === 'kilat' ? 'selected' : ''}>Kilat</option>
-          </select>
+      <div class="filter-modal-content">
+        <!-- Quick Period Filters -->
+        <div class="quick-filters">
+          <button type="button" class="quick-filter-chip ${filterState.period === 'all' ? 'active' : ''}" data-quick-period="all">
+            📊 All Time
+          </button>
+          <button type="button" class="quick-filter-chip ${filterState.month === currentMonth ? 'active' : ''}" data-quick-period="current">
+            📅 This Month
+          </button>
+          <button type="button" class="quick-filter-chip ${filterState.month === lastMonthStr ? 'active' : ''}" data-quick-period="last">
+            📆 Last Month
+          </button>
+          <button type="button" class="quick-filter-chip ${filterState.year === String(now.getFullYear()) ? 'active' : ''}" data-quick-period="year">
+            🗓️ This Year
+          </button>
         </div>
-        <div class="form-group">
-          <label>Periode</label>
-          <select name="period" id="modalFilterPeriod">
-            <option value="all" ${filterState.period === 'all' ? 'selected' : ''}>Semua</option>
-            <option value="month" ${filterState.period === 'month' ? 'selected' : ''}>Bulan</option>
-            <option value="year" ${filterState.period === 'year' ? 'selected' : ''}>Tahun</option>
-          </select>
+        
+        <div class="filter-section">
+          <div class="filter-section-title">Filter Options</div>
+          <div class="filter-grid">
+            ${staffDropdown}
+            <div class="filter-group">
+              <label><span class="icon">📄</span> Process Type</label>
+              <select name="processType">
+                <option value="all" ${filterState.processType === 'all' ? 'selected' : ''}>All Types</option>
+                <option value="normal" ${filterState.processType === 'normal' ? 'selected' : ''}>Normal</option>
+                <option value="kilat" ${filterState.processType === 'kilat' ? 'selected' : ''}>Kilat (Express)</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label><span class="icon">⏱️</span> Period</label>
+              <select name="period" id="modalFilterPeriod">
+                <option value="all" ${filterState.period === 'all' ? 'selected' : ''}>All Time</option>
+                <option value="month" ${filterState.period === 'month' ? 'selected' : ''}>Specific Month</option>
+                <option value="year" ${filterState.period === 'year' ? 'selected' : ''}>Specific Year</option>
+              </select>
+            </div>
+          </div>
+          
+          <!-- Conditional Month/Year Fields -->
+          <div class="filter-conditional ${filterState.period === 'month' ? 'visible' : ''}" id="monthGroup">
+            <div class="filter-grid filter-grid-single">
+              <div class="filter-group">
+                <label><span class="icon">📅</span> Select Month</label>
+                <input type="month" name="month" value="${filterState.month || ''}">
+              </div>
+            </div>
+          </div>
+          <div class="filter-conditional ${filterState.period === 'year' ? 'visible' : ''}" id="yearGroup">
+            <div class="filter-grid filter-grid-single">
+              <div class="filter-group">
+                <label><span class="icon">🗓️</span> Select Year</label>
+                <input type="number" name="year" min="2020" max="2100" value="${filterState.year || ''}" placeholder="Enter year (e.g., 2025)">
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="form-group" id="monthGroup" style="display:${filterState.period === 'month' ? 'block' : 'none'}">
-          <label>Pilih Bulan</label>
-          <input type="month" name="month" value="${filterState.month || ''}">
+        
+        <div class="filter-footer">
+          <div class="filter-footer-left">
+            <button type="button" class="btn-reset-filter" data-reset-documents-filters>
+              🔄 Reset Filters
+            </button>
+          </div>
+          <div class="filter-footer-right">
+            <button type="submit" class="btn-apply-filter">
+              ✓ Apply Filters
+            </button>
+          </div>
         </div>
-        <div class="form-group" id="yearGroup" style="display:${filterState.period === 'year' ? 'block' : 'none'}">
-          <label>Pilih Tahun</label>
-          <input type="number" name="year" min="2020" max="2100" value="${filterState.year || ''}" placeholder="YYYY">
-        </div>
-      </div>
-      <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button type="button" class="btn btn-secondary" data-reset-documents-filters>Reset Filters</button>
-        <button type="submit" class="btn btn-primary">Apply Filters</button>
       </div>
     `,
     context: { entity: 'documents', action: 'filter' }
@@ -85,14 +131,51 @@ function openDocumentsFilterModal() {
     const periodSelect = document.getElementById('modalFilterPeriod');
     const monthGroup = document.getElementById('monthGroup');
     const yearGroup = document.getElementById('yearGroup');
+    const monthInput = document.querySelector('input[name="month"]');
+    const yearInput = document.querySelector('input[name="year"]');
     
+    // Period change handler
     if (periodSelect) {
       periodSelect.addEventListener('change', (e) => {
         const val = e.target.value;
-        monthGroup.style.display = val === 'month' ? 'block' : 'none';
-        yearGroup.style.display = val === 'year' ? 'block' : 'none';
+        monthGroup.classList.toggle('visible', val === 'month');
+        yearGroup.classList.toggle('visible', val === 'year');
       });
     }
+    
+    // Quick filter handlers
+    document.querySelectorAll('[data-quick-period]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const action = btn.dataset.quickPeriod;
+        const now = new Date();
+        
+        document.querySelectorAll('[data-quick-period]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        
+        if (action === 'all') {
+          periodSelect.value = 'all';
+          monthGroup.classList.remove('visible');
+          yearGroup.classList.remove('visible');
+        } else if (action === 'current') {
+          periodSelect.value = 'month';
+          monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+          monthGroup.classList.add('visible');
+          yearGroup.classList.remove('visible');
+        } else if (action === 'last') {
+          periodSelect.value = 'month';
+          const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+          monthInput.value = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
+          monthGroup.classList.add('visible');
+          yearGroup.classList.remove('visible');
+        } else if (action === 'year') {
+          periodSelect.value = 'year';
+          yearInput.value = String(now.getFullYear());
+          yearGroup.classList.add('visible');
+          monthGroup.classList.remove('visible');
+        }
+      });
+    });
   }, 100);
 }
 
