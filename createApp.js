@@ -565,6 +565,8 @@ export async function createApp() {
     const { from, to, staff, region, groupBy } = req.query;
     const isPg = db.dialect === 'postgres';
 
+    logger.info({ reportType, from, to, staff, region, user: req.user.username }, 'Generating report');
+
     try {
       let reportData = {};
 
@@ -597,11 +599,12 @@ export async function createApp() {
           return res.status(400).json({ error: 'Invalid report type' });
       }
 
+      logger.info({ reportType, dataPoints: reportData.tableData?.length || 0 }, 'Report generated successfully');
       await logActivity(req.user.username, 'GENERATE_REPORT', 'reports', null, `Generated ${reportType} from ${from} to ${to}`);
       res.json(reportData);
     } catch (err) {
-      logger.error({ err, reportType }, 'Report generation failed');
-      res.status(500).json({ error: 'Failed to generate report', details: err.message });
+      logger.error({ err, reportType, stack: err.stack }, 'Report generation failed');
+      res.status(500).json({ error: 'Failed to generate report', details: err.message, stack: process.env.NODE_ENV === 'development' ? err.stack : undefined });
     }
   });
 
@@ -732,8 +735,11 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
     params
   );
   
+  // Ensure summary exists with default values
+  const safeSummary = summary || { salesCount: 0, totalSales: 0, totalProfit: 0, averageSale: 0 };
+  
   // Calculate profit margin
-  summary.profitMargin = summary.totalSales > 0 ? (summary.totalProfit / summary.totalSales) * 100 : 0;
+  safeSummary.profitMargin = safeSummary.totalSales > 0 ? (safeSummary.totalProfit / safeSummary.totalSales) * 100 : 0;
   
   // Chart data - sales & profit by month (extract month from transaction_date)
   const monthGrouping = isPg 
@@ -776,22 +782,22 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   );
   
   return {
-    summary,
+    summary: safeSummary,
     chartData: {
       trend: {
-        labels: trendData.map(d => d.month),
-        sales: trendData.map(d => d.totalSales),
-        profit: trendData.map(d => d.totalProfit)
+        labels: (trendData || []).map(d => d.month),
+        sales: (trendData || []).map(d => d.totalSales),
+        profit: (trendData || []).map(d => d.totalProfit)
       },
       byStaff: {
-        labels: staffData.map(d => d.staff_name),
-        sales: staffData.map(d => d.totalSales),
-        profit: staffData.map(d => d.totalProfit),
-        transactions: staffData.map(d => d.transactionCount)
+        labels: (staffData || []).map(d => d.staff_name),
+        sales: (staffData || []).map(d => d.totalSales),
+        profit: (staffData || []).map(d => d.totalProfit),
+        transactions: (staffData || []).map(d => d.transactionCount)
       }
     },
-    tableData,
-    staffData
+    tableData: tableData || [],
+    staffData: staffData || []
   };
 }
 

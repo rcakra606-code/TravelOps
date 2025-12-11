@@ -115,10 +115,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function initializePage() {
-  // Load filter dropdowns
-  await loadStaffList();
-  await loadRegionList();
-  
   // Set report generation date
   document.getElementById('reportDate').textContent = new Date().toLocaleString();
   
@@ -264,46 +260,7 @@ function setQuickPeriod(period) {
   }
 }
 
-// ============================================
-// DATA LOADING
-// ============================================
-async function loadStaffList() {
-  try {
-    const response = await fetchWithAuth('/api/users');
-    if (!response.ok) return;
-    const users = await response.json();
-    
-    const select = document.getElementById('filterStaff');
-    select.innerHTML = '<option value="">All Staff</option>';
-    users.forEach(user => {
-      const option = document.createElement('option');
-      option.value = user.name;
-      option.textContent = user.name;
-      select.appendChild(option);
-    });
-  } catch (error) {
-    console.error('Failed to load staff:', error);
-  }
-}
 
-async function loadRegionList() {
-  try {
-    const response = await fetchWithAuth('/api/regions');
-    if (!response.ok) return;
-    const regions = await response.json();
-    
-    const select = document.getElementById('filterRegion');
-    select.innerHTML = '<option value="">All Regions</option>';
-    regions.forEach(region => {
-      const option = document.createElement('option');
-      option.value = region.id;
-      option.textContent = region.region_name;
-      select.appendChild(option);
-    });
-  } catch (error) {
-    console.error('Failed to load regions:', error);
-  }
-}
 
 // ============================================
 // REPORT GENERATION
@@ -312,9 +269,6 @@ async function generateReport() {
   const reportType = document.getElementById('reportType').value;
   const dateFrom = document.getElementById('dateFrom').value;
   const dateTo = document.getElementById('dateTo').value;
-  const staff = document.getElementById('filterStaff').value;
-  const region = document.getElementById('filterRegion').value;
-  const groupBy = document.getElementById('groupBy').value;
   
   if (!dateFrom || !dateTo) {
     showNotification('Please select date range', 'error');
@@ -330,10 +284,7 @@ async function generateReport() {
     // Fetch report data based on type
     const params = new URLSearchParams({
       from: dateFrom,
-      to: dateTo,
-      ...(staff && { staff }),
-      ...(region && { region }),
-      ...(groupBy !== 'none' && { groupBy })
+      to: dateTo
     });
     
     const endpoint = `/api/reports/${reportType}?${params}`;
