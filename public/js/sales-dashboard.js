@@ -115,20 +115,7 @@ async function renderDashboard() {
     const now = new Date();
     const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     
-    let month = '';
-    let year = '';
     let staff = '';
-    
-    // Apply month filter if set, otherwise default to current month
-    if (filterState.month) {
-      const [y, m] = filterState.month.split('-');
-      month = m;
-      year = y;
-    } else {
-      const [y, m] = currentMonth.split('-');
-      month = m;
-      year = y;
-    }
     
     // For admin, use filter; for staff/semi-admin, auto-filter to their own data
     if (user.type === 'admin') {
@@ -137,45 +124,54 @@ async function renderDashboard() {
       staff = user.name || user.username;
     }
     
-    // Build parameters for current month data (achievement)
-    const currentParams = {
+    // Build parameters for current month achievement (always current month)
+    const achievementParams = {
       month: String(now.getMonth() + 1).padStart(2, '0'),
       year: String(now.getFullYear())
     };
-    if (staff) currentParams.staff = staff;
+    if (staff) achievementParams.staff = staff;
     
-    // Build parameters for trend data (filtered month or all time)
+    // Build parameters for trend data (all historical data for the user/staff)
     const trendParams = {};
     if (staff) trendParams.staff = staff;
-    // Don't add month/year to trend params to get all historical data
+    // Don't filter by month/year for trends - show all history
     
-    // Build parameters for top staff (filtered by month if set)
+    // Build parameters for top staff (current month or filtered month)
     const topStaffParams = {};
     if (filterState.month) {
       const [y, m] = filterState.month.split('-');
       topStaffParams.month = m;
       topStaffParams.year = y;
+    } else {
+      // Default to current month
+      topStaffParams.month = String(now.getMonth() + 1).padStart(2, '0');
+      topStaffParams.year = String(now.getFullYear());
     }
     
-    console.log('Current month params:', currentParams);
-    console.log('Trend params:', trendParams);
+    console.log('Achievement params (current month):', achievementParams);
+    console.log('Trend params (all history):', trendParams);
     console.log('Top staff params:', topStaffParams);
     
-    const currentQ = new URLSearchParams(currentParams).toString();
+    const achievementQ = new URLSearchParams(achievementParams).toString();
     const trendQ = new URLSearchParams(trendParams).toString();
     const topStaffQ = new URLSearchParams(topStaffParams).toString();
     
-    // Fetch data
-    const [currentMetrics, trendData, topStaffData] = await Promise.all([
-      window.fetchJson('/api/metrics?' + currentQ),
+    // Fetch data - also get targets for trend charts
+    const [achievementMetrics, trendData, topStaffData, targetsData] = await Promise.all([
+      window.fetchJson('/api/metrics?' + achievementQ),
       window.fetchJson('/api/sales?' + trendQ),
-      window.fetchJson('/api/sales?' + topStaffQ)
+      window.fetchJson('/api/sales?' + topStaffQ),
+      window.fetchJson('/api/targets' + (staff ? '?' + new URLSearchParams({ staff }).toString() : '')).catch(err => {
+        console.warn('Failed to fetch targets:', err);
+        return [];
+      })
     ]);
     
-    console.log('Current metrics:', currentMetrics);
+    console.log('Achievement metrics:', achievementMetrics);
     console.log('Trend data count:', trendData?.length || 0);
     console.log('Trend data sample:', trendData?.slice(0, 2));
     console.log('Top staff data count:', topStaffData?.length || 0);
+    console.log('Targets data:', targetsData);
     
     if (!trendData || trendData.length === 0) {
       console.warn('⚠️ No sales data found! The database might be empty.');
@@ -207,10 +203,10 @@ async function renderDashboard() {
     });
     
     // Calculate current month metrics
-    const totalSales = currentMetrics.sales?.total_sales || 0;
-    const totalProfit = currentMetrics.sales?.total_profit || 0;
-    const targetSales = currentMetrics.targets?.target_sales || 0;
-    const targetProfit = currentMetrics.targets?.target_profit || 0;
+    const totalSales = achievementMetrics.sales?.total_sales || 0;
+    const totalProfit = achievementMetrics.sales?.total_profit || 0;
+    const targetSales = achievementMetrics.targets?.target_sales || 0;
+    const targetProfit = achievementMetrics.targets?.target_profit || 0;
     const profitMargin = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : 0;
     
     // Update metrics display
@@ -290,7 +286,7 @@ async function renderDashboard() {
       });
     }
     
-    // 3. Sales Trend (Month to Month)
+    // 3. Sales Trend (Month to Month) with Target Line
     if (trendData && trendData.length > 0) {
       const monthlySales = {};
       trendData.forEach(sale => {
@@ -309,21 +305,57 @@ async function renderDashboard() {
       
       const sortedMonths = Object.keys(monthlySales).sort();
       if (sortedMonths.length > 0) {
+        // Build monthly targets mapping
+        const monthlyTargets = {};
+        if (targetsData && Array.isArray(targetsData)) {
+          targetsData.forEach(target => {
+            let month = null;
+            if (target.month) {
+              // month is in YYYY-MM format
+              month = target.month;
+            } else if (target.target_month) {
+              month = target.target_month;
+            }
+            if (month) {
+              monthlyTargets[month] = (monthlyTargets[month] || 0) + (parseFloat(target.target_sales) || 0);
+            }
+          });
+        }
+        
         const ctxSalesTrend = document.getElementById('chartSalesTrend')?.getContext('2d');
         if (ctxSalesTrend) {
+          const datasets = [
+            {
+              label: 'Sales (Rp)',
+              data: sortedMonths.map(m => monthlySales[m]),
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2
+            }
+          ];
+          
+          // Add target line if we have target data
+          if (Object.keys(monthlyTargets).length > 0) {
+            datasets.push({
+              label: 'Target (Rp)',
+              data: sortedMonths.map(m => monthlyTargets[m] || null),
+              borderColor: '#f59e0b',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 4
+            });
+          }
+          
           charts.salesTrend = new Chart(ctxSalesTrend, {
             type: 'line',
             data: {
               labels: sortedMonths,
-              datasets: [{
-                label: 'Sales (Rp)',
-                data: sortedMonths.map(m => monthlySales[m]),
-                borderColor: '#10b981',
-                backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                fill: true,
-                tension: 0.4,
-                borderWidth: 2
-              }]
+              datasets: datasets
             },
             options: commonOptions
           });
@@ -331,7 +363,7 @@ async function renderDashboard() {
       }
     }
     
-    // 4. Profit Trend (Month to Month)
+    // 4. Profit Trend (Month to Month) with Target Line
     if (trendData && trendData.length > 0) {
       const monthlyProfit = {};
       trendData.forEach(sale => {
@@ -350,21 +382,57 @@ async function renderDashboard() {
       
       const sortedMonths = Object.keys(monthlyProfit).sort();
       if (sortedMonths.length > 0) {
+        // Build monthly profit targets (13% of sales target)
+        const monthlyProfitTargets = {};
+        if (targetsData && Array.isArray(targetsData)) {
+          targetsData.forEach(target => {
+            let month = null;
+            if (target.month) {
+              month = target.month;
+            } else if (target.target_month) {
+              month = target.target_month;
+            }
+            if (month) {
+              const targetProfit = (parseFloat(target.target_profit) || (parseFloat(target.target_sales) || 0) * 0.13);
+              monthlyProfitTargets[month] = (monthlyProfitTargets[month] || 0) + targetProfit;
+            }
+          });
+        }
+        
         const ctxProfitTrend = document.getElementById('chartProfitTrend')?.getContext('2d');
         if (ctxProfitTrend) {
+          const datasets = [
+            {
+              label: 'Profit (Rp)',
+              data: sortedMonths.map(m => monthlyProfit[m]),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              fill: true,
+              tension: 0.4,
+              borderWidth: 2
+            }
+          ];
+          
+          // Add target line if we have target data
+          if (Object.keys(monthlyProfitTargets).length > 0) {
+            datasets.push({
+              label: 'Target (Rp)',
+              data: sortedMonths.map(m => monthlyProfitTargets[m] || null),
+              borderColor: '#f59e0b',
+              backgroundColor: 'transparent',
+              borderDash: [5, 5],
+              fill: false,
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 4
+            });
+          }
+          
           charts.profitTrend = new Chart(ctxProfitTrend, {
             type: 'line',
             data: {
               labels: sortedMonths,
-              datasets: [{
-                label: 'Profit (Rp)',
-                data: sortedMonths.map(m => monthlyProfit[m]),
-                borderColor: '#3b82f6',
-                backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                fill: true,
-                tension: 0.4,
-                borderWidth: 2
-              }]
+              datasets: datasets
             },
             options: commonOptions
           });
@@ -514,16 +582,14 @@ function renderSalesTable() {
   }
   
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No sales found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center">No sales found</td></tr>';
     return;
   }
   
   tbody.innerHTML = filtered.map(item => `
     <tr class="table-row">
-      <td>${item.transaction_date || '—'}</td>
-      <td><strong>${item.invoice_no || '—'}</strong></td>
+      <td>${item.month || item.transaction_date || '—'}</td>
       <td>${item.staff_name || '—'}</td>
-      <td><span class="badge badge-${item.status === 'Paid' ? 'success' : item.status === 'Cancelled' ? 'danger' : 'warning'}">${item.status || 'Pending'}</span></td>
       <td class="text-right"><strong>Rp ${(item.sales_amount || 0).toLocaleString('id-ID')}</strong></td>
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
