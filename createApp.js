@@ -212,8 +212,8 @@ export async function createApp() {
     }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise'];
-  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise']);
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding'];
+  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding']);
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{

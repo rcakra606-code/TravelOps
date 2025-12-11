@@ -245,6 +245,18 @@ async function createSchema(db) {
     created_at ${ts} ${createdDefault}
   )`);
 
+  // Outstanding Records
+  await db.run(`CREATE TABLE IF NOT EXISTS outstanding (
+    id ${idCol},
+    nomor_invoice TEXT,
+    nominal_invoice ${num()} DEFAULT 0,
+    pembayaran_pertama ${num()} DEFAULT 0,
+    pembayaran_kedua ${num()} DEFAULT 0,
+    unique_code TEXT,
+    staff_name TEXT,
+    created_at ${ts} ${createdDefault}
+  )`);
+
   // Activity logs
   await db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
     id ${idCol},

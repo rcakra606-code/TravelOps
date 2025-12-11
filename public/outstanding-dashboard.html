@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Outstanding Dashboard - TravelOps</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/dashboard-customization.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/filters.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-modal.css">
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <nav class="nav-menu">
+      <a href="/single-dashboard.html" class="nav-item">📊 Dashboard</a>
+      <a href="/sales-dashboard.html" class="nav-item">💰 Sales</a>
+      <a href="/tours-dashboard.html" class="nav-item">🧳 Tours</a>
+      <a href="/documents-dashboard.html" class="nav-item">📄 Documents</a>
+      <a href="/targets-dashboard.html" class="nav-item">🎯 Targets</a>
+      <a href="/telecom-dashboard.html" class="nav-item">📱 Telecom</a>
+      <a href="/hotel-dashboard.html" class="nav-item">🏨 Hotel</a>
+      <a href="/overtime-dashboard.html" class="nav-item">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html" class="nav-item">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html" class="nav-item active">📋 Outstanding</a>
+      <a href="/reports-dashboard.html" class="nav-item">📈 Reports</a>
+      <a href="/logout.html" class="nav-item logout">🚪 Logout</a>
+    </nav>
+  </aside>
+  
+  <main class="main-content">
+    <header class="header">
+      <h1 class="page-title">📋 Outstanding Records</h1>
+      <div class="user-info">
+        <span id="userName">Loading...</span>
+        <span id="userRole" class="badge badge-info">—</span>
+      </div>
+    </header>
+
+    <!-- Summary Cards -->
+    <div class="metrics-grid" style="margin-bottom: 24px;">
+      <div class="metric-card">
+        <div class="metric-icon">📋</div>
+        <div class="metric-content">
+          <div class="metric-value" id="totalRecords">0</div>
+          <div class="metric-label">Total Records</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">💰</div>
+        <div class="metric-content">
+          <div class="metric-value" id="totalInvoice">Rp 0</div>
+          <div class="metric-label">Total Invoice</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">✅</div>
+        <div class="metric-content">
+          <div class="metric-value" id="totalFirstPayment">Rp 0</div>
+          <div class="metric-label">Total First Payment</div>
+        </div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-icon">🔖</div>
+        <div class="metric-content">
+          <div class="metric-value" id="totalDiscount">Rp 0</div>
+          <div class="metric-label">Total Discount</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Outstanding Records Table with CRUD -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
+        <h3>📋 Outstanding Records</h3>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="searchOutstanding" placeholder="🔍 Search records..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px; min-width: 200px;">
+          <button id="outstandingFilterBtn" class="btn btn-secondary">🔍 Filter</button>
+          <button id="downloadOutstandingTemplateBtn" class="btn btn-secondary" title="Download CSV Template">📥 Template</button>
+          <button id="importOutstandingBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
+          <button id="exportOutstandingBtn" class="btn btn-secondary" title="Export to CSV">💾 Export</button>
+          <button id="addOutstandingBtn" class="btn btn-primary">+ Add Record</button>
+          <input type="file" id="importOutstandingFileInput" accept=".csv" style="display:none;">
+        </div>
+      </div>
+      
+      <div style="overflow-x: auto;">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Invoice No</th>
+              <th>Invoice Amount</th>
+              <th>First Payment</th>
+              <th>Discount</th>
+              <th>Unique Code</th>
+              <th>Outstanding</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="outstandingTableBody">
+            <tr><td colspan="7" class="text-center">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div id="modal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title"></div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/table-enhancer.js"></script>
+<script src="/js/filter-manager.js"></script>
+<script src="/js/quick-view.js"></script>
+<script src="/js/auth-common.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/form-builder.js"></script>
+<script src="/js/form-validator.js"></script>
+<script src="/js/crud-modal.js"></script>
+<script src="/js/outstanding-dashboard.js"></script>
+</body>
+</html>
