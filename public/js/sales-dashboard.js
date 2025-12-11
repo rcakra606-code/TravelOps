@@ -174,7 +174,13 @@ async function renderDashboard() {
     
     console.log('Current metrics:', currentMetrics);
     console.log('Trend data count:', trendData?.length || 0);
+    console.log('Trend data sample:', trendData?.slice(0, 2));
     console.log('Top staff data count:', topStaffData?.length || 0);
+    
+    if (!trendData || trendData.length === 0) {
+      console.warn('⚠️ No sales data found! The database might be empty.');
+      window.toast?.warning('No sales data found. Please add sales records first.');
+    }
     
     // Destroy existing charts
     Object.keys(charts).forEach(key => {
@@ -288,31 +294,40 @@ async function renderDashboard() {
     if (trendData && trendData.length > 0) {
       const monthlySales = {};
       trendData.forEach(sale => {
+        // Use month field if transaction_date is not available
+        let month = null;
         if (sale.transaction_date) {
-          const month = sale.transaction_date.substring(0, 7); // YYYY-MM
+          month = sale.transaction_date.substring(0, 7); // YYYY-MM
+        } else if (sale.month) {
+          month = sale.month; // Already in YYYY-MM format
+        }
+        
+        if (month) {
           monthlySales[month] = (monthlySales[month] || 0) + (parseFloat(sale.sales_amount) || 0);
         }
       });
       
       const sortedMonths = Object.keys(monthlySales).sort();
-      const ctxSalesTrend = document.getElementById('chartSalesTrend')?.getContext('2d');
-      if (ctxSalesTrend) {
-        charts.salesTrend = new Chart(ctxSalesTrend, {
-          type: 'line',
-          data: {
-            labels: sortedMonths,
-            datasets: [{
-              label: 'Sales (Rp)',
-              data: sortedMonths.map(m => monthlySales[m]),
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2
-            }]
-          },
-          options: commonOptions
-        });
+      if (sortedMonths.length > 0) {
+        const ctxSalesTrend = document.getElementById('chartSalesTrend')?.getContext('2d');
+        if (ctxSalesTrend) {
+          charts.salesTrend = new Chart(ctxSalesTrend, {
+            type: 'line',
+            data: {
+              labels: sortedMonths,
+              datasets: [{
+                label: 'Sales (Rp)',
+                data: sortedMonths.map(m => monthlySales[m]),
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2
+              }]
+            },
+            options: commonOptions
+          });
+        }
       }
     }
     
@@ -320,31 +335,40 @@ async function renderDashboard() {
     if (trendData && trendData.length > 0) {
       const monthlyProfit = {};
       trendData.forEach(sale => {
+        // Use month field if transaction_date is not available
+        let month = null;
         if (sale.transaction_date) {
-          const month = sale.transaction_date.substring(0, 7);
+          month = sale.transaction_date.substring(0, 7);
+        } else if (sale.month) {
+          month = sale.month;
+        }
+        
+        if (month) {
           monthlyProfit[month] = (monthlyProfit[month] || 0) + (parseFloat(sale.profit_amount) || 0);
         }
       });
       
       const sortedMonths = Object.keys(monthlyProfit).sort();
-      const ctxProfitTrend = document.getElementById('chartProfitTrend')?.getContext('2d');
-      if (ctxProfitTrend) {
-        charts.profitTrend = new Chart(ctxProfitTrend, {
-          type: 'line',
-          data: {
-            labels: sortedMonths,
-            datasets: [{
-              label: 'Profit (Rp)',
-              data: sortedMonths.map(m => monthlyProfit[m]),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              fill: true,
-              tension: 0.4,
-              borderWidth: 2
-            }]
-          },
-          options: commonOptions
-        });
+      if (sortedMonths.length > 0) {
+        const ctxProfitTrend = document.getElementById('chartProfitTrend')?.getContext('2d');
+        if (ctxProfitTrend) {
+          charts.profitTrend = new Chart(ctxProfitTrend, {
+            type: 'line',
+            data: {
+              labels: sortedMonths,
+              datasets: [{
+                label: 'Profit (Rp)',
+                data: sortedMonths.map(m => monthlyProfit[m]),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4,
+                borderWidth: 2
+              }]
+            },
+            options: commonOptions
+          });
+        }
       }
     }
     
