@@ -11,8 +11,8 @@ const isReportsPage = window.location.pathname.includes('reports-dashboard');
 
 /* === GLOBAL HELPERS (local to this module) === */
 const el = id => document.getElementById(id);
-const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
 // Use globals from auth-common.js
+const getUser = window.getUser;
 const api = window.api;
 const getHeaders = window.getHeaders;
 
