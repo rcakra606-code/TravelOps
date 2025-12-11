@@ -281,7 +281,7 @@ async function renderDashboard() {
     }
     
     // Sales per Month Chart
-    if (salesData) {
+    if (salesData && salesData.length > 0) {
       const monthlyData = {};
       salesData.forEach(sale => {
         if (sale.transaction_date) {
@@ -349,7 +349,7 @@ async function renderDashboard() {
     }
     
     // Profit Margin Trend
-    if (salesData) {
+    if (salesData && salesData.length > 0) {
       const monthlyMargin = {};
       salesData.forEach(sale => {
         if (sale.transaction_date) {

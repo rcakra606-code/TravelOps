@@ -681,9 +681,18 @@ async function renderCharts() {
     const staff = filterStaff !== 'all' ? filterStaff : '';
     const region = filterRegion !== 'all' ? filterRegion : '';
     
+    // Default to current month if no filters
+    let currentMonth = month;
+    let currentYear = year;
+    if (!month && !year && !staff && !region) {
+      const now = new Date();
+      currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+      currentYear = String(now.getFullYear());
+    }
+    
     const params = {};
-    if (month) params.month = month;
-    if (year) params.year = year;
+    if (currentMonth) params.month = currentMonth;
+    if (currentYear) params.year = currentYear;
     if (staff) params.staff = staff;
     if (region) params.region = region;
     
@@ -716,7 +725,7 @@ async function renderCharts() {
     });
     
     // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartSalesTarget', 'chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartSalesMonthly', 'chartTargetAchievement'];
+    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesMonthly', 'chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartTargetAchievement'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -903,6 +912,51 @@ async function renderCharts() {
         }
       }
     });
+
+    // Monthly Sales Trend Chart
+    // Fetch sales data for trend chart
+    const salesResponse = await fetchJson('/api/sales' + (q ? '?' + q : ''));
+    if (salesResponse && salesResponse.length > 0) {
+      const monthlyData = {};
+      salesResponse.forEach(sale => {
+        if (sale.transaction_date) {
+          const month = sale.transaction_date.substring(0, 7); // YYYY-MM
+          monthlyData[month] = (monthlyData[month] || 0) + (parseFloat(sale.sales_amount) || 0);
+        }
+      });
+      
+      const sortedMonths = Object.keys(monthlyData).sort();
+      charts.salesMonthly = safeCreateChart('chartSalesMonthly', {
+        type: 'line',
+        data: {
+          labels: sortedMonths,
+          datasets: [{
+            label: 'Sales (Rp)',
+            data: sortedMonths.map(m => monthlyData[m]),
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderWidth: 2
+          }]
+        },
+        options: {
+          ...commonOptions,
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: {
+                borderDash: [2, 4],
+                color: 'rgba(0, 0, 0, 0.06)'
+              },
+              ticks: {
+                callback: value => 'Rp ' + value.toLocaleString('id-ID')
+              }
+            }
+          }
+        }
+      });
+    }
 
   } catch (err) {
     console.error('renderCharts error', err);

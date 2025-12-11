@@ -448,7 +448,15 @@ export async function createApp() {
 
   app.get('/api/metrics', authMiddleware(), async (req,res)=>{
     try {
-      const { month, year, staff, region } = req.query; 
+      let { month, year, staff, region } = req.query;
+      
+      // Default to current month if no filters provided
+      if (!month && !year && !staff && !region) {
+        const now = new Date();
+        month = String(now.getMonth() + 1).padStart(2, '0');
+        year = String(now.getFullYear());
+      }
+      
       const isPg = db.dialect === 'postgres';
       
       // Helper to build WHERE clause with fresh params each time
