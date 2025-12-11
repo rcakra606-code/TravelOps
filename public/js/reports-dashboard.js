@@ -629,7 +629,7 @@ function renderToursProfitability(data) {
     <div class="chart-container" style="border-radius: 16px; overflow: hidden; grid-column: 1 / -1;">
       <div style="padding: 20px 24px; background: var(--bg-alt); border-bottom: 2px solid var(--border-light); display: flex; align-items: center; gap: 12px;">
         <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #3b82f6, #2563eb); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px;">🗺️</div>
-        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Tours by Destination</h3>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 600; color: var(--text-primary);">Top 10 Tours by Tour Code</h3>
       </div>
       <div style="padding: 24px;">
         <canvas id="destinationChart"></canvas>
@@ -644,7 +644,7 @@ function renderToursProfitability(data) {
   renderDataTable(data.tableData || [], [
     { key: 'tour_code', label: 'Tour Code' },
     { key: 'booking_code', label: 'Booking Code' },
-    { key: 'destination', label: 'Destination' },
+    { key: 'lead_passenger', label: 'Lead Passenger' },
     { key: 'departure_date', label: 'Departure', format: 'date' },
     { key: 'jumlah_peserta', label: 'Participants' },
     { key: 'staff_name', label: 'Staff' },

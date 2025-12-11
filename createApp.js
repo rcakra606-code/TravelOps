@@ -894,13 +894,13 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
     params
   );
   
-  // Group tours by destination for chart
-  const destinationData = await db.all(
-    `SELECT destination, 
+  // Group tours by tour_code for chart (top 10 most popular tours)
+  const tourCodeData = await db.all(
+    `SELECT t.tour_code, 
       COUNT(*) as tourCount,
-      SUM(jumlah_peserta) as totalParticipants
+      SUM(t.jumlah_peserta) as totalParticipants
      FROM tours t ${whereClause}
-     GROUP BY destination
+     GROUP BY t.tour_code
      ORDER BY tourCount DESC
      LIMIT 10`,
     params
@@ -910,9 +910,9 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
     summary,
     chartData: {
       byDestination: {
-        labels: destinationData.map(d => d.destination),
-        tourCount: destinationData.map(d => d.tourCount),
-        participants: destinationData.map(d => d.totalParticipants)
+        labels: tourCodeData.map(d => d.tour_code || 'Unknown'),
+        tourCount: tourCodeData.map(d => d.tourCount),
+        participants: tourCodeData.map(d => d.totalParticipants)
       }
     },
     tableData
