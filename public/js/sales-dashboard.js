@@ -191,7 +191,7 @@ async function renderDashboard() {
     });
     
     // Clear Chart.js instances
-    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesTrend', 'chartProfitTrend', 'chartTopStaff'];
+    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesVsTarget', 'chartProfitVsTarget', 'chartSalesTrend', 'chartProfitTrend', 'chartTopStaff'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -286,7 +286,122 @@ async function renderDashboard() {
       });
     }
     
-    // 3. Sales Trend (Month to Month) with Target Line
+    // 3. Sales vs Target (Month-to-Month Bar Comparison)
+    if (trendData && trendData.length > 0) {
+      const monthlySales = {};
+      const monthlyTargets = {};
+      
+      // Aggregate sales by month
+      trendData.forEach(sale => {
+        let month = null;
+        if (sale.transaction_date) {
+          month = sale.transaction_date.substring(0, 7);
+        } else if (sale.month) {
+          month = sale.month;
+        }
+        if (month) {
+          monthlySales[month] = (monthlySales[month] || 0) + (parseFloat(sale.sales_amount) || 0);
+        }
+      });
+      
+      // Aggregate targets by month
+      if (targetsData && Array.isArray(targetsData) && targetsData.length > 0) {
+        targetsData.forEach(target => {
+          if (target.month && target.year) {
+            const monthStr = `${target.year}-${String(target.month).padStart(2, '0')}`;
+            monthlyTargets[monthStr] = (monthlyTargets[monthStr] || 0) + (parseFloat(target.target_sales) || 0);
+          }
+        });
+      }
+      
+      const sortedMonths = Object.keys(monthlySales).sort();
+      if (sortedMonths.length > 0) {
+        const ctxSalesVsTarget = document.getElementById('chartSalesVsTarget')?.getContext('2d');
+        if (ctxSalesVsTarget) {
+          charts.salesVsTarget = new Chart(ctxSalesVsTarget, {
+            type: 'bar',
+            data: {
+              labels: sortedMonths,
+              datasets: [
+                {
+                  label: 'Actual Sales (Rp)',
+                  data: sortedMonths.map(m => monthlySales[m]),
+                  backgroundColor: '#10b981',
+                  borderRadius: 6
+                },
+                {
+                  label: 'Target Sales (Rp)',
+                  data: sortedMonths.map(m => monthlyTargets[m] || 0),
+                  backgroundColor: '#f59e0b',
+                  borderRadius: 6
+                }
+              ]
+            },
+            options: commonOptions
+          });
+        }
+      }
+    }
+    
+    // 4. Profit vs Target (Month-to-Month Bar Comparison)
+    if (trendData && trendData.length > 0) {
+      const monthlyProfit = {};
+      const monthlyProfitTargets = {};
+      
+      // Aggregate profit by month
+      trendData.forEach(sale => {
+        let month = null;
+        if (sale.transaction_date) {
+          month = sale.transaction_date.substring(0, 7);
+        } else if (sale.month) {
+          month = sale.month;
+        }
+        if (month) {
+          monthlyProfit[month] = (monthlyProfit[month] || 0) + (parseFloat(sale.profit_amount) || 0);
+        }
+      });
+      
+      // Aggregate profit targets by month
+      if (targetsData && Array.isArray(targetsData) && targetsData.length > 0) {
+        targetsData.forEach(target => {
+          if (target.month && target.year) {
+            const monthStr = `${target.year}-${String(target.month).padStart(2, '0')}`;
+            const targetProfit = (parseFloat(target.target_profit) || (parseFloat(target.target_sales) || 0) * 0.13);
+            monthlyProfitTargets[monthStr] = (monthlyProfitTargets[monthStr] || 0) + targetProfit;
+          }
+        });
+      }
+      
+      const sortedMonths = Object.keys(monthlyProfit).sort();
+      if (sortedMonths.length > 0) {
+        const ctxProfitVsTarget = document.getElementById('chartProfitVsTarget')?.getContext('2d');
+        if (ctxProfitVsTarget) {
+          charts.profitVsTarget = new Chart(ctxProfitVsTarget, {
+            type: 'bar',
+            data: {
+              labels: sortedMonths,
+              datasets: [
+                {
+                  label: 'Actual Profit (Rp)',
+                  data: sortedMonths.map(m => monthlyProfit[m]),
+                  backgroundColor: '#3b82f6',
+                  borderRadius: 6
+                },
+                {
+                  label: 'Target Profit (Rp)',
+                  data: sortedMonths.map(m => monthlyProfitTargets[m] || 0),
+                  backgroundColor: '#f59e0b',
+                  borderRadius: 6
+                }
+              ]
+            },
+            options: commonOptions
+          });
+        }
+      }
+    }
+    
+    // 5. Sales Trend (Month to Month) with Target Line
     if (trendData && trendData.length > 0) {
       const monthlySales = {};
       trendData.forEach(sale => {
@@ -362,7 +477,7 @@ async function renderDashboard() {
       }
     }
     
-    // 4. Profit Trend (Month to Month) with Target Line
+    // 6. Profit Trend (Month to Month) with Target Line
     if (trendData && trendData.length > 0) {
       const monthlyProfit = {};
       trendData.forEach(sale => {
@@ -440,7 +555,7 @@ async function renderDashboard() {
       }
     }
     
-    // 5. Top 5 Staff by Sales (Filtered by Month if Set)
+    // 7. Top 5 Staff by Sales (Filtered by Month if Set)
     if (topStaffData && topStaffData.length > 0 && user.type === 'admin') {
       const staffSales = {};
       topStaffData.forEach(sale => {
