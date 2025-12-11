@@ -398,6 +398,11 @@ async function renderDashboard() {
 window.addEventListener('DOMContentLoaded', async () => {
   const user = window.getUser();
   
+  // Hide Add Sale button for non-admin users
+  if (user.type !== 'admin' && el('addSaleBtn')) {
+    el('addSaleBtn').style.display = 'none';
+  }
+  
   // Set up filter button
   const filterBtn = el('salesFilterBtn');
   if (filterBtn) {
@@ -505,28 +510,27 @@ function renderSalesTable() {
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
-        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+        ${window.getUser().type === 'admin' ? `<button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>` : ''}
+        ${window.getUser().type === 'admin' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');
 }
 
 window.editSale = async function(id) {
+  // Check admin-only access
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.type !== 'admin') {
+    window.toast.error('Akses ditolak: Hanya admin yang dapat mengedit sales');
+    return;
+  }
+  
   const item = salesDataForCRUD.find(s => s.id === id);
   if (!item) return;
   
   window.CRUDModal.edit('Edit Sales', [
-    { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
-    { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+    { type: 'month', name: 'month', label: 'Bulan', required: true, icon: '📅' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
-    { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
-      { value: 'Printed', label: 'Printed' },
-      { value: 'Settled', label: 'Settled' },
-      { value: 'Invoiced', label: 'Invoiced' },
-      { value: 'Pending', label: 'Pending' },
-      { value: 'Cancelled', label: 'Cancelled' }
-    ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
     { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
   ], item, async (formData) => {
@@ -535,30 +539,27 @@ window.editSale = async function(id) {
       if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
     });
     
-    // Auto-set amounts to 0 if status is not Printed/Settled/Invoiced
-    const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
-    if (!recordableStatuses.includes(formData.status)) {
-      formData.sales_amount = 0;
-      formData.profit_amount = 0;
-    }
-    
-    // Keep original transaction_date
-    formData.transaction_date = item.transaction_date;
-    
     await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Sales updated successfully');
     await Promise.all([loadSalesData(), renderDashboard()]);
   }, {
     entity: 'sales',
-    validation: { transaction_date: { required: true }, invoice_no: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
+    validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
   });
 };
 
 window.deleteSale = async function(id) {
+  // Check admin-only access
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.type !== 'admin') {
+    window.toast.error('Akses ditolak: Hanya admin yang dapat menghapus sales');
+    return;
+  }
+  
   const item = salesDataForCRUD.find(s => s.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Sales', `${item.invoice_no || 'this sale'}`, async () => {
+  window.CRUDModal.delete('Sales', `${item.month || 'this sale'}`, async () => {
     await window.fetchJson(`/api/sales/${id}`, { method: 'DELETE' });
     window.toast.success('Sales deleted successfully');
     await Promise.all([loadSalesData(), renderDashboard()]);
@@ -567,17 +568,16 @@ window.deleteSale = async function(id) {
 
 if (el('addSaleBtn')) {
   el('addSaleBtn').addEventListener('click', () => {
+    // Check admin-only access
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.type !== 'admin') {
+      window.toast.error('Akses ditolak: Hanya admin yang dapat menambah sales');
+      return;
+    }
+    
     window.CRUDModal.create('Add Sales', [
-      { type: 'text', name: 'invoice_no', label: 'Invoice Number', required: true, icon: '🧾', placeholder: 'INV-001' },
-      { type: 'text', name: 'unique_code', label: 'Unique Code', icon: '🔖', placeholder: 'UC-001 (optional)' },
+      { type: 'month', name: 'month', label: 'Bulan', required: true, icon: '📅' },
       { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
-      { type: 'select', name: 'status', label: 'Invoice Status', required: true, options: [
-        { value: 'Printed', label: 'Printed' },
-        { value: 'Settled', label: 'Settled' },
-        { value: 'Invoiced', label: 'Invoiced' },
-        { value: 'Pending', label: 'Pending' },
-        { value: 'Cancelled', label: 'Cancelled' }
-      ], hint: 'Only Printed/Settled/Invoiced will record amounts' },
       { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
       { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
     ], async (formData) => {
@@ -586,22 +586,12 @@ if (el('addSaleBtn')) {
         if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
       });
       
-      // Auto-set amounts to 0 if status is not Printed/Settled/Invoiced
-      const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
-      if (!recordableStatuses.includes(formData.status)) {
-        formData.sales_amount = 0;
-        formData.profit_amount = 0;
-      }
-      
-      // Auto-set transaction_date to today
-      formData.transaction_date = new Date().toISOString().split('T')[0];
-      
       await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Sales added successfully');
       await Promise.all([loadSalesData(), renderDashboard()]);
     }, {
       entity: 'sales',
-      validation: { transaction_date: { required: true }, invoice_no: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
+      validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
     });
   });
 }

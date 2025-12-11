@@ -464,32 +464,23 @@ function updateStaffSelects() {
 function openAddSalesModal() {
   console.log('📝 Opening Add Sales Modal');
   
+  // Check if user is admin
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.type !== 'admin') {
+    toast.error('Akses ditolak: Hanya admin yang dapat menambah sales');
+    return;
+  }
+  
   openModal({
     title: 'Tambah Sales',
     bodyHtml: `
       <div class="form-group">
-        <label>Tanggal Transaksi *</label>
-        <input type="date" name="transaction_date" required>
-      </div>
-      <div class="form-group">
-        <label>Invoice Number *</label>
-        <input type="text" name="invoice_no" required placeholder="INV-001">
-      </div>
-      <div class="form-group">
-        <label>Unique Code</label>
-        <input type="text" name="unique_code" placeholder="UC-001">
+        <label>Bulan *</label>
+        <input type="month" name="month" required>
       </div>
       <div class="form-group">
         <label>Staff *</label>
         <select name="staff_name" required></select>
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select name="status">
-          <option value="Pending">Pending</option>
-          <option value="Paid">Paid</option>
-          <option value="Cancelled">Cancelled</option>
-        </select>
       </div>
       <div class="form-group">
         <label>Sales Amount *</label>
@@ -499,10 +490,6 @@ function openAddSalesModal() {
         <label>Profit Amount *</label>
         <input type="number" name="profit_amount" required step="0.01" placeholder="0">
       </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea name="notes" rows="3"></textarea>
-      </div>
     `,
     context: { entity: 'sales', action: 'create' }
   });
@@ -510,6 +497,13 @@ function openAddSalesModal() {
 }
 
 function openEditSalesModal(id) {
+  // Check if user is admin
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.type !== 'admin') {
+    toast.error('Akses ditolak: Hanya admin yang dapat mengedit sales');
+    return;
+  }
+  
   const item = state.sales.find(s => s.id === id);
   if (!item) return;
   
@@ -517,28 +511,12 @@ function openEditSalesModal(id) {
     title: 'Edit Sales',
     bodyHtml: `
       <div class="form-group">
-        <label>Tanggal Transaksi *</label>
-        <input type="date" name="transaction_date" value="${formatDateValue(item.transaction_date)}" required>
-      </div>
-      <div class="form-group">
-        <label>Invoice Number *</label>
-        <input type="text" name="invoice_no" value="${item.invoice_no || ''}" required>
-      </div>
-      <div class="form-group">
-        <label>Unique Code</label>
-        <input type="text" name="unique_code" value="${item.unique_code || ''}" placeholder="UC-001">
+        <label>Bulan *</label>
+        <input type="month" name="month" value="${item.month || ''}" required>
       </div>
       <div class="form-group">
         <label>Staff *</label>
         <select name="staff_name" required></select>
-      </div>
-      <div class="form-group">
-        <label>Status</label>
-        <select name="status">
-          <option value="Pending" ${item.status === 'Pending' ? 'selected' : ''}>Pending</option>
-          <option value="Paid" ${item.status === 'Paid' ? 'selected' : ''}>Paid</option>
-          <option value="Cancelled" ${item.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
-        </select>
       </div>
       <div class="form-group">
         <label>Sales Amount *</label>
@@ -547,10 +525,6 @@ function openEditSalesModal(id) {
       <div class="form-group">
         <label>Profit Amount *</label>
         <input type="number" name="profit_amount" value="${item.profit_amount || 0}" required step="0.01">
-      </div>
-      <div class="form-group">
-        <label>Notes</label>
-        <textarea name="notes" rows="3">${item.notes || ''}</textarea>
       </div>
     `,
     context: { entity: 'sales', action: 'update', id }
@@ -632,15 +606,15 @@ function openAddTourModal() {
           </h4>
         </div>
         <div class="form-group">
-          <label>Tour Price</label>
+          <label>Harga Tour Perorang Sebelum Discount</label>
           <input type="number" name="tour_price" step="0.01" placeholder="0">
         </div>
         <div class="form-group">
-          <label>Sales Amount</label>
+          <label>Harga Tour Perorang Setelah Discount</label>
           <input type="number" name="sales_amount" step="0.01" placeholder="0">
         </div>
         <div class="form-group">
-          <label>Discount Amount</label>
+          <label>Total Discount Perorang</label>
           <input type="number" name="discount_amount" step="0.01" placeholder="0">
         </div>
         <div class="form-group">
@@ -648,12 +622,12 @@ function openAddTourModal() {
           <input type="number" name="profit_amount" step="0.01" placeholder="0">
         </div>
         <div class="form-group">
-          <label>Total Nominal Sales Tour</label>
+          <label>Total Nominal Invoice</label>
           <input type="number" name="total_nominal_sales" step="0.01" placeholder="Total sales amount">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="grid-column: 1 / -1;">
           <label>Discount Remarks</label>
-          <input type="text" name="discount_remarks" placeholder="Keterangan diskon">
+          <textarea name="discount_remarks" rows="3" placeholder="Keterangan diskon (detail lengkap)"></textarea>
         </div>
         <div class="form-group">
           <label>Invoice Number</label>
@@ -745,15 +719,15 @@ function openEditTourModal(id) {
           </h4>
         </div>
         <div class="form-group">
-          <label>Tour Price</label>
+          <label>Harga Tour Perorang Sebelum Discount</label>
           <input type="number" name="tour_price" value="${item.tour_price || 0}" step="0.01">
         </div>
         <div class="form-group">
-          <label>Sales Amount</label>
+          <label>Harga Tour Perorang Setelah Discount</label>
           <input type="number" name="sales_amount" value="${item.sales_amount || 0}" step="0.01">
         </div>
         <div class="form-group">
-          <label>Discount Amount</label>
+          <label>Total Discount Perorang</label>
           <input type="number" name="discount_amount" value="${item.discount_amount || 0}" step="0.01">
         </div>
         <div class="form-group">
@@ -761,12 +735,12 @@ function openEditTourModal(id) {
           <input type="number" name="profit_amount" value="${item.profit_amount || 0}" step="0.01">
         </div>
         <div class="form-group">
-          <label>Total Nominal Sales Tour</label>
+          <label>Total Nominal Invoice</label>
           <input type="number" name="total_nominal_sales" value="${item.total_nominal_sales || item.sales_amount || 0}" step="0.01" placeholder="Total sales amount">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="grid-column: 1 / -1;">
           <label>Discount Remarks</label>
-          <input type="text" name="discount_remarks" value="${item.discount_remarks || ''}">
+          <textarea name="discount_remarks" rows="3" placeholder="Keterangan diskon (detail lengkap)">${item.discount_remarks || ''}</textarea>
         </div>
         <div class="form-group">
           <label>Invoice Number</label>
@@ -1411,6 +1385,15 @@ function openEditHotelBookingModal(id) {
 
 /* === DELETE HANDLER === */
 async function deleteItem(entity, id) {
+  // Check admin-only for sales
+  if (entity === 'sales') {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.type !== 'admin') {
+      toast.error('Akses ditolak: Hanya admin yang dapat menghapus sales');
+      return;
+    }
+  }
+  
   const confirmed = await confirmDialog.delete();
   if (!confirmed) return;
   

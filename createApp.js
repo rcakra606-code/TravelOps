@@ -355,6 +355,13 @@ export async function createApp() {
           const r = await db.get('SELECT id FROM regions WHERE id=?',[req.body.region_id]);
           if (!r) return res.status(400).json({ error: 'Invalid region_id' });
         }
+        
+        // Audit logging: Add created_by for tracked entities
+        const auditTables = ['tours', 'sales', 'documents', 'hotel_bookings', 'cruise', 'telecom', 'overtime', 'targets'];
+        if (auditTables.includes(t)) {
+          req.body.created_by = req.user.username || req.user.name;
+        }
+        
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
         const placeholders = keys.map(()=>'?').join(',');
@@ -406,6 +413,14 @@ export async function createApp() {
             }
           });
         }
+        
+        // Audit logging: Add updated_at and updated_by for tracked entities
+        const auditTables = ['tours', 'sales', 'documents', 'hotel_bookings', 'cruise', 'telecom', 'overtime', 'targets'];
+        if (auditTables.includes(t)) {
+          req.body.updated_by = req.user.username || req.user.name;
+          req.body.updated_at = db.dialect === 'postgres' ? new Date().toISOString() : new Date().toISOString();
+        }
+        
         const keys = Object.keys(req.body);
         const values = Object.values(req.body);
         const set = keys.map(k=>`${k}=?`).join(',');
@@ -687,71 +702,70 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   let params = [];
   
   if (from) {
-    conditions.push(isPg ? `transaction_date >= $${params.length + 1}::date` : `date(transaction_date) >= ?`);
+    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `transaction_date <= $${params.length + 1}::date` : `date(transaction_date) <= ?`);
+    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
     params.push(to);
   }
   if (staff) {
-    conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
+    conditions.push(isPg ? `s.staff_name = $${params.length + 1}` : `s.staff_name = ?`);
     params.push(staff);
   }
   if (region) {
-    conditions.push(isPg ? `region_id = $${params.length + 1}::int` : `region_id = ?`);
+    conditions.push(isPg ? `s.region_id = $${params.length + 1}::int` : `s.region_id = ?`);
     params.push(region);
   }
   
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
-  // Summary metrics
+  // Summary metrics from sales table
   const summary = await db.get(
     `SELECT 
       COUNT(*) as salesCount,
       COALESCE(SUM(sales_amount), 0) as totalSales,
+      COALESCE(SUM(profit_amount), 0) as totalProfit,
       COALESCE(AVG(sales_amount), 0) as averageSale
     FROM sales s ${whereClause}`,
     params
   );
   
-  // Get target (simplified - would need date logic)
-  const target = await db.get(`SELECT COALESCE(SUM(sales_target), 0) as target FROM targets`);
-  summary.target = target?.target || 0;
-  summary.targetAchievement = summary.target > 0 ? summary.totalSales / summary.target : 0;
-  summary.growthRate = 0; // Would need previous period comparison
+  // Calculate profit margin
+  summary.profitMargin = summary.totalSales > 0 ? (summary.totalProfit / summary.totalSales) * 100 : 0;
   
-  // Chart data - sales trend by month
+  // Chart data - sales & profit by month
   const trendData = await db.all(
-    isPg
-      ? `SELECT TO_CHAR(transaction_date::date, 'YYYY-MM') as month, SUM(sales_amount) as total
-         FROM sales s ${whereClause}
-         GROUP BY TO_CHAR(transaction_date::date, 'YYYY-MM')
-         ORDER BY month`
-      : `SELECT strftime('%Y-%m', transaction_date) as month, SUM(sales_amount) as total
-         FROM sales s ${whereClause}
-         GROUP BY strftime('%Y-%m', transaction_date)
-         ORDER BY month`,
+    `SELECT s.month, 
+      SUM(s.sales_amount) as totalSales,
+      SUM(s.profit_amount) as totalProfit
+     FROM sales s ${whereClause}
+     GROUP BY s.month
+     ORDER BY s.month`,
     params
   );
   
-  // Sales by region
-  const regionData = await db.all(
-    `SELECT COALESCE(r.region_name, 'Unknown') as region_name, SUM(s.sales_amount) as total
-     FROM sales s
-     LEFT JOIN regions r ON r.id = s.region_id
-     ${whereClause}
-     GROUP BY r.region_name`,
+  // Sales & profit by staff (for comparison)
+  const staffData = await db.all(
+    `SELECT s.staff_name, 
+      SUM(s.sales_amount) as totalSales,
+      SUM(s.profit_amount) as totalProfit,
+      COUNT(*) as transactionCount
+     FROM sales s ${whereClause}
+     GROUP BY s.staff_name
+     ORDER BY totalSales DESC`,
     params
   );
   
-  // Table data
+  // Table data - all sales records
   const tableData = await db.all(
-    `SELECT s.*, r.region_name
+    `SELECT s.id, s.month, s.staff_name, s.sales_amount, s.profit_amount, 
+      r.region_name,
+      s.created_at, s.created_by, s.updated_at, s.updated_by
      FROM sales s
      LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.transaction_date DESC
+     ORDER BY s.month DESC, s.created_at DESC
      LIMIT 100`,
     params
   );
@@ -761,14 +775,18 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
     chartData: {
       trend: {
         labels: trendData.map(d => d.month),
-        values: trendData.map(d => d.total)
+        sales: trendData.map(d => d.totalSales),
+        profit: trendData.map(d => d.totalProfit)
       },
-      byRegion: {
-        labels: regionData.map(d => d.region_name),
-        values: regionData.map(d => d.total)
+      byStaff: {
+        labels: staffData.map(d => d.staff_name),
+        sales: staffData.map(d => d.totalSales),
+        profit: staffData.map(d => d.totalProfit),
+        transactions: staffData.map(d => d.transactionCount)
       }
     },
-    tableData
+    tableData,
+    staffData
   };
 }
 
@@ -849,41 +867,47 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
   
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
+  // Simple summary from tours table
   const summary = await db.get(
     `SELECT 
       COUNT(*) as totalTours,
-      COALESCE(SUM(sales_amount), 0) as totalRevenue,
+      COALESCE(SUM(jumlah_peserta), 0) as totalParticipants,
+      COALESCE(SUM(total_nominal_sales), 0) as totalRevenue,
       COALESCE(SUM(profit_amount), 0) as totalProfit,
-      SUM(CASE WHEN invoice_number IS NOT NULL AND invoice_number != '' THEN 1 ELSE 0 END) as invoicedTours,
-      SUM(CASE WHEN invoice_number IS NULL OR invoice_number = '' THEN 1 ELSE 0 END) as notInvoicedTours
+      COALESCE(AVG(jumlah_peserta), 0) as avgParticipants
     FROM tours t ${whereClause}`,
     params
   );
   
-  summary.profitMargin = summary.totalRevenue > 0 ? summary.totalProfit / summary.totalRevenue : 0;
-  
+  // Get all tour records with region info
   const tableData = await db.all(
-    `SELECT t.*, r.region_name,
-      CASE WHEN sales_amount > 0 THEN profit_amount::float / sales_amount ELSE 0 END as profit_margin
+    `SELECT t.*, r.region_name
      FROM tours t
-     JOIN regions r ON r.id = t.region_id
+     LEFT JOIN regions r ON r.id = t.region_id
      ${whereClause}
-     ORDER BY profit_amount DESC`,
+     ORDER BY t.departure_date DESC`,
     params
   );
   
-  const topTours = tableData.slice(0, 10);
+  // Group tours by destination for chart
+  const destinationData = await db.all(
+    `SELECT destination, 
+      COUNT(*) as tourCount,
+      SUM(jumlah_peserta) as totalParticipants
+     FROM tours t ${whereClause}
+     GROUP BY destination
+     ORDER BY tourCount DESC
+     LIMIT 10`,
+    params
+  );
   
   return {
     summary,
     chartData: {
-      revenueProfit: {
-        labels: topTours.map(t => t.tour_code),
-        values: topTours.map(t => t.profit_amount)
-      },
-      topTours: {
-        labels: topTours.map(t => t.tour_code),
-        values: topTours.map(t => t.profit_amount)
+      byDestination: {
+        labels: destinationData.map(d => d.destination),
+        tourCount: destinationData.map(d => d.tourCount),
+        participants: destinationData.map(d => d.totalParticipants)
       }
     },
     tableData
@@ -1003,11 +1027,11 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
   let params = [];
   
   if (from) {
-    conditions.push(isPg ? `s.created_at >= $${params.length + 1}::date` : `date(s.created_at) >= ?`);
+    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
     params.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `s.created_at <= $${params.length + 1}::date` : `date(s.created_at) <= ?`);
+    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
     params.push(to);
   }
   if (region) {
@@ -1017,26 +1041,48 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
   
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
+  // Staff performance summary
+  const summary = await db.get(
+    `SELECT 
+      COUNT(DISTINCT s.staff_name) as totalStaff,
+      COALESCE(SUM(s.sales_amount), 0) as totalSales,
+      COALESCE(SUM(s.profit_amount), 0) as totalProfit
+    FROM sales s ${whereClause}`,
+    params
+  );
+  
+  // Performance by staff
   const tableData = await db.all(
     `SELECT 
       s.staff_name,
+      r.region_name,
       COALESCE(SUM(s.sales_amount), 0) as total_sales,
+      COALESCE(SUM(s.profit_amount), 0) as total_profit,
       COUNT(s.id) as transaction_count,
       COALESCE(AVG(s.sales_amount), 0) as average_sale,
-      (SELECT COUNT(*) FROM tours t WHERE t.staff_name = s.staff_name) as tours_handled,
-      (SELECT COUNT(*) FROM documents d WHERE d.staff_name = s.staff_name) as documents_processed
+      CASE 
+        WHEN SUM(s.sales_amount) > 0 THEN (SUM(s.profit_amount) / SUM(s.sales_amount)) * 100
+        ELSE 0
+      END as profit_margin
     FROM sales s
+    LEFT JOIN regions r ON r.id = s.region_id
     ${whereClause}
-    GROUP BY s.staff_name
+    GROUP BY s.staff_name, r.region_name
     ORDER BY total_sales DESC`,
     params
   );
   
   return {
+    summary,
     chartData: {
       staffSales: {
         labels: tableData.map(d => d.staff_name),
-        values: tableData.map(d => d.total_sales)
+        sales: tableData.map(d => d.total_sales),
+        profit: tableData.map(d => d.total_profit)
+      },
+      staffTransactions: {
+        labels: tableData.map(d => d.staff_name),
+        values: tableData.map(d => d.transaction_count)
       }
     },
     tableData
@@ -1089,52 +1135,84 @@ async function generateRegionalComparison(db, isPg, { from, to }) {
 }
 
 async function generateExecutiveSummary(db, isPg, { from, to }) {
-  let conditions = [];
-  let params = [];
+  let salesConditions = [];
+  let salesParams = [];
   
   if (from) {
-    conditions.push(isPg ? `created_at >= $${params.length + 1}::date` : `date(created_at) >= ?`);
-    params.push(from);
+    salesConditions.push(isPg ? `month >= $${salesParams.length + 1}` : `month >= ?`);
+    salesParams.push(from);
   }
   if (to) {
-    conditions.push(isPg ? `created_at <= $${params.length + 1}::date` : `date(created_at) <= ?`);
-    params.push(to);
+    salesConditions.push(isPg ? `month <= $${salesParams.length + 1}` : `month <= ?`);
+    salesParams.push(to);
   }
   
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const salesWhere = salesConditions.length > 0 ? `WHERE ${salesConditions.join(' AND ')}` : '';
   
+  // Sales metrics
   const salesSummary = await db.get(
-    `SELECT COALESCE(SUM(sales_amount), 0) as totalRevenue FROM sales s ${whereClause}`,
-    params
+    `SELECT 
+      COALESCE(SUM(sales_amount), 0) as totalSales,
+      COALESCE(SUM(profit_amount), 0) as totalProfit,
+      COUNT(*) as transactionCount
+    FROM sales ${salesWhere}`,
+    salesParams
   );
   
+  // Tours metrics (no date filter - show all active tours)
   const toursSummary = await db.get(
     `SELECT 
-      COUNT(*) as activeTours,
-      COALESCE(SUM(profit_amount), 0) as totalProfit,
+      COUNT(*) as totalTours,
       COALESCE(SUM(jumlah_peserta), 0) as totalParticipants
-    FROM tours t`,
+    FROM tours`,
     []
   );
   
+  // Documents metrics
   const docsSummary = await db.get(
     `SELECT 
       COUNT(*) as totalDocuments,
-      SUM(CASE WHEN send_date IS NULL THEN 1 ELSE 0 END) as pendingDocuments
+      SUM(CASE WHEN send_date IS NULL THEN 1 ELSE 0 END) as pendingDocuments,
+      SUM(CASE WHEN send_date IS NOT NULL THEN 1 ELSE 0 END) as completedDocuments
     FROM documents`,
     []
   );
   
+  // Top performing staff
+  const topStaff = await db.all(
+    `SELECT 
+      staff_name,
+      SUM(sales_amount) as total_sales
+    FROM sales ${salesWhere}
+    GROUP BY staff_name
+    ORDER BY total_sales DESC
+    LIMIT 5`,
+    salesParams
+  );
+  
   const summary = {
-    totalRevenue: salesSummary.totalRevenue,
-    totalProfit: toursSummary.totalProfit,
-    activeTours: toursSummary.activeTours,
+    totalSales: salesSummary.totalSales,
+    totalProfit: salesSummary.totalProfit,
+    transactionCount: salesSummary.transactionCount,
+    profitMargin: salesSummary.totalSales > 0 ? (salesSummary.totalProfit / salesSummary.totalSales) * 100 : 0,
+    totalTours: toursSummary.totalTours,
     totalParticipants: toursSummary.totalParticipants,
     totalDocuments: docsSummary.totalDocuments,
-    pendingDocuments: docsSummary.pendingDocuments
+    pendingDocuments: docsSummary.pendingDocuments,
+    completedDocuments: docsSummary.completedDocuments
   };
   
-  return { summary, chartData: {}, tableData: [] };
+  return {
+    summary,
+    chartData: {
+      topStaff: {
+        labels: topStaff.map(s => s.staff_name),
+        values: topStaff.map(s => s.total_sales)
+      }
+    },
+    topStaff,
+    tableData: []
+  };
 }
 
 export function startServer(app) {

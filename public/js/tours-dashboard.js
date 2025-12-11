@@ -781,12 +781,12 @@ window.editTour = async function(id) {
     { type: 'textarea', name: 'all_passengers', label: 'All Passengers', fullWidth: true, rows: 2, placeholder: 'Comma separated list' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
     { type: 'textarea', name: 'remarks', label: 'Remarks', fullWidth: true, rows: 3, placeholder: 'Additional notes or remarks' },
-    { type: 'currency', name: 'tour_price', label: 'Tour Price', currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'currency', name: 'sales_amount', label: 'Sales Amount', currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'currency', name: 'total_nominal_sales', label: 'Total Nominal Sales Tour', currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'currency', name: 'discount_amount', label: 'Discount Amount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'tour_price', label: 'Harga Tour Perorang Sebelum Discount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'sales_amount', label: 'Harga Tour Perorang Setelah Discount', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'total_nominal_sales', label: 'Total Nominal Invoice', currency: 'Rp', min: 0, step: 0.01 },
+    { type: 'currency', name: 'discount_amount', label: 'Total Discount Perorang', currency: 'Rp', min: 0, step: 0.01 },
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', currency: 'Rp', min: 0, step: 0.01 },
-    { type: 'text', name: 'discount_remarks', label: 'Discount Remarks', placeholder: 'Keterangan diskon' },
+    { type: 'textarea', name: 'discount_remarks', label: 'Discount Remarks', fullWidth: true, rows: 3, placeholder: 'Keterangan diskon (detail lengkap)' },
     { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
     { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
   ], item, async (formData) => {
@@ -853,12 +853,12 @@ if (el('addTourBtn')) {
       { type: 'textarea', name: 'all_passengers', label: 'All Passengers', fullWidth: true, rows: 2, placeholder: 'Comma separated list' },
       { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) },
       { type: 'textarea', name: 'remarks', label: 'Remarks', fullWidth: true, rows: 3, placeholder: 'Additional notes or remarks' },
-      { type: 'currency', name: 'tour_price', label: 'Tour Price', currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'currency', name: 'sales_amount', label: 'Sales Amount', currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'currency', name: 'total_nominal_sales', label: 'Total Nominal Sales Tour', currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'currency', name: 'discount_amount', label: 'Discount Amount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'tour_price', label: 'Harga Tour Perorang Sebelum Discount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'sales_amount', label: 'Harga Tour Perorang Setelah Discount', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'total_nominal_sales', label: 'Total Nominal Invoice', currency: 'Rp', min: 0, step: 0.01 },
+      { type: 'currency', name: 'discount_amount', label: 'Total Discount Perorang', currency: 'Rp', min: 0, step: 0.01 },
       { type: 'currency', name: 'profit_amount', label: 'Profit Amount', currency: 'Rp', min: 0, step: 0.01 },
-      { type: 'text', name: 'discount_remarks', label: 'Discount Remarks', placeholder: 'Keterangan diskon' },
+      { type: 'textarea', name: 'discount_remarks', label: 'Discount Remarks', fullWidth: true, rows: 3, placeholder: 'Keterangan diskon (detail lengkap)' },
       { type: 'text', name: 'invoice_number', label: 'Invoice Number', icon: '🧾', placeholder: 'Nomor invoice' },
       { type: 'url', name: 'link_pelunasan_tour', label: 'Payment Link', fullWidth: true, placeholder: 'Google Drive / Lark link' }
     ], async (formData) => {
@@ -951,9 +951,12 @@ document.addEventListener('click', (e) => {
         {
           title: 'Financial Details',
           fields: {
-            'Sales Amount': formatCurrency(item.sales_amount),
+            'Harga Tour/Org Sebelum Diskon': formatCurrency(item.tour_price),
+            'Harga Tour/Org Setelah Diskon': formatCurrency(item.sales_amount),
+            'Total Nominal Invoice': formatCurrency(item.total_nominal_sales),
+            'Total Discount/Org': formatCurrency(item.discount_amount),
             'Profit Amount': formatCurrency(item.profit_amount),
-            'Profit Margin': item.sales_amount ? ((item.profit_amount / item.sales_amount) * 100).toFixed(2) + '%' : '—'
+            'Discount Remarks': item.discount_remarks || '—'
           }
         },
         {

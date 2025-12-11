@@ -331,38 +331,6 @@ el('addOvertimeBtn').addEventListener('click', () => {
   });
 });
 
-// Handle modal form submissions (legacy support)
-document.addEventListener('modalSubmit', async (e) => {
-  const { data, context } = e.detail;
-  if (context.entity !== 'overtime') return;
-  
-  e.preventDefault();
-  
-  try {
-    if (context.action === 'create') {
-      await fetchJson('/api/overtime', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      toast.success('Overtime added successfully');
-    } else if (context.action === 'edit' && context.id) {
-      await fetchJson(`/api/overtime/${context.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      toast.success('Overtime updated successfully');
-    }
-    
-    await loadOvertime();
-  } catch (err) {
-    console.error('Overtime submission failed:', err);
-    toast.error('Operation failed: ' + err.message);
-    throw err;
-  }
-});
-
 // Search and filter handlers
 const debouncedSearch = performanceUtils.debounce((value) => {
   filters.search = value;

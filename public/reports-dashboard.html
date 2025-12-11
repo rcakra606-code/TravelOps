@@ -23,7 +23,7 @@
   <script type="module" src="/js/auth-common.js"></script>
   <script type="module" src="/js/dashboard.js"></script>
   <style>
-    /* Fix sidebar layout on reports page */
+    /* Reset sidebar styles to match other dashboards */
     .app {
       display: flex;
       min-height: 100vh;
@@ -31,7 +31,7 @@
       gap: 18px;
     }
     .sidebar {
-      width: 300px;
+      width: 280px;
       flex-shrink: 0;
       height: fit-content;
       position: sticky;
@@ -390,12 +390,14 @@
   </style>
 </head>
 <body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
 <button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
 
 <div class="app">
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
-    <nav class="nav" id="mainNav">
+    <div class="nav">
       <a href="/single-dashboard.html">🏠 Main Dashboard</a>
       <a href="/sales-dashboard.html">💰 Sales</a>
       <a href="/tours-dashboard.html">🧳 Tours</a>
@@ -408,8 +410,11 @@
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html" class="active">📊 Reports</a>
       <a id="logoutLink" href="/logout.html">🚪 Logout</a>
-    </nav>
-    <div class="userbox" id="userBox"></div>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
   </aside>
 
   <main class="main">

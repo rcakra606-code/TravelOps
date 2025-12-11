@@ -382,6 +382,51 @@ async function createSchema(db) {
   await ensureColumn('targets', 'month', 'INTEGER');
   await ensureColumn('targets', 'year', 'INTEGER');
 
+  // ===================================================================
+  // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
+  // to all main entity tables for tracking who created/modified records
+  // ===================================================================
+  
+  // Tours audit columns
+  await ensureColumn('tours', 'created_by', 'TEXT');
+  await ensureColumn('tours', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('tours', 'updated_by', 'TEXT');
+  
+  // Sales audit columns
+  await ensureColumn('sales', 'created_by', 'TEXT');
+  await ensureColumn('sales', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('sales', 'updated_by', 'TEXT');
+  
+  // Documents audit columns
+  await ensureColumn('documents', 'created_by', 'TEXT');
+  await ensureColumn('documents', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('documents', 'updated_by', 'TEXT');
+  
+  // Hotel Bookings audit columns
+  await ensureColumn('hotel_bookings', 'created_by', 'TEXT');
+  await ensureColumn('hotel_bookings', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('hotel_bookings', 'updated_by', 'TEXT');
+  
+  // Cruise audit columns
+  await ensureColumn('cruise', 'created_by', 'TEXT');
+  await ensureColumn('cruise', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('cruise', 'updated_by', 'TEXT');
+  
+  // Telecom audit columns
+  await ensureColumn('telecom', 'created_by', 'TEXT');
+  await ensureColumn('telecom', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('telecom', 'updated_by', 'TEXT');
+  
+  // Overtime audit columns
+  await ensureColumn('overtime', 'created_by', 'TEXT');
+  await ensureColumn('overtime', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('overtime', 'updated_by', 'TEXT');
+  
+  // Targets audit columns
+  await ensureColumn('targets', 'created_by', 'TEXT');
+  await ensureColumn('targets', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
+  await ensureColumn('targets', 'updated_by', 'TEXT');
+
   if (process.env.NODE_ENV !== 'test') {
     console.log('✅ All database migrations completed successfully');
   }

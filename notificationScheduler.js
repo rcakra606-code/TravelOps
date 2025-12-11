@@ -49,7 +49,7 @@ function initScheduler(database) {
   
   db = database;
   
-  // Run daily at 9:00 AM
+  // Run daily at 9:00 AM Jakarta time (Asia/Jakarta = UTC+7)
   cron.schedule('0 9 * * *', async () => {
     logger.info('Running daily tour and cruise reminder check...');
     try {
@@ -58,6 +58,8 @@ function initScheduler(database) {
     } catch (error) {
       logger.error({ error: error.message }, 'Error in scheduled reminder check');
     }
+  }, {
+    timezone: 'Asia/Jakarta'
   });
 
   // Optional: Run every hour during business hours (9 AM - 6 PM)
@@ -67,7 +69,7 @@ function initScheduler(database) {
   // });
 
   schedulerActive = true;
-  logger.info('Tour and Cruise reminder scheduler initialized - Daily at 9:00 AM');
+  logger.info('Tour and Cruise reminder scheduler initialized - Daily at 9:00 AM Asia/Jakarta (UTC+7)');
   logger.info('Note: Email reminders require SMTP configuration to function');
   
   // Run once on startup for testing (optional - commented out by default)
@@ -79,7 +81,8 @@ function initScheduler(database) {
  */
 async function checkAndSendReminders() {
   try {
-    const today = new Date();
+    // Use Jakarta timezone for consistent date calculations
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     today.setHours(0, 0, 0, 0);
 
     logger.info('Checking for tours requiring departure reminders...');

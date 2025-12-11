@@ -215,7 +215,7 @@ const modalForm = el('modalForm');
 const modalClose = el('modalClose');
 
 function openModal({ title, bodyHtml, context, size = 'medium' }) {
-  console.log('🚪 openModal called - title:', title, '| Modal already active?', modal?.classList.contains('active'));
+  console.log('🚪 openModal called - title:', title, '| context:', JSON.stringify(context));
   
   // Reset form state
   if (modalForm) modalForm.reset();
@@ -248,6 +248,31 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
     modalForm.querySelectorAll('input, select, textarea').forEach(el => {
       el.addEventListener('input', markDirty, { once: false });
       el.addEventListener('change', markDirty, { once: false });
+    });
+    
+    // Setup form submit handler to dispatch modalSubmit event
+    modalForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const formData = new FormData(modalForm);
+      const data = Object.fromEntries(formData.entries());
+      const ctx = JSON.parse(modal.dataset.context || '{}');
+      
+      console.log('📤 Dispatching modalSubmit event:', { data, context: ctx });
+      
+      const event = new CustomEvent('modalSubmit', {
+        detail: { data, context: ctx },
+        bubbles: true,
+        cancelable: true
+      });
+      document.dispatchEvent(event);
+      
+      // If event was not prevented by listener, close modal
+      if (!event.defaultPrevented) {
+        console.log('⚠️ modalSubmit was not handled by any listener');
+        closeModal(true);
+      }
     });
   }
 }
@@ -554,8 +579,8 @@ function refreshUser() {
   if (!isAdmin && addTargetBtn) addTargetBtn.style.display = 'none';
   if (isBasic) document.querySelectorAll('.btn.delete').forEach(b => b.style.display = 'none');
   
-  // Hide sales add/import buttons for basic users (view only)
-  if (isBasic) {
+  // Hide sales add/edit/delete/import buttons for non-admin users (admin-only CRUD)
+  if (!isAdmin) {
     el('addSalesBtn')?.style.setProperty('display', 'none', 'important');
     el('importSalesBtn')?.style.setProperty('display', 'none', 'important');
     el('downloadSalesTemplate')?.style.setProperty('display', 'none', 'important');
@@ -765,7 +790,7 @@ async function renderCharts() {
           return `
             <tr style=\"${urgency}\">
               <td style=\"padding: 8px;\">${tour.departure_date} <span style=\"color: #6b7280;\">(${daysUntil} hari)</span></td>
-              <td style=\"padding: 8px;\">${tour.tour_code || '-'}</td>
+              <td style=\"padding: 8px;\">${tour.booking_code || '-'}</td>
               <td style=\"padding: 8px;\">${tour.lead_passenger || '-'}</td>
               <td style=\"padding: 8px;\">${regionName}</td>
               <td style=\"padding: 8px; text-align: center;\">${tour.jumlah_peserta || 0}</td>
