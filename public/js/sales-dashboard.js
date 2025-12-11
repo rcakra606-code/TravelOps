@@ -645,7 +645,7 @@ document.addEventListener('click', (e) => {
 
 // Download CSV Template
 el('downloadSalesTemplateBtn').addEventListener('click', () => {
-  const csv = 'invoice_no,unique_code,staff_name,status,sales_amount,profit_amount\n"INV-001","UC-001","John Doe","Printed",10000000,2000000\n"INV-002","UC-002","Jane Smith","Settled",15000000,3000000\n"INV-003","","John Doe","Pending",0,0';
+  const csv = 'month,staff_name,sales_amount,profit_amount\n"2025-12","John Doe",10000000,2000000\n"2025-12","Jane Smith",15000000,3000000\n"2025-11","John Doe",12000000,2400000';
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -663,9 +663,9 @@ el('exportSalesBtn').addEventListener('click', () => {
     return;
   }
   
-  const headers = 'invoice_no,unique_code,staff_name,status,sales_amount,profit_amount';
+  const headers = 'month,staff_name,sales_amount,profit_amount';
   const rows = salesDataForCRUD.map(s => 
-    `"${s.invoice_no}","${s.unique_code || ''}","${s.staff_name}","${s.status}",${s.sales_amount || 0},${s.profit_amount || 0}`
+    `"${s.month || ''}","${s.staff_name || ''}",${s.sales_amount || 0},${s.profit_amount || 0}`
   ).join('\n');
   
   const csv = headers + '\n' + rows;
@@ -695,8 +695,6 @@ el('importSalesFileInput').addEventListener('change', async (e) => {
       const lines = csv.split('\n').filter(line => line.trim());
       const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
       
-      const today = new Date().toISOString().split('T')[0];
-      
       let imported = 0;
       let errors = 0;
       
@@ -704,19 +702,12 @@ el('importSalesFileInput').addEventListener('change', async (e) => {
         try {
           const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
           
-          const status = values[3] || 'Pending';
-          const recordableStatuses = ['Printed', 'Settled', 'Invoiced'];
-          
+          // Map CSV columns: month, staff_name, sales_amount, profit_amount
           const sale = {
-            transaction_date: today,
-            invoice_no: values[0],
-            unique_code: values[1] || null,
-            staff_name: values[2],
-            region_id: null,
-            status: status,
-            sales_amount: recordableStatuses.includes(status) ? (parseFloat(values[4]) || 0) : 0,
-            profit_amount: recordableStatuses.includes(status) ? (parseFloat(values[5]) || 0) : 0,
-            notes: null
+            month: values[0] || '',
+            staff_name: values[1] || '',
+            sales_amount: parseFloat(values[2]) || 0,
+            profit_amount: parseFloat(values[3]) || 0
           };
           
           await window.fetchJson('/api/sales', {
