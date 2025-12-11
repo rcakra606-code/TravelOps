@@ -716,7 +716,7 @@ async function renderCharts() {
     });
     
     // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartSalesMonthly', 'chartTargetAchievement'];
+    const canvasIds = ['chartSalesTarget', 'chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartSalesMonthly', 'chartTargetAchievement'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
