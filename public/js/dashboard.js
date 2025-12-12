@@ -144,64 +144,7 @@ document.querySelectorAll('#mainNav button[data-section]').forEach(b =>
   b.addEventListener('click', () => showSection(b.dataset.section))
 );
 
-// Wire logout link immediately (before DOMContentLoaded)
-const logoutLinkEarly = document.getElementById('logoutLink');
-if (logoutLinkEarly) {
-  logoutLinkEarly.addEventListener('click', async (e) => {
-    e.preventDefault();
-    
-    const confirmed = await confirmDialog.logout();
-    if (!confirmed) {
-      return;
-    }
-    
-    // Clear token refresh interval if exists
-    if (typeof tokenRefreshInterval !== 'undefined' && tokenRefreshInterval) {
-      clearInterval(tokenRefreshInterval);
-    }
-    
-    // Show goodbye message
-    const user = getUser();
-    const userName = user.name || user.username || 'User';
-    
-    const overlay = document.createElement('div');
-    overlay.style.cssText = `
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;
-    `;
-    
-    const message = document.createElement('div');
-    message.style.cssText = `
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      text-align: center;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-    `;
-    message.innerHTML = `
-      <div style="font-size: 48px; margin-bottom: 16px;">👋</div>
-      <h2 style="margin: 0 0 8px 0; color: #111827;">Sampai Jumpa, ${userName}!</h2>
-      <p style="margin: 0; color: #6b7280;">Terima kasih telah menggunakan TravelOps</p>
-    `;
-    
-    overlay.appendChild(message);
-    document.body.appendChild(overlay);
-    
-    setTimeout(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-      window.location.href = '/login.html';
-    }, 1500);
-  });
-}
+// Logout is handled by logout-handler.js - no duplicate handler needed here
 
 window.addEventListener('DOMContentLoaded', () => {
   const s = localStorage.getItem('activeSection') || 'summary';
