@@ -708,6 +708,20 @@ export async function createApp() {
 
   app.post('/api/users/:username/unlock', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]); if (!user) return res.status(404).json({ error:'User not found' }); await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?',[user.id]); await logActivity(req.user.username,'UNLOCK','users',user.id,'Account unlocked by admin'); res.json({ ok:true }); });
 
+  // Lock user account (Admin only)
+  app.post('/api/users/:username/lock', authMiddleware(), async (req,res)=>{
+    if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+    const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]);
+    if (!user) return res.status(404).json({ error:'User not found' });
+    if (user.type === 'admin') return res.status(400).json({ error:'Cannot lock admin accounts' });
+    if (user.username === req.user.username) return res.status(400).json({ error:'Cannot lock your own account' });
+    // Lock indefinitely (set to year 9999)
+    const lockedUntil = '9999-12-31T23:59:59.000Z';
+    await db.run('UPDATE users SET locked_until=? WHERE id=?',[lockedUntil, user.id]);
+    await logActivity(req.user.username,'LOCK','users',user.id,'Account locked by admin');
+    res.json({ ok:true });
+  });
+
   app.post('/api/admin/seed', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const username = req.body.username || process.env.ADMIN_USERNAME || 'admin'; const name = req.body.name || 'Administrator'; const email = req.body.email || 'admin@example.com'; const password = req.body.password || process.env.ADMIN_PASSWORD || 'Admin1234!'; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); const existing = await db.get('SELECT * FROM users WHERE username=?',[username]); if (existing){ await db.run('UPDATE users SET password=?, name=?, email=?, type=? WHERE id=?',[hashed, name, email,'admin', existing.id]); await logActivity(req.user.username,'ADMIN_SEED_UPDATE','users',existing.id,`Updated admin user ${username}`); return res.json({ ok:true, updated:true }); } else { const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)',[username, hashed, name, email,'admin']); await logActivity(req.user.username,'ADMIN_SEED_CREATE','users',r.lastID,`Created admin user ${username}`); return res.json({ ok:true, created:true, id:r.lastID }); } });
 
   // ============================================

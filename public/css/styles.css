@@ -264,6 +264,10 @@ textarea {
 .btn-action.delete:hover { filter: brightness(0.95); }
 .btn-action.reset { background: #fef3c7; color: #92400e; }
 .btn-action.reset:hover { filter: brightness(0.95); }
+.btn-action.unlock { background: #d1fae5; color: #065f46; }
+.btn-action.unlock:hover { filter: brightness(0.95); }
+.btn-action.lock { background: #fce7f3; color: #9d174d; }
+.btn-action.lock:hover { filter: brightness(0.95); }
 
 /* Pagination polish */
 .pagination button, .pagination .btn {

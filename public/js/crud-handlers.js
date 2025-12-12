@@ -1803,6 +1803,7 @@ function renderUsersTable() {
         <button class="btn-action delete" data-action="delete" data-entity="users" data-id="${item.id}">Delete</button>
         ${isAdmin ? `<button class=\"btn-action reset\" data-action=\"reset-user\" data-username=\"${item.username}\">Reset</button>` : ''}
         ${isAdmin && locked ? `<button class=\"btn-action unlock\" data-action=\"unlock-user\" data-username=\"${item.username}\">Unlock</button>` : ''}
+        ${isAdmin && !locked && item.type !== 'admin' ? `<button class=\"btn-action lock\" data-action=\"lock-user\" data-username=\"${item.username}\">Lock</button>` : ''}
       </td>
     </tr>
     `;
@@ -2013,6 +2014,9 @@ async function init() {
             case 'unlock-user':
               if (btn.dataset.username) window.crudHandlers.unlockUser(btn.dataset.username);
               break;
+            case 'lock-user':
+              if (btn.dataset.username) window.crudHandlers.lockUser(btn.dataset.username);
+              break;
           }
         } catch (err) {
           console.error('Action handler error:', err);
@@ -2085,6 +2089,7 @@ window.crudHandlers = {
   openEditUserModal,
   openResetUserModal,
   unlockUser,
+  lockUser,
   openAddTelecomModal,
   openEditTelecomModal,
   openAddHotelBookingModal,
@@ -2126,7 +2131,8 @@ async function unlockUser(username) {
     title: 'Unlock User',
     message: `Unlock account for ${username}?`,
     confirmText: 'Unlock',
-    cancelText: 'Cancel'
+    cancelText: 'Cancel',
+    icon: '🔓'
   });
   if (!confirmed) return;
   try {
@@ -2136,6 +2142,27 @@ async function unlockUser(username) {
     renderTable('users');
   } catch (err) {
     toast.error('Gagal unlock user: ' + (err.message || 'Unknown error'));
+  }
+}
+
+// === LOCK USER (Admin) ===
+async function lockUser(username) {
+  const confirmed = await confirmDialog.custom({
+    title: 'Lock User Account',
+    message: `Are you sure you want to lock the account for ${username}? The user will not be able to login until unlocked.`,
+    confirmText: 'Lock Account',
+    cancelText: 'Cancel',
+    confirmColor: '#dc2626',
+    icon: '🔒'
+  });
+  if (!confirmed) return;
+  try {
+    await fetchJson(`/api/users/${username}/lock`, { method: 'POST' });
+    toast.success('User account locked');
+    await loadUsers();
+    renderTable('users');
+  } catch (err) {
+    toast.error('Failed to lock user: ' + (err.message || 'Unknown error'));
   }
 }
 
