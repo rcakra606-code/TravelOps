@@ -273,24 +273,58 @@ export async function createApp() {
         let params = [];
         
         if (month && (t === 'sales' || t === 'tours' || t === 'documents')) {
-          let dateField = t === 'sales' ? 'transaction_date' : t === 'documents' ? 'receive_date' : 'departure_date';
-          // For tours, allow filtering by registration_date or departure_date
-          if (t === 'tours' && dateType === 'registration') {
-            dateField = 'registration_date';
-          }
-          if (isPg) {
-            // Cast to date if it's a text field (registration_date might be text)
-            const castField = (t === 'tours' && dateType === 'registration') ? `${dateField}::date` : dateField;
-            conditions.push(`TO_CHAR(${castField}, 'MM')=$${params.length+1}::TEXT`);
-            params.push(month.padStart(2,'0'));
+          // For sales, use 'month' column (YYYY-MM format) which is more reliable
+          if (t === 'sales') {
+            // Build YYYY-MM string to match month column
+            if (year) {
+              const monthYearStr = `${year}-${month.padStart(2, '0')}`;
+              if (isPg) {
+                conditions.push(`month=$${params.length+1}`);
+                params.push(monthYearStr);
+              } else {
+                conditions.push(`month=?`);
+                params.push(monthYearStr);
+              }
+            } else {
+              // No year specified, just match month part using LIKE
+              if (isPg) {
+                conditions.push(`month LIKE $${params.length+1}`);
+                params.push(`%-${month.padStart(2, '0')}`);
+              } else {
+                conditions.push(`month LIKE ?`);
+                params.push(`%-${month.padStart(2, '0')}`);
+              }
+            }
           } else {
-            conditions.push(`strftime('%m', ${dateField})=?`);
-            params.push(month.padStart(2,'0'));
+            // For tours and documents, use date fields
+            let dateField = t === 'documents' ? 'receive_date' : 'departure_date';
+            // For tours, allow filtering by registration_date or departure_date
+            if (t === 'tours' && dateType === 'registration') {
+              dateField = 'registration_date';
+            }
+            if (isPg) {
+              // Cast to date if it's a text field (registration_date might be text)
+              const castField = (t === 'tours' && dateType === 'registration') ? `${dateField}::date` : dateField;
+              conditions.push(`TO_CHAR(${castField}, 'MM')=$${params.length+1}::TEXT`);
+              params.push(month.padStart(2,'0'));
+            } else {
+              conditions.push(`strftime('%m', ${dateField})=?`);
+              params.push(month.padStart(2,'0'));
+            }
+          }
+        } else if (year && t === 'sales') {
+          // Year-only filter for sales using month column
+          if (isPg) {
+            conditions.push(`month LIKE $${params.length+1}`);
+            params.push(`${year}-%`);
+          } else {
+            conditions.push(`month LIKE ?`);
+            params.push(`${year}-%`);
           }
         }
         
-        if (year && (t === 'sales' || t === 'tours' || t === 'documents')) {
-          let dateField = t === 'sales' ? 'transaction_date' : t === 'documents' ? 'receive_date' : 'departure_date';
+        if (year && (t === 'tours' || t === 'documents')) {
+          let dateField = t === 'documents' ? 'receive_date' : 'departure_date';
           // For tours, allow filtering by registration_date or departure_date
           if (t === 'tours' && dateType === 'registration') {
             dateField = 'registration_date';
@@ -546,10 +580,44 @@ export async function createApp() {
       };
       
       // Execute queries with independent parameter arrays
-  const salesQuery = buildWhere('transaction_date', { allowRegion: false });
+      // Use 'month' column (YYYY-MM format) for sales filtering - more reliable than transaction_date
+      const salesParams = [];
+      const salesConditions = [];
+      
+      if (month && year) {
+        const monthYearStr = `${year}-${month.padStart(2, '0')}`;
+        if (isPg) {
+          salesConditions.push(`month=$${salesParams.length+1}`);
+          salesParams.push(monthYearStr);
+        } else {
+          salesConditions.push(`month=?`);
+          salesParams.push(monthYearStr);
+        }
+      } else if (year) {
+        // Year only - use LIKE for YYYY-MM format
+        if (isPg) {
+          salesConditions.push(`month LIKE $${salesParams.length+1}`);
+          salesParams.push(`${year}-%`);
+        } else {
+          salesConditions.push(`month LIKE ?`);
+          salesParams.push(`${year}-%`);
+        }
+      }
+      
+      if (staff) {
+        if (isPg) {
+          salesConditions.push(`staff_name=$${salesParams.length+1}`);
+          salesParams.push(staff);
+        } else {
+          salesConditions.push(`staff_name=?`);
+          salesParams.push(staff);
+        }
+      }
+      
+      const salesWhere = salesConditions.length ? 'WHERE ' + salesConditions.join(' AND ') : '';
       const sales = await db.get(
-        `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales ${salesQuery.where}`,
-        salesQuery.params
+        `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales ${salesWhere}`,
+        salesParams
       );
       
       // Filter targets by month/year and staff (targets don't have a date field, use month/year integers)
