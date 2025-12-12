@@ -155,6 +155,11 @@ class ConfirmDialog {
       icon: '⚠️'
     });
   }
+
+  // Alias for show() - allows calling confirmDialog.custom()
+  custom(options) {
+    return this.show(options);
+  }
 }
 
 // Global instance
