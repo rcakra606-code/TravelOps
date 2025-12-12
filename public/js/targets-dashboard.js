@@ -92,12 +92,6 @@ function updateMetrics() {
 function getFilteredData() {
   let filtered = [...targetsData];
 
-  // Basic staff can only see their own targets
-  if (user.type === 'basic') {
-    const staffName = user.name || user.username;
-    filtered = filtered.filter(t => t.staff_name === staffName);
-  }
-
   // Apply search
   if (filters.search) {
     filtered = window.filterUtils.search(filtered, filters.search, ['staff_name']);
@@ -158,7 +152,6 @@ function renderTable(data) {
   };
 
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const canEdit = user.type === 'admin' || user.type === 'semiadmin';
   
   tbody.innerHTML = data.map(item => `
     <tr class="table-row">
@@ -169,8 +162,8 @@ function renderTable(data) {
       <td class="text-right"><strong>Rp ${(item.target_profit || 0).toLocaleString('id-ID')}</strong></td>
       <td class="actions">
         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
-        ${canEdit ? `<button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
-        <button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️ Delete</button>` : ''}
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️ Delete</button>
       </td>
     </tr>
   `).join('');
@@ -276,7 +269,18 @@ async function deleteTarget(id) {
   });
 }
 
+// Hide Add Target button for basic staff
+if (user.type === 'basic') {
+  const addBtn = el('addTargetBtn');
+  if (addBtn) addBtn.style.display = 'none';
+}
+
 el('addTargetBtn').addEventListener('click', () => {
+  // Prevent basic staff from adding targets
+  if (user.type === 'basic') {
+    window.toast.error('You do not have permission to add targets');
+    return;
+  }
   console.log('🎯 Add Target button clicked');
   console.log('CRUDModal available:', !!window.CRUDModal);
   const now = new Date();
@@ -512,12 +516,6 @@ el('importFileInput').addEventListener('change', async (e) => {
 async function init() {
   await loadStaff();
   await loadTargets();
-  
-  // Hide add button for basic staff
-  if (user.type === 'basic') {
-    const addBtn = el('addTargetBtn');
-    if (addBtn) addBtn.style.display = 'none';
-  }
 }
 
 init();

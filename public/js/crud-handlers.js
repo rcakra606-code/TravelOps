@@ -54,15 +54,6 @@ function getCurrentUser() {
 function applyFiltersAndSort(entity) {
   let data = [...state[entity]];
   const filters = state.filters[entity];
-  const currentUser = getCurrentUser();
-  
-  // Auto-filter for basic staff: only show their own data for sales and targets
-  if (currentUser.type === 'basic') {
-    const staffName = currentUser.name || currentUser.username;
-    if (entity === 'sales' || entity === 'targets') {
-      data = data.filter(item => item.staff_name === staffName);
-    }
-  }
   
   // Apply search filter
   if (filters.search) {
@@ -1742,11 +1733,10 @@ function renderTargetsTable() {
       <td>${formatCurrency(item.target_sales)}</td>
       <td>${formatCurrency(item.target_profit)}</td>
       <td>${(() => {
-        const owned = item.staff_name && item.staff_name === current.name;
-        if (isBasic && !owned) return `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"targets\" data-id=\"${item.id}\">View</button>`;
-        let a = `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"targets\" data-id=\"${item.id}\">Edit</button>`;
-        if (!isBasic) a += ` <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"targets\" data-id=\"${item.id}\">Delete</button>`;
-        return a;
+        // Basic staff can only view targets, no edit/delete
+        if (isBasic) return `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"targets\" data-id=\"${item.id}\">View</button>`;
+        // Admin/semi-admin can edit and delete
+        return `<button class=\"btn-action edit\" data-action=\"edit\" data-entity=\"targets\" data-id=\"${item.id}\">Edit</button> <button class=\"btn-action delete\" data-action=\"delete\" data-entity=\"targets\" data-id=\"${item.id}\">Delete</button>`;
       })()}</td>
     </tr>
   `).join('');
