@@ -427,10 +427,11 @@ if (table) {
 
 // 2. Initialize table enhancer with all features
 if (window.TableEnhancer) {
-  const tableEnhancer = new TableEnhancer('overtimeTable');
+  const tableEnhancer = new TableEnhancer('overtimeTable', {
+    multiSelect: true // Already inits in constructor, don't call again
+  });
   
-  // Enable multi-select and batch operations
-  tableEnhancer.initMultiSelect();
+  // Note: multiSelect is already initialized by constructor
   
   // Enable inline editing (double-click to edit)
   tableEnhancer.initInlineEdit({

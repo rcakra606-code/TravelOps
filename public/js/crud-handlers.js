@@ -54,6 +54,15 @@ function getCurrentUser() {
 function applyFiltersAndSort(entity) {
   let data = [...state[entity]];
   const filters = state.filters[entity];
+  const currentUser = getCurrentUser();
+  
+  // Auto-filter for basic staff: only show their own data for sales and targets
+  if (currentUser.type === 'basic') {
+    const staffName = currentUser.name || currentUser.username;
+    if (entity === 'sales' || entity === 'targets') {
+      data = data.filter(item => item.staff_name === staffName);
+    }
+  }
   
   // Apply search filter
   if (filters.search) {
