@@ -21,6 +21,31 @@ function isStrongPassword(pw='') {
   return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw);
 }
 
+// Input sanitization helper to prevent XSS
+function sanitizeInput(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;')
+    .replace(/\//g, '&#x2F;');
+}
+
+// Sanitize object recursively
+function sanitizeObject(obj) {
+  if (typeof obj === 'string') return sanitizeInput(obj);
+  if (Array.isArray(obj)) return obj.map(sanitizeObject);
+  if (obj && typeof obj === 'object') {
+    const result = {};
+    for (const key of Object.keys(obj)) {
+      result[key] = sanitizeObject(obj[key]);
+    }
+    return result;
+  }
+  return obj;
+}
+
 export async function createApp() {
   const app = express();
   if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
@@ -39,9 +64,19 @@ export async function createApp() {
     }
   }
 
-  app.use(cors({ origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : undefined, credentials: true }));
+  // CORS - restrict to specific origins in production
+  app.use(cors({ 
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : undefined, 
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
+  
+  // Security headers with Helmet
   app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: { policy: 'same-origin' },
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
@@ -53,8 +88,15 @@ export async function createApp() {
         connectSrc: ["'self'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
         objectSrc: ["'none'"],
         frameAncestors: ["'none'"],
-        baseUri: ["'self'"]
+        baseUri: ["'self'"],
+        formAction: ["'self'"],
+        upgradeInsecureRequests: []
       }
+    },
+    hsts: {
+      maxAge: 31536000, // 1 year
+      includeSubDomains: true,
+      preload: true
     }
   }));
   app.use(compression());
@@ -71,7 +113,9 @@ export async function createApp() {
     }
   });
   app.use(limiter);
-  app.use(bodyParser.json());
+  // Limit request body size to prevent DoS attacks
+  app.use(bodyParser.json({ limit: '1mb' }));
+  app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
   app.use(express.static('public', {
     setHeaders: (res, path) => {
       // Set proper MIME types for static files
