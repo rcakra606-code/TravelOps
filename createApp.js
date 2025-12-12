@@ -609,23 +609,18 @@ export async function createApp() {
       const currentMonth = now.getMonth() + 1;
       const currentYear = now.getFullYear();
       
-      // Helper to format month/year for SQLite
+      // Helper to format month/year
       const formatMonth = (m) => String(m).padStart(2, '0');
-      
-      // Current period queries
       const monthParam = formatMonth(currentMonth);
       const yearParam = String(currentYear);
+      const monthYearStr = `${currentYear}-${monthParam}`; // Format: YYYY-MM
       
-      // Build date range for current month
-      const monthStart = `${currentYear}-${monthParam}-01`;
-      const monthEnd = new Date(currentYear, currentMonth, 0).toISOString().split('T')[0];
-      
-      // Sales current month
+      // Sales current month - use 'month' column (YYYY-MM format) which is more reliable
       const salesCurrent = await db.get(
         isPg 
-          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
-          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
-        [monthParam, yearParam]
+          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE month = $1`
+          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE month = ?`,
+        [monthYearStr]
       );
       
       // Targets current month
@@ -667,25 +662,25 @@ export async function createApp() {
       // Hotel bookings this month
       const hotelBookings = await db.get(
         isPg
-          ? `SELECT COUNT(*) AS count FROM hotel_bookings WHERE TO_CHAR(check_in, 'MM')=$1 AND TO_CHAR(check_in, 'YYYY')=$2`
-          : `SELECT COUNT(*) AS count FROM hotel_bookings WHERE strftime('%m', check_in)=? AND strftime('%Y', check_in)=?`,
-        [monthParam, yearParam]
+          ? `SELECT COUNT(*) AS count FROM hotel_bookings WHERE TO_CHAR(check_in::date, 'YYYY-MM')=$1`
+          : `SELECT COUNT(*) AS count FROM hotel_bookings WHERE strftime('%Y-%m', check_in)=?`,
+        [monthYearStr]
       );
       
       // Telecom rentals this month
       const telecomRentals = await db.get(
         isPg
-          ? `SELECT COUNT(*) AS count FROM telecom WHERE TO_CHAR(tanggal_mulai, 'MM')=$1 AND TO_CHAR(tanggal_mulai, 'YYYY')=$2`
-          : `SELECT COUNT(*) AS count FROM telecom WHERE strftime('%m', tanggal_mulai)=? AND strftime('%Y', tanggal_mulai)=?`,
-        [monthParam, yearParam]
+          ? `SELECT COUNT(*) AS count FROM telecom WHERE TO_CHAR(tanggal_mulai::date, 'YYYY-MM')=$1`
+          : `SELECT COUNT(*) AS count FROM telecom WHERE strftime('%Y-%m', tanggal_mulai)=?`,
+        [monthYearStr]
       );
       
-      // YTD Summary
+      // YTD Summary - use month column LIKE 'YYYY-%'
       const ytdSales = await db.get(
         isPg
-          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE TO_CHAR(transaction_date, 'YYYY')=$1`
-          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE strftime('%Y', transaction_date)=?`,
-        [yearParam]
+          ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE month LIKE $1`
+          : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS count FROM sales WHERE month LIKE ?`,
+        [`${currentYear}-%`]
       );
       
       const ytdTargets = await db.get(
@@ -701,14 +696,13 @@ export async function createApp() {
         // Previous month
         const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
         const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
-        const prevMonthParam = formatMonth(prevMonth);
-        const prevYearParam = String(prevYear);
+        const prevMonthYearStr = `${prevYear}-${formatMonth(prevMonth)}`;
         
         const salesPrev = await db.get(
           isPg 
-            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
-            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
-          [prevMonthParam, prevYearParam]
+            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE month = $1`
+            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE month = ?`,
+          [prevMonthYearStr]
         );
         
         comparison = {
@@ -720,13 +714,13 @@ export async function createApp() {
         };
       } else if (compare === 'year') {
         // Same month last year
-        const prevYearParam = String(currentYear - 1);
+        const prevMonthYearStr = `${currentYear - 1}-${monthParam}`;
         
         const salesPrev = await db.get(
           isPg 
-            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2`
-            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=?`,
-          [monthParam, prevYearParam]
+            ? `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE month = $1`
+            : `SELECT COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit FROM sales WHERE month = ?`,
+          [prevMonthYearStr]
         );
         
         comparison = {
@@ -741,9 +735,9 @@ export async function createApp() {
       // Staff leaderboard (top 10 by sales this month)
       const staffLeaderboard = await db.all(
         isPg
-          ? `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE TO_CHAR(transaction_date, 'MM')=$1 AND TO_CHAR(transaction_date, 'YYYY')=$2 AND staff_name IS NOT NULL GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`
-          : `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE strftime('%m', transaction_date)=? AND strftime('%Y', transaction_date)=? AND staff_name IS NOT NULL GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`,
-        [monthParam, yearParam]
+          ? `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE month = $1 AND staff_name IS NOT NULL AND staff_name != '' GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`
+          : `SELECT staff_name, COALESCE(SUM(sales_amount), 0) AS total_sales, COALESCE(SUM(profit_amount), 0) AS total_profit, COUNT(*) AS transaction_count FROM sales WHERE month = ? AND staff_name IS NOT NULL AND staff_name != '' GROUP BY staff_name ORDER BY total_sales DESC LIMIT 10`,
+        [monthYearStr]
       );
       
       res.json({
