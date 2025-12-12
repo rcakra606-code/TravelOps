@@ -123,9 +123,9 @@
   <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 24px; padding: 16px; background: var(--bg-alt); border-radius: 12px; border: 1px solid var(--border-light);">
     <span style="font-weight: 600; color: var(--text-secondary);">📊 Compare with:</span>
     <div style="display: flex; gap: 8px;">
-      <button id="compareNone" class="comparison-btn active" onclick="setComparison('')">Current Only</button>
-      <button id="compareMonth" class="comparison-btn" onclick="setComparison('month')">vs Last Month</button>
-      <button id="compareYear" class="comparison-btn" onclick="setComparison('year')">vs Last Year</button>
+      <button id="compareNone" class="comparison-btn active" data-compare="">Current Only</button>
+      <button id="compareMonth" class="comparison-btn" data-compare="month">vs Last Month</button>
+      <button id="compareYear" class="comparison-btn" data-compare="year">vs Last Year</button>
     </div>
     <span id="comparisonLabel" style="margin-left: auto; font-size: 14px; color: var(--text-secondary);"></span>
   </div>

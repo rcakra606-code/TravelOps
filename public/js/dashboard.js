@@ -1365,6 +1365,14 @@ window.addEventListener('DOMContentLoaded', () => {
   
   renderCharts();
   loadDashboardSummary(); // Load enhanced dashboard summary
+  
+  // Wire up comparison buttons (CSP-compliant)
+  document.querySelectorAll('.comparison-btn[data-compare]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      window.setComparison(btn.dataset.compare);
+    });
+  });
+  
   setInterval(renderCharts, 30000);
   if (getUser().type === 'admin') loadActivity();
   
