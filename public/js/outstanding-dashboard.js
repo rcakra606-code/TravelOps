@@ -515,18 +515,5 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Load data
   await loadOutstandingData();
   
-  // Dark mode toggle
-  const savedTheme = localStorage.getItem('theme') || 'light';
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  const toggleBtn = el('darkModeToggle');
-  if (toggleBtn) {
-    toggleBtn.textContent = savedTheme === 'dark' ? '☀️' : '🌙';
-    toggleBtn.addEventListener('click', () => {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
-      const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('theme', newTheme);
-      toggleBtn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
-    });
-  }
+  // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
 });
