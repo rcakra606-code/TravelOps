@@ -11,10 +11,16 @@ const isReportsPage = window.location.pathname.includes('reports-dashboard');
 
 /* === GLOBAL HELPERS (local to this module) === */
 const el = id => document.getElementById(id);
-// Use globals from auth-common.js
-const getUser = window.getUser;
-const api = window.api;
-const getHeaders = window.getHeaders;
+// Define helpers locally to avoid timing issues with script loading
+const getUser = () => JSON.parse(localStorage.getItem('user') || '{}');
+const api = p => p.startsWith('/') ? p : '/' + p;
+const getHeaders = (json = true) => {
+  const h = {};
+  const token = localStorage.getItem('token');
+  if (token) h['Authorization'] = 'Bearer ' + token;
+  if (json) h['Content-Type'] = 'application/json';
+  return h;
+};
 
 // Token refresh & fetchJson now provided by auth-common.js
 // Keep local formatting helpers only
