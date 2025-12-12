@@ -5,8 +5,11 @@
 
 /* === CONFIGURATION === */
 const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity = auto logout
+const INACTIVITY_WARNING = 28 * 60 * 1000; // Show warning at 28 minutes (2 mins before logout)
 const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes if active
 const TOKEN_REFRESH_THRESHOLD = 10 * 60 * 1000; // Refresh if token is older than 10 minutes
+
+let sessionWarningShown = false; // Track if warning has been shown
 
 /* === AUTHENTICATION CHECK (on DOM ready, not immediately) === */
 let authCheckPassed = false;
@@ -168,6 +171,12 @@ function handleSessionExpired() {
 function checkInactivity() {
   const idleTime = Date.now() - lastActivityTime;
   
+  // Show warning 2 minutes before logout
+  if (idleTime > INACTIVITY_WARNING && !sessionWarningShown) {
+    sessionWarningShown = true;
+    showSessionWarning();
+  }
+  
   if (idleTime > INACTIVITY_TIMEOUT) {
     console.warn('User inactive for 30 minutes, logging out...');
     localStorage.clear();
@@ -179,6 +188,64 @@ function checkInactivity() {
     return true;
   }
   return false;
+}
+
+/**
+ * Show session timeout warning with countdown
+ */
+function showSessionWarning() {
+  const warningOverlay = document.createElement('div');
+  warningOverlay.id = 'sessionWarningOverlay';
+  warningOverlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  `;
+  
+  const remainingMs = INACTIVITY_TIMEOUT - (Date.now() - lastActivityTime);
+  let remainingSecs = Math.ceil(remainingMs / 1000);
+  
+  warningOverlay.innerHTML = `
+    <div style="background: white; padding: 32px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size: 48px; margin-bottom: 16px;">⏰</div>
+      <h3 style="margin: 0 0 12px 0; color: #111827; font-size: 20px;">Session Timeout Warning</h3>
+      <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 15px;">You will be logged out due to inactivity in:</p>
+      <div id="sessionCountdown" style="font-size: 36px; font-weight: bold; color: #dc2626; margin: 16px 0;">${remainingSecs}s</div>
+      <button id="sessionStayBtn" style="background: #2563eb; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
+        Stay Logged In
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(warningOverlay);
+  
+  // Countdown timer
+  const countdownInterval = setInterval(() => {
+    remainingSecs--;
+    const countdownEl = document.getElementById('sessionCountdown');
+    if (countdownEl) {
+      countdownEl.textContent = `${remainingSecs}s`;
+    }
+    if (remainingSecs <= 0) {
+      clearInterval(countdownInterval);
+    }
+  }, 1000);
+  
+  // Stay logged in button
+  document.getElementById('sessionStayBtn').addEventListener('click', () => {
+    clearInterval(countdownInterval);
+    lastActivityTime = Date.now();
+    sessionWarningShown = false;
+    warningOverlay.remove();
+    toast.success('Session extended. You are still logged in.');
+  });
 }
 
 /**

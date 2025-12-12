@@ -1702,6 +1702,163 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
+  
+  // Show admin nav button for admins
+  const user = getUser();
+  if (user.type === 'admin') {
+    const adminNavBtn = el('adminNavBtn');
+    if (adminNavBtn) adminNavBtn.style.display = 'block';
+  }
+  
+  // Admin section handlers
+  const refreshStatsBtn = el('refreshSystemStats');
+  const refreshLogsBtn = el('refreshActivityLogs');
+  const activitySearch = el('activitySearch');
+  const activityFilter = el('activityFilter');
+  
+  if (refreshStatsBtn) refreshStatsBtn.addEventListener('click', loadSystemStats);
+  if (refreshLogsBtn) refreshLogsBtn.addEventListener('click', loadActivityLogs);
+  if (activitySearch) activitySearch.addEventListener('input', filterActivityLogs);
+  if (activityFilter) activityFilter.addEventListener('change', filterActivityLogs);
 });
+
+// === ADMIN SECTION FUNCTIONS ===
+let activityLogsData = [];
+
+async function loadSystemStats() {
+  const loading = el('systemStatsLoading');
+  const content = el('systemStatsContent');
+  
+  if (loading) loading.style.display = 'block';
+  if (content) content.style.display = 'none';
+  
+  try {
+    const data = await fetchJson('/api/system/stats');
+    
+    // Update UI
+    if (el('statTotalUsers')) el('statTotalUsers').textContent = data.counts?.users || 0;
+    if (el('statActiveUsers')) el('statActiveUsers').textContent = data.activeUsers24h || 0;
+    if (el('statLockedUsers')) el('statLockedUsers').textContent = data.lockedUsers || 0;
+    if (el('statTotalSales')) el('statTotalSales').textContent = data.counts?.sales || 0;
+    if (el('statTotalTours')) el('statTotalTours').textContent = data.counts?.tours || 0;
+    if (el('statTotalDocs')) el('statTotalDocs').textContent = data.counts?.documents || 0;
+    
+    // Database info
+    if (el('dbInfo')) {
+      const dbText = data.database?.dialect === 'postgres' 
+        ? 'PostgreSQL' 
+        : `SQLite (${data.database?.sizeMB || '?'} MB)`;
+      el('dbInfo').textContent = dbText;
+    }
+    
+    // Uptime
+    if (el('serverUptime')) {
+      const uptime = data.uptime || 0;
+      const hours = Math.floor(uptime / 3600);
+      const mins = Math.floor((uptime % 3600) / 60);
+      el('serverUptime').textContent = `${hours}h ${mins}m`;
+    }
+    
+    // Recent activity
+    if (el('recentActivity')) {
+      el('recentActivity').textContent = `${data.recentActivity7d || 0} actions`;
+    }
+    
+    if (loading) loading.style.display = 'none';
+    if (content) content.style.display = 'block';
+  } catch (err) {
+    console.error('Failed to load system stats:', err);
+    if (loading) loading.innerHTML = '<p style="color: #dc2626;">Failed to load stats</p>';
+  }
+}
+
+async function loadActivityLogs() {
+  const tbody = el('activityLogsBody');
+  if (!tbody) return;
+  
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 40px;"><div class="loading-spinner"></div></td></tr>';
+  
+  try {
+    activityLogsData = await fetchJson('/api/activity_logs');
+    renderActivityLogs(activityLogsData);
+  } catch (err) {
+    console.error('Failed to load activity logs:', err);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #dc2626;">Failed to load logs</td></tr>';
+  }
+}
+
+function renderActivityLogs(logs) {
+  const tbody = el('activityLogsBody');
+  if (!tbody) return;
+  
+  if (!logs || logs.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No activity logs found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = logs.slice(0, 200).map(log => {
+    const time = log.created_at ? new Date(log.created_at).toLocaleString('id-ID') : '-';
+    const actionBadge = getActionBadge(log.action);
+    return `
+      <tr>
+        <td style="white-space: nowrap; font-size: 13px;">${time}</td>
+        <td><strong>${log.username || '-'}</strong></td>
+        <td>${actionBadge}</td>
+        <td>${log.entity || '-'}</td>
+        <td>${log.record_id || '-'}</td>
+        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.description || ''}">${log.description || '-'}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function getActionBadge(action) {
+  const badges = {
+    'LOGIN': '<span class="badge badge-success">LOGIN</span>',
+    'LOGOUT': '<span class="badge badge-info">LOGOUT</span>',
+    'CREATE': '<span class="badge badge-primary">CREATE</span>',
+    'UPDATE': '<span class="badge badge-warning">UPDATE</span>',
+    'DELETE': '<span class="badge badge-danger">DELETE</span>',
+    'LOCK': '<span class="badge badge-danger">LOCK</span>',
+    'UNLOCK': '<span class="badge badge-success">UNLOCK</span>',
+    'LOGIN_FAIL': '<span class="badge badge-danger">LOGIN_FAIL</span>',
+    'LOCKED': '<span class="badge badge-danger">LOCKED</span>'
+  };
+  return badges[action] || `<span class="badge">${action || '-'}</span>`;
+}
+
+function filterActivityLogs() {
+  const search = (el('activitySearch')?.value || '').toLowerCase();
+  const filter = el('activityFilter')?.value || '';
+  
+  let filtered = activityLogsData;
+  
+  if (filter) {
+    filtered = filtered.filter(log => log.action === filter);
+  }
+  
+  if (search) {
+    filtered = filtered.filter(log => 
+      (log.username || '').toLowerCase().includes(search) ||
+      (log.entity || '').toLowerCase().includes(search) ||
+      (log.description || '').toLowerCase().includes(search)
+    );
+  }
+  
+  renderActivityLogs(filtered);
+}
+
+// Load admin data when section is shown
+const originalShowSection = window.showSection;
+window.showSection = function(section) {
+  if (typeof originalShowSection === 'function') {
+    originalShowSection(section);
+  }
+  
+  if (section === 'admin') {
+    loadSystemStats();
+    loadActivityLogs();
+  }
+};
 
 })(); // End IIFE

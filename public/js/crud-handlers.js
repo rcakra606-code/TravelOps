@@ -36,6 +36,17 @@ let state = {
     users: {},
     telecom: {},
     hotel_bookings: {}
+  },
+  // Selected items for bulk actions
+  selected: {
+    sales: new Set(),
+    tours: new Set(),
+    documents: new Set(),
+    targets: new Set(),
+    regions: new Set(),
+    users: new Set(),
+    telecom: new Set(),
+    hotel_bookings: new Set()
   }
 };
 
@@ -1383,6 +1394,120 @@ function openEditHotelBookingModal(id) {
   }, 100);
 }
 
+/* === BULK SELECT/DELETE HANDLERS === */
+function toggleSelectItem(entity, id) {
+  if (state.selected[entity].has(id)) {
+    state.selected[entity].delete(id);
+  } else {
+    state.selected[entity].add(id);
+  }
+  updateBulkActionsUI(entity);
+  updateSelectAllCheckbox(entity);
+}
+
+function toggleSelectAll(entity) {
+  const filtered = applyFiltersAndSort(entity);
+  const paginated = paginateData(entity, filtered);
+  const allSelected = paginated.every(item => state.selected[entity].has(item.id));
+  
+  if (allSelected) {
+    // Deselect all on current page
+    paginated.forEach(item => state.selected[entity].delete(item.id));
+  } else {
+    // Select all on current page
+    paginated.forEach(item => state.selected[entity].add(item.id));
+  }
+  
+  renderTable(entity);
+  updateBulkActionsUI(entity);
+}
+
+function updateSelectAllCheckbox(entity) {
+  const selectAllCb = document.querySelector(`#selectAll-${entity}`);
+  if (!selectAllCb) return;
+  
+  const filtered = applyFiltersAndSort(entity);
+  const paginated = paginateData(entity, filtered);
+  const allSelected = paginated.length > 0 && paginated.every(item => state.selected[entity].has(item.id));
+  const someSelected = paginated.some(item => state.selected[entity].has(item.id));
+  
+  selectAllCb.checked = allSelected;
+  selectAllCb.indeterminate = someSelected && !allSelected;
+}
+
+function updateBulkActionsUI(entity) {
+  const bulkBar = document.querySelector(`#bulkActions-${entity}`);
+  const count = state.selected[entity].size;
+  
+  if (!bulkBar) return;
+  
+  if (count > 0) {
+    bulkBar.style.display = 'flex';
+    bulkBar.querySelector('.selected-count').textContent = `${count} selected`;
+  } else {
+    bulkBar.style.display = 'none';
+  }
+}
+
+function clearSelection(entity) {
+  state.selected[entity].clear();
+  renderTable(entity);
+  updateBulkActionsUI(entity);
+}
+
+async function bulkDelete(entity) {
+  const count = state.selected[entity].size;
+  if (count === 0) {
+    toast.warning('No items selected');
+    return;
+  }
+  
+  // Check admin-only for sales
+  if (entity === 'sales') {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.type !== 'admin') {
+      toast.error('Access denied: Only admin can delete sales');
+      return;
+    }
+  }
+  
+  const confirmed = await confirmDialog.custom({
+    title: 'Bulk Delete',
+    message: `Are you sure you want to delete ${count} item(s)? This action cannot be undone.`,
+    confirmText: 'Delete All',
+    cancelText: 'Cancel',
+    confirmColor: '#dc2626',
+    icon: '🗑️'
+  });
+  
+  if (!confirmed) return;
+  
+  let deleted = 0;
+  let failed = 0;
+  
+  for (const id of state.selected[entity]) {
+    try {
+      await fetchJson(`/api/${entity}/${id}`, { method: 'DELETE' });
+      deleted++;
+    } catch (err) {
+      failed++;
+      console.error(`Failed to delete ${entity} #${id}:`, err);
+    }
+  }
+  
+  state.selected[entity].clear();
+  
+  if (failed === 0) {
+    toast.success(`Successfully deleted ${deleted} item(s)`);
+  } else {
+    toast.warning(`Deleted ${deleted} item(s), ${failed} failed`);
+  }
+  
+  await loadData(entity);
+  renderTable(entity);
+  updateBulkActionsUI(entity);
+}
+
 /* === DELETE HANDLER === */
 async function deleteItem(entity, id) {
   // Check admin-only for sales
@@ -2104,7 +2229,12 @@ window.crudHandlers = {
   toggleSort,
   openFilterModal,
   resetFilters,
-  applyFilterFromModal
+  applyFilterFromModal,
+  // Bulk actions
+  toggleSelectItem,
+  toggleSelectAll,
+  bulkDelete,
+  clearSelection
 };
 
 // === VIEW-ONLY MODAL ===
@@ -2184,6 +2314,75 @@ function exportCsv(entity) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+// === EXPORT FILTERED DATA TO EXCEL (XLSX) ===
+async function exportExcel(entity) {
+  const filtered = applyFiltersAndSort(entity);
+  if (!filtered.length) {
+    toast.warning('No data to export');
+    return;
+  }
+  
+  // Load SheetJS if not already loaded
+  if (!window.XLSX) {
+    toast.info('Loading Excel library...');
+    await loadScript('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js');
+  }
+  
+  if (!window.XLSX) {
+    toast.error('Failed to load Excel library. Using CSV export instead.');
+    exportCsv(entity);
+    return;
+  }
+  
+  try {
+    // Prepare data - exclude password field
+    const headers = Object.keys(filtered[0]).filter(k => !['password'].includes(k));
+    const data = filtered.map(item => {
+      const row = {};
+      headers.forEach(h => {
+        row[h] = item[h] ?? '';
+      });
+      return row;
+    });
+    
+    // Create workbook and worksheet
+    const ws = window.XLSX.utils.json_to_sheet(data);
+    const wb = window.XLSX.utils.book_new();
+    window.XLSX.utils.book_append_sheet(wb, ws, entity.charAt(0).toUpperCase() + entity.slice(1));
+    
+    // Auto-fit column widths
+    const colWidths = headers.map(h => {
+      const maxLen = Math.max(h.length, ...data.map(row => String(row[h] || '').length));
+      return { wch: Math.min(maxLen + 2, 50) };
+    });
+    ws['!cols'] = colWidths;
+    
+    // Generate and download
+    const filename = `${entity}-export-${new Date().toISOString().slice(0,10)}.xlsx`;
+    window.XLSX.writeFile(wb, filename);
+    toast.success(`Exported ${filtered.length} rows to ${filename}`);
+  } catch (err) {
+    console.error('Excel export failed:', err);
+    toast.error('Excel export failed. Using CSV instead.');
+    exportCsv(entity);
+  }
+}
+
+// Helper to load external scripts
+function loadScript(src) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${src}"]`)) {
+      resolve();
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = src;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
 }
 
 // Wire export buttons after init renders

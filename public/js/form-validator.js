@@ -206,6 +206,129 @@ class FormValidator {
   }
 }
 
+/**
+ * Password Strength Indicator
+ * Shows visual feedback for password strength
+ */
+class PasswordStrengthIndicator {
+  constructor(inputElement, options = {}) {
+    this.input = inputElement;
+    this.options = {
+      minLength: 8,
+      showText: true,
+      ...options
+    };
+    this.indicator = null;
+    this.init();
+  }
+
+  init() {
+    // Create indicator container
+    this.indicator = document.createElement('div');
+    this.indicator.className = 'password-strength-indicator';
+    this.indicator.innerHTML = `
+      <div class="strength-bar-container">
+        <div class="strength-bar"></div>
+      </div>
+      <span class="strength-text"></span>
+    `;
+    this.input.parentNode.insertBefore(this.indicator, this.input.nextSibling);
+    
+    // Add styles if not exist
+    if (!document.getElementById('password-strength-styles')) {
+      const style = document.createElement('style');
+      style.id = 'password-strength-styles';
+      style.textContent = `
+        .password-strength-indicator {
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        .strength-bar-container {
+          flex: 1;
+          height: 6px;
+          background: #e5e7eb;
+          border-radius: 3px;
+          overflow: hidden;
+        }
+        .strength-bar {
+          height: 100%;
+          width: 0;
+          transition: width 0.3s, background 0.3s;
+          border-radius: 3px;
+        }
+        .strength-text {
+          font-size: 12px;
+          font-weight: 500;
+          min-width: 70px;
+        }
+        .strength-weak { background: #ef4444; }
+        .strength-fair { background: #f59e0b; }
+        .strength-good { background: #10b981; }
+        .strength-strong { background: #059669; }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // Listen for input
+    this.input.addEventListener('input', () => this.check());
+  }
+
+  check() {
+    const password = this.input.value;
+    const result = this.evaluate(password);
+    
+    const bar = this.indicator.querySelector('.strength-bar');
+    const text = this.indicator.querySelector('.strength-text');
+    
+    bar.className = 'strength-bar';
+    bar.style.width = `${result.score * 25}%`;
+    bar.classList.add(`strength-${result.level}`);
+    
+    text.textContent = result.label;
+    text.style.color = result.color;
+  }
+
+  evaluate(password) {
+    let score = 0;
+    
+    if (!password) {
+      return { score: 0, level: 'weak', label: '', color: '#6b7280' };
+    }
+    
+    // Length checks
+    if (password.length >= 8) score++;
+    if (password.length >= 12) score++;
+    
+    // Character variety
+    if (/[a-z]/.test(password)) score += 0.5;
+    if (/[A-Z]/.test(password)) score += 0.5;
+    if (/[0-9]/.test(password)) score += 0.5;
+    if (/[^a-zA-Z0-9]/.test(password)) score += 0.5;
+    
+    // Determine level
+    let level, label, color;
+    if (score <= 1) {
+      level = 'weak'; label = 'Weak'; color = '#ef4444';
+    } else if (score <= 2) {
+      level = 'fair'; label = 'Fair'; color = '#f59e0b';
+    } else if (score <= 3) {
+      level = 'good'; label = 'Good'; color = '#10b981';
+    } else {
+      level = 'strong'; label = 'Strong'; color = '#059669';
+    }
+    
+    return { score: Math.min(score, 4), level, label, color };
+  }
+
+  destroy() {
+    if (this.indicator) {
+      this.indicator.remove();
+    }
+  }
+}
+
 // Shake animation
 const style = document.createElement('style');
 style.textContent = `
@@ -220,4 +343,5 @@ document.head.appendChild(style);
 // Export
 if (typeof window !== 'undefined') {
   window.FormValidator = FormValidator;
+  window.PasswordStrengthIndicator = PasswordStrengthIndicator;
 }

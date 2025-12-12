@@ -706,6 +706,71 @@ export async function createApp() {
 
   app.get('/api/activity_logs', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const isPg = db.dialect === 'postgres'; const sql = isPg ? 'SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 500' : 'SELECT * FROM activity_logs ORDER BY datetime(created_at) DESC LIMIT 500'; const rows = await db.all(sql); res.json(rows); });
 
+  // System Health Stats (Admin only)
+  app.get('/api/system/stats', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const isPg = db.dialect === 'postgres';
+      
+      // Get table counts
+      const counts = {};
+      const tables = ['users', 'sales', 'tours', 'documents', 'targets', 'telecom', 'hotel_bookings', 'regions', 'activity_logs'];
+      for (const table of tables) {
+        try {
+          const result = await db.get(`SELECT COUNT(*) as count FROM ${table}`);
+          counts[table] = result?.count || 0;
+        } catch { counts[table] = 0; }
+      }
+      
+      // Get active users (logged in last 24 hours from activity logs)
+      const activeUsersResult = await db.get(
+        isPg
+          ? `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '24 hours'`
+          : `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-24 hours')`
+      );
+      
+      // Get locked users count
+      const lockedUsersResult = await db.get(
+        isPg
+          ? `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND locked_until > NOW()`
+          : `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND datetime(locked_until) > datetime('now')`
+      );
+      
+      // Get recent activity count (last 7 days)
+      const recentActivityResult = await db.get(
+        isPg
+          ? `SELECT COUNT(*) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '7 days'`
+          : `SELECT COUNT(*) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-7 days')`
+      );
+      
+      // Get database info
+      let dbInfo = { dialect: db.dialect };
+      if (!isPg) {
+        try {
+          const dbPath = path.resolve('data/travelops.db');
+          if (fs.existsSync(dbPath)) {
+            const stats = fs.statSync(dbPath);
+            dbInfo.sizeBytes = stats.size;
+            dbInfo.sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+          }
+        } catch {}
+      }
+      
+      res.json({
+        counts,
+        activeUsers24h: activeUsersResult?.count || 0,
+        lockedUsers: lockedUsersResult?.count || 0,
+        recentActivity7d: recentActivityResult?.count || 0,
+        database: dbInfo,
+        serverTime: new Date().toISOString(),
+        uptime: process.uptime()
+      });
+    } catch (err) {
+      logger.error({ err }, 'System stats error');
+      res.status(500).json({ error: 'Failed to get system stats' });
+    }
+  });
+
   app.post('/api/users/:username/unlock', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]); if (!user) return res.status(404).json({ error:'User not found' }); await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?',[user.id]); await logActivity(req.user.username,'UNLOCK','users',user.id,'Account unlocked by admin'); res.json({ ok:true }); });
 
   // Lock user account (Admin only)
