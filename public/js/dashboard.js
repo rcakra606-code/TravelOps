@@ -3,6 +3,9 @@
    Extracted to external module for CSP compliance
    ========================================================= */
 
+(function() {
+'use strict';
+
 // Authentication now handled globally by auth-common.js
 // api, getHeaders, fetchJson provided by auth-common.js
 
@@ -1757,3 +1760,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+})(); // End IIFE
