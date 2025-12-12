@@ -659,8 +659,8 @@ export async function createApp() {
       // Upcoming cruise (next 30 days)
       const upcomingCruise = await db.get(
         isPg
-          ? `SELECT COUNT(*) AS count FROM cruise WHERE embark_date >= $1 AND embark_date <= $2`
-          : `SELECT COUNT(*) AS count FROM cruise WHERE embark_date >= ? AND embark_date <= ?`,
+          ? `SELECT COUNT(*) AS count FROM cruise WHERE sailing_start >= $1 AND sailing_start <= $2`
+          : `SELECT COUNT(*) AS count FROM cruise WHERE sailing_start >= ? AND sailing_start <= ?`,
         [todayStr, thirtyDaysLater]
       );
       
