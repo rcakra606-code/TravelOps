@@ -184,8 +184,7 @@ export async function createApp() {
     if (user.type !== 'admin' && user.locked_until) {
       const lockedUntilMs = Date.parse(user.locked_until);
       if (!isNaN(lockedUntilMs) && lockedUntilMs > now) {
-        const minutesLeft = Math.ceil((lockedUntilMs - now)/60000);
-        return res.status(423).json({ error: `Akun terkunci. Coba lagi dalam ${minutesLeft} menit` });
+        return res.status(423).json({ error: 'Akun terkunci. Hubungi administrator untuk membuka kunci akun Anda.' });
       }
     }
     const valid = await bcrypt.compare(password, user.password);
@@ -193,11 +192,12 @@ export async function createApp() {
       if (user.type !== 'admin') {
         const attempts = (user.failed_attempts || 0) + 1;
         let lockedUntil = null;
-        if (attempts >= 3) lockedUntil = new Date(Date.now() + LOCKOUT_MINUTES*60000).toISOString();
+        // Lock indefinitely after 3 failed attempts - only admin can unlock
+        if (attempts >= 3) lockedUntil = '9999-12-31T23:59:59.000Z';
         await db.run('UPDATE users SET failed_attempts=?, locked_until=? WHERE id=?', [attempts, lockedUntil, user.id]);
         if (lockedUntil) {
           await logActivity(username, 'LOCKED', 'users', user.id, `Account locked after ${attempts} failed attempts`);
-          return res.status(423).json({ error: `Akun terkunci selama ${LOCKOUT_MINUTES} menit` });
+          return res.status(423).json({ error: 'Akun terkunci karena 3x salah password. Hubungi administrator untuk membuka kunci.' });
         }
       }
       await logActivity(username, 'LOGIN_FAIL', 'auth', user.id, 'Bad password');
