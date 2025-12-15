@@ -474,11 +474,14 @@
 <script src="/js/utils.js"></script>
 <script src="/js/confirm-dialog.js"></script>
 <script src="/js/mobile-menu.js"></script>
-<script type="module" src="/js/auth-common.js"></script>
-<script src="/js/logout-handler.js"></script>
+<script type="module" src="/js/auth-common.js?v=20251215"></script>
+<script src="/js/logout-handler.js?v=20251215"></script>
 <script src="/js/app-enhancements.js"></script>
 <script type="module">
-  import { getUser, fetchJson, logout } from '/js/auth-common.js';
+  import { getUser, fetchJson, startTokenRefresh } from '/js/auth-common.js?v=20251215';
+  
+  // Start token refresh system
+  startTokenRefresh();
   
   // Make available globally
   window.getUser = getUser;
@@ -859,14 +862,24 @@
     // Keep staff_name as current user
     data.staff_name = currentUser.name || currentUser.username;
     
-    // Convert numeric fields
-    ['tour_price', 'sales_amount', 'discount_amount', 'total_nominal_sales', 'profit_amount', 'jumlah_peserta', 'region_id'].forEach(field => {
+    // Convert numeric fields - handle Indonesian currency format
+    ['tour_price', 'sales_amount', 'discount_amount', 'total_nominal_sales', 'profit_amount'].forEach(field => {
       if (data[field]) {
-        data[field] = parseFloat(data[field]) || 0;
+        // Remove currency formatting (Rp, dots, etc)
+        const cleanValue = String(data[field]).replace(/[^0-9,-]/g, '').replace(',', '.');
+        data[field] = parseFloat(cleanValue) || 0;
+      }
+    });
+    
+    // Convert integer fields
+    ['jumlah_peserta', 'region_id'].forEach(field => {
+      if (data[field]) {
+        data[field] = parseInt(data[field]) || 0;
       }
     });
     
     try {
+      // Use same API endpoint as tours-dashboard.js for consistency
       await fetchJson(`/api/tours/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -875,6 +888,8 @@
       
       toast.success('Tour updated successfully!');
       closeModal();
+      
+      // Reload data to ensure sync with database
       await loadData();
       
     } catch (err) {

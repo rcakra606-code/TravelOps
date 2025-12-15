@@ -441,7 +441,7 @@ function getUser() {
   return JSON.parse(localStorage.getItem('user') || '{}');
 }
 
-// Export functions globally
+// Export functions globally (for non-module scripts)
 window.api = api;
 window.getHeaders = getHeaders;
 window.fetchJson = fetchJson;
@@ -453,6 +453,21 @@ window.refreshTokenIfNeeded = refreshTokenIfNeeded;
 window.startTokenRefresh = startTokenRefresh;
 window.checkInactivity = checkInactivity;
 window.handleSessionExpired = handleSessionExpired;
+
+// ES Module exports (for module scripts using import)
+export { 
+  api, 
+  getHeaders, 
+  fetchJson, 
+  formatCurrency, 
+  formatNumberWithCommas, 
+  parseFormattedNumber, 
+  getUser, 
+  refreshTokenIfNeeded, 
+  startTokenRefresh, 
+  checkInactivity, 
+  handleSessionExpired 
+};
 
 // Auto-start token refresh when module loads (after auth check)
 if (document.readyState === 'loading') {

@@ -4,24 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Settings | TravelOps</title>
-  <link rel="stylesheet" href="css/styles.css">
-  <link rel="stylesheet" href="css/dashboard.css">
-  <link rel="stylesheet" href="css/dark-mode.css">
-  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/dark-mode.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <script src="/js/theme-toggle.js"></script>
   <style>
-    .settings-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
     .settings-tabs {
       display: flex;
       gap: 4px;
       background: var(--bg-alt, #f3f4f6);
-      padding: 5px;
-      border-radius: 10px;
-      margin-bottom: 24px;
+      padding: 8px;
+      border-radius: 12px 12px 0 0;
+      flex-wrap: wrap;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
     }
     
     .settings-tab {
@@ -48,10 +47,7 @@
     
     .settings-panel {
       display: none;
-      background: var(--card, #fff);
-      border-radius: 12px;
       padding: 24px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
     
     .settings-panel.active {
@@ -431,26 +427,46 @@
   </style>
 </head>
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header class="dashboard-header">
-      <div class="header-left">
-        <div class="brand">
-          <div class="brand-logo">⚙️</div>
-          <div class="brand-text">
-            <div class="brand-name">Admin Settings</div>
-            <div class="brand-subtitle">System Configuration</div>
-          </div>
-        </div>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/my-tours.html">📋 My Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a href="/admin-settings.html" class="active">⚙️ Admin Settings</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>⚙️ Admin Settings</h2>
+        <div class="small">System configuration and management</div>
       </div>
-      <div class="header-right">
-        <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
-        <a href="sales-dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
-      </div>
-    </header>
+    </div>
 
     <!-- Main Content -->
-    <main class="settings-container">
+    <div class="card" style="padding: 0;">
       <!-- Settings Tabs -->
       <div class="settings-tabs">
         <button class="settings-tab active" data-tab="general">⚙️ General</button>
@@ -972,12 +988,51 @@
           </div>
         </div>
       </div>
-    </main>
-  </div>
+    </div><!-- End card -->
+  </main>
+</div><!-- End app -->
 
-  <script src="js/toast.js"></script>
-  <script src="js/theme-toggle.js"></script>
-  <script src="js/confirm-dialog.js"></script>
+  <script src="/js/toast.js"></script>
+  <script src="/js/mobile-menu.js"></script>
+  <script type="module" src="/js/auth-common.js?v=20251215"></script>
+  <script src="/js/logout-handler.js?v=20251215"></script>
+  <script src="/js/confirm-dialog.js"></script>
+  <script type="module">
+    import { getUser, fetchJson, startTokenRefresh } from '/js/auth-common.js?v=20251215';
+    
+    // Start token refresh system
+    startTokenRefresh();
+    
+    // Make fetchJson available globally for this page
+    window.fetchJson = fetchJson;
+    
+    // Initialize user info and auth check
+    document.addEventListener('DOMContentLoaded', () => {
+      // Check authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      try {
+        const user = getUser();
+        // Admin only page
+        if (user.type !== 'admin') {
+          window.location.href = '/single-dashboard.html';
+          return;
+        }
+        document.getElementById('userName').textContent = user.name || user.username;
+        document.getElementById('userRole').textContent = 'Administrator';
+        
+        // Load settings after auth verified
+        loadSettings();
+      } catch (e) {
+        console.error('Auth error:', e);
+        window.location.href = '/login.html';
+      }
+    });
+  </script>
   <script>
     // Tab switching
     document.querySelectorAll('.settings-tab').forEach(tab => {
@@ -1348,9 +1403,8 @@
       });
     }
 
-    // Initialize
+    // Initialize dropzones (settings loaded from module script above)
     document.addEventListener('DOMContentLoaded', () => {
-      loadSettings();
       setupDropzone('importDropzone', 'importFile');
       setupDropzone('restoreDropzone', 'restoreFile');
     });
