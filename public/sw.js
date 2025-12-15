@@ -1,5 +1,5 @@
 // TravelOps Service Worker
-const CACHE_NAME = 'travelops-v1';
+const CACHE_NAME = 'travelops-v2';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',
@@ -46,8 +46,22 @@ self.addEventListener('fetch', (event) => {
   // Skip non-GET requests
   if (event.request.method !== 'GET') return;
   
+  // Skip non-http(s) URLs (chrome-extension://, etc)
+  const url = new URL(event.request.url);
+  if (!url.protocol.startsWith('http')) {
+    return;
+  }
+  
   // Skip API calls - always go to network
   if (event.request.url.includes('/api/')) {
+    return;
+  }
+  
+  // Skip external resources that may have CORS/CSP issues
+  const origin = self.location.origin;
+  if (!event.request.url.startsWith(origin) && 
+      !event.request.url.includes('cdn.jsdelivr.net') && 
+      !event.request.url.includes('cdnjs.cloudflare.com')) {
     return;
   }
   
