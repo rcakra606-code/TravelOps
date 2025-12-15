@@ -102,6 +102,7 @@
       <button data-section="regions">🌍 Regions</button>
       <button data-section="users">👥 Users</button>
       <a href="/reports-dashboard.html" id="reportsLink" style="display: none;">📊 Reports</a>
+      <a href="/admin-settings.html" id="adminSettingsLink" style="display: none;">⚙️ Admin Settings</a>
       <button data-section="admin" id="adminNavBtn" style="display: none;">🛡️ Admin</button>
       <button data-section="profile">⚙️ Profile</button>
       <a id="logoutLink" href="/logout.html">🚪 Logout</a>
@@ -914,6 +915,7 @@
 <script src="/js/quick-view.js"></script>
 <script src="/js/dashboard-customizer.js"></script>
 <script src="/js/advanced-search.js"></script>
+<script src="/js/enhanced-search-filter.js"></script>
 <script src="/js/form-builder.js"></script>
 <script src="/js/form-validator.js"></script>
 <script src="/js/crud-modal.js"></script>
@@ -931,5 +933,19 @@
 
 <!-- Removed logout confirmation modal; using direct navigation to /logout.html -->
 
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.type === 'admin') {
+          const adminLink = document.getElementById('adminSettingsLink');
+          if (adminLink) adminLink.style.display = 'block';
+        }
+      }
+    } catch (e) {}
+  });
+</script>
 </body>
 </html>

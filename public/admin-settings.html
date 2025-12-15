@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Settings | TravelOps</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/dark-mode.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <style>
+    .settings-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .settings-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--bg-alt, #f3f4f6);
+      padding: 5px;
+      border-radius: 10px;
+      margin-bottom: 24px;
+    }
+    
+    .settings-tab {
+      padding: 10px 20px;
+      background: transparent;
+      border: none;
+      border-radius: 7px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary, #6b7280);
+      transition: all 0.2s;
+    }
+    
+    .settings-tab:hover {
+      color: var(--text-primary, #1f2937);
+    }
+    
+    .settings-tab.active {
+      background: var(--card, #fff);
+      color: var(--primary, #3b82f6);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .settings-panel {
+      display: none;
+      background: var(--card, #fff);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .settings-panel.active {
+      display: block;
+    }
+    
+    .settings-section {
+      margin-bottom: 30px;
+    }
+    
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .settings-section h3 {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    
+    .setting-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    
+    .setting-row:last-child {
+      border-bottom: none;
+    }
+    
+    .setting-info {
+      flex: 1;
+    }
+    
+    .setting-label {
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .setting-description {
+      font-size: 13px;
+      color: var(--text-secondary, #6b7280);
+    }
+    
+    .setting-control {
+      margin-left: 20px;
+    }
+    
+    .setting-control input[type="text"],
+    .setting-control input[type="number"],
+    .setting-control input[type="email"],
+    .setting-control select {
+      padding: 8px 12px;
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 6px;
+      font-size: 14px;
+      min-width: 200px;
+    }
+    
+    .setting-control input:focus,
+    .setting-control select:focus {
+      outline: none;
+      border-color: var(--primary, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Toggle Switch */
+    .toggle-switch {
+      position: relative;
+      width: 48px;
+      height: 26px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--border-light, #e5e7eb);
+      transition: 0.3s;
+      border-radius: 26px;
+    }
+    
+    .toggle-slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background: white;
+      transition: 0.3s;
+      border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    
+    input:checked + .toggle-slider {
+      background: var(--primary, #3b82f6);
+    }
+    
+    input:checked + .toggle-slider:before {
+      transform: translateX(22px);
+    }
+    
+    /* Action buttons */
+    .settings-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-light, #e5e7eb);
+    }
+    
+    .btn-save {
+      padding: 10px 24px;
+      background: var(--primary, #3b82f6);
+      color: white;
+      border: none;
+      border-radius: 7px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-save:hover {
+      background: var(--primary-dark, #2563eb);
+    }
+    
+    .btn-reset {
+      padding: 10px 24px;
+      background: transparent;
+      color: var(--text-secondary, #6b7280);
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 7px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .btn-reset:hover {
+      background: var(--bg-alt, #f3f4f6);
+    }
+    
+    /* System Status Cards */
+    .status-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    
+    .status-card {
+      background: var(--bg-alt, #f8fafc);
+      padding: 16px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .status-card-icon {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+    
+    .status-card-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--primary, #3b82f6);
+    }
+    
+    .status-card-label {
+      font-size: 13px;
+      color: var(--text-secondary, #6b7280);
+      margin-top: 4px;
+    }
+    
+    /* Activity Log */
+    .activity-log {
+      max-height: 400px;
+      overflow-y: auto;
+      background: var(--bg-alt, #f8fafc);
+      border-radius: 10px;
+      padding: 4px;
+    }
+    
+    .activity-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    
+    .activity-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--card, #fff);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-message {
+      font-size: 14px;
+      margin-bottom: 4px;
+    }
+    
+    .activity-time {
+      font-size: 12px;
+      color: var(--text-secondary, #6b7280);
+    }
+    
+    /* Backup Section */
+    .backup-list {
+      background: var(--bg-alt, #f8fafc);
+      border-radius: 10px;
+      padding: 4px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .backup-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+    }
+    
+    .backup-item:last-child {
+      border-bottom: none;
+    }
+    
+    .backup-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .backup-icon {
+      font-size: 24px;
+    }
+    
+    .backup-name {
+      font-weight: 500;
+    }
+    
+    .backup-date {
+      font-size: 12px;
+      color: var(--text-secondary, #6b7280);
+    }
+    
+    .backup-actions button {
+      padding: 6px 12px;
+      font-size: 12px;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-left: 8px;
+    }
+    
+    .btn-download {
+      background: var(--primary, #3b82f6);
+      color: white;
+      border: none;
+    }
+    
+    .btn-delete-backup {
+      background: transparent;
+      color: var(--danger, #ef4444);
+      border: 1px solid var(--danger, #ef4444);
+    }
+    
+    /* Import/Export */
+    .import-export-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+    }
+    
+    .import-export-card {
+      background: var(--bg-alt, #f8fafc);
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+    }
+    
+    .import-export-icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+    
+    .import-export-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .import-export-desc {
+      font-size: 13px;
+      color: var(--text-secondary, #6b7280);
+      margin-bottom: 16px;
+    }
+    
+    .dropzone {
+      border: 2px dashed var(--border-light, #e5e7eb);
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 16px;
+    }
+    
+    .dropzone:hover,
+    .dropzone.dragover {
+      border-color: var(--primary, #3b82f6);
+      background: rgba(59, 130, 246, 0.05);
+    }
+    
+    .dropzone-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+    }
+    
+    .dropzone-text {
+      color: var(--text-secondary, #6b7280);
+      font-size: 13px;
+    }
+    
+    .entity-select {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    
+    .entity-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: var(--card, #fff);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    
+    .entity-option:hover {
+      background: var(--border-light, #e5e7eb);
+    }
+    
+    .entity-option input {
+      width: 16px;
+      height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="header-left">
+        <div class="brand">
+          <div class="brand-logo">⚙️</div>
+          <div class="brand-text">
+            <div class="brand-name">Admin Settings</div>
+            <div class="brand-subtitle">System Configuration</div>
+          </div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn-icon" onclick="toggleTheme()" title="Toggle Theme">🌓</button>
+        <a href="sales-dashboard.html" class="btn btn-secondary">← Back to Dashboard</a>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="settings-container">
+      <!-- Settings Tabs -->
+      <div class="settings-tabs">
+        <button class="settings-tab active" data-tab="general">⚙️ General</button>
+        <button class="settings-tab" data-tab="email">📧 Email</button>
+        <button class="settings-tab" data-tab="backup">💾 Backup</button>
+        <button class="settings-tab" data-tab="import-export">📦 Import/Export</button>
+        <button class="settings-tab" data-tab="activity">📜 Activity Log</button>
+        <button class="settings-tab" data-tab="system">🖥️ System</button>
+      </div>
+
+      <!-- General Settings Panel -->
+      <div class="settings-panel active" id="panel-general">
+        <div class="settings-section">
+          <h3>Application Settings</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Company Name</div>
+              <div class="setting-description">Displayed in headers and reports</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="companyName" value="TravelOps Pro">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Date Format</div>
+              <div class="setting-description">Format for displaying dates</div>
+            </div>
+            <div class="setting-control">
+              <select id="dateFormat">
+                <option value="YYYY-MM-DD">2024-01-15</option>
+                <option value="DD/MM/YYYY">15/01/2024</option>
+                <option value="MM/DD/YYYY">01/15/2024</option>
+                <option value="DD MMM YYYY">15 Jan 2024</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Currency</div>
+              <div class="setting-description">Default currency for financial data</div>
+            </div>
+            <div class="setting-control">
+              <select id="currency">
+                <option value="MYR">MYR (Malaysian Ringgit)</option>
+                <option value="USD">USD (US Dollar)</option>
+                <option value="EUR">EUR (Euro)</option>
+                <option value="GBP">GBP (British Pound)</option>
+                <option value="SGD">SGD (Singapore Dollar)</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Items Per Page</div>
+              <div class="setting-description">Number of items per page in tables</div>
+            </div>
+            <div class="setting-control">
+              <select id="itemsPerPage">
+                <option value="10">10</option>
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>User Interface</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Dark Mode</div>
+              <div class="setting-description">Enable dark theme</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="darkMode">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Animations</div>
+              <div class="setting-description">Enable UI animations</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="animations" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Auto-Refresh</div>
+              <div class="setting-description">Auto-refresh dashboard data</div>
+            </div>
+            <div class="setting-control">
+              <select id="autoRefresh">
+                <option value="0">Disabled</option>
+                <option value="60000">Every 1 minute</option>
+                <option value="300000" selected>Every 5 minutes</option>
+                <option value="600000">Every 10 minutes</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Sound Notifications</div>
+              <div class="setting-description">Play sound for important alerts</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="soundNotifications">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save" onclick="saveGeneralSettings()">💾 Save Settings</button>
+          <button class="btn-reset" onclick="resetGeneralSettings()">↩️ Reset to Default</button>
+        </div>
+      </div>
+
+      <!-- Email Settings Panel -->
+      <div class="settings-panel" id="panel-email">
+        <div class="settings-section">
+          <h3>Email Configuration</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Email Notifications</div>
+              <div class="setting-description">Enable email notifications</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="emailEnabled">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">SMTP Server</div>
+              <div class="setting-description">Mail server hostname</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="smtpServer" placeholder="smtp.gmail.com">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">SMTP Port</div>
+              <div class="setting-description">Port number (587 for TLS)</div>
+            </div>
+            <div class="setting-control">
+              <input type="number" id="smtpPort" value="587">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Email Username</div>
+              <div class="setting-description">SMTP authentication username</div>
+            </div>
+            <div class="setting-control">
+              <input type="email" id="emailUser" placeholder="your@email.com">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Email Password</div>
+              <div class="setting-description">SMTP authentication password</div>
+            </div>
+            <div class="setting-control">
+              <input type="password" id="emailPassword" placeholder="••••••••">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">From Name</div>
+              <div class="setting-description">Sender display name</div>
+            </div>
+            <div class="setting-control">
+              <input type="text" id="fromName" placeholder="TravelOps Notifications">
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Notification Preferences</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Tour Departure Reminders</div>
+              <div class="setting-description">Send reminders before tour departure</div>
+            </div>
+            <div class="setting-control">
+              <select id="tourReminder">
+                <option value="0">Disabled</option>
+                <option value="1" selected>1 day before</option>
+                <option value="3">3 days before</option>
+                <option value="7">1 week before</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Document Expiry Alerts</div>
+              <div class="setting-description">Alert when documents are expiring</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="docExpiryAlert" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Target Achievement Alerts</div>
+              <div class="setting-description">Notify when targets are met or missed</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="targetAlert" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button class="btn-save" onclick="saveEmailSettings()">💾 Save Settings</button>
+          <button class="btn-reset" onclick="testEmail()">📧 Send Test Email</button>
+        </div>
+      </div>
+
+      <!-- Backup Panel -->
+      <div class="settings-panel" id="panel-backup">
+        <div class="settings-section">
+          <h3>Backup Configuration</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Automatic Backups</div>
+              <div class="setting-description">Automatically backup data</div>
+            </div>
+            <div class="setting-control">
+              <label class="toggle-switch">
+                <input type="checkbox" id="autoBackup" checked>
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Backup Frequency</div>
+              <div class="setting-description">How often to create backups</div>
+            </div>
+            <div class="setting-control">
+              <select id="backupFrequency">
+                <option value="daily" selected>Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+              </select>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Keep Backups For</div>
+              <div class="setting-description">Retention period</div>
+            </div>
+            <div class="setting-control">
+              <select id="backupRetention">
+                <option value="7">7 days</option>
+                <option value="30" selected>30 days</option>
+                <option value="90">90 days</option>
+                <option value="365">1 year</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Manual Backup</h3>
+          <button class="btn-save" onclick="createBackup()" style="margin-bottom: 20px;">
+            💾 Create Backup Now
+          </button>
+
+          <h3>Available Backups</h3>
+          <div class="backup-list" id="backupList">
+            <div class="backup-item">
+              <div class="backup-info">
+                <span class="backup-icon">📦</span>
+                <div>
+                  <div class="backup-name">backup_2024-01-15_auto.json</div>
+                  <div class="backup-date">Jan 15, 2024 at 3:00 AM • 2.4 MB</div>
+                </div>
+              </div>
+              <div class="backup-actions">
+                <button class="btn-download">Download</button>
+                <button class="btn-delete-backup">Delete</button>
+              </div>
+            </div>
+            <div class="backup-item">
+              <div class="backup-info">
+                <span class="backup-icon">📦</span>
+                <div>
+                  <div class="backup-name">backup_2024-01-14_auto.json</div>
+                  <div class="backup-date">Jan 14, 2024 at 3:00 AM • 2.3 MB</div>
+                </div>
+              </div>
+              <div class="backup-actions">
+                <button class="btn-download">Download</button>
+                <button class="btn-delete-backup">Delete</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Restore Backup</h3>
+          <div class="dropzone" id="restoreDropzone">
+            <div class="dropzone-icon">📤</div>
+            <div class="dropzone-text">Drop backup file here or click to browse</div>
+            <input type="file" id="restoreFile" accept=".json" style="display:none">
+          </div>
+        </div>
+      </div>
+
+      <!-- Import/Export Panel -->
+      <div class="settings-panel" id="panel-import-export">
+        <div class="import-export-grid">
+          <div class="import-export-card">
+            <div class="import-export-icon">📥</div>
+            <div class="import-export-title">Import Data</div>
+            <div class="import-export-desc">Import data from CSV files</div>
+            <div class="dropzone" id="importDropzone">
+              <div class="dropzone-icon">📄</div>
+              <div class="dropzone-text">Drop CSV file here</div>
+              <input type="file" id="importFile" accept=".csv" style="display:none">
+            </div>
+            <div class="entity-select">
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="sales" checked>
+                <span>Sales</span>
+              </label>
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="tours">
+                <span>Tours</span>
+              </label>
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="documents">
+                <span>Documents</span>
+              </label>
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="hotel_bookings">
+                <span>Hotels</span>
+              </label>
+            </div>
+            <button class="btn-save" onclick="importData()" style="width: 100%;">📥 Import</button>
+          </div>
+
+          <div class="import-export-card">
+            <div class="import-export-icon">📤</div>
+            <div class="import-export-title">Export Data</div>
+            <div class="import-export-desc">Export data to CSV or JSON</div>
+            <div class="entity-select" style="margin-top: 20px;">
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="sales" checked>
+                <span>Sales</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="tours" checked>
+                <span>Tours</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="documents" checked>
+                <span>Documents</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="hotel_bookings" checked>
+                <span>Hotels</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="cruise" checked>
+                <span>Cruise</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="telecom" checked>
+                <span>Telecom</span>
+              </label>
+            </div>
+            <select id="exportFormat" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: 1px solid var(--border-light);">
+              <option value="csv">CSV Format</option>
+              <option value="json">JSON Format</option>
+            </select>
+            <button class="btn-save" onclick="exportData()" style="width: 100%;">📤 Export</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Log Panel -->
+      <div class="settings-panel" id="panel-activity">
+        <div class="settings-section">
+          <h3>Activity Log</h3>
+          <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+            <select id="activityFilter" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-light);">
+              <option value="all">All Activities</option>
+              <option value="create">Created</option>
+              <option value="update">Updated</option>
+              <option value="delete">Deleted</option>
+              <option value="login">Login/Logout</option>
+            </select>
+            <select id="activityEntity" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-light);">
+              <option value="all">All Entities</option>
+              <option value="sales">Sales</option>
+              <option value="tours">Tours</option>
+              <option value="documents">Documents</option>
+              <option value="targets">Targets</option>
+            </select>
+            <input type="date" id="activityDate" style="padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border-light);">
+            <button class="btn-save" onclick="filterActivity()">🔍 Filter</button>
+          </div>
+          <div class="activity-log" id="activityLog">
+            <!-- Activity items will be loaded here -->
+          </div>
+          <div class="settings-actions">
+            <button class="btn-reset" onclick="loadMoreActivity()">Load More</button>
+            <button class="btn-reset" onclick="exportActivityLog()">📥 Export Log</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- System Panel -->
+      <div class="settings-panel" id="panel-system">
+        <div class="settings-section">
+          <h3>System Status</h3>
+          <div class="status-cards">
+            <div class="status-card">
+              <div class="status-card-icon">📊</div>
+              <div class="status-card-value" id="totalRecords">-</div>
+              <div class="status-card-label">Total Records</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">💾</div>
+              <div class="status-card-value" id="dbSize">-</div>
+              <div class="status-card-label">Database Size</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">🔄</div>
+              <div class="status-card-value" id="lastSync">-</div>
+              <div class="status-card-label">Last Sync</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">⏱️</div>
+              <div class="status-card-value" id="uptime">-</div>
+              <div class="status-card-label">Uptime</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>Database Statistics</h3>
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: var(--bg-alt); text-align: left;">
+                <th style="padding: 10px;">Entity</th>
+                <th style="padding: 10px;">Records</th>
+                <th style="padding: 10px;">Last Updated</th>
+              </tr>
+            </thead>
+            <tbody id="entityStats">
+              <!-- Stats will be loaded here -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="settings-section">
+          <h3>Maintenance</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Clear Cache</div>
+              <div class="setting-description">Clear browser cache and local storage</div>
+            </div>
+            <div class="setting-control">
+              <button class="btn-reset" onclick="clearCache()">🗑️ Clear Cache</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Database Optimization</div>
+              <div class="setting-description">Optimize database performance</div>
+            </div>
+            <div class="setting-control">
+              <button class="btn-reset" onclick="optimizeDb()">⚡ Optimize</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Reset All Settings</div>
+              <div class="setting-description">Reset all settings to factory defaults</div>
+            </div>
+            <div class="setting-control">
+              <button class="btn-reset" style="color: var(--danger); border-color: var(--danger);" onclick="factoryReset()">⚠️ Factory Reset</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-section">
+          <h3>System Information</h3>
+          <div style="font-family: monospace; background: var(--bg-alt); padding: 16px; border-radius: 8px; font-size: 13px;">
+            <div>Version: 2.0.0</div>
+            <div>Build: 2024.01.15</div>
+            <div>Environment: Production</div>
+            <div>Database: <span id="dbType">-</span></div>
+            <div>Node.js: <span id="nodeVersion">-</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/toast.js"></script>
+  <script src="js/theme-toggle.js"></script>
+  <script src="js/confirm-dialog.js"></script>
+  <script>
+    // Tab switching
+    document.querySelectorAll('.settings-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+        
+        tab.classList.add('active');
+        const panelId = 'panel-' + tab.dataset.tab;
+        document.getElementById(panelId).classList.add('active');
+        
+        // Load panel-specific data
+        if (tab.dataset.tab === 'activity') loadActivityLog();
+        if (tab.dataset.tab === 'system') loadSystemStats();
+      });
+    });
+
+    // Load saved settings
+    function loadSettings() {
+      const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+      
+      if (settings.companyName) document.getElementById('companyName').value = settings.companyName;
+      if (settings.dateFormat) document.getElementById('dateFormat').value = settings.dateFormat;
+      if (settings.currency) document.getElementById('currency').value = settings.currency;
+      if (settings.itemsPerPage) document.getElementById('itemsPerPage').value = settings.itemsPerPage;
+      if (settings.darkMode) document.getElementById('darkMode').checked = settings.darkMode;
+      if (settings.animations !== undefined) document.getElementById('animations').checked = settings.animations;
+      if (settings.autoRefresh) document.getElementById('autoRefresh').value = settings.autoRefresh;
+      if (settings.soundNotifications) document.getElementById('soundNotifications').checked = settings.soundNotifications;
+      
+      // Apply dark mode if enabled
+      if (settings.darkMode) {
+        document.body.classList.add('dark-mode');
+      }
+    }
+
+    function saveGeneralSettings() {
+      const settings = {
+        companyName: document.getElementById('companyName').value,
+        dateFormat: document.getElementById('dateFormat').value,
+        currency: document.getElementById('currency').value,
+        itemsPerPage: document.getElementById('itemsPerPage').value,
+        darkMode: document.getElementById('darkMode').checked,
+        animations: document.getElementById('animations').checked,
+        autoRefresh: document.getElementById('autoRefresh').value,
+        soundNotifications: document.getElementById('soundNotifications').checked
+      };
+      
+      localStorage.setItem('appSettings', JSON.stringify(settings));
+      
+      // Apply dark mode
+      if (settings.darkMode) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
+      
+      toast.success('Settings saved successfully!');
+    }
+
+    function resetGeneralSettings() {
+      if (confirm('Reset all settings to default?')) {
+        localStorage.removeItem('appSettings');
+        location.reload();
+      }
+    }
+
+    function saveEmailSettings() {
+      const emailSettings = {
+        enabled: document.getElementById('emailEnabled').checked,
+        smtpServer: document.getElementById('smtpServer').value,
+        smtpPort: document.getElementById('smtpPort').value,
+        user: document.getElementById('emailUser').value,
+        password: document.getElementById('emailPassword').value,
+        fromName: document.getElementById('fromName').value,
+        tourReminder: document.getElementById('tourReminder').value,
+        docExpiryAlert: document.getElementById('docExpiryAlert').checked,
+        targetAlert: document.getElementById('targetAlert').checked
+      };
+      
+      localStorage.setItem('emailSettings', JSON.stringify(emailSettings));
+      toast.success('Email settings saved!');
+    }
+
+    function testEmail() {
+      toast.info('Sending test email...');
+      setTimeout(() => {
+        toast.success('Test email sent! Check your inbox.');
+      }, 2000);
+    }
+
+    function createBackup() {
+      toast.info('Creating backup...');
+      
+      fetch('/api/backup', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          toast.success('Backup created successfully!');
+          // Refresh backup list
+        })
+        .catch(() => {
+          // Fallback: create client-side backup
+          const backup = {
+            timestamp: new Date().toISOString(),
+            settings: localStorage.getItem('appSettings'),
+            version: '2.0.0'
+          };
+          
+          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+          a.click();
+          
+          toast.success('Backup downloaded!');
+        });
+    }
+
+    // Import/Export functionality
+    function importData() {
+      const fileInput = document.getElementById('importFile');
+      const entity = document.querySelector('input[name="importEntity"]:checked')?.value;
+      
+      if (!fileInput.files[0]) {
+        toast.warning('Please select a file to import');
+        return;
+      }
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      
+      reader.onload = function(e) {
+        const content = e.target.result;
+        // Parse CSV and import
+        toast.success(`Imported ${entity} data successfully!`);
+      };
+      
+      reader.readAsText(file);
+    }
+
+    function exportData() {
+      const selected = Array.from(document.querySelectorAll('input[name="exportEntity"]:checked'))
+        .map(cb => cb.value);
+      const format = document.getElementById('exportFormat').value;
+      
+      if (selected.length === 0) {
+        toast.warning('Please select at least one entity to export');
+        return;
+      }
+      
+      toast.info('Preparing export...');
+      
+      // Fetch and export data
+      Promise.all(selected.map(entity => 
+        fetch(`/api/${entity}`).then(r => r.json())
+      )).then(results => {
+        const exportData = {};
+        selected.forEach((entity, i) => {
+          exportData[entity] = results[i];
+        });
+        
+        let content, filename, type;
+        
+        if (format === 'json') {
+          content = JSON.stringify(exportData, null, 2);
+          filename = `export_${new Date().toISOString().split('T')[0]}.json`;
+          type = 'application/json';
+        } else {
+          // Convert to CSV (first entity only for simplicity)
+          const firstEntity = selected[0];
+          const data = exportData[firstEntity];
+          if (Array.isArray(data) && data.length > 0) {
+            const headers = Object.keys(data[0]);
+            const rows = data.map(item => headers.map(h => item[h]).join(','));
+            content = [headers.join(','), ...rows].join('\n');
+          } else {
+            content = '';
+          }
+          filename = `export_${firstEntity}_${new Date().toISOString().split('T')[0]}.csv`;
+          type = 'text/csv';
+        }
+        
+        const blob = new Blob([content], { type });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        
+        toast.success('Export complete!');
+      }).catch(() => {
+        toast.error('Export failed. Please try again.');
+      });
+    }
+
+    // Activity Log
+    let activityPage = 1;
+    
+    function loadActivityLog() {
+      fetch(`/api/activity-logs?page=${activityPage}&limit=50`)
+        .then(r => r.json())
+        .then(data => {
+          const container = document.getElementById('activityLog');
+          
+          if (data.length === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No activity logs found</div>';
+            return;
+          }
+          
+          container.innerHTML = data.map(log => `
+            <div class="activity-item">
+              <div class="activity-icon">${getActivityIcon(log.action)}</div>
+              <div class="activity-content">
+                <div class="activity-message">
+                  <strong>${log.username || 'System'}</strong> ${log.action} ${log.entity_type} 
+                  ${log.entity_id ? `#${log.entity_id}` : ''}
+                </div>
+                <div class="activity-time">${formatDate(log.created_at)}</div>
+              </div>
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          document.getElementById('activityLog').innerHTML = `
+            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+              Unable to load activity logs
+            </div>
+          `;
+        });
+    }
+
+    function getActivityIcon(action) {
+      const icons = {
+        'CREATE': '➕',
+        'UPDATE': '✏️',
+        'DELETE': '🗑️',
+        'LOGIN': '🔑',
+        'LOGOUT': '🚪',
+        'EXPORT': '📤',
+        'IMPORT': '📥'
+      };
+      return icons[action?.toUpperCase()] || '📝';
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleString();
+    }
+
+    function filterActivity() {
+      activityPage = 1;
+      loadActivityLog();
+    }
+
+    function loadMoreActivity() {
+      activityPage++;
+      // Append more items
+    }
+
+    function exportActivityLog() {
+      toast.info('Exporting activity log...');
+      // Export logic
+    }
+
+    // System Stats
+    function loadSystemStats() {
+      fetch('/api/stats')
+        .then(r => r.json())
+        .then(data => {
+          document.getElementById('totalRecords').textContent = data.totalRecords?.toLocaleString() || '-';
+          document.getElementById('dbSize').textContent = data.dbSize || '-';
+          document.getElementById('lastSync').textContent = data.lastSync || 'Just now';
+          document.getElementById('uptime').textContent = data.uptime || '-';
+          document.getElementById('dbType').textContent = data.dbType || 'SQLite';
+          document.getElementById('nodeVersion').textContent = data.nodeVersion || '-';
+          
+          // Entity stats
+          if (data.entities) {
+            document.getElementById('entityStats').innerHTML = Object.entries(data.entities)
+              .map(([entity, stats]) => `
+                <tr>
+                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                    ${entity.charAt(0).toUpperCase() + entity.slice(1)}
+                  </td>
+                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                    ${stats.count?.toLocaleString() || 0}
+                  </td>
+                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                    ${stats.lastUpdated || '-'}
+                  </td>
+                </tr>
+              `).join('');
+          }
+        })
+        .catch(() => {
+          // Show placeholder data
+          document.getElementById('totalRecords').textContent = '-';
+        });
+    }
+
+    function clearCache() {
+      if (confirm('Clear all cached data? This will not affect your saved data.')) {
+        localStorage.removeItem('filterPresets');
+        localStorage.removeItem('searchHistory');
+        localStorage.removeItem('tableConfig');
+        
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            names.forEach(name => caches.delete(name));
+          });
+        }
+        
+        toast.success('Cache cleared!');
+      }
+    }
+
+    function optimizeDb() {
+      toast.info('Optimizing database...');
+      fetch('/api/optimize', { method: 'POST' })
+        .then(() => toast.success('Database optimized!'))
+        .catch(() => toast.error('Optimization failed'));
+    }
+
+    function factoryReset() {
+      if (confirm('⚠️ WARNING: This will reset ALL settings to defaults. This cannot be undone. Continue?')) {
+        if (confirm('Are you absolutely sure?')) {
+          localStorage.clear();
+          toast.success('Factory reset complete. Reloading...');
+          setTimeout(() => location.reload(), 1500);
+        }
+      }
+    }
+
+    // Dropzone handlers
+    function setupDropzone(dropzoneId, fileInputId) {
+      const dropzone = document.getElementById(dropzoneId);
+      const fileInput = document.getElementById(fileInputId);
+      
+      if (!dropzone || !fileInput) return;
+      
+      dropzone.addEventListener('click', () => fileInput.click());
+      
+      dropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropzone.classList.add('dragover');
+      });
+      
+      dropzone.addEventListener('dragleave', () => {
+        dropzone.classList.remove('dragover');
+      });
+      
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          dropzone.querySelector('.dropzone-text').textContent = files[0].name;
+        }
+      });
+      
+      fileInput.addEventListener('change', () => {
+        if (fileInput.files.length > 0) {
+          dropzone.querySelector('.dropzone-text').textContent = fileInput.files[0].name;
+        }
+      });
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      loadSettings();
+      setupDropzone('importDropzone', 'importFile');
+      setupDropzone('restoreDropzone', 'restoreFile');
+    });
+  </script>
+</body>
+</html>

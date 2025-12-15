@@ -41,6 +41,7 @@
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html">📊 Reports</a>
+      <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
       <a id="logoutLink" href="/logout.html">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
@@ -155,6 +156,7 @@
 <script src="/js/quick-view.js"></script>
 <script src="/js/dashboard-customizer.js"></script>
 <script src="/js/advanced-search.js"></script>
+<script src="/js/enhanced-search-filter.js"></script>
 <script src="/js/form-builder.js"></script>
 <script src="/js/form-validator.js"></script>
 <script src="/js/crud-modal.js"></script>
@@ -163,5 +165,19 @@
 <script src="/js/dashboard.js"></script>
 <script type="module" src="/js/cruise-dashboard.js"></script>
 <script src="/js/app-enhancements.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.type === 'admin') {
+          const adminLink = document.getElementById('adminSettingsLink');
+          if (adminLink) adminLink.style.display = 'block';
+        }
+      }
+    } catch (e) {}
+  });
+</script>
 </body>
 </html>

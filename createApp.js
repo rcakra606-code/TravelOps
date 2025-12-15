@@ -1086,6 +1086,190 @@ export async function createApp() {
     }
   });
 
+  // Admin Stats for Settings Page (simplified format)
+  app.get('/api/stats', authMiddleware(), async (req, res) => {
+    try {
+      const isPg = db.dialect === 'postgres';
+      
+      // Get counts for all entities
+      const entities = {};
+      const entityList = ['sales', 'tours', 'documents', 'targets', 'hotel_bookings', 'cruise', 'telecom', 'overtime', 'outstanding'];
+      
+      let totalRecords = 0;
+      for (const entity of entityList) {
+        try {
+          const result = await db.get(`SELECT COUNT(*) as count FROM ${entity}`);
+          const count = parseInt(result?.count, 10) || 0;
+          entities[entity] = {
+            count,
+            lastUpdated: 'Recently'
+          };
+          totalRecords += count;
+        } catch (err) {
+          entities[entity] = { count: 0, lastUpdated: '-' };
+        }
+      }
+      
+      // Database size
+      let dbSize = '-';
+      if (!isPg) {
+        try {
+          const dbPath = path.resolve(process.cwd(), 'data/travelops.db');
+          if (fs.existsSync(dbPath)) {
+            const stats = fs.statSync(dbPath);
+            const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
+            dbSize = `${sizeMB} MB`;
+          }
+        } catch (err) {
+          // Ignore
+        }
+      } else {
+        dbSize = 'PostgreSQL';
+      }
+      
+      // Uptime
+      const uptimeSec = process.uptime();
+      const hours = Math.floor(uptimeSec / 3600);
+      const mins = Math.floor((uptimeSec % 3600) / 60);
+      const uptime = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+      
+      res.json({
+        totalRecords,
+        dbSize,
+        lastSync: 'Just now',
+        uptime,
+        dbType: isPg ? 'PostgreSQL' : 'SQLite',
+        nodeVersion: process.version,
+        entities
+      });
+    } catch (err) {
+      logger.error({ err }, 'Stats error');
+      res.status(500).json({ error: 'Failed to get stats' });
+    }
+  });
+
+  // Database Optimization endpoint
+  app.post('/api/optimize', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const isPg = db.dialect === 'postgres';
+      if (!isPg) {
+        await db.run('VACUUM');
+        await db.run('ANALYZE');
+      } else {
+        await db.run('VACUUM ANALYZE');
+      }
+      await logActivity(req.user.username, 'OPTIMIZE', 'system', null, 'Database optimized');
+      res.json({ ok: true, message: 'Database optimized successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Optimize error');
+      res.status(500).json({ error: 'Optimization failed' });
+    }
+  });
+
+  // Create Backup endpoint (enhanced)
+  app.post('/api/backup', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      if (db.dialect === 'postgres') {
+        return res.status(400).json({ error: 'Backup endpoint only for SQLite mode' });
+      }
+      const src = path.resolve('data/travelops.db');
+      const backupDir = path.resolve('backup');
+      if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir, { recursive: true });
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const dest = path.join(backupDir, `backup_${timestamp}.db`);
+      fs.copyFileSync(src, dest);
+      await logActivity(req.user.username, 'BACKUP', 'system', null, `Created backup: ${dest}`);
+      res.json({ ok: true, file: dest, timestamp });
+    } catch (err) {
+      logger.error({ err }, 'Backup error');
+      res.status(500).json({ error: 'Backup failed' });
+    }
+  });
+
+  // Bulk Export endpoint
+  app.get('/api/export/:entity', authMiddleware(), async (req, res) => {
+    try {
+      const { entity } = req.params;
+      const { format = 'json' } = req.query;
+      const validEntities = ['sales', 'tours', 'documents', 'targets', 'hotel_bookings', 'cruise', 'telecom', 'overtime', 'outstanding'];
+      
+      if (!validEntities.includes(entity)) {
+        return res.status(400).json({ error: 'Invalid entity' });
+      }
+      
+      const data = await db.all(`SELECT * FROM ${entity}`);
+      
+      if (format === 'csv') {
+        if (data.length === 0) {
+          return res.status(200).send('');
+        }
+        const headers = Object.keys(data[0]);
+        const csvRows = [headers.join(',')];
+        data.forEach(row => {
+          const values = headers.map(h => {
+            let val = row[h];
+            if (val === null || val === undefined) val = '';
+            val = String(val);
+            if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+              val = `"${val.replace(/"/g, '""')}"`;
+            }
+            return val;
+          });
+          csvRows.push(values.join(','));
+        });
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', `attachment; filename=${entity}_export.csv`);
+        return res.send(csvRows.join('\n'));
+      }
+      
+      res.json(data);
+    } catch (err) {
+      logger.error({ err }, 'Export error');
+      res.status(500).json({ error: 'Export failed' });
+    }
+  });
+
+  // Bulk Import endpoint
+  app.post('/api/import/:entity', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const { entity } = req.params;
+      const { data } = req.body;
+      const validEntities = ['sales', 'tours', 'documents', 'targets', 'hotel_bookings', 'cruise', 'telecom'];
+      
+      if (!validEntities.includes(entity)) {
+        return res.status(400).json({ error: 'Invalid entity' });
+      }
+      
+      if (!Array.isArray(data) || data.length === 0) {
+        return res.status(400).json({ error: 'No data provided' });
+      }
+      
+      let imported = 0;
+      let failed = 0;
+      
+      for (const row of data) {
+        try {
+          const columns = Object.keys(row).filter(k => k !== 'id');
+          const values = columns.map(c => row[c]);
+          const placeholders = columns.map((_, i) => db.dialect === 'postgres' ? `$${i+1}` : '?').join(', ');
+          await db.run(`INSERT INTO ${entity} (${columns.join(', ')}) VALUES (${placeholders})`, values);
+          imported++;
+        } catch (err) {
+          failed++;
+        }
+      }
+      
+      await logActivity(req.user.username, 'IMPORT', entity, null, `Imported ${imported} records, ${failed} failed`);
+      res.json({ ok: true, imported, failed });
+    } catch (err) {
+      logger.error({ err }, 'Import error');
+      res.status(500).json({ error: 'Import failed' });
+    }
+  });
+
   app.post('/api/users/:username/unlock', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]); if (!user) return res.status(404).json({ error:'User not found' }); await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?',[user.id]); await logActivity(req.user.username,'UNLOCK','users',user.id,'Account unlocked by admin'); res.json({ ok:true }); });
 
   // Lock user account (Admin only)
