@@ -128,7 +128,7 @@ window.parseFormattedNumber = parseFormattedNumber;
 window.formatCurrency = formatCurrency;
 
 /* === NAVIGATION === */
-function showSection(name) {
+window.showSection = function showSection(name) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   const t = el(name);
   if (t) t.classList.add('active');
@@ -138,6 +138,13 @@ function showSection(name) {
   // Render profile when profile section is shown
   if (name === 'profile') {
     renderProfile();
+  }
+  
+  // Load admin data when admin section is shown
+  if (name === 'admin' && getUser().type === 'admin') {
+    // Call global admin functions if available
+    if (typeof window.loadSystemStats === 'function') window.loadSystemStats();
+    if (typeof window.loadActivityLogs === 'function') window.loadActivityLogs();
   }
 }
 document.querySelectorAll('#mainNav button[data-section]').forEach(b =>
@@ -1833,17 +1840,8 @@ function filterActivityLogs() {
   renderActivityLogs(filtered);
 }
 
-// Load admin data when section is shown
-const originalShowSection = window.showSection;
-window.showSection = function(section) {
-  if (typeof originalShowSection === 'function') {
-    originalShowSection(section);
-  }
-  
-  if (section === 'admin') {
-    loadSystemStats();
-    loadActivityLogs();
-  }
-};
+// Expose admin functions globally for showSection to call
+window.loadSystemStats = loadSystemStats;
+window.loadActivityLogs = loadActivityLogs;
 
 })(); // End IIFE
