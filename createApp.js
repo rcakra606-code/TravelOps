@@ -3,6 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import helmet from 'helmet';
@@ -44,6 +45,139 @@ function sanitizeObject(obj) {
     return result;
   }
   return obj;
+}
+
+// ===================================================================
+// SERVER-SIDE VALIDATION HELPERS
+// ===================================================================
+const validators = {
+  // Validate required fields
+  required: (value, fieldName) => {
+    if (value === undefined || value === null || value === '') {
+      return `${fieldName} is required`;
+    }
+    return null;
+  },
+  
+  // Validate email format
+  email: (value) => {
+    if (!value) return null;
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      return 'Invalid email format';
+    }
+    return null;
+  },
+  
+  // Validate phone number
+  phone: (value) => {
+    if (!value) return null;
+    const phoneRegex = /^[\d\s\-+()]{7,20}$/;
+    if (!phoneRegex.test(value)) {
+      return 'Invalid phone number format';
+    }
+    return null;
+  },
+  
+  // Validate positive number
+  positiveNumber: (value, fieldName) => {
+    if (value === undefined || value === null || value === '') return null;
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0) {
+      return `${fieldName} must be a positive number`;
+    }
+    return null;
+  },
+  
+  // Validate date format (YYYY-MM-DD)
+  date: (value, fieldName) => {
+    if (!value) return null;
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(value)) {
+      return `${fieldName} must be in YYYY-MM-DD format`;
+    }
+    return null;
+  },
+  
+  // Validate month format (YYYY-MM)
+  month: (value, fieldName) => {
+    if (!value) return null;
+    const monthRegex = /^\d{4}-\d{2}$/;
+    if (!monthRegex.test(value)) {
+      return `${fieldName} must be in YYYY-MM format`;
+    }
+    return null;
+  },
+  
+  // Validate string length
+  maxLength: (value, maxLen, fieldName) => {
+    if (!value) return null;
+    if (value.length > maxLen) {
+      return `${fieldName} must be at most ${maxLen} characters`;
+    }
+    return null;
+  }
+};
+
+// Validate entity data
+function validateEntity(entity, data) {
+  const errors = [];
+  
+  switch (entity) {
+    case 'sales':
+      if (validators.required(data.staff_name, 'Staff Name')) errors.push(validators.required(data.staff_name, 'Staff Name'));
+      if (validators.required(data.month, 'Month')) errors.push(validators.required(data.month, 'Month'));
+      if (validators.month(data.month, 'Month')) errors.push(validators.month(data.month, 'Month'));
+      if (validators.positiveNumber(data.sales_amount, 'Sales Amount')) errors.push(validators.positiveNumber(data.sales_amount, 'Sales Amount'));
+      if (validators.positiveNumber(data.profit_amount, 'Profit Amount')) errors.push(validators.positiveNumber(data.profit_amount, 'Profit Amount'));
+      break;
+      
+    case 'tours':
+      if (validators.required(data.lead_passenger, 'Lead Passenger')) errors.push(validators.required(data.lead_passenger, 'Lead Passenger'));
+      if (validators.date(data.departure_date, 'Departure Date')) errors.push(validators.date(data.departure_date, 'Departure Date'));
+      if (validators.email(data.email)) errors.push(validators.email(data.email));
+      if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
+      if (validators.positiveNumber(data.jumlah_peserta, 'Participants')) errors.push(validators.positiveNumber(data.jumlah_peserta, 'Participants'));
+      break;
+      
+    case 'documents':
+      if (validators.required(data.guest_name, 'Guest Name')) errors.push(validators.required(data.guest_name, 'Guest Name'));
+      if (validators.date(data.receive_date, 'Receive Date')) errors.push(validators.date(data.receive_date, 'Receive Date'));
+      if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
+      break;
+      
+    case 'targets':
+      if (validators.required(data.staff_name, 'Staff Name')) errors.push(validators.required(data.staff_name, 'Staff Name'));
+      if (validators.required(data.month, 'Month')) errors.push(validators.required(data.month, 'Month'));
+      if (validators.required(data.year, 'Year')) errors.push(validators.required(data.year, 'Year'));
+      if (validators.positiveNumber(data.target_sales, 'Target Sales')) errors.push(validators.positiveNumber(data.target_sales, 'Target Sales'));
+      break;
+      
+    case 'hotel_bookings':
+      if (validators.required(data.hotel_name, 'Hotel Name')) errors.push(validators.required(data.hotel_name, 'Hotel Name'));
+      if (validators.date(data.check_in, 'Check-in Date')) errors.push(validators.date(data.check_in, 'Check-in Date'));
+      if (validators.date(data.check_out, 'Check-out Date')) errors.push(validators.date(data.check_out, 'Check-out Date'));
+      break;
+      
+    case 'cruise':
+      if (validators.required(data.cruise_brand, 'Cruise Brand')) errors.push(validators.required(data.cruise_brand, 'Cruise Brand'));
+      if (validators.email(data.email)) errors.push(validators.email(data.email));
+      if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
+      break;
+      
+    case 'telecom':
+      if (validators.required(data.nama, 'Nama')) errors.push(validators.required(data.nama, 'Nama'));
+      if (validators.phone(data.no_telephone)) errors.push(validators.phone(data.no_telephone));
+      break;
+      
+    case 'overtime':
+      if (validators.required(data.staff_name, 'Staff Name')) errors.push(validators.required(data.staff_name, 'Staff Name'));
+      if (validators.date(data.event_date, 'Event Date')) errors.push(validators.date(data.event_date, 'Event Date'));
+      if (validators.positiveNumber(data.hours, 'Hours')) errors.push(validators.positiveNumber(data.hours, 'Hours'));
+      break;
+  }
+  
+  return errors.filter(e => e !== null);
 }
 
 export async function createApp() {
@@ -130,6 +264,59 @@ export async function createApp() {
   app.get('/favicon.ico', (req,res)=>res.status(204).end());
 
   app.get('/', (req,res) => res.redirect('/login.html'));
+
+  // ===================================================================
+  // CSRF TOKEN MANAGEMENT
+  // ===================================================================
+  const csrfTokens = new Map(); // userId -> { token, expires }
+  
+  function generateCsrfToken(userId) {
+    const token = crypto.randomBytes(32).toString('hex');
+    const expires = Date.now() + (60 * 60 * 1000); // 1 hour
+    csrfTokens.set(userId, { token, expires });
+    // Clean up expired tokens periodically
+    if (csrfTokens.size > 1000) {
+      const now = Date.now();
+      for (const [key, val] of csrfTokens.entries()) {
+        if (val.expires < now) csrfTokens.delete(key);
+      }
+    }
+    return token;
+  }
+  
+  function validateCsrfToken(userId, token) {
+    const stored = csrfTokens.get(userId);
+    if (!stored) return false;
+    if (stored.expires < Date.now()) {
+      csrfTokens.delete(userId);
+      return false;
+    }
+    return stored.token === token;
+  }
+  
+  // ===================================================================
+  // PAGINATION HELPER
+  // ===================================================================
+  function getPaginationParams(req) {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 50));
+    const offset = (page - 1) * limit;
+    return { page, limit, offset };
+  }
+  
+  function paginatedResponse(data, total, page, limit) {
+    return {
+      data,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+        hasNext: page * limit < total,
+        hasPrev: page > 1
+      }
+    };
+  }
 
   function authMiddleware(required = true) {
     return async (req, res, next) => {
@@ -228,6 +415,111 @@ export async function createApp() {
     }
   });
   
+  // ===================================================================
+  // CSRF TOKEN ENDPOINT
+  // ===================================================================
+  app.get('/api/csrf-token', authMiddleware(), (req, res) => {
+    const token = generateCsrfToken(req.user.id);
+    res.json({ csrfToken: token });
+  });
+  
+  // ===================================================================
+  // NOTIFICATIONS ENDPOINT - Get upcoming deadlines & alerts
+  // ===================================================================
+  app.get('/api/notifications', authMiddleware(), async (req, res) => {
+    try {
+      const notifications = [];
+      const today = new Date();
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      const todayStr = today.toISOString().split('T')[0];
+      const nextWeekStr = nextWeek.toISOString().split('T')[0];
+      
+      // Get upcoming tour departures (next 7 days)
+      const upcomingTours = await db.all(
+        `SELECT id, lead_passenger, tour_code, departure_date, staff_name 
+         FROM tours 
+         WHERE departure_date >= ? AND departure_date <= ?
+         ORDER BY departure_date ASC
+         LIMIT 10`,
+        [todayStr, nextWeekStr]
+      );
+      
+      upcomingTours.forEach(tour => {
+        const daysUntil = Math.ceil((new Date(tour.departure_date) - today) / (1000 * 60 * 60 * 24));
+        notifications.push({
+          type: 'tour_departure',
+          priority: daysUntil <= 2 ? 'high' : 'medium',
+          title: `Tour Departure: ${tour.tour_code || 'Unknown'}`,
+          message: `${tour.lead_passenger} departing in ${daysUntil} day(s)`,
+          date: tour.departure_date,
+          entityId: tour.id,
+          entity: 'tours'
+        });
+      });
+      
+      // Get pending documents (no send_date)
+      const pendingDocs = await db.all(
+        `SELECT id, guest_name, process_type, estimated_done, staff_name 
+         FROM documents 
+         WHERE send_date IS NULL AND estimated_done <= ?
+         ORDER BY estimated_done ASC
+         LIMIT 10`,
+        [nextWeekStr]
+      );
+      
+      pendingDocs.forEach(doc => {
+        const isOverdue = doc.estimated_done < todayStr;
+        notifications.push({
+          type: 'document_pending',
+          priority: isOverdue ? 'high' : 'medium',
+          title: `Document: ${doc.process_type || 'Processing'}`,
+          message: `${doc.guest_name} - ${isOverdue ? 'OVERDUE' : 'Due soon'}`,
+          date: doc.estimated_done,
+          entityId: doc.id,
+          entity: 'documents'
+        });
+      });
+      
+      // Get current month targets status
+      const currentMonth = today.getMonth() + 1;
+      const currentYear = today.getFullYear();
+      
+      const targetStatus = await db.all(
+        `SELECT t.staff_name, t.target_sales, t.target_profit,
+                COALESCE(SUM(s.sales_amount), 0) as actual_sales,
+                COALESCE(SUM(s.profit_amount), 0) as actual_profit
+         FROM targets t
+         LEFT JOIN sales s ON s.staff_name = t.staff_name AND s.month = ?
+         WHERE t.month = ? AND t.year = ?
+         GROUP BY t.id, t.staff_name, t.target_sales, t.target_profit`,
+        [`${currentYear}-${String(currentMonth).padStart(2, '0')}`, currentMonth, currentYear]
+      );
+      
+      targetStatus.forEach(target => {
+        const salesPct = target.target_sales > 0 ? (target.actual_sales / target.target_sales) * 100 : 0;
+        if (salesPct < 50 && today.getDate() > 15) {
+          notifications.push({
+            type: 'target_warning',
+            priority: 'high',
+            title: `Target Alert: ${target.staff_name}`,
+            message: `Sales at ${salesPct.toFixed(0)}% of target`,
+            entity: 'targets'
+          });
+        }
+      });
+      
+      // Sort by priority
+      const priorityOrder = { high: 0, medium: 1, low: 2 };
+      notifications.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+      
+      res.json({ notifications, count: notifications.length });
+    } catch (err) {
+      logger.error({ err }, 'Failed to fetch notifications');
+      res.status(500).json({ error: 'Failed to fetch notifications' });
+    }
+  });
+
   // Refresh endpoint with configurable grace window to avoid race-based premature logout.
   // IMPORTANT: Do NOT use authMiddleware here because it enforces expiration strictly.
   // We manually verify with ignoreExpiration, then apply grace logic.

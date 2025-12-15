@@ -400,6 +400,57 @@ async function createSchema(db) {
   await ensureColumn('users', 'locked_until', 'TEXT');
 
   // ===================================================================
+  // PERFORMANCE INDEXES - Add indexes on frequently queried columns
+  // ===================================================================
+  async function ensureIndex(tableName, indexName, columns) {
+    try {
+      if (isPg) {
+        // PostgreSQL: Create index if not exists
+        await db.run(`CREATE INDEX IF NOT EXISTS ${indexName} ON ${tableName} (${columns})`);
+      } else {
+        // SQLite: Check if index exists first
+        const existing = await db.get(`SELECT name FROM sqlite_master WHERE type='index' AND name=?`, [indexName]);
+        if (!existing) {
+          await db.run(`CREATE INDEX ${indexName} ON ${tableName} (${columns})`);
+        }
+      }
+      if (process.env.NODE_ENV !== 'test') {
+        console.log(`✓ Index ensured: ${indexName}`);
+      }
+    } catch (err) {
+      // Index may already exist, ignore error
+      if (!err.message.includes('already exists')) {
+        console.error(`⚠ Index ${indexName} warning:`, err.message);
+      }
+    }
+  }
+
+  // Sales indexes for faster queries
+  await ensureIndex('sales', 'idx_sales_month', 'month');
+  await ensureIndex('sales', 'idx_sales_staff', 'staff_name');
+  await ensureIndex('sales', 'idx_sales_region', 'region_id');
+  await ensureIndex('sales', 'idx_sales_status', 'status');
+  
+  // Tours indexes
+  await ensureIndex('tours', 'idx_tours_departure', 'departure_date');
+  await ensureIndex('tours', 'idx_tours_staff', 'staff_name');
+  await ensureIndex('tours', 'idx_tours_region', 'region_id');
+  await ensureIndex('tours', 'idx_tours_status', 'status');
+  
+  // Documents indexes
+  await ensureIndex('documents', 'idx_docs_receive', 'receive_date');
+  await ensureIndex('documents', 'idx_docs_staff', 'staff_name');
+  
+  // Targets indexes
+  await ensureIndex('targets', 'idx_targets_period', 'year, month');
+  await ensureIndex('targets', 'idx_targets_staff', 'staff_name');
+  
+  // Activity logs for audit queries
+  await ensureIndex('activity_logs', 'idx_activity_user', 'username');
+  await ensureIndex('activity_logs', 'idx_activity_entity', 'entity');
+  await ensureIndex('activity_logs', 'idx_activity_created', 'created_at');
+
+  // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
   // to all main entity tables for tracking who created/modified records
   // ===================================================================
