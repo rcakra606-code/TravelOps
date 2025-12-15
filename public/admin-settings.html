@@ -511,6 +511,7 @@
             </div>
             <div class="setting-control">
               <select id="currency">
+                <option value="IDR" selected>IDR (Indonesian Rupiah)</option>
                 <option value="MYR">MYR (Malaysian Ringgit)</option>
                 <option value="USD">USD (US Dollar)</option>
                 <option value="EUR">EUR (Euro)</option>
@@ -663,14 +664,15 @@
           <div class="setting-row">
             <div class="setting-info">
               <div class="setting-label">Tour Departure Reminders</div>
-              <div class="setting-description">Send reminders before tour departure</div>
+              <div class="setting-description">Send reminders before tour departure (7, 3, 2, 1, 0 days)</div>
             </div>
             <div class="setting-control">
               <select id="tourReminder">
                 <option value="0">Disabled</option>
-                <option value="1" selected>1 day before</option>
+                <option value="7" selected>7 days before (Recommended)</option>
                 <option value="3">3 days before</option>
-                <option value="7">1 week before</option>
+                <option value="2">2 days before</option>
+                <option value="1">1 day before</option>
               </select>
             </div>
           </div>
