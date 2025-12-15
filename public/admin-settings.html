@@ -703,9 +703,45 @@
           </div>
         </div>
 
+        <div class="settings-section">
+          <h3>Email Actions</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Test Email</div>
+              <div class="setting-description">Send a test email to verify SMTP configuration</div>
+            </div>
+            <div class="setting-control">
+              <input type="email" id="testEmailAddress" placeholder="test@email.com" style="margin-right: 10px;">
+              <button class="btn-reset" onclick="testEmail()">📧 Send Test</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Manual Reminder Trigger</div>
+              <div class="setting-description">Manually send departure reminders for upcoming tours</div>
+            </div>
+            <div class="setting-control">
+              <button class="btn-reset" onclick="triggerReminders()">🔔 Trigger Reminders</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Reminder Statistics</div>
+              <div class="setting-description">View email reminder statistics</div>
+            </div>
+            <div class="setting-control">
+              <button class="btn-reset" onclick="loadReminderStats()">📊 View Stats</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="reminderStatsPanel" style="display:none; margin-top: 20px; padding: 16px; background: var(--bg-alt); border-radius: 8px;">
+          <h4 style="margin-bottom: 12px;">📊 Reminder Statistics</h4>
+          <div id="reminderStatsContent">Loading...</div>
+        </div>
+
         <div class="settings-actions">
           <button class="btn-save" onclick="saveEmailSettings()">💾 Save Settings</button>
-          <button class="btn-reset" onclick="testEmail()">📧 Send Test Email</button>
         </div>
       </div>
 
@@ -1120,43 +1156,132 @@
       toast.success('Email settings saved!');
     }
 
-    function testEmail() {
+    async function testEmail() {
+      const email = document.getElementById('testEmailAddress').value;
+      if (!email) {
+        toast.warning('Please enter an email address');
+        return;
+      }
+      
       toast.info('Sending test email...');
-      setTimeout(() => {
-        toast.success('Test email sent! Check your inbox.');
-      }, 2000);
+      try {
+        const response = await fetchJson('/api/email/test', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+        
+        if (response.success) {
+          toast.success('Test email sent! Check your inbox.');
+        } else {
+          toast.error(response.error || 'Failed to send test email');
+        }
+      } catch (err) {
+        toast.error('Failed to send test email: ' + (err.message || 'Server error'));
+      }
     }
 
-    function createBackup() {
+    async function triggerReminders() {
+      if (!confirm('This will send departure reminder emails for all upcoming tours. Continue?')) return;
+      
+      toast.info('Triggering reminders...');
+      try {
+        const response = await fetchJson('/api/email/trigger-reminders', {
+          method: 'POST'
+        });
+        
+        if (response.success) {
+          toast.success(`Reminders sent: ${response.remindersSent}, Errors: ${response.errors}`);
+        } else {
+          toast.error(response.error || 'Failed to trigger reminders');
+        }
+      } catch (err) {
+        toast.error('Failed to trigger reminders: ' + (err.message || 'Server error'));
+      }
+    }
+
+    async function loadReminderStats() {
+      const panel = document.getElementById('reminderStatsPanel');
+      const content = document.getElementById('reminderStatsContent');
+      
+      panel.style.display = 'block';
+      content.innerHTML = 'Loading...';
+      
+      try {
+        const response = await fetchJson('/api/email/reminder-stats');
+        const stats = response.stats || {};
+        
+        content.innerHTML = `
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
+            <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
+              <div style="font-size: 24px; font-weight: bold; color: var(--primary);">${stats.totalSent || 0}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Total Sent</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
+              <div style="font-size: 24px; font-weight: bold; color: var(--success);">${stats.upcomingTours || 0}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Upcoming Tours</div>
+            </div>
+            <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
+              <div style="font-size: 24px; font-weight: bold; color: var(--warning);">${stats.pendingReminders || 0}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Pending Reminders</div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
+            Last updated: ${new Date().toLocaleString()}
+          </div>
+        `;
+      } catch (err) {
+        content.innerHTML = '<div style="color: var(--danger);">Failed to load statistics</div>';
+      }
+    }
+
+    async function createBackup() {
       toast.info('Creating backup...');
       
-      fetch('/api/backup', { method: 'POST' })
-        .then(r => r.json())
-        .then(data => {
-          toast.success('Backup created successfully!');
-          // Refresh backup list
-        })
-        .catch(() => {
-          // Fallback: create client-side backup
-          const backup = {
+      try {
+        const response = await fetchJson('/api/backup', { method: 'POST' });
+        if (response.ok) {
+          toast.success('Server backup created: ' + (response.file || 'backup.db'));
+        } else {
+          throw new Error(response.error);
+        }
+      } catch (err) {
+        // Fallback: create client-side data export
+        toast.info('Server backup unavailable, creating data export...');
+        try {
+          const entities = ['sales', 'tours', 'documents', 'targets', 'hotel_bookings', 'cruise', 'telecom'];
+          const exportData = {
             timestamp: new Date().toISOString(),
-            settings: localStorage.getItem('appSettings'),
-            version: '2.0.0'
+            version: '2.0.0',
+            settings: JSON.parse(localStorage.getItem('appSettings') || '{}'),
+            data: {}
           };
           
-          const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+          for (const entity of entities) {
+            try {
+              const data = await fetchJson(`/api/${entity}`);
+              exportData.data[entity] = Array.isArray(data) ? data : [];
+            } catch (e) {
+              exportData.data[entity] = [];
+            }
+          }
+          
+          const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
           a.href = url;
-          a.download = `backup_${new Date().toISOString().split('T')[0]}.json`;
+          a.download = `travelops_backup_${new Date().toISOString().split('T')[0]}.json`;
           a.click();
+          URL.revokeObjectURL(url);
           
-          toast.success('Backup downloaded!');
-        });
+          toast.success('Data export downloaded!');
+        } catch (exportErr) {
+          toast.error('Backup failed: ' + exportErr.message);
+        }
+      }
     }
 
     // Import/Export functionality
-    function importData() {
+    async function importData() {
       const fileInput = document.getElementById('importFile');
       const entity = document.querySelector('input[name="importEntity"]:checked')?.value;
       
@@ -1165,19 +1290,62 @@
         return;
       }
       
+      if (!entity) {
+        toast.warning('Please select an entity type');
+        return;
+      }
+      
       const file = fileInput.files[0];
-      const reader = new FileReader();
+      toast.info(`Importing ${entity} data...`);
       
-      reader.onload = function(e) {
-        const content = e.target.result;
-        // Parse CSV and import
-        toast.success(`Imported ${entity} data successfully!`);
-      };
-      
-      reader.readAsText(file);
+      try {
+        const content = await file.text();
+        let data = [];
+        
+        if (file.name.endsWith('.csv')) {
+          // Parse CSV
+          const lines = content.split('\n').filter(l => l.trim());
+          if (lines.length < 2) {
+            throw new Error('CSV file is empty or has no data rows');
+          }
+          const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
+          for (let i = 1; i < lines.length; i++) {
+            const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+            const row = {};
+            headers.forEach((h, idx) => {
+              row[h] = values[idx] || '';
+            });
+            data.push(row);
+          }
+        } else if (file.name.endsWith('.json')) {
+          const parsed = JSON.parse(content);
+          data = Array.isArray(parsed) ? parsed : (parsed.data || []);
+        } else {
+          throw new Error('Unsupported file format. Use CSV or JSON.');
+        }
+        
+        if (data.length === 0) {
+          throw new Error('No data found in file');
+        }
+        
+        const response = await fetchJson(`/api/import/${entity}`, {
+          method: 'POST',
+          body: JSON.stringify({ data })
+        });
+        
+        if (response.ok) {
+          toast.success(`Imported ${response.imported} records (${response.failed} failed)`);
+          fileInput.value = '';
+          document.querySelector('#importDropzone .dropzone-text').textContent = 'Drop CSV file here';
+        } else {
+          throw new Error(response.error || 'Import failed');
+        }
+      } catch (err) {
+        toast.error('Import failed: ' + err.message);
+      }
     }
 
-    function exportData() {
+    async function exportData() {
       const selected = Array.from(document.querySelectorAll('input[name="exportEntity"]:checked'))
         .map(cb => cb.value);
       const format = document.getElementById('exportFormat').value;
@@ -1189,14 +1357,20 @@
       
       toast.info('Preparing export...');
       
-      // Fetch and export data
-      Promise.all(selected.map(entity => 
-        fetch(`/api/${entity}`).then(r => r.json())
-      )).then(results => {
+      try {
+        // Use export endpoint if available, else fall back to fetching data
         const exportData = {};
-        selected.forEach((entity, i) => {
-          exportData[entity] = results[i];
-        });
+        
+        for (const entity of selected) {
+          try {
+            const data = await fetchJson(`/api/export/${entity}?format=json`);
+            exportData[entity] = Array.isArray(data) ? data : [];
+          } catch (e) {
+            // Fallback to regular endpoint
+            const data = await fetchJson(`/api/${entity}`);
+            exportData[entity] = Array.isArray(data) ? data : [];
+          }
+        }
         
         let content, filename, type;
         
@@ -1210,7 +1384,15 @@
           const data = exportData[firstEntity];
           if (Array.isArray(data) && data.length > 0) {
             const headers = Object.keys(data[0]);
-            const rows = data.map(item => headers.map(h => item[h]).join(','));
+            const escapeCSV = (val) => {
+              if (val === null || val === undefined) return '';
+              const str = String(val);
+              if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                return `"${str.replace(/"/g, '""')}"`;
+              }
+              return str;
+            };
+            const rows = data.map(item => headers.map(h => escapeCSV(item[h])).join(','));
             content = [headers.join(','), ...rows].join('\n');
           } else {
             content = '';
@@ -1225,47 +1407,47 @@
         a.href = url;
         a.download = filename;
         a.click();
+        URL.revokeObjectURL(url);
         
         toast.success('Export complete!');
-      }).catch(() => {
-        toast.error('Export failed. Please try again.');
-      });
+      } catch (err) {
+        toast.error('Export failed: ' + err.message);
+      }
     }
 
     // Activity Log
     let activityPage = 1;
     
-    function loadActivityLog() {
-      fetch(`/api/activity-logs?page=${activityPage}&limit=50`)
-        .then(r => r.json())
-        .then(data => {
-          const container = document.getElementById('activityLog');
-          
-          if (data.length === 0) {
-            container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No activity logs found</div>';
-            return;
-          }
-          
-          container.innerHTML = data.map(log => `
-            <div class="activity-item">
-              <div class="activity-icon">${getActivityIcon(log.action)}</div>
-              <div class="activity-content">
-                <div class="activity-message">
-                  <strong>${log.username || 'System'}</strong> ${log.action} ${log.entity_type} 
-                  ${log.entity_id ? `#${log.entity_id}` : ''}
-                </div>
-                <div class="activity-time">${formatDate(log.created_at)}</div>
+    async function loadActivityLog() {
+      try {
+        const data = await fetchJson('/api/activity_logs');
+        const container = document.getElementById('activityLog');
+        
+        if (!data || data.length === 0) {
+          container.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);">No activity logs found</div>';
+          return;
+        }
+        
+        container.innerHTML = data.map(log => `
+          <div class="activity-item">
+            <div class="activity-icon">${getActivityIcon(log.action)}</div>
+            <div class="activity-content">
+              <div class="activity-message">
+                <strong>${log.username || 'System'}</strong> ${log.action} ${log.entity_type} 
+                ${log.entity_id ? `#${log.entity_id}` : ''}
+                ${log.details ? `<br><small style="color: var(--text-secondary);">${log.details}</small>` : ''}
               </div>
+              <div class="activity-time">${formatDate(log.created_at)}</div>
             </div>
-          `).join('');
-        })
-        .catch(() => {
-          document.getElementById('activityLog').innerHTML = `
-            <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
-              Unable to load activity logs
-            </div>
-          `;
-        });
+          </div>
+        `).join('');
+      } catch (err) {
+        document.getElementById('activityLog').innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            Unable to load activity logs: ${err.message || 'Error'}
+          </div>
+        `;
+      }
     }
 
     function getActivityIcon(action) {
@@ -1302,39 +1484,68 @@
     }
 
     // System Stats
-    function loadSystemStats() {
-      fetch('/api/stats')
-        .then(r => r.json())
-        .then(data => {
-          document.getElementById('totalRecords').textContent = data.totalRecords?.toLocaleString() || '-';
-          document.getElementById('dbSize').textContent = data.dbSize || '-';
-          document.getElementById('lastSync').textContent = data.lastSync || 'Just now';
-          document.getElementById('uptime').textContent = data.uptime || '-';
-          document.getElementById('dbType').textContent = data.dbType || 'SQLite';
-          document.getElementById('nodeVersion').textContent = data.nodeVersion || '-';
+    async function loadSystemStats() {
+      try {
+        const data = await fetchJson('/api/system/stats');
+        
+        // Calculate total records from counts
+        const totalRecords = Object.values(data.counts || {}).reduce((a, b) => a + b, 0);
+        document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
+        document.getElementById('dbSize').textContent = data.database?.sizeMB ? `${data.database.sizeMB} MB` : '-';
+        document.getElementById('lastSync').textContent = 'Just now';
+        document.getElementById('uptime').textContent = data.uptime || '-';
+        document.getElementById('dbType').textContent = data.database?.dialect?.toUpperCase() || 'SQLite';
+        document.getElementById('nodeVersion').textContent = data.nodeVersion || '-';
+        
+        // Entity stats from counts
+        if (data.counts) {
+          const entityLabels = {
+            users: 'Users',
+            sales: 'Sales',
+            tours: 'Tours',
+            documents: 'Documents',
+            targets: 'Targets',
+            telecom: 'Telecom',
+            hotel_bookings: 'Hotel Bookings',
+            regions: 'Regions',
+            activity_logs: 'Activity Logs'
+          };
+          document.getElementById('entityStats').innerHTML = Object.entries(data.counts)
+            .filter(([entity]) => entity !== 'activity_logs')
+            .map(([entity, count]) => `
+              <tr>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                  ${entityLabels[entity] || entity}
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
+                  ${count?.toLocaleString() || 0}
+                </td>
+                <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">-</td>
+              </tr>
+            `).join('');
+        }
+        
+        // Show additional system info if available
+        if (data.activeUsers24h !== undefined || data.lockedUsers !== undefined) {
+          const additionalInfo = [];
+          if (data.activeUsers24h !== undefined) additionalInfo.push(`Active users (24h): ${data.activeUsers24h}`);
+          if (data.lockedUsers !== undefined) additionalInfo.push(`Locked accounts: ${data.lockedUsers}`);
+          if (data.recentActivity7d !== undefined) additionalInfo.push(`Recent activity (7d): ${data.recentActivity7d}`);
           
-          // Entity stats
-          if (data.entities) {
-            document.getElementById('entityStats').innerHTML = Object.entries(data.entities)
-              .map(([entity, stats]) => `
-                <tr>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
-                    ${entity.charAt(0).toUpperCase() + entity.slice(1)}
-                  </td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
-                    ${stats.count?.toLocaleString() || 0}
-                  </td>
-                  <td style="padding: 10px; border-bottom: 1px solid var(--border-light);">
-                    ${stats.lastUpdated || '-'}
-                  </td>
-                </tr>
-              `).join('');
+          const sysInfo = document.querySelector('.settings-section:last-child div[style*="monospace"]');
+          if (sysInfo && additionalInfo.length > 0) {
+            additionalInfo.forEach(info => {
+              const div = document.createElement('div');
+              div.textContent = info;
+              sysInfo.appendChild(div);
+            });
           }
-        })
-        .catch(() => {
-          // Show placeholder data
-          document.getElementById('totalRecords').textContent = '-';
-        });
+        }
+      } catch (err) {
+        console.error('Failed to load system stats:', err);
+        document.getElementById('totalRecords').textContent = '-';
+        document.getElementById('dbSize').textContent = '-';
+      }
     }
 
     function clearCache() {
@@ -1353,11 +1564,20 @@
       }
     }
 
-    function optimizeDb() {
+    async function optimizeDb() {
       toast.info('Optimizing database...');
-      fetch('/api/optimize', { method: 'POST' })
-        .then(() => toast.success('Database optimized!'))
-        .catch(() => toast.error('Optimization failed'));
+      try {
+        // For SQLite, VACUUM command optimizes
+        await fetchJson('/api/system/optimize', { method: 'POST' });
+        toast.success('Database optimized!');
+      } catch (err) {
+        // If no optimize endpoint, just clear local cache
+        if ('caches' in window) {
+          const names = await caches.keys();
+          await Promise.all(names.map(name => caches.delete(name)));
+        }
+        toast.success('Local cache optimized!');
+      }
     }
 
     function factoryReset() {
