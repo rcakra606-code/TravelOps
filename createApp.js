@@ -1182,14 +1182,17 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   let conditions = [];
   let params = [];
   
-  // Use transaction_date for filtering (convert from and to dates)
+  // Use month field for filtering (YYYY-MM format)
+  // Convert date range to month range
   if (from) {
-    conditions.push(isPg ? `s.transaction_date >= $${params.length + 1}::date` : `date(s.transaction_date) >= ?`);
-    params.push(from);
+    const fromMonth = from.substring(0, 7); // Extract YYYY-MM
+    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
+    params.push(fromMonth);
   }
   if (to) {
-    conditions.push(isPg ? `s.transaction_date <= $${params.length + 1}::date` : `date(s.transaction_date) <= ?`);
-    params.push(to);
+    const toMonth = to.substring(0, 7); // Extract YYYY-MM
+    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
+    params.push(toMonth);
   }
   if (staff) {
     conditions.push(isPg ? `s.staff_name = $${params.length + 1}` : `s.staff_name = ?`);
@@ -1219,18 +1222,14 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   // Calculate profit margin
   safeSummary.profitMargin = safeSummary.totalSales > 0 ? (safeSummary.totalProfit / safeSummary.totalSales) * 100 : 0;
   
-  // Chart data - sales & profit by month (extract month from transaction_date)
-  const monthGrouping = isPg 
-    ? `TO_CHAR(s.transaction_date::date, 'YYYY-MM')`
-    : `strftime('%Y-%m', s.transaction_date)`;
-  
+  // Chart data - sales & profit by month
   const trendData = await db.all(
-    `SELECT ${monthGrouping} as month, 
+    `SELECT s.month, 
       SUM(s.sales_amount) as totalSales,
       SUM(s.profit_amount) as totalProfit
      FROM sales s ${whereClause}
-     GROUP BY ${monthGrouping}
-     ORDER BY ${monthGrouping}`,
+     GROUP BY s.month
+     ORDER BY s.month`,
     params
   );
   
@@ -1248,13 +1247,12 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
   
   // Table data - all sales records
   const tableData = await db.all(
-    `SELECT s.id, s.transaction_date, ${monthGrouping} as month, s.staff_name, s.sales_amount, s.profit_amount, 
-      r.region_name,
-      s.created_at, s.created_by, s.updated_at, s.updated_by
+    `SELECT s.id, s.month, s.staff_name, s.sales_amount, s.profit_amount, 
+      r.region_name, s.status, s.invoice_no, s.unique_code
      FROM sales s
      LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.transaction_date DESC, s.created_at DESC
+     ORDER BY s.month DESC, s.id DESC
      LIMIT 100`,
     params
   );
@@ -1263,15 +1261,15 @@ async function generateSalesSummary(db, isPg, { from, to, staff, region }) {
     summary: safeSummary,
     chartData: {
       trend: {
-        labels: (trendData || []).map(d => d.month),
-        sales: (trendData || []).map(d => d.totalSales),
-        profit: (trendData || []).map(d => d.totalProfit)
+        labels: (trendData || []).map(d => d.month || 'Unknown'),
+        sales: (trendData || []).map(d => parseFloat(d.totalsales || d.totalSales || 0)),
+        profit: (trendData || []).map(d => parseFloat(d.totalprofit || d.totalProfit || 0))
       },
       byStaff: {
-        labels: (staffData || []).map(d => d.staff_name),
-        sales: (staffData || []).map(d => d.totalSales),
-        profit: (staffData || []).map(d => d.totalProfit),
-        transactions: (staffData || []).map(d => d.transactionCount)
+        labels: (staffData || []).map(d => d.staff_name || 'Unknown'),
+        sales: (staffData || []).map(d => parseFloat(d.totalsales || d.totalSales || 0)),
+        profit: (staffData || []).map(d => parseFloat(d.totalprofit || d.totalProfit || 0)),
+        transactions: (staffData || []).map(d => parseInt(d.transactioncount || d.transactionCount || 0))
       }
     },
     tableData: tableData || [],
@@ -1283,13 +1281,16 @@ async function generateSalesDetailed(db, isPg, { from, to, staff, region }) {
   let conditions = [];
   let params = [];
   
+  // Use month field for filtering
   if (from) {
-    conditions.push(isPg ? `transaction_date >= $${params.length + 1}::date` : `date(transaction_date) >= ?`);
-    params.push(from);
+    const fromMonth = from.substring(0, 7);
+    conditions.push(isPg ? `month >= $${params.length + 1}` : `month >= ?`);
+    params.push(fromMonth);
   }
   if (to) {
-    conditions.push(isPg ? `transaction_date <= $${params.length + 1}::date` : `date(transaction_date) <= ?`);
-    params.push(to);
+    const toMonth = to.substring(0, 7);
+    conditions.push(isPg ? `month <= $${params.length + 1}` : `month <= ?`);
+    params.push(toMonth);
   }
   if (staff) {
     conditions.push(isPg ? `staff_name = $${params.length + 1}` : `staff_name = ?`);
@@ -1312,25 +1313,30 @@ async function generateSalesDetailed(db, isPg, { from, to, staff, region }) {
   const counts = await db.get(
     `SELECT 
       COUNT(*) as totalCount,
-      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completedCount,
-      SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pendingCount,
+      SUM(CASE WHEN status = 'Completed' OR status = 'completed' THEN 1 ELSE 0 END) as completedCount,
+      SUM(CASE WHEN status = 'Pending' OR status = 'pending' OR status IS NULL THEN 1 ELSE 0 END) as pendingCount,
       COALESCE(SUM(sales_amount), 0) as totalRevenue
     FROM sales s ${whereClause}`,
     params
   );
   
-  Object.assign(summary, counts);
+  if (counts) {
+    summary.totalCount = parseInt(counts.totalcount || counts.totalCount || 0);
+    summary.completedCount = parseInt(counts.completedcount || counts.completedCount || 0);
+    summary.pendingCount = parseInt(counts.pendingcount || counts.pendingCount || 0);
+    summary.totalRevenue = parseFloat(counts.totalrevenue || counts.totalRevenue || 0);
+  }
   
   const tableData = await db.all(
     `SELECT s.*, r.region_name
      FROM sales s
      LEFT JOIN regions r ON r.id = s.region_id
      ${whereClause}
-     ORDER BY s.transaction_date DESC`,
+     ORDER BY s.month DESC, s.id DESC`,
     params
   );
   
-  return { summary, tableData };
+  return { summary, tableData: tableData || [] };
 }
 
 async function generateToursProfitability(db, isPg, { from, to, staff, region }) {
@@ -1357,7 +1363,7 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
   // Simple summary from tours table
-  const summary = await db.get(
+  const rawSummary = await db.get(
     `SELECT 
       COUNT(*) as totalTours,
       COALESCE(SUM(jumlah_peserta), 0) as totalParticipants,
@@ -1367,6 +1373,15 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
     FROM tours t ${whereClause}`,
     params
   );
+  
+  // Normalize for PostgreSQL lowercase columns
+  const summary = {
+    totalTours: parseInt(rawSummary?.totaltours || rawSummary?.totalTours || 0),
+    totalParticipants: parseInt(rawSummary?.totalparticipants || rawSummary?.totalParticipants || 0),
+    totalRevenue: parseFloat(rawSummary?.totalrevenue || rawSummary?.totalRevenue || 0),
+    totalProfit: parseFloat(rawSummary?.totalprofit || rawSummary?.totalProfit || 0),
+    avgParticipants: parseFloat(rawSummary?.avgparticipants || rawSummary?.avgParticipants || 0)
+  };
   
   // Get all tour records with region info
   const tableData = await db.all(
@@ -1390,16 +1405,23 @@ async function generateToursProfitability(db, isPg, { from, to, staff, region })
     params
   );
   
+  // Normalize chart data
+  const normalizedTourData = (tourCodeData || []).map(d => ({
+    tour_code: d.tour_code || 'Unknown',
+    tourCount: parseInt(d.tourcount || d.tourCount || 0),
+    totalParticipants: parseInt(d.totalparticipants || d.totalParticipants || 0)
+  }));
+  
   return {
     summary,
     chartData: {
       byDestination: {
-        labels: tourCodeData.map(d => d.tour_code || 'Unknown'),
-        tourCount: tourCodeData.map(d => d.tourCount),
-        participants: tourCodeData.map(d => d.totalParticipants)
+        labels: normalizedTourData.map(d => d.tour_code),
+        tourCount: normalizedTourData.map(d => d.tourCount),
+        participants: normalizedTourData.map(d => d.totalParticipants)
       }
     },
-    tableData
+    tableData: tableData || []
   };
 }
 
@@ -1426,7 +1448,7 @@ async function generateToursParticipants(db, isPg, { from, to, staff, region }) 
   
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
-  const summary = await db.get(
+  const rawSummary = await db.get(
     `SELECT 
       COUNT(*) as totalTours,
       COALESCE(SUM(jumlah_peserta), 0) as totalParticipants,
@@ -1435,18 +1457,24 @@ async function generateToursParticipants(db, isPg, { from, to, staff, region }) 
     params
   );
   
-  summary.occupancyRate = 0.75; // Placeholder - would need capacity data
+  // Normalize for PostgreSQL lowercase columns
+  const summary = {
+    totalTours: parseInt(rawSummary?.totaltours || rawSummary?.totalTours || 0),
+    totalParticipants: parseInt(rawSummary?.totalparticipants || rawSummary?.totalParticipants || 0),
+    averagePerTour: parseFloat(rawSummary?.averagepertour || rawSummary?.averagePerTour || 0),
+    occupancyRate: 0.75 // Placeholder - would need capacity data
+  };
   
   const tableData = await db.all(
     `SELECT t.*, r.region_name
      FROM tours t
-     JOIN regions r ON r.id = t.region_id
+     LEFT JOIN regions r ON r.id = t.region_id
      ${whereClause}
      ORDER BY t.departure_date DESC`,
     params
   );
   
-  return { summary, tableData };
+  return { summary, tableData: tableData || [] };
 }
 
 async function generateDocumentsStatus(db, isPg, { from, to, staff, region }) {
@@ -1468,14 +1496,7 @@ async function generateDocumentsStatus(db, isPg, { from, to, staff, region }) {
   
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
   
-  const summary = {
-    totalDocuments: 0,
-    completedCount: 0,
-    inProgressCount: 0,
-    avgProcessingDays: 0
-  };
-  
-  const counts = await db.get(
+  const rawCounts = await db.get(
     `SELECT 
       COUNT(*) as totalDocuments,
       SUM(CASE WHEN send_date IS NOT NULL THEN 1 ELSE 0 END) as completedCount,
@@ -1484,7 +1505,13 @@ async function generateDocumentsStatus(db, isPg, { from, to, staff, region }) {
     params
   );
   
-  Object.assign(summary, counts);
+  // Normalize for PostgreSQL lowercase columns
+  const summary = {
+    totalDocuments: parseInt(rawCounts?.totaldocuments || rawCounts?.totalDocuments || 0),
+    completedCount: parseInt(rawCounts?.completedcount || rawCounts?.completedCount || 0),
+    inProgressCount: parseInt(rawCounts?.inprogresscount || rawCounts?.inProgressCount || 0),
+    avgProcessingDays: 0
+  };
   
   const processTypeData = await db.all(
     `SELECT process_type, COUNT(*) as count
@@ -1499,15 +1526,21 @@ async function generateDocumentsStatus(db, isPg, { from, to, staff, region }) {
     params
   );
   
+  // Normalize process type data
+  const normalizedProcessType = (processTypeData || []).map(d => ({
+    process_type: d.process_type || 'Unknown',
+    count: parseInt(d.count || 0)
+  }));
+  
   return {
     summary,
     chartData: {
       byProcessType: {
-        labels: processTypeData.map(d => d.process_type),
-        values: processTypeData.map(d => d.count)
+        labels: normalizedProcessType.map(d => d.process_type),
+        values: normalizedProcessType.map(d => d.count)
       }
     },
-    tableData
+    tableData: tableData || []
   };
 }
 
@@ -1515,13 +1548,16 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
   let conditions = [];
   let params = [];
   
+  // Use month field for filtering
   if (from) {
-    conditions.push(isPg ? `s.transaction_date >= $${params.length + 1}::date` : `date(s.transaction_date) >= ?`);
-    params.push(from);
+    const fromMonth = from.substring(0, 7);
+    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
+    params.push(fromMonth);
   }
   if (to) {
-    conditions.push(isPg ? `s.transaction_date <= $${params.length + 1}::date` : `date(s.transaction_date) <= ?`);
-    params.push(to);
+    const toMonth = to.substring(0, 7);
+    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
+    params.push(toMonth);
   }
   if (region) {
     conditions.push(isPg ? `s.region_id = $${params.length + 1}::int` : `s.region_id = ?`);
@@ -1539,6 +1575,12 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
     FROM sales s ${whereClause}`,
     params
   );
+  
+  const safeSummary = {
+    totalStaff: parseInt(summary?.totalstaff || summary?.totalStaff || 0),
+    totalSales: parseFloat(summary?.totalsales || summary?.totalSales || 0),
+    totalProfit: parseFloat(summary?.totalprofit || summary?.totalProfit || 0)
+  };
   
   // Performance by staff
   const tableData = await db.all(
@@ -1561,20 +1603,31 @@ async function generateStaffPerformance(db, isPg, { from, to, region }) {
     params
   );
   
+  // Normalize postgres lowercase column names
+  const normalizedData = (tableData || []).map(d => ({
+    staff_name: d.staff_name,
+    region_name: d.region_name,
+    total_sales: parseFloat(d.total_sales || 0),
+    total_profit: parseFloat(d.total_profit || 0),
+    transaction_count: parseInt(d.transaction_count || 0),
+    average_sale: parseFloat(d.average_sale || 0),
+    profit_margin: parseFloat(d.profit_margin || 0)
+  }));
+  
   return {
-    summary,
+    summary: safeSummary,
     chartData: {
       staffSales: {
-        labels: tableData.map(d => d.staff_name),
-        sales: tableData.map(d => d.total_sales),
-        profit: tableData.map(d => d.total_profit)
+        labels: normalizedData.map(d => d.staff_name || 'Unknown'),
+        sales: normalizedData.map(d => d.total_sales),
+        profit: normalizedData.map(d => d.total_profit)
       },
       staffTransactions: {
-        labels: tableData.map(d => d.staff_name),
-        values: tableData.map(d => d.transaction_count)
+        labels: normalizedData.map(d => d.staff_name || 'Unknown'),
+        values: normalizedData.map(d => d.transaction_count)
       }
     },
-    tableData
+    tableData: normalizedData
   };
 }
 
@@ -1582,16 +1635,19 @@ async function generateRegionalComparison(db, isPg, { from, to }) {
   let conditions = [];
   let params = [];
   
+  // Use month field for filtering
   if (from) {
-    conditions.push(isPg ? `s.created_at >= $${params.length + 1}::date` : `date(s.created_at) >= ?`);
-    params.push(from);
+    const fromMonth = from.substring(0, 7);
+    conditions.push(isPg ? `s.month >= $${params.length + 1}` : `s.month >= ?`);
+    params.push(fromMonth);
   }
   if (to) {
-    conditions.push(isPg ? `s.created_at <= $${params.length + 1}::date` : `date(s.created_at) <= ?`);
-    params.push(to);
+    const toMonth = to.substring(0, 7);
+    conditions.push(isPg ? `s.month <= $${params.length + 1}` : `s.month <= ?`);
+    params.push(toMonth);
   }
   
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const salesCondition = conditions.length > 0 ? `AND ${conditions.join(' AND ')}` : '';
   
   const tableData = await db.all(
     `SELECT 
@@ -1600,26 +1656,35 @@ async function generateRegionalComparison(db, isPg, { from, to }) {
       COUNT(DISTINCT t.id) as total_tours,
       COALESCE(SUM(t.jumlah_peserta), 0) as total_participants
     FROM regions r
-    LEFT JOIN sales s ON s.region_id = r.id ${from || to ? `AND ${conditions.join(' AND ')}` : ''}
+    LEFT JOIN sales s ON s.region_id = r.id ${salesCondition}
     LEFT JOIN tours t ON t.region_id = r.id
-    GROUP BY r.region_name
+    GROUP BY r.id, r.region_name
     ORDER BY total_sales DESC`,
-    from || to ? params : []
+    params
   );
   
-  const totalSales = tableData.reduce((sum, r) => sum + parseFloat(r.total_sales || 0), 0);
-  tableData.forEach(row => {
-    row.market_share = totalSales > 0 ? parseFloat(row.total_sales) / totalSales : 0;
+  // Normalize data
+  const normalizedData = (tableData || []).map(row => ({
+    region_name: row.region_name || 'Unknown',
+    total_sales: parseFloat(row.total_sales || 0),
+    total_tours: parseInt(row.total_tours || 0),
+    total_participants: parseInt(row.total_participants || 0),
+    market_share: 0
+  }));
+  
+  const totalSales = normalizedData.reduce((sum, r) => sum + r.total_sales, 0);
+  normalizedData.forEach(row => {
+    row.market_share = totalSales > 0 ? row.total_sales / totalSales : 0;
   });
   
   return {
     chartData: {
       regionRevenue: {
-        labels: tableData.map(d => d.region_name),
-        values: tableData.map(d => d.total_sales)
+        labels: normalizedData.map(d => d.region_name),
+        values: normalizedData.map(d => d.total_sales)
       }
     },
-    tableData
+    tableData: normalizedData
   };
 }
 
@@ -1627,13 +1692,16 @@ async function generateExecutiveSummary(db, isPg, { from, to }) {
   let salesConditions = [];
   let salesParams = [];
   
+  // Use month field for filtering
   if (from) {
-    salesConditions.push(isPg ? `transaction_date >= $${salesParams.length + 1}::date` : `date(transaction_date) >= ?`);
-    salesParams.push(from);
+    const fromMonth = from.substring(0, 7);
+    salesConditions.push(isPg ? `month >= $${salesParams.length + 1}` : `month >= ?`);
+    salesParams.push(fromMonth);
   }
   if (to) {
-    salesConditions.push(isPg ? `transaction_date <= $${salesParams.length + 1}::date` : `date(transaction_date) <= ?`);
-    salesParams.push(to);
+    const toMonth = to.substring(0, 7);
+    salesConditions.push(isPg ? `month <= $${salesParams.length + 1}` : `month <= ?`);
+    salesParams.push(toMonth);
   }
   
   const salesWhere = salesConditions.length > 0 ? `WHERE ${salesConditions.join(' AND ')}` : '';
@@ -1679,27 +1747,36 @@ async function generateExecutiveSummary(db, isPg, { from, to }) {
     salesParams
   );
   
+  // Normalize values (postgres returns lowercase)
   const summary = {
-    totalSales: salesSummary.totalSales,
-    totalProfit: salesSummary.totalProfit,
-    transactionCount: salesSummary.transactionCount,
-    profitMargin: salesSummary.totalSales > 0 ? (salesSummary.totalProfit / salesSummary.totalSales) * 100 : 0,
-    totalTours: toursSummary.totalTours,
-    totalParticipants: toursSummary.totalParticipants,
-    totalDocuments: docsSummary.totalDocuments,
-    pendingDocuments: docsSummary.pendingDocuments,
-    completedDocuments: docsSummary.completedDocuments
+    totalSales: parseFloat(salesSummary?.totalsales || salesSummary?.totalSales || 0),
+    totalProfit: parseFloat(salesSummary?.totalprofit || salesSummary?.totalProfit || 0),
+    transactionCount: parseInt(salesSummary?.transactioncount || salesSummary?.transactionCount || 0),
+    profitMargin: 0,
+    totalTours: parseInt(toursSummary?.totaltours || toursSummary?.totalTours || 0),
+    totalParticipants: parseInt(toursSummary?.totalparticipants || toursSummary?.totalParticipants || 0),
+    totalDocuments: parseInt(docsSummary?.totaldocuments || docsSummary?.totalDocuments || 0),
+    pendingDocuments: parseInt(docsSummary?.pendingdocuments || docsSummary?.pendingDocuments || 0),
+    completedDocuments: parseInt(docsSummary?.completeddocuments || docsSummary?.completedDocuments || 0)
   };
+  
+  summary.profitMargin = summary.totalSales > 0 ? (summary.totalProfit / summary.totalSales) * 100 : 0;
+  
+  // Normalize top staff data
+  const normalizedTopStaff = (topStaff || []).map(s => ({
+    staff_name: s.staff_name,
+    total_sales: parseFloat(s.total_sales || 0)
+  }));
   
   return {
     summary,
     chartData: {
       topStaff: {
-        labels: topStaff.map(s => s.staff_name),
-        values: topStaff.map(s => s.total_sales)
+        labels: normalizedTopStaff.map(s => s.staff_name || 'Unknown'),
+        values: normalizedTopStaff.map(s => s.total_sales)
       }
     },
-    topStaff,
+    topStaff: normalizedTopStaff,
     tableData: []
   };
 }
