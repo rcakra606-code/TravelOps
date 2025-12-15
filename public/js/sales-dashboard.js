@@ -880,9 +880,9 @@ window.editSale = async function(id) {
     { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
     { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
   ], item, async (formData) => {
-    // Clean currency fields
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['sales_amount', 'profit_amount'].forEach(field => {
-      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
     await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
@@ -927,9 +927,9 @@ if (el('addSaleBtn')) {
       { type: 'currency', name: 'sales_amount', label: 'Sales Amount', required: true, currency: 'Rp', min: 0, step: 0.01 },
       { type: 'currency', name: 'profit_amount', label: 'Profit Amount', required: true, currency: 'Rp', min: 0, step: 0.01 }
     ], async (formData) => {
-      // Clean currency fields
+      // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
       ['sales_amount', 'profit_amount'].forEach(field => {
-        if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+        if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
       });
       
       await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });

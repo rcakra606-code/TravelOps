@@ -863,11 +863,11 @@ window.editTour = async function(id) {
   ], item, async (formData) => {
     console.log('Submitting tour update:', formData);
     
-    // Clean currency fields - remove commas and convert to numbers
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     const currencyFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
     currencyFields.forEach(field => {
       if (formData[field]) {
-        formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+        formData[field] = window.parseFormattedNumber(formData[field]);
       }
     });
     
@@ -936,12 +936,11 @@ if (el('addTourBtn')) {
       console.log('🔥 TOUR CALLBACK STARTED');
       console.log('🔥 FormData received:', formData);
       
-      // Clean currency fields - remove commas and convert to numbers
+      // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
       const currencyFields = ['tour_price', 'sales_amount', 'total_nominal_sales', 'discount_amount', 'profit_amount'];
       currencyFields.forEach(field => {
         if (formData[field]) {
-          // Remove commas and convert to number
-          formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+          formData[field] = window.parseFormattedNumber(formData[field]);
         }
       });
       

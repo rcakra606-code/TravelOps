@@ -747,13 +747,15 @@ export async function createApp() {
       let dbInfo = { dialect: db.dialect };
       if (!isPg) {
         try {
-          const dbPath = path.resolve('data/travelops.db');
+          const dbPath = path.resolve(process.cwd(), 'data/travelops.db');
           if (fs.existsSync(dbPath)) {
             const stats = fs.statSync(dbPath);
             dbInfo.sizeBytes = stats.size;
             dbInfo.sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
           }
-        } catch {}
+        } catch (dbErr) {
+          logger.warn({ err: dbErr }, 'Could not get database file info');
+        }
       }
       
       res.json({
@@ -766,8 +768,8 @@ export async function createApp() {
         uptime: process.uptime()
       });
     } catch (err) {
-      logger.error({ err }, 'System stats error');
-      res.status(500).json({ error: 'Failed to get system stats' });
+      logger.error({ err, stack: err.stack }, 'System stats error');
+      res.status(500).json({ error: 'Failed to get system stats', details: err.message });
     }
   });
 

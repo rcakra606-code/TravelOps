@@ -225,9 +225,9 @@ async function editTarget(id) {
     }
   ], item, async (formData) => {
     console.log('Submitting target update:', formData);
-    // Clean currency fields
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['target_sales', 'target_profit'].forEach(field => {
-      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     const response = await fetchJson(`/api/targets/${item.id}`, {
       method: 'PUT',
@@ -338,9 +338,9 @@ el('addTargetBtn').addEventListener('click', () => {
     }
   ], async (formData) => {
     console.log('Submitting new target:', formData);
-    // Clean currency fields
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['target_sales', 'target_profit'].forEach(field => {
-      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     const response = await fetchJson('/api/targets', {
       method: 'POST',

@@ -406,10 +406,33 @@ function formatNumberWithCommas(value) {
 
 /**
  * Utility: Parse formatted number
+ * Handles both Indonesian format (dot as thousand separator: 439.000.000)
+ * and International format (comma as thousand separator: 439,000,000)
  */
 function parseFormattedNumber(value) {
-  return parseFloat(String(value).replace(/,/g, '')) || 0;
+  let val = String(value);
+  
+  // Handle Indonesian format (dots as thousand separators)
+  if (val.includes('.') && !val.includes(',')) {
+    // Multiple dots = definitely thousand separators (e.g., 439.000.000)
+    if ((val.match(/\./g) || []).length > 1) {
+      val = val.replace(/\./g, '');
+    } 
+    // Single dot followed by exactly 3 digits at end = thousand separator (e.g., 439.000)
+    else if (/\.\d{3}$/.test(val)) {
+      val = val.replace(/\./g, '');
+    }
+    // Otherwise keep as decimal point (e.g., 439.50)
+  } else {
+    // International format - remove commas
+    val = val.replace(/,/g, '');
+  }
+  
+  return parseFloat(val) || 0;
 }
+
+// Expose globally
+window.parseFormattedNumber = parseFormattedNumber;
 
 /**
  * Utility: Get current user data

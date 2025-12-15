@@ -262,9 +262,9 @@ function addOutstanding() {
     { type: 'currency', name: 'pembayaran_kedua', label: 'Discount (Pembayaran Kedua)', required: false, currency: 'Rp', min: 0 },
     { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖', placeholder: 'UC-001' }
   ], async (formData) => {
-    // Clean currency fields
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['nominal_invoice', 'pembayaran_pertama', 'pembayaran_kedua'].forEach(field => {
-      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
     await window.fetchJson('/api/outstanding', { 
@@ -300,9 +300,9 @@ function editOutstanding(id) {
     { type: 'currency', name: 'pembayaran_kedua', label: 'Discount (Pembayaran Kedua)', required: false, currency: 'Rp', min: 0 },
     { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖' }
   ], item, async (formData) => {
-    // Clean currency fields
+    // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['nominal_invoice', 'pembayaran_pertama', 'pembayaran_kedua'].forEach(field => {
-      if (formData[field]) formData[field] = parseFloat(String(formData[field]).replace(/,/g, '')) || 0;
+      if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
     await window.fetchJson(`/api/outstanding/${item.id}`, { 

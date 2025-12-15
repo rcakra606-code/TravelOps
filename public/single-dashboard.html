@@ -923,16 +923,8 @@
 <script src="/js/dashboard.js?v=9"></script>
 <script defer src="/js/crud-handlers.js?v=7"></script>
 
-<!-- Service Worker Registration -->
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(reg => console.log('Service Worker registered'))
-      .catch(err => console.log('Service Worker registration failed:', err));
-  });
-}
-</script>
+<!-- Service Worker Registration (external to comply with CSP) -->
+<script src="/js/sw-register.js"></script>
 
 <!-- Removed logout confirmation modal; using direct navigation to /logout.html -->
 
