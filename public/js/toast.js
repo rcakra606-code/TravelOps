@@ -86,6 +86,8 @@ class ToastManager {
     toast.innerHTML = `
       <span style="font-size: 1.2rem; font-weight: bold; flex-shrink: 0;">${icons[type]}</span>
       <span style="flex: 1; line-height: 1.4;">${message}</span>
+      <button class="toast-dismiss" style="background:none;border:none;color:white;opacity:0.7;cursor:pointer;font-size:1.2rem;padding:0 4px;">×</button>
+      <div class="toast-progress" style="position:absolute;bottom:0;left:0;height:3px;background:rgba(255,255,255,0.4);animation:toastProgress ${duration}ms linear forwards;"></div>
     `;
 
     // Add CSS animation if not already added
@@ -117,11 +119,27 @@ class ToastManager {
           transform: translateX(-4px);
           box-shadow: 0 6px 16px rgba(0,0,0,0.15);
         }
+        @keyframes toastProgress {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+        .toast-dismiss:hover {
+          opacity: 1 !important;
+        }
       `;
       document.head.appendChild(style);
     }
 
-    // Click to dismiss
+    // Click dismiss button
+    const dismissBtn = toast.querySelector('.toast-dismiss');
+    if (dismissBtn) {
+      dismissBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.dismiss(toast);
+      });
+    }
+
+    // Click anywhere to dismiss
     toast.addEventListener('click', () => this.dismiss(toast));
 
     this.container.appendChild(toast);

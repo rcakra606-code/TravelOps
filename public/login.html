@@ -184,6 +184,24 @@
       pointer-events: none;
     }
 
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 1.25rem;
+      opacity: 0.6;
+      transition: opacity 0.2s;
+    }
+
+    .password-toggle:hover {
+      opacity: 1;
+    }
+
     .btn {
       background: var(--gradient);
       color: #fff;
@@ -342,6 +360,9 @@
           <div class="input-wrapper">
             <span class="input-icon">🔒</span>
             <input type="password" id="password" placeholder="Masukkan password" required />
+            <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
+              <span id="toggleIcon">👁️</span>
+            </button>
           </div>
         </div>
         
@@ -358,6 +379,19 @@
     </div>
   </div>
 
-  
+  <script>
+    function togglePassword() {
+      const passwordInput = document.getElementById('password');
+      const toggleIcon = document.getElementById('toggleIcon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        toggleIcon.textContent = '🙈';
+      } else {
+        passwordInput.type = 'password';
+        toggleIcon.textContent = '👁️';
+      }
+    }
+  </script>
 </body>
 </html>
