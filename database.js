@@ -395,6 +395,10 @@ async function createSchema(db) {
   await ensureColumn('targets', 'month', 'INTEGER');
   await ensureColumn('targets', 'year', 'INTEGER');
 
+  // Users: lockout columns for security
+  await ensureColumn('users', 'failed_attempts', 'INTEGER DEFAULT 0');
+  await ensureColumn('users', 'locked_until', 'TEXT');
+
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
   // to all main entity tables for tracking who created/modified records

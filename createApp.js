@@ -712,39 +712,60 @@ export async function createApp() {
     try {
       const isPg = db.dialect === 'postgres';
       
-      // Get table counts
+      // Get table counts with individual error handling
       const counts = {};
       const tables = ['users', 'sales', 'tours', 'documents', 'targets', 'telecom', 'hotel_bookings', 'regions', 'activity_logs'];
       for (const table of tables) {
         try {
           const result = await db.get(`SELECT COUNT(*) as count FROM ${table}`);
-          counts[table] = result?.count || 0;
-        } catch { counts[table] = 0; }
+          counts[table] = parseInt(result?.count, 10) || 0;
+        } catch (tableErr) {
+          logger.warn({ table, err: tableErr.message }, 'Could not count table');
+          counts[table] = 0;
+        }
       }
       
       // Get active users (logged in last 24 hours from activity logs)
-      const activeUsersResult = await db.get(
-        isPg
-          ? `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '24 hours'`
-          : `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-24 hours')`
-      );
+      let activeUsers24h = 0;
+      try {
+        const activeUsersResult = await db.get(
+          isPg
+            ? `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '24 hours'`
+            : `SELECT COUNT(DISTINCT username) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-24 hours')`
+        );
+        activeUsers24h = parseInt(activeUsersResult?.count, 10) || 0;
+      } catch (err) {
+        logger.warn({ err: err.message }, 'Could not get active users');
+      }
       
       // Get locked users count
-      const lockedUsersResult = await db.get(
-        isPg
-          ? `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND locked_until > NOW()`
-          : `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND datetime(locked_until) > datetime('now')`
-      );
+      let lockedUsers = 0;
+      try {
+        const lockedUsersResult = await db.get(
+          isPg
+            ? `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND locked_until > NOW()`
+            : `SELECT COUNT(*) as count FROM users WHERE locked_until IS NOT NULL AND datetime(locked_until) > datetime('now')`
+        );
+        lockedUsers = parseInt(lockedUsersResult?.count, 10) || 0;
+      } catch (err) {
+        logger.warn({ err: err.message }, 'Could not get locked users');
+      }
       
       // Get recent activity count (last 7 days)
-      const recentActivityResult = await db.get(
-        isPg
-          ? `SELECT COUNT(*) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '7 days'`
-          : `SELECT COUNT(*) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-7 days')`
-      );
+      let recentActivity7d = 0;
+      try {
+        const recentActivityResult = await db.get(
+          isPg
+            ? `SELECT COUNT(*) as count FROM activity_logs WHERE created_at > NOW() - INTERVAL '7 days'`
+            : `SELECT COUNT(*) as count FROM activity_logs WHERE datetime(created_at) > datetime('now', '-7 days')`
+        );
+        recentActivity7d = parseInt(recentActivityResult?.count, 10) || 0;
+      } catch (err) {
+        logger.warn({ err: err.message }, 'Could not get recent activity');
+      }
       
       // Get database info
-      let dbInfo = { dialect: db.dialect };
+      let dbInfo = { dialect: db.dialect || 'unknown' };
       if (!isPg) {
         try {
           const dbPath = path.resolve(process.cwd(), 'data/travelops.db');
@@ -760,9 +781,9 @@ export async function createApp() {
       
       res.json({
         counts,
-        activeUsers24h: activeUsersResult?.count || 0,
-        lockedUsers: lockedUsersResult?.count || 0,
-        recentActivity7d: recentActivityResult?.count || 0,
+        activeUsers24h,
+        lockedUsers,
+        recentActivity7d,
         database: dbInfo,
         serverTime: new Date().toISOString(),
         uptime: process.uptime()
