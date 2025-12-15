@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Tour Data | TravelOps</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/dark-mode.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <script src="/js/theme-toggle.js"></script>
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--card, #fff);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stat-card h4 {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin: 0 0 16px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .stat-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .stat-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+    
+    .stat-badge {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+    
+    .stat-badge.pending { background: #fef3c7; color: #92400e; }
+    .stat-badge.completed { background: #d1fae5; color: #065f46; }
+    .stat-badge.cancelled { background: #fee2e2; color: #991b1b; }
+    .stat-badge.invoiced { background: #dbeafe; color: #1e40af; }
+    .stat-badge.not-invoiced { background: #f3f4f6; color: #4b5563; }
+    
+    .big-number {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary);
+      line-height: 1;
+    }
+    
+    .summary-row {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .summary-item {
+      background: var(--card);
+      padding: 16px 24px;
+      border-radius: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 150px;
+      text-align: center;
+    }
+    
+    .summary-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .summary-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .tours-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .tours-table th {
+      background: var(--bg-alt);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    
+    .tours-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    
+    .tours-table tr:hover {
+      background: var(--bg-alt);
+    }
+    
+    .status-chip {
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    
+    .status-chip.pending { background: #fef3c7; color: #92400e; }
+    .status-chip.completed { background: #d1fae5; color: #065f46; }
+    .status-chip.cancelled { background: #fee2e2; color: #991b1b; }
+    
+    .invoice-status {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .invoice-status.yes { background: #d1fae5; color: #065f46; }
+    .invoice-status.no { background: #fee2e2; color: #991b1b; }
+    
+    .btn-edit {
+      padding: 6px 12px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    
+    .btn-edit:hover {
+      background: var(--primary-dark);
+    }
+    
+    .search-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    
+    .search-input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    .filter-select {
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 150px;
+    }
+    
+    .table-container {
+      background: var(--card);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .table-scroll {
+      overflow-x: auto;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-secondary);
+    }
+    
+    .empty-state-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    
+    /* Progress bar for stats */
+    .progress-container {
+      margin-top: 8px;
+    }
+    
+    .progress-bar {
+      height: 8px;
+      background: var(--bg-alt);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    
+    .progress-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.5s ease;
+    }
+    
+    .progress-fill.pending { background: #f59e0b; }
+    .progress-fill.completed { background: #10b981; }
+    .progress-fill.cancelled { background: #ef4444; }
+  </style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/my-tours.html" class="active">📋 My Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>📋 My Tour Data</h2>
+        <div class="small">View and manage your tour bookings</div>
+      </div>
+    </div>
+
+    <!-- Summary Row -->
+    <div class="summary-row">
+      <div class="summary-item">
+        <div class="summary-value" id="totalMyTours">0</div>
+        <div class="summary-label">Total Tours</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="totalMyPassengers">0</div>
+        <div class="summary-label">Total Passengers</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="totalMySales">Rp 0</div>
+        <div class="summary-label">Total Sales</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-value" id="avgPassengers">0</div>
+        <div class="summary-label">Avg Passengers/Tour</div>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="stats-grid">
+      <!-- Passengers by Status -->
+      <div class="stat-card">
+        <h4>🚶 Passengers by Tour Status</h4>
+        <div class="stat-items">
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>⏳</span> Belum Jalan
+            </div>
+            <span class="stat-badge pending" id="paxPending">0</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill pending" id="progressPending" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>✅</span> Sudah Jalan
+            </div>
+            <span class="stat-badge completed" id="paxCompleted">0</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill completed" id="progressCompleted" style="width: 0%"></div>
+            </div>
+          </div>
+          
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>❌</span> Tidak Jalan
+            </div>
+            <span class="stat-badge cancelled" id="paxCancelled">0</span>
+          </div>
+          <div class="progress-container">
+            <div class="progress-bar">
+              <div class="progress-fill cancelled" id="progressCancelled" style="width: 0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Invoice Status -->
+      <div class="stat-card">
+        <h4>📝 Invoice Status</h4>
+        <div class="stat-items">
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>✅</span> Invoiced Tours
+            </div>
+            <span class="stat-badge invoiced" id="toursInvoiced">0</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>⏳</span> Not Invoiced
+            </div>
+            <span class="stat-badge not-invoiced" id="toursNotInvoiced">0</span>
+          </div>
+          <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light);">
+            <div class="stat-row">
+              <div class="stat-label" style="font-weight: 600;">Invoice Rate</div>
+              <span class="big-number" id="invoiceRate">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tours by Status Count -->
+      <div class="stat-card">
+        <h4>🗂️ Tours by Status</h4>
+        <div class="stat-items">
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>⏳</span> Belum Jalan
+            </div>
+            <span class="stat-badge pending" id="toursPending">0</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>✅</span> Sudah Jalan
+            </div>
+            <span class="stat-badge completed" id="toursCompleted">0</span>
+          </div>
+          <div class="stat-row">
+            <div class="stat-label">
+              <span>❌</span> Tidak Jalan
+            </div>
+            <span class="stat-badge cancelled" id="toursCancelled">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="search-bar">
+      <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by tour code, passenger name, booking code...">
+      <select class="filter-select" id="filterStatus">
+        <option value="">All Status</option>
+        <option value="belum jalan">⏳ Belum Jalan</option>
+        <option value="sudah jalan">✅ Sudah Jalan</option>
+        <option value="tidak jalan">❌ Tidak Jalan</option>
+      </select>
+      <select class="filter-select" id="filterInvoice">
+        <option value="">All Invoice Status</option>
+        <option value="invoiced">✅ Invoiced</option>
+        <option value="not-invoiced">⏳ Not Invoiced</option>
+      </select>
+      <input type="month" class="filter-select" id="filterMonth" title="Filter by departure month">
+    </div>
+
+    <!-- Tours Table -->
+    <div class="table-container">
+      <div class="table-scroll">
+        <table class="tours-table">
+          <thead>
+            <tr>
+              <th>Reg Date</th>
+              <th>Tour Code</th>
+              <th>Booking Code</th>
+              <th>Lead Passenger</th>
+              <th>Pax</th>
+              <th>Departure</th>
+              <th>Status</th>
+              <th>Invoice #</th>
+              <th>Total Sales</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="toursTableBody">
+            <tr>
+              <td colspan="10" class="empty-state">
+                <div class="empty-state-icon">📭</div>
+                <div>Loading your tours...</div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Edit Modal -->
+<div id="modal" class="modal">
+  <div class="modal-card" style="max-width: 800px;">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title">Edit Tour</div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/app-enhancements.js"></script>
+<script type="module">
+  import { getUser, fetchJson, logout } from '/js/auth-common.js';
+  
+  // Make available globally
+  window.getUser = getUser;
+  window.fetchJson = fetchJson;
+  
+  const el = id => document.getElementById(id);
+  
+  let allTours = [];
+  let regions = [];
+  let filteredTours = [];
+  let currentUser = null;
+  
+  // Format currency
+  function formatCurrency(amount) {
+    const num = parseFloat(amount) || 0;
+    return 'Rp ' + num.toLocaleString('id-ID');
+  }
+  
+  // Initialize
+  async function init() {
+    currentUser = getUser();
+    
+    // Display user info
+    el('userName').textContent = currentUser.name || currentUser.username || '—';
+    el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[currentUser.type] || currentUser.type || '—';
+    
+    // Show admin link if admin
+    if (currentUser.type === 'admin') {
+      const adminLink = el('adminSettingsLink');
+      if (adminLink) adminLink.style.display = 'block';
+    }
+    
+    // Load data
+    await loadData();
+    
+    // Setup event listeners
+    setupEventListeners();
+  }
+  
+  async function loadData() {
+    try {
+      // Load regions for edit form
+      regions = await fetchJson('/api/regions') || [];
+      
+      // Load all tours
+      const allToursData = await fetchJson('/api/tours') || [];
+      
+      // Filter to current user's tours only
+      const staffName = currentUser.name || currentUser.username;
+      allTours = allToursData.filter(t => 
+        t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase()
+      );
+      
+      // Apply filters and render
+      applyFilters();
+      updateStats();
+      
+    } catch (err) {
+      console.error('Error loading data:', err);
+      toast.error('Failed to load tour data');
+    }
+  }
+  
+  function setupEventListeners() {
+    // Search input
+    el('searchInput').addEventListener('input', debounce(applyFilters, 300));
+    
+    // Filter dropdowns
+    el('filterStatus').addEventListener('change', applyFilters);
+    el('filterInvoice').addEventListener('change', applyFilters);
+    el('filterMonth').addEventListener('change', applyFilters);
+    
+    // Modal close
+    el('modalClose').addEventListener('click', closeModal);
+    el('modalCancel').addEventListener('click', closeModal);
+    el('modal').addEventListener('click', (e) => {
+      if (e.target === el('modal')) closeModal();
+    });
+    
+    // Modal form submit
+    el('modalForm').addEventListener('submit', handleSave);
+  }
+  
+  function debounce(fn, delay) {
+    let timer;
+    return function(...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn.apply(this, args), delay);
+    };
+  }
+  
+  function applyFilters() {
+    const search = el('searchInput').value.toLowerCase().trim();
+    const statusFilter = el('filterStatus').value;
+    const invoiceFilter = el('filterInvoice').value;
+    const monthFilter = el('filterMonth').value;
+    
+    filteredTours = allTours.filter(tour => {
+      // Search filter
+      if (search) {
+        const searchFields = [
+          tour.tour_code,
+          tour.booking_code,
+          tour.lead_passenger,
+          tour.all_passengers,
+          tour.invoice_number,
+          tour.phone_number,
+          tour.email
+        ].filter(Boolean).join(' ').toLowerCase();
+        
+        if (!searchFields.includes(search)) return false;
+      }
+      
+      // Status filter
+      if (statusFilter && tour.status !== statusFilter) return false;
+      
+      // Invoice filter
+      if (invoiceFilter === 'invoiced' && (!tour.invoice_number || !tour.invoice_number.trim())) return false;
+      if (invoiceFilter === 'not-invoiced' && tour.invoice_number && tour.invoice_number.trim()) return false;
+      
+      // Month filter (based on departure_date)
+      if (monthFilter && tour.departure_date) {
+        const tourMonth = tour.departure_date.substring(0, 7);
+        if (tourMonth !== monthFilter) return false;
+      }
+      
+      return true;
+    });
+    
+    renderTable();
+  }
+  
+  function updateStats() {
+    // Total counts
+    const totalTours = allTours.length;
+    const totalPassengers = allTours.reduce((sum, t) => sum + (parseInt(t.jumlah_peserta) || 0), 0);
+    const totalSales = allTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+    const avgPax = totalTours > 0 ? Math.round(totalPassengers / totalTours) : 0;
+    
+    el('totalMyTours').textContent = totalTours;
+    el('totalMyPassengers').textContent = totalPassengers;
+    el('totalMySales').textContent = formatCurrency(totalSales);
+    el('avgPassengers').textContent = avgPax;
+    
+    // Passengers by status
+    const paxByStatus = {
+      'belum jalan': 0,
+      'sudah jalan': 0,
+      'tidak jalan': 0
+    };
+    
+    const toursByStatus = {
+      'belum jalan': 0,
+      'sudah jalan': 0,
+      'tidak jalan': 0
+    };
+    
+    allTours.forEach(t => {
+      const status = (t.status || 'belum jalan').toLowerCase();
+      const pax = parseInt(t.jumlah_peserta) || 0;
+      
+      if (paxByStatus.hasOwnProperty(status)) {
+        paxByStatus[status] += pax;
+        toursByStatus[status]++;
+      }
+    });
+    
+    // Update passenger stats
+    el('paxPending').textContent = paxByStatus['belum jalan'];
+    el('paxCompleted').textContent = paxByStatus['sudah jalan'];
+    el('paxCancelled').textContent = paxByStatus['tidak jalan'];
+    
+    // Update progress bars
+    const maxPax = Math.max(...Object.values(paxByStatus), 1);
+    el('progressPending').style.width = (paxByStatus['belum jalan'] / maxPax * 100) + '%';
+    el('progressCompleted').style.width = (paxByStatus['sudah jalan'] / maxPax * 100) + '%';
+    el('progressCancelled').style.width = (paxByStatus['tidak jalan'] / maxPax * 100) + '%';
+    
+    // Update tours by status
+    el('toursPending').textContent = toursByStatus['belum jalan'];
+    el('toursCompleted').textContent = toursByStatus['sudah jalan'];
+    el('toursCancelled').textContent = toursByStatus['tidak jalan'];
+    
+    // Invoice stats
+    const invoiced = allTours.filter(t => t.invoice_number && t.invoice_number.trim()).length;
+    const notInvoiced = totalTours - invoiced;
+    const invoiceRate = totalTours > 0 ? Math.round((invoiced / totalTours) * 100) : 0;
+    
+    el('toursInvoiced').textContent = invoiced;
+    el('toursNotInvoiced').textContent = notInvoiced;
+    el('invoiceRate').textContent = invoiceRate + '%';
+  }
+  
+  function renderTable() {
+    const tbody = el('toursTableBody');
+    
+    if (filteredTours.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="10">
+            <div class="empty-state">
+              <div class="empty-state-icon">📭</div>
+              <div>No tours found</div>
+              <div style="font-size: 13px; margin-top: 8px; color: var(--text-secondary);">
+                ${allTours.length === 0 ? 'You have no tour bookings yet' : 'Try adjusting your filters'}
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    // Sort by departure date (newest first)
+    const sorted = [...filteredTours].sort((a, b) => {
+      const dateA = a.departure_date || '';
+      const dateB = b.departure_date || '';
+      return dateB.localeCompare(dateA);
+    });
+    
+    tbody.innerHTML = sorted.map(tour => {
+      const status = (tour.status || 'belum jalan').toLowerCase();
+      const statusClass = status === 'sudah jalan' ? 'completed' : status === 'tidak jalan' ? 'cancelled' : 'pending';
+      const statusIcon = status === 'sudah jalan' ? '✅' : status === 'tidak jalan' ? '❌' : '⏳';
+      const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+      
+      const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
+      
+      return `
+        <tr>
+          <td>${tour.registration_date || '-'}</td>
+          <td><strong>${tour.tour_code || '-'}</strong></td>
+          <td>${tour.booking_code || '-'}</td>
+          <td title="${tour.lead_passenger || '-'}">${truncate(tour.lead_passenger, 20)}</td>
+          <td style="text-align: center;"><strong>${tour.jumlah_peserta || 0}</strong></td>
+          <td>${tour.departure_date || '-'}</td>
+          <td>
+            <span class="status-chip ${statusClass}">${statusIcon} ${statusText}</span>
+          </td>
+          <td>
+            ${hasInvoice 
+              ? `<span class="invoice-status yes">✅ ${tour.invoice_number}</span>`
+              : `<span class="invoice-status no">⏳ Pending</span>`
+            }
+          </td>
+          <td>${formatCurrency(tour.total_nominal_sales || tour.sales_amount || 0)}</td>
+          <td>
+            <button class="btn-edit" onclick="openEditModal(${tour.id})">✏️ Edit</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+  
+  function truncate(str, len) {
+    if (!str) return '-';
+    return str.length > len ? str.substring(0, len) + '...' : str;
+  }
+  
+  // Open edit modal
+  window.openEditModal = function(id) {
+    const tour = allTours.find(t => t.id === id);
+    if (!tour) return;
+    
+    const formatDate = (d) => d ? d.slice(0, 10) : '';
+    
+    el('modalTitle').textContent = `Edit Tour: ${tour.tour_code || 'N/A'}`;
+    el('modalBody').innerHTML = `
+      <input type="hidden" name="id" value="${tour.id}">
+      <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
+        <div class="form-group">
+          <label>Registration Date</label>
+          <input type="date" name="registration_date" value="${formatDate(tour.registration_date)}">
+        </div>
+        <div class="form-group">
+          <label>Tour Code *</label>
+          <input type="text" name="tour_code" value="${tour.tour_code || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Booking Code</label>
+          <input type="text" name="booking_code" value="${tour.booking_code || ''}">
+        </div>
+        <div class="form-group">
+          <label>Departure Date *</label>
+          <input type="date" name="departure_date" value="${formatDate(tour.departure_date)}" required>
+        </div>
+        <div class="form-group">
+          <label>Region</label>
+          <select name="region_id">
+            <option value="">Select Region</option>
+            ${regions.map(r => `<option value="${r.id}" ${r.id === tour.region_id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select name="status">
+            <option value="belum jalan" ${tour.status === 'belum jalan' ? 'selected' : ''}>⏳ Belum Jalan</option>
+            <option value="sudah jalan" ${tour.status === 'sudah jalan' ? 'selected' : ''}>✅ Sudah Jalan</option>
+            <option value="tidak jalan" ${tour.status === 'tidak jalan' ? 'selected' : ''}>❌ Tidak Jalan</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Lead Passenger *</label>
+          <input type="text" name="lead_passenger" value="${tour.lead_passenger || ''}" required>
+        </div>
+        <div class="form-group">
+          <label>Number of Passengers *</label>
+          <input type="number" name="jumlah_peserta" value="${tour.jumlah_peserta || 1}" min="1" required>
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="tel" name="phone_number" value="${tour.phone_number || ''}">
+        </div>
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" name="email" value="${tour.email || ''}">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>All Passengers</label>
+          <textarea name="all_passengers" rows="2" placeholder="List all passenger names">${tour.all_passengers || ''}</textarea>
+        </div>
+        
+        <div style="grid-column: 1 / -1; border-top: 2px solid var(--border-light); padding-top: 16px; margin-top: 8px;">
+          <h4 style="margin: 0 0 16px 0; color: var(--primary);">💰 Financial Information</h4>
+        </div>
+        
+        <div class="form-group">
+          <label>Tour Price (per person)</label>
+          <input type="number" name="tour_price" value="${tour.tour_price || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Sales Amount (after discount)</label>
+          <input type="number" name="sales_amount" value="${tour.sales_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Discount Amount</label>
+          <input type="number" name="discount_amount" value="${tour.discount_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Total Invoice Amount</label>
+          <input type="number" name="total_nominal_sales" value="${tour.total_nominal_sales || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Profit Amount</label>
+          <input type="number" name="profit_amount" value="${tour.profit_amount || 0}" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Invoice Number</label>
+          <input type="text" name="invoice_number" value="${tour.invoice_number || ''}" placeholder="INV-XXXX">
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Discount Remarks</label>
+          <textarea name="discount_remarks" rows="2">${tour.discount_remarks || ''}</textarea>
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label>Payment Link (Google Drive / Lark)</label>
+          <input type="url" name="link_pelunasan_tour" value="${tour.link_pelunasan_tour || ''}" placeholder="https://...">
+        </div>
+      </div>
+    `;
+    
+    el('modal').classList.add('active');
+  };
+  
+  function closeModal() {
+    el('modal').classList.remove('active');
+  }
+  
+  async function handleSave(e) {
+    e.preventDefault();
+    
+    const form = el('modalForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    const id = parseInt(data.id);
+    delete data.id;
+    
+    // Keep staff_name as current user
+    data.staff_name = currentUser.name || currentUser.username;
+    
+    // Convert numeric fields
+    ['tour_price', 'sales_amount', 'discount_amount', 'total_nominal_sales', 'profit_amount', 'jumlah_peserta', 'region_id'].forEach(field => {
+      if (data[field]) {
+        data[field] = parseFloat(data[field]) || 0;
+      }
+    });
+    
+    try {
+      await fetchJson(`/api/tours/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      
+      toast.success('Tour updated successfully!');
+      closeModal();
+      await loadData();
+      
+    } catch (err) {
+      console.error('Save error:', err);
+      toast.error('Failed to save: ' + (err.message || 'Unknown error'));
+    }
+  }
+  
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
