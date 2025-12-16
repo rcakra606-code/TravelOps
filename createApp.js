@@ -1649,6 +1649,290 @@ export async function createApp() {
   // Central error handler
   app.use((err, req, res, next)=>{ logger.error({ err: err.message, stack: err.stack }, 'Unhandled error'); if (res.headersSent) return next(err); res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' }); });
 
+  // ===================================================================
+  // TRACKING & EXPEDITION API ENDPOINTS
+  // ===================================================================
+  
+  // Get all deliveries
+  app.get('/api/tracking/deliveries', authMiddleware(), async (req, res) => {
+    try {
+      const rows = await db.all('SELECT * FROM tracking_deliveries ORDER BY send_date DESC');
+      res.json(rows);
+    } catch (err) {
+      logger.error({ err }, 'Failed to fetch deliveries');
+      res.status(500).json({ error: 'Failed to fetch deliveries' });
+    }
+  });
+
+  // Create delivery
+  app.post('/api/tracking/deliveries', authMiddleware(), async (req, res) => {
+    try {
+      const { send_date, passport_count, invoice_no, booking_code, courier, tracking_no, recipient, address, details, status } = req.body;
+      const isPg = db.dialect === 'postgres';
+      
+      const result = await db.run(
+        `INSERT INTO tracking_deliveries (send_date, passport_count, invoice_no, booking_code, courier, tracking_no, recipient, address, details, status, created_by) VALUES (${isPg ? '$1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11' : '?,?,?,?,?,?,?,?,?,?,?'})`,
+        [send_date, passport_count || null, invoice_no || null, booking_code || null, courier || null, tracking_no, recipient || null, address || null, details || null, status || 'pending', req.user.username]
+      );
+      
+      // Sync send_date to documents if invoice_no or booking_code is provided
+      if (invoice_no || booking_code) {
+        let syncConditions = [];
+        let syncParams = [];
+        
+        if (invoice_no) {
+          if (isPg) {
+            syncConditions.push(`invoice_no=$${syncParams.length + 1}`);
+          } else {
+            syncConditions.push('invoice_no=?');
+          }
+          syncParams.push(invoice_no);
+        }
+        
+        if (booking_code) {
+          if (isPg) {
+            syncConditions.push(`booking_code=$${syncParams.length + 1}`);
+          } else {
+            syncConditions.push('booking_code=?');
+          }
+          syncParams.push(booking_code);
+        }
+        
+        if (syncConditions.length > 0) {
+          const whereClause = syncConditions.join(' OR ');
+          if (isPg) {
+            syncParams.push(send_date);
+            await db.run(`UPDATE documents SET send_date=$${syncParams.length} WHERE ${whereClause}`, syncParams);
+          } else {
+            syncParams.push(send_date);
+            await db.run(`UPDATE documents SET send_date=? WHERE ${whereClause}`, [...syncParams.slice(0, -1), send_date]);
+          }
+          logger.info({ invoice_no, booking_code, send_date }, 'Synced send_date to documents');
+        }
+      }
+      
+      await logActivity(req.user.username, 'CREATE', 'tracking_deliveries', result.lastID, JSON.stringify(req.body));
+      res.json({ id: result.lastID, message: 'Delivery created successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to create delivery');
+      res.status(500).json({ error: 'Failed to create delivery' });
+    }
+  });
+
+  // Update delivery
+  app.put('/api/tracking/deliveries/:id', authMiddleware(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      const isPg = db.dialect === 'postgres';
+      
+      if (keys.length === 0) {
+        return res.status(400).json({ error: 'No update data provided' });
+      }
+      
+      const setClause = keys.map((k, i) => isPg ? `${k}=$${i + 1}` : `${k}=?`).join(', ');
+      values.push(id);
+      
+      await db.run(
+        `UPDATE tracking_deliveries SET ${setClause} WHERE id=${isPg ? `$${values.length}` : '?'}`,
+        values
+      );
+      
+      // Sync send_date to documents if invoice_no or booking_code is in the record
+      if (updates.send_date || updates.invoice_no || updates.booking_code) {
+        const record = await db.get('SELECT * FROM tracking_deliveries WHERE id=?', [id]);
+        if (record && (record.invoice_no || record.booking_code)) {
+          const sendDate = updates.send_date || record.send_date;
+          let syncConditions = [];
+          let syncParams = [];
+          
+          if (record.invoice_no) {
+            if (isPg) {
+              syncConditions.push(`invoice_no=$${syncParams.length + 1}`);
+            } else {
+              syncConditions.push('invoice_no=?');
+            }
+            syncParams.push(record.invoice_no);
+          }
+          
+          if (record.booking_code) {
+            if (isPg) {
+              syncConditions.push(`booking_code=$${syncParams.length + 1}`);
+            } else {
+              syncConditions.push('booking_code=?');
+            }
+            syncParams.push(record.booking_code);
+          }
+          
+          if (syncConditions.length > 0 && sendDate) {
+            const whereClause = syncConditions.join(' OR ');
+            syncParams.push(sendDate);
+            if (isPg) {
+              await db.run(`UPDATE documents SET send_date=$${syncParams.length} WHERE ${whereClause}`, syncParams);
+            } else {
+              await db.run(`UPDATE documents SET send_date=? WHERE ${whereClause}`, [...syncParams.slice(0, -1), sendDate]);
+            }
+          }
+        }
+      }
+      
+      await logActivity(req.user.username, 'UPDATE', 'tracking_deliveries', id, JSON.stringify(updates));
+      res.json({ message: 'Delivery updated successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to update delivery');
+      res.status(500).json({ error: 'Failed to update delivery' });
+    }
+  });
+
+  // Delete delivery
+  app.delete('/api/tracking/deliveries/:id', authMiddleware(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.run('DELETE FROM tracking_deliveries WHERE id=?', [id]);
+      await logActivity(req.user.username, 'DELETE', 'tracking_deliveries', id, '');
+      res.json({ message: 'Delivery deleted successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to delete delivery');
+      res.status(500).json({ error: 'Failed to delete delivery' });
+    }
+  });
+
+  // Get all receivings
+  app.get('/api/tracking/receivings', authMiddleware(), async (req, res) => {
+    try {
+      const rows = await db.all('SELECT * FROM tracking_receivings ORDER BY receive_date DESC');
+      res.json(rows);
+    } catch (err) {
+      logger.error({ err }, 'Failed to fetch receivings');
+      res.status(500).json({ error: 'Failed to fetch receivings' });
+    }
+  });
+
+  // Create receiving
+  app.post('/api/tracking/receivings', authMiddleware(), async (req, res) => {
+    try {
+      const { receive_date, passport_count, sender, tracking_no, details } = req.body;
+      const isPg = db.dialect === 'postgres';
+      
+      const result = await db.run(
+        `INSERT INTO tracking_receivings (receive_date, passport_count, sender, tracking_no, details, created_by) VALUES (${isPg ? '$1,$2,$3,$4,$5,$6' : '?,?,?,?,?,?'})`,
+        [receive_date, passport_count || null, sender || null, tracking_no || null, details || null, req.user.username]
+      );
+      
+      await logActivity(req.user.username, 'CREATE', 'tracking_receivings', result.lastID, JSON.stringify(req.body));
+      res.json({ id: result.lastID, message: 'Receiving created successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to create receiving');
+      res.status(500).json({ error: 'Failed to create receiving' });
+    }
+  });
+
+  // Update receiving
+  app.put('/api/tracking/receivings/:id', authMiddleware(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      const keys = Object.keys(updates);
+      const values = Object.values(updates);
+      const isPg = db.dialect === 'postgres';
+      
+      if (keys.length === 0) {
+        return res.status(400).json({ error: 'No update data provided' });
+      }
+      
+      const setClause = keys.map((k, i) => isPg ? `${k}=$${i + 1}` : `${k}=?`).join(', ');
+      values.push(id);
+      
+      await db.run(
+        `UPDATE tracking_receivings SET ${setClause} WHERE id=${isPg ? `$${values.length}` : '?'}`,
+        values
+      );
+      
+      await logActivity(req.user.username, 'UPDATE', 'tracking_receivings', id, JSON.stringify(updates));
+      res.json({ message: 'Receiving updated successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to update receiving');
+      res.status(500).json({ error: 'Failed to update receiving' });
+    }
+  });
+
+  // Delete receiving
+  app.delete('/api/tracking/receivings/:id', authMiddleware(), async (req, res) => {
+    try {
+      const { id } = req.params;
+      await db.run('DELETE FROM tracking_receivings WHERE id=?', [id]);
+      await logActivity(req.user.username, 'DELETE', 'tracking_receivings', id, '');
+      res.json({ message: 'Receiving deleted successfully' });
+    } catch (err) {
+      logger.error({ err }, 'Failed to delete receiving');
+      res.status(500).json({ error: 'Failed to delete receiving' });
+    }
+  });
+
+  // Check tracking status from external courier (simulated/fallback)
+  // Note: Real tracking requires integration with courier APIs which need API keys
+  app.get('/api/tracking/check/:courier/:trackingNo', authMiddleware(), async (req, res) => {
+    try {
+      const { courier, trackingNo } = req.params;
+      
+      // For now, return a simulated response
+      // In production, you would integrate with actual courier APIs:
+      // - JNE: https://api.jne.co.id
+      // - J&T: https://api.jet.co.id
+      // - SiCepat: https://api.sicepat.com
+      // - AnterAja: https://api.anteraja.id
+      // - POS Indonesia: https://api.posindonesia.co.id
+      
+      // Check if we have any cached/stored tracking info
+      const delivery = await db.get(
+        'SELECT * FROM tracking_deliveries WHERE tracking_no=? ORDER BY id DESC LIMIT 1',
+        [trackingNo]
+      );
+      
+      if (delivery) {
+        // Return stored status with simulated timeline
+        const timeline = [
+          { date: delivery.send_date, time: '10:00', description: 'Paket dikirim dari origin', location: 'Jakarta' }
+        ];
+        
+        if (delivery.status === 'in-transit') {
+          timeline.unshift({ date: delivery.send_date, time: '14:00', description: 'Paket dalam perjalanan', location: 'Sorting Center' });
+        } else if (delivery.status === 'delivered') {
+          timeline.unshift({ date: delivery.send_date, time: '14:00', description: 'Paket dalam perjalanan', location: 'Sorting Center' });
+          timeline.unshift({ date: delivery.send_date, time: '16:00', description: 'Paket telah diterima', location: delivery.address || 'Tujuan' });
+        }
+        
+        res.json({
+          tracking_no: trackingNo,
+          courier: delivery.courier || courier,
+          status: delivery.status || 'pending',
+          origin: 'Jakarta',
+          destination: delivery.address || '-',
+          timeline
+        });
+      } else {
+        // No local data, return empty response with suggestion to check courier website
+        res.status(404).json({
+          error: 'Tracking data not found locally',
+          message: 'Please check the courier website directly for live tracking',
+          courier_urls: {
+            jne: 'https://www.jne.co.id/id/tracking/trace',
+            jnt: 'https://www.jet.co.id/track',
+            sicepat: 'https://www.sicepat.com/checkAwb',
+            anteraja: 'https://anteraja.id/tracking',
+            pos: 'https://www.posindonesia.co.id/id/tracking',
+            tiki: 'https://www.tiki.id/id/tracking'
+          }
+        });
+      }
+    } catch (err) {
+      logger.error({ err }, 'Failed to check tracking');
+      res.status(500).json({ error: 'Failed to check tracking status' });
+    }
+  });
+
   return { app, db };
 }
 

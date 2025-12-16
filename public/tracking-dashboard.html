@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Tracking & Expedition - TravelOps</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/dark-mode.css">
+<link rel="stylesheet" href="/css/app-v2.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/modal.css">
+<link rel="stylesheet" href="/css/filters.css">
+<link rel="stylesheet" href="/css/table-enhancements.css">
+<link rel="stylesheet" href="/css/filter-enhancements.css">
+<link rel="stylesheet" href="/css/status-badges.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/mobile-responsive.css">
+<link rel="stylesheet" href="/css/form-enhancements.css">
+<link rel="stylesheet" href="/css/crud-enhancements.css">
+<link rel="stylesheet" href="/css/ui-enhancements.css">
+<script src="/js/theme-toggle.js"></script>
+<style>
+  .tracking-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    background: var(--bg-alt);
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid var(--border-light);
+  }
+  .tracking-tab {
+    flex: 1;
+    padding: 14px 24px;
+    border: none;
+    background: transparent;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: var(--text-secondary);
+  }
+  .tracking-tab:hover {
+    background: var(--card);
+  }
+  .tracking-tab.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  }
+  .tracking-tab .tab-icon {
+    font-size: 20px;
+  }
+  .tracking-tab .tab-count {
+    background: rgba(255,255,255,0.2);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+  }
+  .tracking-tab.active .tab-count {
+    background: rgba(255,255,255,0.3);
+  }
+  
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  
+  .hero-banner {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
+    padding: 32px;
+    border-radius: 16px;
+    color: white;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-banner::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+  .hero-banner h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    position: relative;
+  }
+  .hero-banner p {
+    margin: 0;
+    opacity: 0.9;
+    position: relative;
+  }
+  .hero-stats {
+    display: flex;
+    gap: 24px;
+    margin-top: 20px;
+    position: relative;
+  }
+  .hero-stat {
+    background: rgba(255,255,255,0.15);
+    padding: 12px 20px;
+    border-radius: 10px;
+    backdrop-filter: blur(10px);
+  }
+  .hero-stat-value {
+    font-size: 24px;
+    font-weight: 700;
+  }
+  .hero-stat-label {
+    font-size: 12px;
+    opacity: 0.9;
+  }
+  
+  .form-card {
+    background: var(--card);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    border: 1px solid var(--border-light);
+  }
+  .form-card h3 {
+    margin: 0 0 20px 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+  }
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .form-field.full-width {
+    grid-column: 1 / -1;
+  }
+  .form-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .form-field input,
+  .form-field select,
+  .form-field textarea {
+    padding: 10px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text-primary);
+    transition: all 0.2s;
+  }
+  .form-field input:focus,
+  .form-field select:focus,
+  .form-field textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+  .form-field textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  .tracking-input-group {
+    display: flex;
+    gap: 8px;
+  }
+  .tracking-input-group input {
+    flex: 1;
+  }
+  .tracking-input-group button {
+    padding: 10px 16px;
+    border: none;
+    background: var(--primary);
+    color: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+  .tracking-input-group button:hover {
+    background: var(--primary-dark, #2563eb);
+  }
+  
+  .tracking-status-card {
+    background: var(--bg-alt);
+    border-radius: 12px;
+    padding: 16px;
+    margin-top: 12px;
+    border: 1px solid var(--border-light);
+  }
+  .tracking-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+  .tracking-courier {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+  }
+  .tracking-courier img {
+    height: 24px;
+  }
+  .tracking-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .tracking-badge.delivered { background: #d1fae5; color: #059669; }
+  .tracking-badge.in-transit { background: #dbeafe; color: #2563eb; }
+  .tracking-badge.pending { background: #fef3c7; color: #d97706; }
+  
+  .tracking-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    padding-left: 20px;
+    border-left: 2px solid var(--border-light);
+  }
+  .tracking-event {
+    position: relative;
+    padding-left: 20px;
+  }
+  .tracking-event::before {
+    content: '';
+    position: absolute;
+    left: -26px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border-light);
+    border: 2px solid var(--card);
+  }
+  .tracking-event.current::before {
+    background: var(--primary);
+  }
+  .tracking-event-time {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  .tracking-event-desc {
+    font-size: 14px;
+    margin-top: 2px;
+  }
+  
+  .btn-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+  }
+  .btn {
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+  }
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  }
+  .btn-secondary {
+    background: var(--bg-alt);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+  }
+  .btn-secondary:hover {
+    background: var(--border-light);
+  }
+  
+  .data-table-card {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid var(--border-light);
+  }
+  .data-table-header {
+    padding: 16px 20px;
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .data-table-header h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+  .table-wrapper {
+    overflow-x: auto;
+  }
+  .table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    background: var(--bg-alt);
+    border-bottom: 2px solid var(--border-light);
+  }
+  .table td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 14px;
+  }
+  .table tr:hover {
+    background: var(--bg-alt);
+  }
+  .table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .action-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    margin-right: 4px;
+  }
+  .action-btn.view { background: #dbeafe; color: #2563eb; }
+  .action-btn.edit { background: #fef3c7; color: #d97706; }
+  .action-btn.delete { background: #fee2e2; color: #dc2626; }
+  
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-state .icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+  
+  .courier-select {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .courier-option {
+    padding: 12px;
+    border: 2px solid var(--border-light);
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .courier-option:hover {
+    border-color: var(--primary);
+  }
+  .courier-option.selected {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.1);
+  }
+  .courier-option img {
+    height: 24px;
+    margin-bottom: 4px;
+  }
+  .courier-option span {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: #d1fae5;
+    color: #059669;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .sync-indicator.syncing {
+    background: #dbeafe;
+    color: #2563eb;
+  }
+</style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/my-tours.html">📋 My Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/tracking-dashboard.html" class="active">📦 Tracking</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Hero Banner -->
+    <div class="hero-banner">
+      <h1>📦 Tracking & Expedition</h1>
+      <p>Kelola pengiriman dan penerimaan dokumen dengan mudah</p>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="statDelivering">0</div>
+          <div class="hero-stat-label">Dalam Pengiriman</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="statDelivered">0</div>
+          <div class="hero-stat-label">Terkirim</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" id="statReceived">0</div>
+          <div class="hero-stat-label">Diterima</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tracking-tabs">
+      <button class="tracking-tab active" data-tab="delivering">
+        <span class="tab-icon">📤</span>
+        Pengiriman (Delivering)
+        <span class="tab-count" id="deliveringCount">0</span>
+      </button>
+      <button class="tracking-tab" data-tab="receiving">
+        <span class="tab-icon">📥</span>
+        Penerimaan (Receiving)
+        <span class="tab-count" id="receivingCount">0</span>
+      </button>
+    </div>
+
+    <!-- Delivering Tab -->
+    <div id="deliveringTab" class="tab-content active">
+      <!-- Add Delivery Form -->
+      <div class="form-card">
+        <h3>📤 Tambah Pengiriman Baru</h3>
+        <form id="deliveryForm">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="deliverySendDate">Tanggal Kirim *</label>
+              <input type="date" id="deliverySendDate" required>
+            </div>
+            <div class="form-field">
+              <label for="deliveryPassportCount">Jumlah Passport</label>
+              <input type="number" id="deliveryPassportCount" min="0" placeholder="Opsional">
+            </div>
+            <div class="form-field">
+              <label for="deliveryInvoice">Invoice Number</label>
+              <input type="text" id="deliveryInvoice" placeholder="Opsional - akan sync ke Documents">
+            </div>
+            <div class="form-field">
+              <label for="deliveryBookingCode">Booking Code</label>
+              <input type="text" id="deliveryBookingCode" placeholder="Opsional - akan sync ke Documents">
+            </div>
+            <div class="form-field">
+              <label>Kurir / Ekspedisi</label>
+              <div class="courier-select" id="courierSelect">
+                <div class="courier-option" data-courier="jne">
+                  <span>🚚</span>
+                  <span>JNE</span>
+                </div>
+                <div class="courier-option" data-courier="jnt">
+                  <span>🚛</span>
+                  <span>J&T</span>
+                </div>
+                <div class="courier-option" data-courier="sicepat">
+                  <span>⚡</span>
+                  <span>SiCepat</span>
+                </div>
+                <div class="courier-option" data-courier="anteraja">
+                  <span>📦</span>
+                  <span>AnterAja</span>
+                </div>
+                <div class="courier-option" data-courier="pos">
+                  <span>📮</span>
+                  <span>POS</span>
+                </div>
+                <div class="courier-option" data-courier="tiki">
+                  <span>🚀</span>
+                  <span>TIKI</span>
+                </div>
+                <div class="courier-option" data-courier="other">
+                  <span>📋</span>
+                  <span>Lainnya</span>
+                </div>
+              </div>
+              <input type="hidden" id="deliveryCourier" value="">
+            </div>
+            <div class="form-field">
+              <label for="deliveryTrackingNo">Nomor Resi *</label>
+              <div class="tracking-input-group">
+                <input type="text" id="deliveryTrackingNo" required placeholder="Masukkan nomor resi">
+                <button type="button" id="checkTrackingBtn">🔍 Cek</button>
+              </div>
+              <div id="trackingResult" style="display: none;"></div>
+            </div>
+            <div class="form-field">
+              <label for="deliveryRecipient">Nama Penerima</label>
+              <input type="text" id="deliveryRecipient" placeholder="Nama penerima">
+            </div>
+            <div class="form-field">
+              <label for="deliveryAddress">Alamat Tujuan</label>
+              <input type="text" id="deliveryAddress" placeholder="Alamat pengiriman">
+            </div>
+            <div class="form-field full-width">
+              <label for="deliveryDetails">Detail Pengiriman</label>
+              <textarea id="deliveryDetails" placeholder="Catatan detail pengiriman, isi dokumen, dll..."></textarea>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary">💾 Simpan Pengiriman</button>
+            <button type="reset" class="btn btn-secondary">🔄 Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Delivery Records Table -->
+      <div class="data-table-card">
+        <div class="data-table-header">
+          <h3>📋 Riwayat Pengiriman</h3>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <input type="text" id="deliverySearch" placeholder="Cari resi / invoice..." style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 14px;">
+            <button class="btn btn-secondary" id="exportDeliveries">📥 Export</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>No. Resi</th>
+                <th>Kurir</th>
+                <th>Penerima</th>
+                <th>Passport</th>
+                <th>Invoice</th>
+                <th>Status</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="deliveryTableBody">
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">
+                    <div class="icon">📦</div>
+                    <p>Belum ada data pengiriman</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Receiving Tab -->
+    <div id="receivingTab" class="tab-content">
+      <!-- Add Receiving Form -->
+      <div class="form-card">
+        <h3>📥 Tambah Penerimaan Baru</h3>
+        <form id="receivingForm">
+          <div class="form-grid">
+            <div class="form-field">
+              <label for="receiveDate">Tanggal Terima *</label>
+              <input type="date" id="receiveDate" required>
+            </div>
+            <div class="form-field">
+              <label for="receivePassportCount">Jumlah Passport</label>
+              <input type="number" id="receivePassportCount" min="0" placeholder="Opsional">
+            </div>
+            <div class="form-field">
+              <label for="receiveSender">Pengirim</label>
+              <input type="text" id="receiveSender" placeholder="Nama pengirim">
+            </div>
+            <div class="form-field">
+              <label for="receiveTrackingNo">Nomor Resi</label>
+              <input type="text" id="receiveTrackingNo" placeholder="Opsional">
+            </div>
+            <div class="form-field full-width">
+              <label for="receiveDetails">Detail Penerimaan</label>
+              <textarea id="receiveDetails" placeholder="Catatan detail penerimaan, isi dokumen, kondisi paket, dll..."></textarea>
+            </div>
+          </div>
+          <div class="btn-group">
+            <button type="submit" class="btn btn-primary">💾 Simpan Penerimaan</button>
+            <button type="reset" class="btn btn-secondary">🔄 Reset</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Receiving Records Table -->
+      <div class="data-table-card">
+        <div class="data-table-header">
+          <h3>📋 Riwayat Penerimaan</h3>
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <input type="text" id="receivingSearch" placeholder="Cari resi / pengirim..." style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 14px;">
+            <button class="btn btn-secondary" id="exportReceivings">📥 Export</button>
+          </div>
+        </div>
+        <div class="table-wrapper">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>No. Resi</th>
+                <th>Pengirim</th>
+                <th>Passport</th>
+                <th>Detail</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="receivingTableBody">
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">
+                    <div class="icon">📥</div>
+                    <p>Belum ada data penerimaan</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Edit Modal -->
+<div id="editModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 id="editModalTitle">Edit Record</h3>
+      <button class="modal-close" id="closeEditModal">&times;</button>
+    </div>
+    <form id="editForm">
+      <div class="modal-body" id="editModalBody">
+        <!-- Dynamic content -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelEdit">Batal</button>
+        <button type="submit" class="btn btn-primary">💾 Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tracking Detail Modal -->
+<div id="trackingModal" class="modal" style="display: none;">
+  <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3>📍 Detail Tracking</h3>
+      <button class="modal-close" id="closeTrackingModal">&times;</button>
+    </div>
+    <div class="modal-body" id="trackingModalBody">
+      <!-- Tracking timeline -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="closeTrackingModalBtn">Tutup</button>
+      <button type="button" class="btn btn-primary" id="refreshTrackingBtn">🔄 Refresh</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/tracking-dashboard.js"></script>
+<script src="/js/app-enhancements.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (token) {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.type === 'admin') {
+          const adminLink = document.getElementById('adminSettingsLink');
+          if (adminLink) adminLink.style.display = 'block';
+        }
+        document.getElementById('userName').textContent = payload.username || 'User';
+        document.getElementById('userRole').textContent = payload.type || 'user';
+      }
+    } catch (e) {}
+  });
+</script>
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/global-search.js"></script>
+<script src="/js/audit-trail.js"></script>
+</body>
+</html>

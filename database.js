@@ -257,6 +257,38 @@ async function createSchema(db) {
     created_at ${ts} ${createdDefault}
   )`);
 
+  // Tracking Deliveries (Pengiriman)
+  await db.run(`CREATE TABLE IF NOT EXISTS tracking_deliveries (
+    id ${idCol},
+    send_date ${text()},
+    passport_count INTEGER,
+    invoice_no TEXT,
+    booking_code TEXT,
+    courier TEXT,
+    tracking_no TEXT,
+    recipient TEXT,
+    address TEXT,
+    details TEXT,
+    status TEXT DEFAULT 'pending',
+    tracking_data TEXT,
+    created_by TEXT,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts}
+  )`);
+
+  // Tracking Receivings (Penerimaan)
+  await db.run(`CREATE TABLE IF NOT EXISTS tracking_receivings (
+    id ${idCol},
+    receive_date ${text()},
+    passport_count INTEGER,
+    sender TEXT,
+    tracking_no TEXT,
+    details TEXT,
+    created_by TEXT,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts}
+  )`);
+
   // Activity logs
   await db.run(`CREATE TABLE IF NOT EXISTS activity_logs (
     id ${idCol},
@@ -449,6 +481,13 @@ async function createSchema(db) {
   await ensureIndex('activity_logs', 'idx_activity_user', 'username');
   await ensureIndex('activity_logs', 'idx_activity_entity', 'entity');
   await ensureIndex('activity_logs', 'idx_activity_created', 'created_at');
+
+  // Tracking indexes
+  await ensureIndex('tracking_deliveries', 'idx_tracking_del_date', 'send_date');
+  await ensureIndex('tracking_deliveries', 'idx_tracking_del_invoice', 'invoice_no');
+  await ensureIndex('tracking_deliveries', 'idx_tracking_del_booking', 'booking_code');
+  await ensureIndex('tracking_deliveries', 'idx_tracking_del_tracking', 'tracking_no');
+  await ensureIndex('tracking_receivings', 'idx_tracking_rec_date', 'receive_date');
 
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
