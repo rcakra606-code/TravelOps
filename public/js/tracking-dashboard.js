@@ -10,7 +10,7 @@ class TrackingDashboard {
     this.selectedCourier = '';
     this.currentTrackingData = null;
     
-    // Courier tracking URLs
+    // Courier tracking URLs with tracking number support
     this.courierUrls = {
       jne: 'https://www.jne.co.id/tracking-package',
       jnt: 'https://www.jet.co.id/track',
@@ -18,6 +18,17 @@ class TrackingDashboard {
       anteraja: 'https://anteraja.id/tracking',
       pos: 'https://www.posindonesia.co.id/id/tracking',
       tiki: 'https://www.tiki.id/id/track',
+      other: null
+    };
+    
+    // Courier URLs with tracking number parameter support
+    this.courierTrackUrls = {
+      jne: (no) => `https://www.jne.co.id/tracking-package?awb=${no}`,
+      jnt: (no) => `https://www.jet.co.id/track?no=${no}`,
+      sicepat: (no) => `https://www.sicepat.com/checkAwb?awb=${no}`,
+      anteraja: (no) => `https://anteraja.id/tracking/${no}`,
+      pos: (no) => `https://www.posindonesia.co.id/id/tracking?barcode=${no}`,
+      tiki: (no) => `https://www.tiki.id/id/track?awb=${no}`,
       other: null
     };
     
@@ -486,40 +497,28 @@ class TrackingDashboard {
     }
   }
 
-  // Tracking Functions
-  async quickTrack() {
+  // Tracking Functions - Direct redirect to courier website
+  quickTrack() {
     const courier = document.getElementById('quickTrackCourier').value;
     const trackingNo = document.getElementById('quickTrackNumber').value.trim();
 
+    if (!courier) {
+      window.showToast?.('Pilih kurir terlebih dahulu', 'warning');
+      return;
+    }
+    
     if (!trackingNo) {
       window.showToast?.('Masukkan nomor resi terlebih dahulu', 'warning');
       return;
     }
 
-    const resultDiv = document.getElementById('quickTrackResult');
-    resultDiv.classList.add('show');
-    resultDiv.innerHTML = `
-      <div class="tracking-info-card">
-        <div style="text-align: center; padding: 20px;">
-          <p>🔄 Mengecek status tracking...</p>
-        </div>
-      </div>
-    `;
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/tracking/check/${courier || 'auto'}/${trackingNo}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        this.renderQuickTrackResult(data, resultDiv);
-      } else {
-        this.renderQuickTrackFallback(trackingNo, courier, resultDiv);
-      }
-    } catch (error) {
-      this.renderQuickTrackFallback(trackingNo, courier, resultDiv);
+    // Open courier tracking page directly
+    const trackUrl = this.courierTrackUrls[courier];
+    if (trackUrl) {
+      window.open(trackUrl(trackingNo), '_blank');
+      window.showToast?.(`Membuka halaman tracking ${this.getCourierName(courier)}...`, 'info');
+    } else {
+      window.showToast?.('Kurir tidak mendukung tracking otomatis', 'warning');
     }
   }
 
@@ -606,30 +605,16 @@ class TrackingDashboard {
     `;
   }
 
-  async showTrackingDetail(trackingNo, courier) {
-    this.currentTrackingData = { tracking_no: trackingNo, courier };
-    
-    const modal = document.getElementById('trackingModal');
-    const body = document.getElementById('trackingModalBody');
-    
-    body.innerHTML = '<div style="text-align: center; padding: 40px;"><p>🔄 Memuat data tracking...</p></div>';
-    modal.classList.add('show');
-
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`/api/tracking/check/${courier || 'auto'}/${trackingNo}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-
-      if (res.ok) {
-        const data = await res.json();
-        this.currentTrackingData = { ...this.currentTrackingData, ...data };
-        body.innerHTML = this.getTrackingDetailHTML(data);
-      } else {
-        body.innerHTML = this.getTrackingFallbackHTML(trackingNo, courier);
-      }
-    } catch (error) {
-      body.innerHTML = this.getTrackingFallbackHTML(trackingNo, courier);
+  showTrackingDetail(trackingNo, courier) {
+    // Directly open courier tracking page instead of showing modal
+    if (courier && this.courierTrackUrls[courier]) {
+      window.open(this.courierTrackUrls[courier](trackingNo), '_blank');
+      window.showToast?.(`Membuka tracking ${this.getCourierName(courier)}...`, 'info');
+    } else if (courier && this.courierUrls[courier]) {
+      window.open(this.courierUrls[courier], '_blank');
+      window.showToast?.(`Membuka website ${this.getCourierName(courier)}...`, 'info');
+    } else {
+      window.showToast?.('Kurir tidak mendukung tracking online', 'warning');
     }
   }
 
