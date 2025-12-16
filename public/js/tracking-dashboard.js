@@ -12,12 +12,12 @@ class TrackingDashboard {
     
     // Courier tracking URLs
     this.courierUrls = {
-      jne: 'https://www.jne.co.id/id/tracking/trace',
+      jne: 'https://www.jne.co.id/tracking-package',
       jnt: 'https://www.jet.co.id/track',
       sicepat: 'https://www.sicepat.com/checkAwb',
       anteraja: 'https://anteraja.id/tracking',
       pos: 'https://www.posindonesia.co.id/id/tracking',
-      tiki: 'https://www.tiki.id/id/tracking',
+      tiki: 'https://www.tiki.id/id/track',
       other: null
     };
     
