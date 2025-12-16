@@ -7,6 +7,7 @@ class KeyboardShortcuts {
   constructor() {
     this.shortcuts = [
       { key: '?', description: 'Show this help dialog' },
+      { key: 'Ctrl + K', description: 'Open global search' },
       { key: 'Ctrl + B', description: 'Toggle sidebar' },
       { key: 'Alt + N', description: 'Add new record' },
       { key: 'Escape', description: 'Close modal/dialog' },
@@ -23,6 +24,15 @@ class KeyboardShortcuts {
     document.addEventListener('keydown', (e) => {
       // Don't trigger when typing in inputs
       if (e.target.matches('input, textarea, select')) return;
+      
+      // Global search on Ctrl+K
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        if (window.globalSearch) {
+          window.globalSearch.open();
+        }
+        return;
+      }
       
       // Show shortcuts modal on "?"
       if (e.key === '?' || (e.shiftKey && e.key === '/')) {

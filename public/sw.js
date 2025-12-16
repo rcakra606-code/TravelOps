@@ -1,20 +1,39 @@
-// TravelOps Service Worker
-const CACHE_NAME = 'travelops-v2';
+// TravelOps Service Worker - Enhanced PWA
+const CACHE_NAME = 'travelops-v3';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',
   '/login.html',
+  '/sales-dashboard.html',
+  '/tours-dashboard.html',
+  '/my-tours.html',
+  '/documents-dashboard.html',
+  '/reports-dashboard.html',
   '/css/styles.css',
   '/css/dark-mode.css',
   '/css/app-v2.css',
   '/css/dashboard.css',
   '/css/modal.css',
+  '/css/filters.css',
+  '/css/mobile-responsive.css',
   '/js/auth-common.js',
   '/js/dashboard.js',
   '/js/toast.js',
   '/js/theme-toggle.js',
+  '/js/global-search.js',
+  '/js/tour-calendar.js',
+  '/js/staff-leaderboard.js',
+  '/js/yoy-analytics.js',
+  '/js/bulk-importer.js',
+  '/js/dashboard-widgets.js',
+  '/js/audit-trail.js',
+  '/js/i18n.js',
+  '/js/data-exporter.js',
   '/manifest.json'
 ];
+
+// Offline data queue for sync
+const OFFLINE_QUEUE_KEY = 'offline-queue';
 
 // Install - cache static assets
 self.addEventListener('install', (event) => {
