@@ -310,6 +310,31 @@
       </div>
     </div>
 
+    <!-- Sales by Invoice Status -->
+    <div class="stats-grid" style="margin-bottom: 24px;">
+      <div class="stat-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+        <h4 style="color: #166534;">✅ Invoiced Sales</h4>
+        <div class="big-number" id="salesInvoiced" style="color: #16a34a; font-size: 28px;">Rp 0</div>
+        <div style="font-size: 13px; color: #166534; margin-top: 8px;">
+          <span id="toursInvoicedCount">0</span> tours with invoice
+        </div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+        <h4 style="color: #92400e;">⏳ Not Invoiced Yet</h4>
+        <div class="big-number" id="salesNotInvoiced" style="color: #d97706; font-size: 28px;">Rp 0</div>
+        <div style="font-size: 13px; color: #92400e; margin-top: 8px;">
+          <span id="toursNotInvoicedCount">0</span> tours pending invoice
+        </div>
+      </div>
+      <div class="stat-card" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+        <h4 style="color: #1e40af;">📊 Invoice Coverage</h4>
+        <div class="big-number" id="invoiceCoverage" style="color: #2563eb; font-size: 28px;">0%</div>
+        <div style="font-size: 13px; color: #1e40af; margin-top: 8px;">
+          of total sales value invoiced
+        </div>
+      </div>
+    </div>
+
     <!-- Statistics Cards -->
     <div class="stats-grid">
       <!-- Passengers by Status -->
@@ -667,13 +692,27 @@
     el('toursCancelled').textContent = toursByStatus['tidak jalan'];
     
     // Invoice stats
-    const invoiced = allTours.filter(t => t.invoice_number && t.invoice_number.trim()).length;
-    const notInvoiced = totalTours - invoiced;
-    const invoiceRate = totalTours > 0 ? Math.round((invoiced / totalTours) * 100) : 0;
+    const invoicedTours = allTours.filter(t => t.invoice_number && t.invoice_number.trim());
+    const notInvoicedTours = allTours.filter(t => !t.invoice_number || !t.invoice_number.trim());
     
-    el('toursInvoiced').textContent = invoiced;
-    el('toursNotInvoiced').textContent = notInvoiced;
+    const invoicedCount = invoicedTours.length;
+    const notInvoicedCount = notInvoicedTours.length;
+    const invoiceRate = totalTours > 0 ? Math.round((invoicedCount / totalTours) * 100) : 0;
+    
+    el('toursInvoiced').textContent = invoicedCount;
+    el('toursNotInvoiced').textContent = notInvoicedCount;
     el('invoiceRate').textContent = invoiceRate + '%';
+    
+    // Calculate sales amounts by invoice status
+    const salesInvoiced = invoicedTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+    const salesNotInvoiced = notInvoicedTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+    const invoiceCoverage = totalSales > 0 ? Math.round((salesInvoiced / totalSales) * 100) : 0;
+    
+    el('salesInvoiced').textContent = formatCurrency(salesInvoiced);
+    el('salesNotInvoiced').textContent = formatCurrency(salesNotInvoiced);
+    el('toursInvoicedCount').textContent = invoicedCount;
+    el('toursNotInvoicedCount').textContent = notInvoicedCount;
+    el('invoiceCoverage').textContent = invoiceCoverage + '%';
   }
   
   function renderTable() {
