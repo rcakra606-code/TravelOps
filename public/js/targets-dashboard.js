@@ -423,9 +423,9 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Download CSV Template
+// Download CSV Template with ID column for bulk editing
 el('downloadTemplateBtn').addEventListener('click', () => {
-  const csv = 'staff_name,month,year,target_sales,target_profit\n"John Doe",1,2025,10000000,2000000\n"Jane Smith",1,2025,15000000,3000000';
+  const csv = 'id,staff_name,month,year,target_sales,target_profit\n,"John Doe",1,2025,10000000,2000000\n,"Jane Smith",1,2025,15000000,3000000';
   const blob = new Blob([csv], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -433,19 +433,20 @@ el('downloadTemplateBtn').addEventListener('click', () => {
   a.download = 'targets_template.csv';
   a.click();
   URL.revokeObjectURL(url);
-  window.toast.success('Template downloaded');
+  window.toast.success('Template downloaded - Leave ID empty for new records, or fill ID to update existing');
 });
 
-// Export Targets to CSV
+// Export Targets to CSV with ID for bulk editing
 el('exportTargetsBtn').addEventListener('click', () => {
   if (!targetsData || targetsData.length === 0) {
     window.toast.error('No data to export');
     return;
   }
   
-  const headers = 'staff_name,month,year,target_sales,target_profit';
+  // Include ID for bulk edit capability
+  const headers = 'id,staff_name,month,year,target_sales,target_profit';
   const rows = targetsData.map(t => 
-    `"${t.staff_name}",${t.month},${t.year},${t.target_sales || 0},${t.target_profit || 0}`
+    `${t.id || ''},"${t.staff_name}",${t.month},${t.year},${t.target_sales || 0},${t.target_profit || 0}`
   ).join('\n');
   
   const csv = headers + '\n' + rows;
@@ -456,10 +457,10 @@ el('exportTargetsBtn').addEventListener('click', () => {
   a.download = `targets_export_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  window.toast.success(`Exported ${targetsData.length} targets`);
+  window.toast.success(`Exported ${targetsData.length} targets (with ID for bulk edit)`);
 });
 
-// Import Targets from CSV
+// Import Targets from CSV - supports bulk edit (update if ID exists, create if not)
 el('importTargetsBtn').addEventListener('click', () => {
   el('importFileInput').click();
 });
@@ -473,28 +474,67 @@ el('importFileInput').addEventListener('change', async (e) => {
     try {
       const csv = event.target.result;
       const lines = csv.split('\n').filter(line => line.trim());
-      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+      const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, '').toLowerCase());
       
-      let imported = 0;
+      // Find column indexes
+      const idIndex = headers.indexOf('id');
+      const staffIndex = headers.indexOf('staff_name');
+      const monthIndex = headers.indexOf('month');
+      const yearIndex = headers.indexOf('year');
+      const salesTargetIndex = headers.indexOf('target_sales');
+      const profitTargetIndex = headers.indexOf('target_profit');
+      
+      let created = 0;
+      let updated = 0;
       let errors = 0;
       
       for (let i = 1; i < lines.length; i++) {
         try {
-          const values = lines[i].match(/(".*?"|[^,]+)(?=\s*,|\s*$)/g).map(v => v.trim().replace(/^"|"$/g, ''));
+          // Parse CSV values, handling quoted strings
+          const values = [];
+          let current = '';
+          let inQuotes = false;
+          const line = lines[i];
+          
+          for (let j = 0; j < line.length; j++) {
+            const char = line[j];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              values.push(current.trim());
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          values.push(current.trim());
+          
+          const id = idIndex >= 0 ? values[idIndex]?.replace(/"/g, '').trim() : '';
           const target = {
-            staff_name: values[0],
-            month: parseInt(values[1]),
-            year: parseInt(values[2]),
-            target_sales: parseFloat(values[3]) || 0,
-            target_profit: parseFloat(values[4]) || 0
+            staff_name: staffIndex >= 0 ? values[staffIndex]?.replace(/"/g, '').trim() : '',
+            month: monthIndex >= 0 ? parseInt(values[monthIndex]?.replace(/"/g, '')) : null,
+            year: yearIndex >= 0 ? parseInt(values[yearIndex]?.replace(/"/g, '')) : null,
+            target_sales: salesTargetIndex >= 0 ? parseFloat(values[salesTargetIndex]?.replace(/"/g, '')) || 0 : 0,
+            target_profit: profitTargetIndex >= 0 ? parseFloat(values[profitTargetIndex]?.replace(/"/g, '')) || 0 : 0
           };
           
-          await fetchJson('/api/targets', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(target)
-          });
-          imported++;
+          if (id && !isNaN(parseInt(id))) {
+            // Update existing record
+            await fetchJson(`/api/targets/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(target)
+            });
+            updated++;
+          } else {
+            // Create new record
+            await fetchJson('/api/targets', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(target)
+            });
+            created++;
+          }
         } catch (err) {
           console.error(`Error importing row ${i}:`, err);
           errors++;
@@ -502,7 +542,13 @@ el('importFileInput').addEventListener('change', async (e) => {
       }
       
       await loadTargets();
-      window.toast.success(`Imported ${imported} targets${errors > 0 ? `, ${errors} errors` : ''}`);
+      
+      let message = '';
+      if (created > 0) message += `${created} created`;
+      if (updated > 0) message += `${message ? ', ' : ''}${updated} updated`;
+      if (errors > 0) message += `${message ? ', ' : ''}${errors} errors`;
+      
+      window.toast.success(`Bulk import: ${message}`);
       e.target.value = '';
     } catch (error) {
       console.error('Import failed:', error);

@@ -304,7 +304,7 @@ class DashboardWidgets {
           case 'TourCalendar':
             contentEl.id = 'tourCalendarWidget';
             if (window.TourCalendar) {
-              new TourCalendar('tourCalendarWidget');
+              new window.TourCalendar('tourCalendarWidget');
             } else {
               contentEl.innerHTML = '<div class="widget-empty">Calendar module not loaded</div>';
             }
@@ -312,7 +312,7 @@ class DashboardWidgets {
           case 'StaffLeaderboard':
             contentEl.id = 'staffLeaderboardWidget';
             if (window.StaffLeaderboard) {
-              const lb = new StaffLeaderboard('staffLeaderboardWidget');
+              const lb = new window.StaffLeaderboard('staffLeaderboardWidget');
               lb.init();
             } else {
               contentEl.innerHTML = '<div class="widget-empty">Leaderboard module not loaded</div>';
@@ -321,7 +321,7 @@ class DashboardWidgets {
           case 'YoYAnalytics':
             contentEl.id = 'yoyAnalyticsWidget';
             if (window.YearOverYearAnalytics) {
-              const yoy = new YearOverYearAnalytics();
+              const yoy = new window.YearOverYearAnalytics();
               await yoy.loadData();
               yoy.renderWidget('yoyAnalyticsWidget');
             } else {

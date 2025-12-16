@@ -21,6 +21,7 @@
 <link rel="stylesheet" href="/css/ui-enhancements.css">
 <script src="/js/theme-toggle.js"></script>
 <style>
+  /* Tracking Tabs */
   .tracking-tabs {
     display: flex;
     gap: 0;
@@ -46,16 +47,11 @@
     gap: 8px;
     color: var(--text-secondary);
   }
-  .tracking-tab:hover {
-    background: var(--card);
-  }
+  .tracking-tab:hover { background: var(--card); }
   .tracking-tab.active {
     background: var(--primary);
     color: white;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-  }
-  .tracking-tab .tab-icon {
-    font-size: 20px;
   }
   .tracking-tab .tab-count {
     background: rgba(255,255,255,0.2);
@@ -63,20 +59,15 @@
     border-radius: 12px;
     font-size: 12px;
   }
-  .tracking-tab.active .tab-count {
-    background: rgba(255,255,255,0.3);
-  }
+  .tracking-tab.active .tab-count { background: rgba(255,255,255,0.3); }
   
-  .tab-content {
-    display: none;
-  }
-  .tab-content.active {
-    display: block;
-  }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
   
+  /* Hero Banner */
   .hero-banner {
     background: linear-gradient(135deg, #f97316 0%, #ea580c 50%, #c2410c 100%);
-    padding: 32px;
+    padding: 28px 32px;
     border-radius: 16px;
     color: white;
     margin-bottom: 24px;
@@ -93,72 +84,333 @@
     background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
     border-radius: 50%;
   }
-  .hero-banner h1 {
-    margin: 0 0 8px 0;
-    font-size: 28px;
-    position: relative;
-  }
-  .hero-banner p {
-    margin: 0;
-    opacity: 0.9;
-    position: relative;
-  }
+  .hero-banner h1 { margin: 0 0 6px 0; font-size: 26px; position: relative; }
+  .hero-banner p { margin: 0; opacity: 0.9; position: relative; font-size: 14px; }
   .hero-stats {
     display: flex;
-    gap: 24px;
-    margin-top: 20px;
+    gap: 16px;
+    margin-top: 16px;
     position: relative;
+    flex-wrap: wrap;
   }
   .hero-stat {
     background: rgba(255,255,255,0.15);
-    padding: 12px 20px;
+    padding: 10px 18px;
     border-radius: 10px;
     backdrop-filter: blur(10px);
+    min-width: 100px;
   }
-  .hero-stat-value {
-    font-size: 24px;
-    font-weight: 700;
-  }
-  .hero-stat-label {
-    font-size: 12px;
-    opacity: 0.9;
-  }
+  .hero-stat-value { font-size: 22px; font-weight: 700; }
+  .hero-stat-label { font-size: 11px; opacity: 0.9; }
   
-  .form-card {
+  /* Quick Track Widget */
+  .quick-track-widget {
     background: var(--card);
+    border: 1px solid var(--border-light);
     border-radius: 16px;
     padding: 24px;
     margin-bottom: 24px;
-    border: 1px solid var(--border-light);
   }
-  .form-card h3 {
-    margin: 0 0 20px 0;
+  .quick-track-widget h3 { margin: 0 0 16px 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .quick-track-form {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .quick-track-form .form-group { flex: 1; min-width: 150px; }
+  .quick-track-form .form-group label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600; }
+  .quick-track-form select,
+  .quick-track-form input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 14px;
+    background: var(--bg);
+    color: var(--text-primary);
+    transition: all 0.2s;
+  }
+  .quick-track-form select:focus,
+  .quick-track-form input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+  .quick-track-form button {
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 18px;
+    gap: 8px;
+    transition: all 0.2s;
+    white-space: nowrap;
   }
-  .form-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 16px;
+  .quick-track-form button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); }
+  
+  /* Tracking Result Card */
+  .tracking-result { margin-top: 20px; display: none; }
+  .tracking-result.show { display: block; }
+  .tracking-info-card {
+    background: linear-gradient(135deg, var(--bg-alt), var(--card));
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
   }
-  .form-field {
+  .tracking-header-info {
     display: flex;
-    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px dashed var(--border-light);
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .tracking-courier-display {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .courier-logo {
+    width: 48px;
+    height: 48px;
+    background: var(--bg);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+  }
+  .courier-info h4 { margin: 0; font-size: 15px; }
+  .courier-info span { font-size: 12px; color: var(--text-secondary); }
+  
+  /* Tracking Timeline */
+  .tracking-timeline {
+    position: relative;
+    padding-left: 28px;
+    margin-top: 16px;
+  }
+  .tracking-timeline::before {
+    content: '';
+    position: absolute;
+    left: 9px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--primary), var(--border-light));
+  }
+  .timeline-item {
+    position: relative;
+    padding-bottom: 16px;
+    padding-left: 16px;
+  }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -19px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--border-light);
+    border: 2px solid var(--card);
+  }
+  .timeline-item.active::before { background: var(--primary); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2); }
+  .timeline-item.completed::before { background: #10b981; }
+  .timeline-time { font-size: 11px; color: var(--text-secondary); }
+  .timeline-desc { font-size: 13px; margin-top: 2px; font-weight: 500; }
+  .timeline-location { font-size: 11px; color: var(--text-secondary); margin-top: 2px; display: flex; align-items: center; gap: 4px; }
+  
+  /* Status Badges */
+  .status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
   }
-  .form-field.full-width {
-    grid-column: 1 / -1;
+  .status-badge.delivered { background: #d1fae5; color: #059669; }
+  .status-badge.in-transit { background: #dbeafe; color: #2563eb; }
+  .status-badge.pending { background: #fef3c7; color: #d97706; }
+  
+  /* Table Card */
+  .table-card {
+    background: var(--card);
+    border-radius: 16px;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+    margin-bottom: 24px;
   }
-  .form-field label {
+  .table-card-header {
+    padding: 16px 20px;
+    background: var(--bg-alt);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .table-card-header h3 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .header-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .search-input {
+    padding: 8px 14px;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
     font-size: 13px;
+    min-width: 180px;
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+  .search-input:focus { outline: none; border-color: var(--primary); }
+  
+  /* Data Table */
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
     font-weight: 600;
     color: var(--text-secondary);
+    text-transform: uppercase;
+    background: var(--bg-alt);
+    border-bottom: 2px solid var(--border-light);
   }
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-light);
+    font-size: 14px;
+    vertical-align: middle;
+  }
+  .data-table tr:hover { background: var(--bg-alt); }
+  .data-table tr:last-child td { border-bottom: none; }
+  
+  /* Courier Badge */
+  .courier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: var(--bg-alt);
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  
+  /* Action Buttons */
+  .action-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+    margin-right: 4px;
+  }
+  .action-btn.track { background: #ede9fe; color: #7c3aed; }
+  .action-btn.edit { background: #fef3c7; color: #d97706; }
+  .action-btn.delete { background: #fee2e2; color: #dc2626; }
+  .action-btn.delivered { background: #d1fae5; color: #059669; }
+  .action-btn:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: 48px 20px;
+    color: var(--text-secondary);
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .empty-state p { margin: 0; }
+  
+  /* Buttons */
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+  .btn-primary:hover { box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+  .btn-secondary { background: var(--bg-alt); color: var(--text-secondary); border: 1px solid var(--border-light); }
+  .btn-secondary:hover { background: var(--border-light); }
+  .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+  
+  /* Modal */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal.show { display: flex; }
+  .modal-card {
+    background: var(--card);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .modal-header h3 { margin: 0; font-size: 18px; }
+  .modal-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: var(--bg-alt);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .modal-close:hover { background: #fee2e2; color: #dc2626; }
+  .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+  .modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-light);
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    background: var(--bg-alt);
+  }
+  
+  /* Form Grid */
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .form-row.full { grid-template-columns: 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group label { font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
     padding: 10px 14px;
     border: 1px solid var(--border-light);
     border-radius: 8px;
@@ -167,255 +419,44 @@
     color: var(--text-primary);
     transition: all 0.2s;
   }
-  .form-field input:focus,
-  .form-field select:focus,
-  .form-field textarea:focus {
+  .form-group input:focus,
+  .form-group select:focus,
+  .form-group textarea:focus {
     outline: none;
     border-color: var(--primary);
     box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
   }
-  .form-field textarea {
-    min-height: 100px;
-    resize: vertical;
-  }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+  .form-group .help-text { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
   
-  .tracking-input-group {
-    display: flex;
-    gap: 8px;
-  }
-  .tracking-input-group input {
-    flex: 1;
-  }
-  .tracking-input-group button {
-    padding: 10px 16px;
-    border: none;
-    background: var(--primary);
-    color: white;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 14px;
-    white-space: nowrap;
-  }
-  .tracking-input-group button:hover {
-    background: var(--primary-dark, #2563eb);
-  }
-  
-  .tracking-status-card {
-    background: var(--bg-alt);
-    border-radius: 12px;
-    padding: 16px;
-    margin-top: 12px;
-    border: 1px solid var(--border-light);
-  }
-  .tracking-status-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
-  }
-  .tracking-courier {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-  }
-  .tracking-courier img {
-    height: 24px;
-  }
-  .tracking-badge {
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .tracking-badge.delivered { background: #d1fae5; color: #059669; }
-  .tracking-badge.in-transit { background: #dbeafe; color: #2563eb; }
-  .tracking-badge.pending { background: #fef3c7; color: #d97706; }
-  
-  .tracking-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin-top: 16px;
-    padding-left: 20px;
-    border-left: 2px solid var(--border-light);
-  }
-  .tracking-event {
-    position: relative;
-    padding-left: 20px;
-  }
-  .tracking-event::before {
-    content: '';
-    position: absolute;
-    left: -26px;
-    top: 4px;
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: var(--border-light);
-    border: 2px solid var(--card);
-  }
-  .tracking-event.current::before {
-    background: var(--primary);
-  }
-  .tracking-event-time {
-    font-size: 12px;
-    color: var(--text-secondary);
-  }
-  .tracking-event-desc {
-    font-size: 14px;
-    margin-top: 2px;
-  }
-  
-  .btn-group {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-  }
-  .btn {
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .btn-primary {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: white;
-  }
-  .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  }
-  .btn-secondary {
-    background: var(--bg-alt);
-    color: var(--text-secondary);
-    border: 1px solid var(--border-light);
-  }
-  .btn-secondary:hover {
-    background: var(--border-light);
-  }
-  
-  .data-table-card {
-    background: var(--card);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border-light);
-  }
-  .data-table-header {
-    padding: 16px 20px;
-    background: var(--bg-alt);
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-  .data-table-header h3 {
-    margin: 0;
-    font-size: 16px;
-  }
-  .table-wrapper {
-    overflow-x: auto;
-  }
-  .table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  .table th {
-    padding: 12px 16px;
-    text-align: left;
-    font-size: 12px;
-    font-weight: 600;
-    color: var(--text-secondary);
-    text-transform: uppercase;
-    background: var(--bg-alt);
-    border-bottom: 2px solid var(--border-light);
-  }
-  .table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 14px;
-  }
-  .table tr:hover {
-    background: var(--bg-alt);
-  }
-  .table tr:last-child td {
-    border-bottom: none;
-  }
-  
-  .action-btn {
-    padding: 6px 12px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    margin-right: 4px;
-  }
-  .action-btn.view { background: #dbeafe; color: #2563eb; }
-  .action-btn.edit { background: #fef3c7; color: #d97706; }
-  .action-btn.delete { background: #fee2e2; color: #dc2626; }
-  
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--text-secondary);
-  }
-  .empty-state .icon {
-    font-size: 64px;
-    margin-bottom: 16px;
-    opacity: 0.5;
-  }
-  
-  .courier-select {
+  /* Courier Selection Grid */
+  .courier-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 8px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     margin-top: 8px;
   }
-  .courier-option {
-    padding: 12px;
+  .courier-item {
+    padding: 12px 8px;
     border: 2px solid var(--border-light);
-    border-radius: 8px;
+    border-radius: 10px;
     text-align: center;
     cursor: pointer;
     transition: all 0.2s;
+    background: var(--bg);
   }
-  .courier-option:hover {
-    border-color: var(--primary);
-  }
-  .courier-option.selected {
-    border-color: var(--primary);
-    background: rgba(59, 130, 246, 0.1);
-  }
-  .courier-option img {
-    height: 24px;
-    margin-bottom: 4px;
-  }
-  .courier-option span {
-    display: block;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .sync-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 4px 10px;
-    background: #d1fae5;
-    color: #059669;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-  .sync-indicator.syncing {
-    background: #dbeafe;
-    color: #2563eb;
+  .courier-item:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
+  .courier-item.selected { border-color: var(--primary); background: rgba(59, 130, 246, 0.1); }
+  .courier-item .emoji { font-size: 24px; display: block; margin-bottom: 4px; }
+  .courier-item .name { font-size: 11px; font-weight: 600; color: var(--text-primary); }
+  
+  @media (max-width: 768px) {
+    .form-row { grid-template-columns: 1fr; }
+    .courier-grid { grid-template-columns: repeat(3, 1fr); }
+    .hero-stats { gap: 10px; }
+    .hero-stat { padding: 8px 12px; min-width: 80px; }
+    .tracking-tabs { flex-direction: column; }
+    .quick-track-form { flex-direction: column; }
   }
 </style>
 </head>
@@ -471,137 +512,68 @@
       </div>
     </div>
 
+    <!-- Quick Track Widget -->
+    <div class="quick-track-widget">
+      <h3>🔍 Lacak Pengiriman</h3>
+      <div class="quick-track-form">
+        <div class="form-group">
+          <label>Kurir</label>
+          <select id="quickTrackCourier">
+            <option value="">Pilih Kurir</option>
+            <option value="jne">🚚 JNE</option>
+            <option value="jnt">🚛 J&T Express</option>
+            <option value="sicepat">⚡ SiCepat</option>
+            <option value="anteraja">📦 AnterAja</option>
+            <option value="pos">📮 POS Indonesia</option>
+            <option value="tiki">🚀 TIKI</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 2;">
+          <label>Nomor Resi</label>
+          <input type="text" id="quickTrackNumber" placeholder="Masukkan nomor resi...">
+        </div>
+        <button type="button" id="quickTrackBtn">🔍 Lacak</button>
+      </div>
+      <div id="quickTrackResult" class="tracking-result"></div>
+    </div>
+
     <!-- Tabs -->
     <div class="tracking-tabs">
       <button class="tracking-tab active" data-tab="delivering">
-        <span class="tab-icon">📤</span>
-        Pengiriman (Delivering)
+        📤 Pengiriman
         <span class="tab-count" id="deliveringCount">0</span>
       </button>
       <button class="tracking-tab" data-tab="receiving">
-        <span class="tab-icon">📥</span>
-        Penerimaan (Receiving)
+        📥 Penerimaan
         <span class="tab-count" id="receivingCount">0</span>
       </button>
     </div>
 
     <!-- Delivering Tab -->
     <div id="deliveringTab" class="tab-content active">
-      <!-- Add Delivery Form -->
-      <div class="form-card">
-        <h3>📤 Tambah Pengiriman Baru</h3>
-        <form id="deliveryForm">
-          <div class="form-grid">
-            <div class="form-field">
-              <label for="deliverySendDate">Tanggal Kirim *</label>
-              <input type="date" id="deliverySendDate" required>
-            </div>
-            <div class="form-field">
-              <label for="deliveryPassportCount">Jumlah Passport</label>
-              <input type="number" id="deliveryPassportCount" min="0" placeholder="Opsional">
-            </div>
-            <div class="form-field">
-              <label for="deliveryInvoice">Invoice Number</label>
-              <input type="text" id="deliveryInvoice" placeholder="Opsional - akan sync ke Documents">
-            </div>
-            <div class="form-field">
-              <label for="deliveryBookingCode">Booking Code</label>
-              <input type="text" id="deliveryBookingCode" placeholder="Opsional - akan sync ke Documents">
-            </div>
-            <div class="form-field">
-              <label>Kurir / Ekspedisi</label>
-              <div class="courier-select" id="courierSelect">
-                <div class="courier-option" data-courier="jne">
-                  <span>🚚</span>
-                  <span>JNE</span>
-                </div>
-                <div class="courier-option" data-courier="jnt">
-                  <span>🚛</span>
-                  <span>J&T</span>
-                </div>
-                <div class="courier-option" data-courier="sicepat">
-                  <span>⚡</span>
-                  <span>SiCepat</span>
-                </div>
-                <div class="courier-option" data-courier="anteraja">
-                  <span>📦</span>
-                  <span>AnterAja</span>
-                </div>
-                <div class="courier-option" data-courier="pos">
-                  <span>📮</span>
-                  <span>POS</span>
-                </div>
-                <div class="courier-option" data-courier="tiki">
-                  <span>🚀</span>
-                  <span>TIKI</span>
-                </div>
-                <div class="courier-option" data-courier="other">
-                  <span>📋</span>
-                  <span>Lainnya</span>
-                </div>
-              </div>
-              <input type="hidden" id="deliveryCourier" value="">
-            </div>
-            <div class="form-field">
-              <label for="deliveryTrackingNo">Nomor Resi *</label>
-              <div class="tracking-input-group">
-                <input type="text" id="deliveryTrackingNo" required placeholder="Masukkan nomor resi">
-                <button type="button" id="checkTrackingBtn">🔍 Cek</button>
-              </div>
-              <div id="trackingResult" style="display: none;"></div>
-            </div>
-            <div class="form-field">
-              <label for="deliveryRecipient">Nama Penerima</label>
-              <input type="text" id="deliveryRecipient" placeholder="Nama penerima">
-            </div>
-            <div class="form-field">
-              <label for="deliveryAddress">Alamat Tujuan</label>
-              <input type="text" id="deliveryAddress" placeholder="Alamat pengiriman">
-            </div>
-            <div class="form-field full-width">
-              <label for="deliveryDetails">Detail Pengiriman</label>
-              <textarea id="deliveryDetails" placeholder="Catatan detail pengiriman, isi dokumen, dll..."></textarea>
-            </div>
-          </div>
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary">💾 Simpan Pengiriman</button>
-            <button type="reset" class="btn btn-secondary">🔄 Reset</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Delivery Records Table -->
-      <div class="data-table-card">
-        <div class="data-table-header">
-          <h3>📋 Riwayat Pengiriman</h3>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <input type="text" id="deliverySearch" placeholder="Cari resi / invoice..." style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 14px;">
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>📤 Riwayat Pengiriman</h3>
+          <div class="header-actions">
+            <input type="text" class="search-input" id="deliverySearch" placeholder="🔍 Cari...">
             <button class="btn btn-secondary" id="exportDeliveries">📥 Export</button>
+            <button class="btn btn-primary" id="addDeliveryBtn">+ Tambah</button>
           </div>
         </div>
-        <div class="table-wrapper">
-          <table class="table">
+        <div style="overflow-x: auto;">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>Tanggal</th>
-                <th>No. Resi</th>
-                <th>Kurir</th>
+                <th>Kurir & Resi</th>
                 <th>Penerima</th>
-                <th>Passport</th>
-                <th>Invoice</th>
+                <th>Invoice / Booking</th>
                 <th>Status</th>
-                <th>Aksi</th>
+                <th style="text-align: center;">Aksi</th>
               </tr>
             </thead>
             <tbody id="deliveryTableBody">
-              <tr>
-                <td colspan="8">
-                  <div class="empty-state">
-                    <div class="icon">📦</div>
-                    <p>Belum ada data pengiriman</p>
-                  </div>
-                </td>
-              </tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="icon">📦</div><p>Belum ada data pengiriman</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -610,50 +582,17 @@
 
     <!-- Receiving Tab -->
     <div id="receivingTab" class="tab-content">
-      <!-- Add Receiving Form -->
-      <div class="form-card">
-        <h3>📥 Tambah Penerimaan Baru</h3>
-        <form id="receivingForm">
-          <div class="form-grid">
-            <div class="form-field">
-              <label for="receiveDate">Tanggal Terima *</label>
-              <input type="date" id="receiveDate" required>
-            </div>
-            <div class="form-field">
-              <label for="receivePassportCount">Jumlah Passport</label>
-              <input type="number" id="receivePassportCount" min="0" placeholder="Opsional">
-            </div>
-            <div class="form-field">
-              <label for="receiveSender">Pengirim</label>
-              <input type="text" id="receiveSender" placeholder="Nama pengirim">
-            </div>
-            <div class="form-field">
-              <label for="receiveTrackingNo">Nomor Resi</label>
-              <input type="text" id="receiveTrackingNo" placeholder="Opsional">
-            </div>
-            <div class="form-field full-width">
-              <label for="receiveDetails">Detail Penerimaan</label>
-              <textarea id="receiveDetails" placeholder="Catatan detail penerimaan, isi dokumen, kondisi paket, dll..."></textarea>
-            </div>
-          </div>
-          <div class="btn-group">
-            <button type="submit" class="btn btn-primary">💾 Simpan Penerimaan</button>
-            <button type="reset" class="btn btn-secondary">🔄 Reset</button>
-          </div>
-        </form>
-      </div>
-
-      <!-- Receiving Records Table -->
-      <div class="data-table-card">
-        <div class="data-table-header">
-          <h3>📋 Riwayat Penerimaan</h3>
-          <div style="display: flex; gap: 12px; align-items: center;">
-            <input type="text" id="receivingSearch" placeholder="Cari resi / pengirim..." style="padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 8px; font-size: 14px;">
+      <div class="table-card">
+        <div class="table-card-header">
+          <h3>📥 Riwayat Penerimaan</h3>
+          <div class="header-actions">
+            <input type="text" class="search-input" id="receivingSearch" placeholder="🔍 Cari...">
             <button class="btn btn-secondary" id="exportReceivings">📥 Export</button>
+            <button class="btn btn-primary" id="addReceivingBtn">+ Tambah</button>
           </div>
         </div>
-        <div class="table-wrapper">
-          <table class="table">
+        <div style="overflow-x: auto;">
+          <table class="data-table">
             <thead>
               <tr>
                 <th>Tanggal</th>
@@ -661,18 +600,11 @@
                 <th>Pengirim</th>
                 <th>Passport</th>
                 <th>Detail</th>
-                <th>Aksi</th>
+                <th style="text-align: center;">Aksi</th>
               </tr>
             </thead>
             <tbody id="receivingTableBody">
-              <tr>
-                <td colspan="6">
-                  <div class="empty-state">
-                    <div class="icon">📥</div>
-                    <p>Belum ada data penerimaan</p>
-                  </div>
-                </td>
-              </tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="icon">📥</div><p>Belum ada data penerimaan</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -681,19 +613,139 @@
   </main>
 </div>
 
-<!-- Edit Modal -->
-<div id="editModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 600px;">
+<!-- Delivery Modal -->
+<div id="deliveryModal" class="modal">
+  <div class="modal-card">
     <div class="modal-header">
-      <h3 id="editModalTitle">Edit Record</h3>
-      <button class="modal-close" id="closeEditModal">&times;</button>
+      <h3 id="deliveryModalTitle">📤 Tambah Pengiriman</h3>
+      <button class="modal-close" id="closeDeliveryModal">&times;</button>
     </div>
-    <form id="editForm">
-      <div class="modal-body" id="editModalBody">
-        <!-- Dynamic content -->
+    <form id="deliveryForm">
+      <div class="modal-body">
+        <input type="hidden" id="deliveryId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Kirim *</label>
+            <input type="date" id="deliverySendDate" required>
+          </div>
+          <div class="form-group">
+            <label>Jumlah Passport</label>
+            <input type="number" id="deliveryPassportCount" min="0" placeholder="Opsional">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Invoice Number</label>
+            <input type="text" id="deliveryInvoice" placeholder="Akan sync ke Documents">
+            <span class="help-text">🔗 Auto-sync tanggal kirim ke Documents</span>
+          </div>
+          <div class="form-group">
+            <label>Booking Code</label>
+            <input type="text" id="deliveryBookingCode" placeholder="Akan sync ke Documents">
+          </div>
+        </div>
+        
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Pilih Kurir *</label>
+            <div class="courier-grid" id="courierSelect">
+              <div class="courier-item" data-courier="jne"><span class="emoji">🚚</span><span class="name">JNE</span></div>
+              <div class="courier-item" data-courier="jnt"><span class="emoji">🚛</span><span class="name">J&T</span></div>
+              <div class="courier-item" data-courier="sicepat"><span class="emoji">⚡</span><span class="name">SiCepat</span></div>
+              <div class="courier-item" data-courier="anteraja"><span class="emoji">📦</span><span class="name">AnterAja</span></div>
+              <div class="courier-item" data-courier="pos"><span class="emoji">📮</span><span class="name">POS</span></div>
+              <div class="courier-item" data-courier="tiki"><span class="emoji">🚀</span><span class="name">TIKI</span></div>
+              <div class="courier-item" data-courier="other"><span class="emoji">📋</span><span class="name">Lainnya</span></div>
+            </div>
+            <input type="hidden" id="deliveryCourier">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nomor Resi</label>
+            <input type="text" id="deliveryTrackingNo" placeholder="Opsional - untuk tracking">
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select id="deliveryStatus">
+              <option value="pending">⏳ Pending</option>
+              <option value="in-transit">🚚 Dalam Perjalanan</option>
+              <option value="delivered">✅ Terkirim</option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nama Penerima</label>
+            <input type="text" id="deliveryRecipient" placeholder="Nama penerima">
+          </div>
+          <div class="form-group">
+            <label>Alamat Tujuan</label>
+            <input type="text" id="deliveryAddress" placeholder="Alamat pengiriman">
+          </div>
+        </div>
+        
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Detail Pengiriman</label>
+            <textarea id="deliveryDetails" placeholder="Catatan detail pengiriman..."></textarea>
+          </div>
+        </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelEdit">Batal</button>
+        <button type="button" class="btn btn-secondary" id="cancelDeliveryBtn">Batal</button>
+        <button type="submit" class="btn btn-primary">💾 Simpan</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Receiving Modal -->
+<div id="receivingModal" class="modal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="receivingModalTitle">📥 Tambah Penerimaan</h3>
+      <button class="modal-close" id="closeReceivingModal">&times;</button>
+    </div>
+    <form id="receivingForm">
+      <div class="modal-body">
+        <input type="hidden" id="receivingId">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Tanggal Terima *</label>
+            <input type="date" id="receiveDate" required>
+          </div>
+          <div class="form-group">
+            <label>Jumlah Passport</label>
+            <input type="number" id="receivePassportCount" min="0" placeholder="Opsional">
+          </div>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>Pengirim</label>
+            <input type="text" id="receiveSender" placeholder="Nama pengirim">
+          </div>
+          <div class="form-group">
+            <label>Nomor Resi</label>
+            <input type="text" id="receiveTrackingNo" placeholder="Opsional">
+          </div>
+        </div>
+        
+        <div class="form-row full">
+          <div class="form-group">
+            <label>Detail Penerimaan</label>
+            <textarea id="receiveDetails" placeholder="Catatan detail penerimaan..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="cancelReceivingBtn">Batal</button>
         <button type="submit" class="btn btn-primary">💾 Simpan</button>
       </div>
     </form>
@@ -701,18 +753,18 @@
 </div>
 
 <!-- Tracking Detail Modal -->
-<div id="trackingModal" class="modal" style="display: none;">
-  <div class="modal-content" style="max-width: 500px;">
+<div id="trackingModal" class="modal">
+  <div class="modal-card" style="max-width: 500px;">
     <div class="modal-header">
       <h3>📍 Detail Tracking</h3>
       <button class="modal-close" id="closeTrackingModal">&times;</button>
     </div>
     <div class="modal-body" id="trackingModalBody">
-      <!-- Tracking timeline -->
+      <!-- Tracking content -->
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" id="closeTrackingModalBtn">Tutup</button>
-      <button type="button" class="btn btn-primary" id="refreshTrackingBtn">🔄 Refresh</button>
+      <button type="button" class="btn btn-primary" id="openCourierSiteBtn">🔗 Buka Website Kurir</button>
     </div>
   </div>
 </div>
