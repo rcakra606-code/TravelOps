@@ -1913,18 +1913,22 @@ export async function createApp() {
           timeline
         });
       } else {
-        // No local data, return empty response with suggestion to check courier website
-        res.status(404).json({
-          error: 'Tracking data not found locally',
-          message: 'Please check the courier website directly for live tracking',
+        // No local data, return response with suggestion to check courier website
+        res.json({
+          tracking_no: trackingNo,
+          courier: courier,
+          status: 'unknown',
+          not_found: true,
+          message: 'Data tracking tidak ditemukan. Silakan cek langsung di website kurir.',
           courier_urls: {
-            jne: 'https://www.jne.co.id/id/tracking/trace',
+            jne: 'https://www.jne.co.id/tracking-package',
             jnt: 'https://www.jet.co.id/track',
             sicepat: 'https://www.sicepat.com/checkAwb',
             anteraja: 'https://anteraja.id/tracking',
             pos: 'https://www.posindonesia.co.id/id/tracking',
-            tiki: 'https://www.tiki.id/id/tracking'
-          }
+            tiki: 'https://www.tiki.id/id/track'
+          },
+          timeline: []
         });
       }
     } catch (err) {

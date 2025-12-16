@@ -527,6 +527,32 @@ class TrackingDashboard {
     const emoji = this.courierEmojis[data.courier] || '📦';
     const courierName = this.getCourierName(data.courier);
     
+    // If not found locally, show fallback with courier link
+    if (data.not_found) {
+      const url = this.courierUrls[data.courier];
+      container.innerHTML = `
+        <div class="tracking-info-card">
+          <div class="tracking-header-info">
+            <div class="tracking-courier-display">
+              <div class="courier-logo">${emoji}</div>
+              <div class="courier-info">
+                <h4>${courierName}</h4>
+                <span>${data.tracking_no}</span>
+              </div>
+            </div>
+            <span class="status-badge pending">❓ Belum Diketahui</span>
+          </div>
+          <p style="color: var(--text-secondary); text-align: center; padding: 16px 0;">${data.message || 'Data tracking tidak ditemukan di sistem lokal.'}</p>
+          ${url ? `
+            <div style="text-align: center; margin-top: 8px;">
+              <a href="${url}" target="_blank" class="btn btn-primary">🔗 Cek di Website ${courierName}</a>
+            </div>
+          ` : ''}
+        </div>
+      `;
+      return;
+    }
+    
     container.innerHTML = `
       <div class="tracking-info-card">
         <div class="tracking-header-info">
