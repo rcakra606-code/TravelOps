@@ -1,9 +1,9 @@
 /* =========================================================
-   TABLE ENHANCEMENTS
+   TABLE EXPORT & SORT ENHANCEMENTS
    Sortable columns, export buttons, and responsive cards
    ========================================================= */
 
-class TableEnhancer {
+class TableExporter {
   constructor(tableSelector = '.table') {
     this.tables = document.querySelectorAll(tableSelector);
     this.init();
@@ -235,7 +235,7 @@ class TableEnhancer {
   // Static method to refresh enhancements after table update
   static refresh() {
     document.querySelectorAll('.table').forEach(table => {
-      const instance = new TableEnhancer();
+      const instance = new TableExporter();
       instance.addDataLabels(table);
     });
   }
@@ -245,11 +245,11 @@ class TableEnhancer {
 document.addEventListener('DOMContentLoaded', () => {
   // Delay initialization to allow tables to be populated
   setTimeout(() => {
-    window.tableEnhancer = new TableEnhancer();
+    window.tableExporter = new TableExporter();
   }, 500);
 });
 
 // Export for module usage
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = TableEnhancer;
+  module.exports = TableExporter;
 }

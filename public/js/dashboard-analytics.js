@@ -64,7 +64,7 @@ class DashboardAnalytics {
       const [tours, sales, hotels, overtime] = await Promise.all([
         window.fetchJson?.('/api/tours') || [],
         window.fetchJson?.('/api/sales') || [],
-        window.fetchJson?.('/api/hotels') || [],
+        window.fetchJson?.('/api/hotel_bookings') || [],
         window.fetchJson?.('/api/overtime') || []
       ]);
 

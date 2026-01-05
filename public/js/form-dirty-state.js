@@ -256,16 +256,18 @@ class FormDirtyState {
 // Global instance
 window.formDirtyState = new FormDirtyState();
 
-// Add styles
-const style = document.createElement('style');
-style.textContent = `
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  
-  .dirty-indicator {
-    animation: fadeIn 0.3s ease;
-  }
-`;
-document.head.appendChild(style);
+// Add styles (wrapped in IIFE to avoid global conflicts)
+(function() {
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .dirty-indicator {
+      animation: fadeIn 0.3s ease;
+    }
+  `;
+  document.head.appendChild(style);
+})();
