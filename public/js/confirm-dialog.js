@@ -91,7 +91,19 @@ class ConfirmDialog {
       const confirmBtn = dialog.querySelector('#confirmOk');
       const cancelBtn = dialog.querySelector('#confirmCancel');
       
+      // ESC key handler - defined before handleClose so we can remove it
+      const escHandler = (e) => {
+        if (e.key === 'Escape') {
+          document.removeEventListener('keydown', escHandler);
+          handleClose(false);
+        }
+      };
+      document.addEventListener('keydown', escHandler);
+
       const handleClose = (confirmed) => {
+        // Always remove ESC handler on close
+        document.removeEventListener('keydown', escHandler);
+        
         this.overlay.style.animation = 'fadeOut 0.2s ease';
         setTimeout(() => {
           if (this.overlay && this.overlay.parentNode) {
@@ -102,24 +114,19 @@ class ConfirmDialog {
         }, 200);
       };
 
-      if (confirmBtn) confirmBtn.onclick = () => handleClose(true);
-      if (cancelBtn) cancelBtn.onclick = () => handleClose(false);
-      
-      // ESC key to cancel
-      const escHandler = (e) => {
-        if (e.key === 'Escape') {
-          document.removeEventListener('keydown', escHandler);
-          handleClose(false);
-        }
-      };
-      document.addEventListener('keydown', escHandler);
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => handleClose(true));
+      }
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', () => handleClose(false));
+      }
 
       // Click overlay to cancel
-      this.overlay.onclick = (e) => {
+      this.overlay.addEventListener('click', (e) => {
         if (e.target === this.overlay) {
           handleClose(false);
         }
-      };
+      });
     });
   }
 

@@ -11,6 +11,29 @@ class CRUDModal {
   }
 
   /**
+   * Wait for DOM element to be available with retry
+   */
+  static waitForElement(selector, maxAttempts = 10) {
+    return new Promise((resolve, reject) => {
+      let attempts = 0;
+      const check = () => {
+        const element = document.querySelector(selector);
+        if (element) {
+          resolve(element);
+        } else if (attempts < maxAttempts) {
+          attempts++;
+          requestAnimationFrame(check);
+        } else {
+          console.error(`Element ${selector} not found after ${maxAttempts} attempts`);
+          reject(new Error(`Element ${selector} not found`));
+        }
+      };
+      // Start after a short delay to allow modal DOM to be inserted
+      setTimeout(check, 50);
+    });
+  }
+
+  /**
    * Show create modal with FormBuilder
    */
   static create(title, fields, onSubmit, options = {}) {
@@ -36,10 +59,9 @@ class CRUDModal {
       context: { entity: options.entity, action: 'create' }
     });
     
-    console.log('🔧 openModal called, waiting 100ms for DOM...');
+    console.log('🔧 openModal called, waiting for DOM...');
 
-    setTimeout(() => {
-      const form = document.querySelector('#modalForm');
+    CRUDModal.waitForElement('#modalForm').then(form => {
       if (form) {
         FormBuilder.enhance(form);
         
@@ -108,10 +130,10 @@ class CRUDModal {
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         }
-      } else {
-        console.error('🔧 CRUDModal.create: Form NOT found in modal!');
       }
-    }, 100);
+    }).catch(err => {
+      console.error('🔧 CRUDModal.create: Form NOT found in modal!', err);
+    });
   }
 
   /**
@@ -129,8 +151,7 @@ class CRUDModal {
       context: { entity: options.entity, action: 'edit', id: data.id }
     });
 
-    setTimeout(() => {
-      const form = document.querySelector('#modalForm');
+    CRUDModal.waitForElement('#modalForm').then(form => {
       if (form) {
         FormBuilder.enhance(form);
         
@@ -231,7 +252,9 @@ class CRUDModal {
           new AutoSave(form, `${options.entity}-edit-${data.id}`);
         }
       }
-    }, 100);
+    }).catch(err => {
+      console.error('🔧 CRUDModal.edit: Form NOT found in modal!', err);
+    });
   }
 
   /**
@@ -276,9 +299,11 @@ class CRUDModal {
       context: { entity: options.entity, action: 'create', multiStep: true }
     });
 
-    setTimeout(() => {
+    CRUDModal.waitForElement('#modalForm').then(() => {
       this.setupMultiStepHandlers(onSubmit);
-    }, 100);
+    }).catch(err => {
+      console.error('Multi-step form setup failed:', err);
+    });
   }
 
   renderMultiStepForm() {
