@@ -398,10 +398,30 @@ class BulkImporter {
       document.getElementById('confirmImport').disabled = !validation.valid;
     };
     
-    document.getElementById('confirmImport').onclick = () => {
+    // Track import state to prevent double-click
+    let isImporting = false;
+    
+    document.getElementById('confirmImport').onclick = async () => {
+      if (isImporting) {
+        return; // Prevent double-click
+      }
+      
       if (validation && validation.valid && onImport) {
-        onImport(parsedData);
-        modal.remove();
+        isImporting = true;
+        const btn = document.getElementById('confirmImport');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = '⏳ Importing...';
+        
+        try {
+          await onImport(parsedData);
+          modal.remove();
+        } catch (err) {
+          console.error('Import error:', err);
+          isImporting = false;
+          btn.disabled = false;
+          btn.textContent = originalText;
+        }
       }
     };
   }

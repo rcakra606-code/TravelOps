@@ -7,6 +7,9 @@
 /* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
 const el = id => document.getElementById(id);
 
+// Store interval reference for cleanup
+let refreshInterval = null;
+
 /* === DISPLAY USER INFO === */
 (() => {
   const user = window.getUser();
@@ -699,9 +702,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   await populateFilterDropdowns();
   renderDashboard();
   
-  // Auto-refresh with visual indicator
+  // Auto-refresh with visual indicator - store reference for cleanup
   let lastRefresh = Date.now();
-  setInterval(() => {
+  refreshInterval = setInterval(() => {
+    // Don't refresh if modal is open
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      return;
+    }
+    
     const now = Date.now();
     if (now - lastRefresh >= 60000) {
       lastRefresh = now;
@@ -714,6 +723,14 @@ window.addEventListener('DOMContentLoaded', async () => {
       setTimeout(() => indicator.remove(), 2000);
     }
   }, 60000);
+  
+  // Cleanup interval on page unload to prevent memory leaks
+  window.addEventListener('beforeunload', () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+  });
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {

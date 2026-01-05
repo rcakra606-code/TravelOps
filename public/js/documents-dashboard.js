@@ -6,6 +6,9 @@
 /* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
 const el = id => document.getElementById(id);
 
+// Store interval reference for cleanup
+let refreshInterval = null;
+
 /* === DISPLAY USER INFO === */
 (() => {
   const user = window.getUser();
@@ -584,7 +587,24 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   await populateFilterDropdowns();
   renderDashboard();
-  setInterval(renderDashboard, 60000); // Refresh every minute
+  
+  // Store interval reference for cleanup
+  refreshInterval = setInterval(() => {
+    // Don't refresh if modal is open
+    const modal = document.getElementById('modal');
+    if (modal && modal.classList.contains('active')) {
+      return;
+    }
+    renderDashboard();
+  }, 60000); // Refresh every minute
+  
+  // Cleanup interval on page unload to prevent memory leaks
+  window.addEventListener('beforeunload', () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+      refreshInterval = null;
+    }
+  });
   
   // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
 });

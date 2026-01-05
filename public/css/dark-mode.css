@@ -226,3 +226,97 @@
 [data-theme="dark"] .chart-container {
   background: var(--card);
 }
+
+/* =========================================================
+   DARK MODE REFINEMENTS
+   Enhanced shadows, borders, and visual polish
+   ========================================================= */
+
+/* Enhanced shadows for dark mode */
+[data-theme="dark"] {
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
+}
+
+/* Modal refinements */
+[data-theme="dark"] .modal-content,
+[data-theme="dark"] .modal-card {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+/* Card glow effect on hover */
+[data-theme="dark"] .card:hover,
+[data-theme="dark"] .stat-card:hover {
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+/* Better form inputs */
+[data-theme="dark"] .form-control:focus,
+[data-theme="dark"] input:focus,
+[data-theme="dark"] select:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+}
+
+/* Filter chips dark mode */
+[data-theme="dark"] .filter-chip {
+  background: rgba(59, 130, 246, 0.2);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Trend indicators dark mode */
+[data-theme="dark"] .stat-trend.up {
+  background: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme="dark"] .stat-trend.down {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+/* Empty state dark mode */
+[data-theme="dark"] .empty-state {
+  background: rgba(30, 41, 59, 0.5);
+}
+
+/* Progress bar dark mode */
+[data-theme="dark"] .upload-progress {
+  background: #334155;
+}
+
+/* Skeleton dark mode */
+[data-theme="dark"] .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* Dropdown/Select dark mode improvements */
+[data-theme="dark"] select option {
+  background: #1e293b;
+  color: var(--text-primary);
+}
+
+/* Scrollbar dark mode */
+[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border-radius: 4px;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Focus visible in dark mode */
+[data-theme="dark"] :focus-visible {
+  outline-color: #60a5fa;
+}

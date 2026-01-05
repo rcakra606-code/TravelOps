@@ -10,6 +10,11 @@ class TrackingDashboard {
     this.selectedCourier = '';
     this.currentTrackingData = null;
     
+    // Form submission protection flags
+    this.isSubmitting = false;
+    this.lastSubmitTime = 0;
+    this.submitCooldown = 2000; // 2 seconds cooldown between submissions
+    
     // Courier tracking URLs with tracking number support
     this.courierUrls = {
       jne: 'https://www.jne.co.id/tracking-package',
@@ -46,6 +51,10 @@ class TrackingDashboard {
   }
 
   async init() {
+    // Prevent double initialization
+    if (this.initialized) return;
+    this.initialized = true;
+    
     this.bindEvents();
     await this.loadData();
   }
@@ -65,9 +74,19 @@ class TrackingDashboard {
       item.addEventListener('click', () => this.selectCourier(item.dataset.courier));
     });
 
-    // Forms
-    document.getElementById('deliveryForm')?.addEventListener('submit', (e) => this.handleDeliverySubmit(e));
-    document.getElementById('receivingForm')?.addEventListener('submit', (e) => this.handleReceivingSubmit(e));
+    // Forms - use bound functions to prevent duplicate handlers
+    const deliveryForm = document.getElementById('deliveryForm');
+    const receivingForm = document.getElementById('receivingForm');
+    
+    if (deliveryForm) {
+      // Remove any existing listener and add fresh one
+      deliveryForm.onsubmit = (e) => this.handleDeliverySubmit(e);
+    }
+    
+    if (receivingForm) {
+      // Remove any existing listener and add fresh one
+      receivingForm.onsubmit = (e) => this.handleReceivingSubmit(e);
+    }
 
     // Modal close buttons
     document.getElementById('closeDeliveryModal')?.addEventListener('click', () => this.closeDeliveryModal());
@@ -157,6 +176,13 @@ class TrackingDashboard {
 
   closeDeliveryModal() {
     document.getElementById('deliveryModal')?.classList.remove('show');
+    // Reset submission state when modal is closed
+    this.isSubmitting = false;
+    const submitBtn = document.querySelector('#deliveryForm button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '💾 Simpan';
+    }
   }
 
   openReceivingModal(editData = null) {
@@ -185,6 +211,13 @@ class TrackingDashboard {
 
   closeReceivingModal() {
     document.getElementById('receivingModal')?.classList.remove('show');
+    // Reset submission state when modal is closed
+    this.isSubmitting = false;
+    const submitBtn = document.querySelector('#receivingForm button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '💾 Simpan';
+    }
   }
 
   closeTrackingModal() {
@@ -347,9 +380,24 @@ class TrackingDashboard {
   // CRUD Operations
   async handleDeliverySubmit(e) {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (this.isSubmitting) {
+      window.showToast?.('Mohon tunggu, data sedang diproses...', 'warning');
+      return;
+    }
+    
+    // Check cooldown period to prevent rapid submissions
+    const now = Date.now();
+    if (now - this.lastSubmitTime < this.submitCooldown) {
+      window.showToast?.('Mohon tunggu sebentar sebelum menyimpan lagi', 'warning');
+      return;
+    }
+    
     const token = localStorage.getItem('token');
     const id = document.getElementById('deliveryId').value;
-
+    
+    // Get form data first before disabling
     const data = {
       send_date: document.getElementById('deliverySendDate').value,
       passport_count: document.getElementById('deliveryPassportCount').value || null,
@@ -363,6 +411,15 @@ class TrackingDashboard {
       details: document.getElementById('deliveryDetails').value.trim() || null
     };
 
+    // Set submission flags and disable button
+    this.isSubmitting = true;
+    this.lastSubmitTime = now;
+    const submitBtn = document.querySelector('#deliveryForm button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Menyimpan...';
+    }
+
     try {
       const url = id ? `/api/tracking/deliveries/${id}` : '/api/tracking/deliveries';
       const method = id ? 'PUT' : 'POST';
@@ -374,8 +431,9 @@ class TrackingDashboard {
       });
 
       if (res.ok) {
+        const result = await res.json();
         window.showToast?.(id ? 'Pengiriman berhasil diperbarui!' : 'Pengiriman berhasil disimpan!', 'success');
-        window.logAudit?.(id ? 'update' : 'create', 'tracking_deliveries', id || (await res.json()).id, data);
+        window.logAudit?.(id ? 'update' : 'create', 'tracking_deliveries', id || result.id, data);
         this.closeDeliveryModal();
         await this.loadData();
       } else {
@@ -385,14 +443,36 @@ class TrackingDashboard {
     } catch (error) {
       console.error('Error saving delivery:', error);
       window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');
+    } finally {
+      // Reset submission flags and re-enable button
+      this.isSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Simpan';
+      }
     }
   }
 
   async handleReceivingSubmit(e) {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (this.isSubmitting) {
+      window.showToast?.('Mohon tunggu, data sedang diproses...', 'warning');
+      return;
+    }
+    
+    // Check cooldown period to prevent rapid submissions
+    const now = Date.now();
+    if (now - this.lastSubmitTime < this.submitCooldown) {
+      window.showToast?.('Mohon tunggu sebentar sebelum menyimpan lagi', 'warning');
+      return;
+    }
+    
     const token = localStorage.getItem('token');
     const id = document.getElementById('receivingId').value;
 
+    // Get form data first before disabling
     const data = {
       receive_date: document.getElementById('receiveDate').value,
       passport_count: document.getElementById('receivePassportCount').value || null,
@@ -400,6 +480,15 @@ class TrackingDashboard {
       tracking_no: document.getElementById('receiveTrackingNo').value.trim() || null,
       details: document.getElementById('receiveDetails').value.trim() || null
     };
+
+    // Set submission flags and disable button
+    this.isSubmitting = true;
+    this.lastSubmitTime = now;
+    const submitBtn = document.querySelector('#receivingForm button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Menyimpan...';
+    }
 
     try {
       const url = id ? `/api/tracking/receivings/${id}` : '/api/tracking/receivings';
@@ -412,8 +501,9 @@ class TrackingDashboard {
       });
 
       if (res.ok) {
+        const result = await res.json();
         window.showToast?.(id ? 'Penerimaan berhasil diperbarui!' : 'Penerimaan berhasil disimpan!', 'success');
-        window.logAudit?.(id ? 'update' : 'create', 'tracking_receivings', id || (await res.json()).id, data);
+        window.logAudit?.(id ? 'update' : 'create', 'tracking_receivings', id || result.id, data);
         this.closeReceivingModal();
         await this.loadData();
       } else {
@@ -423,6 +513,13 @@ class TrackingDashboard {
     } catch (error) {
       console.error('Error saving receiving:', error);
       window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');
+    } finally {
+      // Reset submission flags and re-enable button
+      this.isSubmitting = false;
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '💾 Simpan';
+      }
     }
   }
 
@@ -437,7 +534,21 @@ class TrackingDashboard {
   }
 
   async markDelivered(id) {
+    // Check if id exists in current deliveries to prevent operating on stale data
+    const delivery = this.deliveries.find(d => d.id === id);
+    if (!delivery) {
+      window.showToast?.('Data tidak ditemukan, mungkin sudah dihapus', 'warning');
+      await this.loadData();
+      return;
+    }
+    
     if (!confirm('Tandai pengiriman ini sebagai terkirim?')) return;
+
+    // Prevent double-click by checking if already delivered
+    if (delivery.status === 'delivered') {
+      window.showToast?.('Pengiriman ini sudah ditandai terkirim', 'info');
+      return;
+    }
 
     const token = localStorage.getItem('token');
     try {
@@ -450,6 +561,9 @@ class TrackingDashboard {
       if (res.ok) {
         window.showToast?.('Status berhasil diperbarui!', 'success');
         await this.loadData();
+      } else {
+        const error = await res.json();
+        window.showToast?.(error.message || 'Gagal memperbarui status', 'error');
       }
     } catch (error) {
       console.error('Error marking delivered:', error);
@@ -458,7 +572,19 @@ class TrackingDashboard {
   }
 
   async deleteDelivery(id) {
+    // Check if id exists in current deliveries to prevent operating on stale/deleted data
+    const delivery = this.deliveries.find(d => d.id === id);
+    if (!delivery) {
+      window.showToast?.('Data tidak ditemukan, mungkin sudah dihapus', 'warning');
+      await this.loadData();
+      return;
+    }
+    
     if (!confirm('Yakin ingin menghapus data pengiriman ini?')) return;
+
+    // Prevent double-click by removing from local array immediately
+    this.deliveries = this.deliveries.filter(d => d.id !== id);
+    this.renderDeliveries();
 
     const token = localStorage.getItem('token');
     try {
@@ -469,16 +595,34 @@ class TrackingDashboard {
 
       if (res.ok) {
         window.showToast?.('Data berhasil dihapus!', 'success');
+        this.updateStats();
+      } else {
+        // Restore data if delete failed
         await this.loadData();
+        window.showToast?.('Gagal menghapus data', 'error');
       }
     } catch (error) {
       console.error('Error deleting:', error);
+      // Restore data if delete failed
+      await this.loadData();
       window.showToast?.('Gagal menghapus data', 'error');
     }
   }
 
   async deleteReceiving(id) {
+    // Check if id exists in current receivings to prevent operating on stale/deleted data
+    const receiving = this.receivings.find(r => r.id === id);
+    if (!receiving) {
+      window.showToast?.('Data tidak ditemukan, mungkin sudah dihapus', 'warning');
+      await this.loadData();
+      return;
+    }
+    
     if (!confirm('Yakin ingin menghapus data penerimaan ini?')) return;
+
+    // Prevent double-click by removing from local array immediately
+    this.receivings = this.receivings.filter(r => r.id !== id);
+    this.renderReceivings();
 
     const token = localStorage.getItem('token');
     try {
@@ -489,10 +633,16 @@ class TrackingDashboard {
 
       if (res.ok) {
         window.showToast?.('Data berhasil dihapus!', 'success');
+        this.updateStats();
+      } else {
+        // Restore data if delete failed
         await this.loadData();
+        window.showToast?.('Gagal menghapus data', 'error');
       }
     } catch (error) {
       console.error('Error deleting:', error);
+      // Restore data if delete failed
+      await this.loadData();
       window.showToast?.('Gagal menghapus data', 'error');
     }
   }
@@ -737,8 +887,10 @@ class TrackingDashboard {
   }
 }
 
-// Initialize
+// Initialize - prevent multiple instantiation
 let trackingDashboard;
 document.addEventListener('DOMContentLoaded', () => {
-  trackingDashboard = new TrackingDashboard();
+  if (!trackingDashboard) {
+    trackingDashboard = new TrackingDashboard();
+  }
 });

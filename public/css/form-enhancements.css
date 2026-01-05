@@ -738,3 +738,154 @@
 .enhanced-form .form-field:nth-child(4) { animation-delay: 0.2s; }
 .enhanced-form .form-field:nth-child(5) { animation-delay: 0.25s; }
 .enhanced-form .form-field:nth-child(6) { animation-delay: 0.3s; }
+
+/* =========================================================
+   REAL-TIME FORM VALIDATION FEEDBACK
+   Visual states for valid/invalid inputs
+   ========================================================= */
+
+/* Shake animation for errors */
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+  20%, 40%, 60%, 80% { transform: translateX(4px); }
+}
+
+/* Valid field state */
+.form-field.valid .form-control,
+.form-group.valid input,
+.form-group.valid select,
+.form-group.valid textarea {
+  border-color: #10b981 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2310b981' viewBox='0 0 16 16'%3E%3Cpath d='M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+}
+
+/* Invalid field state */
+.form-field.invalid .form-control,
+.form-group.invalid input,
+.form-group.invalid select,
+.form-group.invalid textarea {
+  border-color: #ef4444 !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23ef4444' viewBox='0 0 16 16'%3E%3Cpath d='M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z'/%3E%3Cpath d='M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+  padding-right: 40px;
+  animation: shake 0.4s ease-in-out;
+}
+
+/* Focus state on invalid keeps the error */
+.form-field.invalid .form-control:focus,
+.form-group.invalid input:focus {
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+/* Error message styling */
+.field-error,
+.error-message,
+.validation-error {
+  color: #ef4444;
+  font-size: 12px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: fadeInUp 0.2s ease;
+}
+
+.field-error::before,
+.error-message::before {
+  content: '⚠';
+  font-size: 11px;
+}
+
+/* Success message styling */
+.field-success,
+.success-message {
+  color: #10b981;
+  font-size: 12px;
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  animation: fadeInUp 0.2s ease;
+}
+
+.field-success::before,
+.success-message::before {
+  content: '✓';
+  font-weight: bold;
+}
+
+/* Character counter */
+.char-counter {
+  font-size: 11px;
+  color: var(--muted, #6b7280);
+  text-align: right;
+  margin-top: 4px;
+}
+
+.char-counter.warning {
+  color: #f59e0b;
+}
+
+.char-counter.danger {
+  color: #ef4444;
+}
+
+/* Form save indicator */
+.form-save-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted, #6b7280);
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg-alt, #f3f4f6);
+}
+
+.form-save-status.saving {
+  color: #3b82f6;
+}
+
+.form-save-status.saved {
+  color: #10b981;
+}
+
+.form-save-status.error {
+  color: #ef4444;
+}
+
+/* Inline editing indicator */
+.inline-editable {
+  position: relative;
+  cursor: text;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.inline-editable:hover {
+  background: rgba(59, 130, 246, 0.05);
+}
+
+.inline-editable::after {
+  content: '✎';
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.inline-editable:hover::after {
+  opacity: 1;
+}

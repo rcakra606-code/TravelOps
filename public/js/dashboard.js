@@ -624,6 +624,7 @@ async function refreshAll() {
 
 /* === AUTO REFRESH === */
 let autoInterval = null;
+let chartInterval = null;
 function startAutoRefresh() {
   if (autoInterval) clearInterval(autoInterval);
   autoInterval = setInterval(() => refreshAll(), 30000);
@@ -1326,8 +1327,20 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
   
-  setInterval(renderCharts, 30000);
+  chartInterval = setInterval(renderCharts, 30000);
   if (getUser().type === 'admin') loadActivity();
+  
+  // Cleanup intervals on page unload to prevent memory leaks
+  window.addEventListener('beforeunload', () => {
+    if (autoInterval) {
+      clearInterval(autoInterval);
+      autoInterval = null;
+    }
+    if (chartInterval) {
+      clearInterval(chartInterval);
+      chartInterval = null;
+    }
+  });
   
   // Wait for CRUD handlers to be ready (only for single-dashboard.html)
   setTimeout(() => {

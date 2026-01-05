@@ -6,6 +6,11 @@
 // Doing so with const causes "Identifier 'fetchJson' has already been declared" errors.
 // We simply reference the existing global functions directly.
 
+// Submission protection flags
+let isSubmitting = false;
+let lastSubmitTime = 0;
+const SUBMIT_COOLDOWN = 2000; // 2 seconds cooldown between submissions
+
 // Global state
 let state = {
   regions: [],
@@ -1519,15 +1524,33 @@ async function deleteItem(entity, id) {
     }
   }
   
+  // Check if item exists in local state before attempting delete
+  const item = state[entity]?.find(i => i.id === id);
+  if (!item) {
+    toast.warning('Data tidak ditemukan, mungkin sudah dihapus');
+    await loadData(entity);
+    renderTable(entity);
+    return;
+  }
+  
   const confirmed = await confirmDialog.delete();
   if (!confirmed) return;
+  
+  // Optimistic UI update - remove from local state immediately
+  const originalData = [...state[entity]];
+  state[entity] = state[entity].filter(i => i.id !== id);
+  renderTable(entity);
   
   try {
     await fetchJson(`/api/${entity}/${id}`, { method: 'DELETE' });
     toast.success('Data berhasil dihapus');
+    // Refresh data from server to ensure sync
     await loadData(entity);
     renderTable(entity);
   } catch (err) {
+    // Restore data if delete failed
+    state[entity] = originalData;
+    renderTable(entity);
     toast.error('Gagal menghapus data: ' + err.message);
   }
 }
@@ -1536,11 +1559,28 @@ async function deleteItem(entity, id) {
 async function handleModalSubmit(formData, context) {
   const { entity, action, id } = context;
   
-    // Handle filter modal submission
-    if (action === 'filter') {
-      applyFilterFromModal(entity, formData);
-      return true;
-    }
+  // Handle filter modal submission (no protection needed for filters)
+  if (action === 'filter') {
+    applyFilterFromModal(entity, formData);
+    return true;
+  }
+  
+  // Prevent double submission
+  if (isSubmitting) {
+    toast.warning('Mohon tunggu, data sedang diproses...');
+    return false;
+  }
+  
+  // Check cooldown period to prevent rapid submissions
+  const now = Date.now();
+  if (now - lastSubmitTime < SUBMIT_COOLDOWN) {
+    toast.warning('Mohon tunggu sebentar sebelum menyimpan lagi');
+    return false;
+  }
+  
+  // Set submission flags
+  isSubmitting = true;
+  lastSubmitTime = now;
   
   // Robust normalization for numeric (financial) fields.
   // Accept inputs like: "1,234", "Rp 1.234,00", "1.234.567", "1,234.50", "1234567", "1.234,5".
@@ -1652,6 +1692,9 @@ async function handleModalSubmit(formData, context) {
     return true;
   } catch (err) {
     throw new Error(err.message || 'Gagal menyimpan data');
+  } finally {
+    // Reset submission flag
+    isSubmitting = false;
   }
 }
 

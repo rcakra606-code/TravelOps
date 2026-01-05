@@ -515,6 +515,13 @@ document.addEventListener('DOMContentLoaded', () => {
     autoRefreshManager.init();
     errorHandler.init();
   }, 500);
+  
+  // Cleanup on page unload to prevent memory leaks
+  window.addEventListener('beforeunload', () => {
+    if (autoRefreshManager) {
+      autoRefreshManager.stop();
+    }
+  });
 });
 
 // Export for use in other scripts

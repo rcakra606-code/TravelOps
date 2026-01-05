@@ -128,7 +128,8 @@ class FormValidator {
     const wrapper = field.closest('.form-field, .form-group');
     if (!wrapper) return;
 
-    wrapper.classList.add('has-error');
+    wrapper.classList.add('invalid');
+    wrapper.classList.remove('valid');
     
     let errorEl = wrapper.querySelector('.field-error');
     if (!errorEl) {
@@ -138,13 +139,12 @@ class FormValidator {
     }
     
     errorEl.textContent = message;
-    errorEl.style.display = 'block';
+    errorEl.style.display = 'flex';
 
-    // Shake animation
-    field.style.animation = 'shake 0.3s';
-    setTimeout(() => {
-      field.style.animation = '';
-    }, 300);
+    // Shake animation handled by CSS
+    field.style.animation = 'none';
+    field.offsetHeight; // Trigger reflow
+    field.style.animation = '';
   }
 
   /**
@@ -154,7 +154,8 @@ class FormValidator {
     const wrapper = field.closest('.form-field, .form-group');
     if (!wrapper) return;
 
-    wrapper.classList.remove('has-error');
+    wrapper.classList.remove('invalid');
+    wrapper.classList.add('valid');
     
     const errorEl = wrapper.querySelector('.field-error');
     if (errorEl) {
