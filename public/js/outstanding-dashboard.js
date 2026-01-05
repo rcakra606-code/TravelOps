@@ -15,6 +15,7 @@ const el = id => document.getElementById(id);
 
 /* === DATA STORAGE === */
 let outstandingData = [];
+let usersData = [];
 let filterState = {
   search: '',
   dateFrom: '',
@@ -209,7 +210,7 @@ function renderTable() {
   const paginated = window.paginationUtils.paginate(filtered, currentPage, pageSize);
   
   if (paginated.data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center">No outstanding records found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center">No outstanding records found</td></tr>';
     // Still render pagination to show total
     window.paginationUtils.renderPaginationControls('paginationControls', paginated, (page) => {
       currentPage = page;
@@ -231,6 +232,7 @@ function renderTable() {
       <td class="text-right">Rp ${firstPayment.toLocaleString('id-ID')}</td>
       <td class="text-right">Rp ${discount.toLocaleString('id-ID')}</td>
       <td><code>${item.unique_code || '—'}</code></td>
+      <td>${item.staff_name || '—'}</td>
       <td class="text-right"><strong class="${outstanding > 0 ? 'text-danger' : 'text-success'}">Rp ${outstanding.toLocaleString('id-ID')}</strong></td>
       <td class="actions">
         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
@@ -260,7 +262,8 @@ function addOutstanding() {
     { type: 'currency', name: 'nominal_invoice', label: 'Nominal Invoice', required: true, currency: 'Rp', min: 0 },
     { type: 'currency', name: 'pembayaran_pertama', label: 'Pembayaran Pertama', required: false, currency: 'Rp', min: 0 },
     { type: 'currency', name: 'pembayaran_kedua', label: 'Discount (Pembayaran Kedua)', required: false, currency: 'Rp', min: 0 },
-    { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖', placeholder: 'UC-001' }
+    { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖', placeholder: 'UC-001' },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], async (formData) => {
     // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['nominal_invoice', 'pembayaran_pertama', 'pembayaran_kedua'].forEach(field => {
@@ -298,7 +301,8 @@ function editOutstanding(id) {
     { type: 'currency', name: 'nominal_invoice', label: 'Nominal Invoice', required: true, currency: 'Rp', min: 0 },
     { type: 'currency', name: 'pembayaran_pertama', label: 'Pembayaran Pertama', required: false, currency: 'Rp', min: 0 },
     { type: 'currency', name: 'pembayaran_kedua', label: 'Discount (Pembayaran Kedua)', required: false, currency: 'Rp', min: 0 },
-    { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖' }
+    { type: 'text', name: 'unique_code', label: 'Unique Code', required: false, icon: '🔖' },
+    { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], item, async (formData) => {
     // Clean currency fields using global parseFormattedNumber (handles Indonesian format)
     ['nominal_invoice', 'pembayaran_pertama', 'pembayaran_kedua'].forEach(field => {
@@ -511,6 +515,15 @@ window.addEventListener('DOMContentLoaded', async () => {
       resetOutstandingFilters();
     }
   });
+  
+  // Load users for staff dropdown
+  try {
+    usersData = await window.fetchJson('/api/users') || [];
+  } catch (err) {
+    console.error('Failed to load users:', err);
+    const user = window.getUser();
+    usersData = [{ name: user.name || user.username }];
+  }
   
   // Load data
   await loadOutstandingData();

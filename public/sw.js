@@ -1,5 +1,5 @@
-// TravelOps Service Worker - Enhanced PWA
-const CACHE_NAME = 'travelops-v4';
+// TravelOps Service Worker - Enhanced PWA v5
+const CACHE_NAME = 'travelops-v5';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',
@@ -10,6 +10,12 @@ const STATIC_ASSETS = [
   '/documents-dashboard.html',
   '/tracking-dashboard.html',
   '/reports-dashboard.html',
+  '/targets-dashboard.html',
+  '/telecom-dashboard.html',
+  '/hotel-dashboard.html',
+  '/overtime-dashboard.html',
+  '/cruise-dashboard.html',
+  '/outstanding-dashboard.html',
   '/css/styles.css',
   '/css/dark-mode.css',
   '/css/app-v2.css',
@@ -17,6 +23,12 @@ const STATIC_ASSETS = [
   '/css/modal.css',
   '/css/filters.css',
   '/css/mobile-responsive.css',
+  '/css/table-enhancements.css',
+  '/css/filter-enhancements.css',
+  '/css/status-badges.css',
+  '/css/animations.css',
+  '/css/crud-enhancements.css',
+  '/css/ui-enhancements.css',
   '/js/auth-common.js',
   '/js/dashboard.js',
   '/js/toast.js',
@@ -31,6 +43,16 @@ const STATIC_ASSETS = [
   '/js/audit-trail.js',
   '/js/i18n.js',
   '/js/data-exporter.js',
+  '/js/saved-filters.js',
+  '/js/pwa-install.js',
+  '/js/keyboard-help.js',
+  '/js/profit-alerts.js',
+  '/js/pdf-export.js',
+  '/js/customer-database.js',
+  '/js/batch-status.js',
+  '/js/commission-calculator.js',
+  '/js/invoice-generator.js',
+  '/js/activity-feed.js',
   '/manifest.json'
 ];
 
