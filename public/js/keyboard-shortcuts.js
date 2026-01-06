@@ -366,7 +366,7 @@ class LoadingIndicator {
   }
 
   interceptFetch() {
-    const originalFetch = window.fetch;
+    const originalFetch = window.fetch.bind(window);
     const self = this;
 
     window.fetch = function(...args) {
@@ -377,7 +377,7 @@ class LoadingIndicator {
         self.show();
       }
 
-      return originalFetch.apply(this, args)
+      return originalFetch(...args)
         .then(response => {
           if (typeof url === 'string' && url.includes('/api/')) {
             self.hide();

@@ -276,7 +276,7 @@
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="button" class="btn btn-secondary" onclick="closeCashoutModal()">Cancel</button>
         <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save</button>
       </div>
     </form>
@@ -452,7 +452,7 @@
   }
   
   function setupEventListeners() {
-    el('addCashoutBtn').addEventListener('click', () => openModal());
+    el('addCashoutBtn').addEventListener('click', () => openCashoutModal());
     el('searchInput').addEventListener('input', renderTable);
     el('cashoutForm').addEventListener('submit', handleSave);
     el('exportBtn').addEventListener('click', exportData);
@@ -461,7 +461,7 @@
     el('requestDate').value = new Date().toISOString().split('T')[0];
   }
   
-  function openModal(cashout = null) {
+  function openCashoutModal(cashout = null) {
     el('modalTitle').textContent = cashout ? 'Edit Cash Out Request' : 'New Cash Out Request';
     el('formId').value = cashout?.id || '';
     el('requestDate').value = cashout?.request_date || new Date().toISOString().split('T')[0];
@@ -481,13 +481,16 @@
     el('modal').classList.add('active');
   }
   
-  function closeModal() {
+  function closeCashoutModal() {
     el('modal').classList.remove('active');
   }
   
+  // Make closeCashoutModal global for onclick
+  window.closeCashoutModal = closeCashoutModal;
+  
   window.editCashout = function(id) {
     const cashout = allCashouts.find(c => c.id === id);
-    if (cashout) openModal(cashout);
+    if (cashout) openCashoutModal(cashout);
   };
   
   window.deleteCashout = async function(id) {
@@ -534,7 +537,7 @@
         window.toast?.success('Record created successfully');
       }
       
-      closeModal();
+      closeCashoutModal();
       await loadData();
     } catch (err) {
       window.toast?.error('Save failed: ' + err.message);
