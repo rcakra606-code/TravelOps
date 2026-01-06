@@ -306,6 +306,108 @@ el('exportHotelBtn').addEventListener('click', () => {
   window.toast.success('Exported');
 });
 
+// Import functionality
+el('importHotelBtn')?.addEventListener('click', () => {
+  el('importHotelFileInput').click();
+});
+
+el('importHotelFileInput')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) {
+      window.toast.error('CSV file is empty or has no data rows');
+      return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    const imported = [];
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+      
+      // Map common header names to our field names
+      const mapped = {
+        hotel_name: row['hotel name'] || row['hotel_name'] || row['name'] || '',
+        location: row['location'] || row['region'] || '',
+        check_in: row['check-in date'] || row['check_in_date'] || row['check_in'] || row['check in'] || '',
+        check_out: row['check-out date'] || row['check_out_date'] || row['check_out'] || row['check out'] || '',
+        confirmation_number: row['confirmation number'] || row['confirmation_number'] || row['confirmation'] || '',
+        guest_list: row['guest list'] || row['guest_list'] || row['guests'] || '',
+        room_type: row['room type'] || row['room_type'] || '',
+        room_count: row['room count'] || row['room_count'] || row['rooms'] || '',
+        staff_name: row['staff name'] || row['staff_name'] || row['staff'] || user.name || user.username
+      };
+      
+      // Validate required fields
+      if (!mapped.hotel_name) {
+        errors.push(`Row ${i + 1}: Hotel name is required`);
+        continue;
+      }
+      
+      // Find region by name if location provided
+      if (mapped.location) {
+        const region = regionsData.find(r => 
+          r.region_name?.toLowerCase() === mapped.location.toLowerCase()
+        );
+        if (region) {
+          mapped.region_id = region.id;
+        }
+      }
+      
+      imported.push(mapped);
+    }
+    
+    if (errors.length > 0) {
+      window.toast.warning(`${errors.length} rows had errors. Importing valid rows...`);
+      console.warn('Import errors:', errors);
+    }
+    
+    if (imported.length === 0) {
+      window.toast.error('No valid data to import');
+      return;
+    }
+    
+    // Confirm import
+    if (!confirm(`Import ${imported.length} hotel bookings?`)) {
+      return;
+    }
+    
+    // Import each record
+    let success = 0;
+    for (const record of imported) {
+      try {
+        await fetchJson('/api/hotel_bookings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        success++;
+      } catch (err) {
+        console.error('Failed to import record:', record, err);
+      }
+    }
+    
+    window.toast.success(`Imported ${success} of ${imported.length} hotel bookings`);
+    await loadHotel();
+    
+  } catch (err) {
+    console.error('Import failed:', err);
+    window.toast.error('Failed to import CSV file');
+  }
+  
+  // Reset file input
+  e.target.value = '';
+});
+
 // Initialize
 Promise.all([loadRegions(), loadUsers()]).then(() => loadHotel());
 

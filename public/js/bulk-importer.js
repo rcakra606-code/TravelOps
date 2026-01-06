@@ -48,6 +48,53 @@ class BulkImporter {
           { key: 'status', label: 'Status', required: false, type: 'text' },
           { key: 'notes', label: 'Notes', required: false, type: 'text' }
         ]
+      },
+      hotel_bookings: {
+        name: 'Hotel Bookings Import Template',
+        columns: [
+          { key: 'hotel_name', label: 'Hotel Name', required: true, type: 'text' },
+          { key: 'location', label: 'Location', required: true, type: 'text' },
+          { key: 'check_in_date', label: 'Check-In Date (YYYY-MM-DD)', required: true, type: 'date' },
+          { key: 'check_out_date', label: 'Check-Out Date (YYYY-MM-DD)', required: true, type: 'date' },
+          { key: 'confirmation_number', label: 'Confirmation Number', required: false, type: 'text' },
+          { key: 'guest_list', label: 'Guest List', required: false, type: 'text' },
+          { key: 'room_type', label: 'Room Type', required: false, type: 'text' },
+          { key: 'room_count', label: 'Room Count', required: false, type: 'number' },
+          { key: 'cost', label: 'Cost', required: false, type: 'number' },
+          { key: 'staff_name', label: 'Staff Name', required: false, type: 'text' },
+          { key: 'notes', label: 'Notes', required: false, type: 'text' }
+        ]
+      },
+      overtime: {
+        name: 'Overtime Import Template',
+        columns: [
+          { key: 'staff_name', label: 'Staff Name', required: true, type: 'text' },
+          { key: 'date', label: 'Date (YYYY-MM-DD)', required: true, type: 'date' },
+          { key: 'start_time', label: 'Start Time (HH:MM)', required: true, type: 'text' },
+          { key: 'end_time', label: 'End Time (HH:MM)', required: true, type: 'text' },
+          { key: 'hours', label: 'Hours', required: false, type: 'number' },
+          { key: 'reason', label: 'Reason', required: false, type: 'text' },
+          { key: 'status', label: 'Status', required: false, type: 'text' },
+          { key: 'notes', label: 'Notes', required: false, type: 'text' }
+        ]
+      },
+      cruise: {
+        name: 'Cruise Import Template',
+        columns: [
+          { key: 'cruise_line', label: 'Cruise Line', required: true, type: 'text' },
+          { key: 'ship_name', label: 'Ship Name', required: false, type: 'text' },
+          { key: 'departure_date', label: 'Departure Date (YYYY-MM-DD)', required: true, type: 'date' },
+          { key: 'return_date', label: 'Return Date (YYYY-MM-DD)', required: false, type: 'date' },
+          { key: 'departure_port', label: 'Departure Port', required: false, type: 'text' },
+          { key: 'destination', label: 'Destination', required: false, type: 'text' },
+          { key: 'cabin_type', label: 'Cabin Type', required: false, type: 'text' },
+          { key: 'passenger_count', label: 'Passenger Count', required: false, type: 'number' },
+          { key: 'lead_passenger', label: 'Lead Passenger', required: true, type: 'text' },
+          { key: 'price', label: 'Price', required: false, type: 'number' },
+          { key: 'staff_name', label: 'Staff Name', required: false, type: 'text' },
+          { key: 'status', label: 'Status', required: false, type: 'text' },
+          { key: 'notes', label: 'Notes', required: false, type: 'text' }
+        ]
       }
     };
     

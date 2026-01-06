@@ -272,6 +272,7 @@
       <a href="/overtime-dashboard.html">⏰ Overtime</a>
       <a href="/cruise-dashboard.html">🚢 Cruise</a>
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
@@ -434,6 +435,9 @@
     <!-- Search and Filter -->
     <div class="search-bar">
       <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by tour code, passenger name, booking code...">
+      <select class="filter-select" id="filterStaff" style="display:none;">
+        <option value="">All Staff</option>
+      </select>
       <select class="filter-select" id="filterStatus">
         <option value="">All Status</option>
         <option value="belum jalan">⏳ Belum Jalan</option>
@@ -458,6 +462,7 @@
               <th>Tour Code</th>
               <th>Booking Code</th>
               <th>Lead Passenger</th>
+              <th class="staff-column" style="display:none;">Staff</th>
               <th>Pax</th>
               <th>Departure</th>
               <th>Status</th>
@@ -527,18 +532,25 @@
     return 'Rp ' + num.toLocaleString('id-ID');
   }
   
+  let isAdminView = false;
+  
   // Initialize
   async function init() {
     currentUser = getUser();
     
     // Display user info
     el('userName').textContent = currentUser.name || currentUser.username || '—';
-    el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[currentUser.type] || currentUser.type || '—';
+    el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', semiadmin: 'Semi Admin', basic: 'Staff' }[currentUser.type] || currentUser.type || '—';
     
     // Show admin link if admin
-    if (currentUser.type === 'admin') {
+    if (currentUser.type === 'admin' || currentUser.type === 'semi-admin') {
       const adminLink = el('adminSettingsLink');
       if (adminLink) adminLink.style.display = 'block';
+      
+      // Show staff filter and column for admin users
+      isAdminView = true;
+      el('filterStaff').style.display = 'block';
+      document.querySelectorAll('.staff-column').forEach(col => col.style.display = 'table-cell');
     }
     
     // Load data
@@ -556,11 +568,22 @@
       // Load all tours
       const allToursData = await fetchJson('/api/tours') || [];
       
-      // Filter to current user's tours only
-      const staffName = currentUser.name || currentUser.username;
-      allTours = allToursData.filter(t => 
-        t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase()
-      );
+      // Admin/Semi-admin can see all tours, basic users see only their own
+      if (currentUser.type === 'admin' || currentUser.type === 'semi-admin') {
+        allTours = allToursData;
+        
+        // Populate staff filter dropdown
+        const uniqueStaff = [...new Set(allToursData.map(t => t.staff_name).filter(Boolean))].sort();
+        const staffSelect = el('filterStaff');
+        staffSelect.innerHTML = '<option value="">All Staff</option>' + 
+          uniqueStaff.map(s => `<option value="${s}">${s}</option>`).join('');
+      } else {
+        // Filter to current user's tours only
+        const staffName = currentUser.name || currentUser.username;
+        allTours = allToursData.filter(t => 
+          t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase()
+        );
+      }
       
       // Apply filters and render
       applyFilters();
@@ -577,6 +600,7 @@
     el('searchInput').addEventListener('input', debounce(applyFilters, 300));
     
     // Filter dropdowns
+    el('filterStaff').addEventListener('change', applyFilters);
     el('filterStatus').addEventListener('change', applyFilters);
     el('filterInvoice').addEventListener('change', applyFilters);
     el('filterMonth').addEventListener('change', applyFilters);
@@ -602,11 +626,15 @@
   
   function applyFilters() {
     const search = el('searchInput').value.toLowerCase().trim();
+    const staffFilter = el('filterStaff').value;
     const statusFilter = el('filterStatus').value;
     const invoiceFilter = el('filterInvoice').value;
     const monthFilter = el('filterMonth').value;
     
     filteredTours = allTours.filter(tour => {
+      // Staff filter (for admin view)
+      if (staffFilter && tour.staff_name !== staffFilter) return false;
+      
       // Search filter
       if (search) {
         const searchFields = [
@@ -616,7 +644,8 @@
           tour.all_passengers,
           tour.invoice_number,
           tour.phone_number,
-          tour.email
+          tour.email,
+          tour.staff_name
         ].filter(Boolean).join(' ').toLowerCase();
         
         if (!searchFields.includes(search)) return false;
@@ -718,11 +747,12 @@
   
   function renderTable() {
     const tbody = el('toursTableBody');
+    const colSpan = isAdminView ? 12 : 11;
     
     if (filteredTours.length === 0) {
       tbody.innerHTML = `
         <tr>
-          <td colspan="10">
+          <td colspan="${colSpan}">
             <div class="empty-state">
               <div class="empty-state-icon">📭</div>
               <div>No tours found</div>
@@ -750,6 +780,7 @@
       const statusText = status.charAt(0).toUpperCase() + status.slice(1);
       
       const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
+      const staffColumn = isAdminView ? `<td class="staff-column">${tour.staff_name || '-'}</td>` : '';
       
       return `
         <tr>
@@ -757,6 +788,7 @@
           <td><strong>${tour.tour_code || '-'}</strong></td>
           <td>${tour.booking_code || '-'}</td>
           <td title="${tour.lead_passenger || '-'}">${truncate(tour.lead_passenger, 20)}</td>
+          ${staffColumn}
           <td style="text-align: center;"><strong>${tour.jumlah_peserta || 0}</strong></td>
           <td>${tour.departure_date || '-'}</td>
           <td>

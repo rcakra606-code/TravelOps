@@ -42,6 +42,7 @@
       <a href="/overtime-dashboard.html">⏰ Overtime</a>
       <a href="/cruise-dashboard.html">🚢 Cruise</a>
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
@@ -95,9 +96,11 @@
         </div>
       </div>
 
-      <!-- Export Button -->
-      <div style="text-align: right; margin-top: 20px;">
+      <!-- Export/Import Buttons -->
+      <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="importHotelBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
         <button id="exportHotelBtn" class="btn">⬇ Export Hotel Data</button>
+        <input type="file" id="importHotelFileInput" accept=".csv" style="display:none;">
       </div>
     </div>
 
@@ -171,6 +174,8 @@
 <script src="/js/dashboard.js"></script>
 <script type="module" src="/js/hotel-dashboard.js"></script>
 <script src="/js/app-enhancements.js"></script>
+<script src="/js/bulk-importer.js"></script>
+<script src="/js/data-exporter.js"></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     try {

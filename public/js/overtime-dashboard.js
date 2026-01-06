@@ -384,6 +384,108 @@ el('exportBtn').addEventListener('click', () => {
   ]);
 });
 
+// Import handler
+el('importBtn')?.addEventListener('click', () => {
+  el('importFileInput').click();
+});
+
+el('importFileInput')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) {
+      toast.error('CSV file is empty or has no data rows');
+      return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    const imported = [];
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+      
+      // Map common header names to our field names
+      const mapped = {
+        staff_name: row['staff name'] || row['staff_name'] || row['staff'] || '',
+        event_date: row['date'] || row['event_date'] || row['date (yyyy-mm-dd)'] || '',
+        event_name: row['event name'] || row['event_name'] || row['event'] || row['reason'] || '',
+        start_time: row['start time'] || row['start_time'] || row['start time (hh:mm)'] || '',
+        end_time: row['end time'] || row['end_time'] || row['end time (hh:mm)'] || '',
+        hours: row['hours'] || '',
+        status: row['status'] || 'pending',
+        remarks: row['remarks'] || row['notes'] || ''
+      };
+      
+      // Validate required fields
+      if (!mapped.staff_name || !mapped.event_date) {
+        errors.push(`Row ${i + 1}: Staff name and date are required`);
+        continue;
+      }
+      
+      // Calculate hours if not provided
+      if (!mapped.hours && mapped.start_time && mapped.end_time) {
+        const start = mapped.start_time.split(':').map(Number);
+        const end = mapped.end_time.split(':').map(Number);
+        if (start.length === 2 && end.length === 2) {
+          const startMinutes = start[0] * 60 + start[1];
+          const endMinutes = end[0] * 60 + end[1];
+          mapped.hours = ((endMinutes - startMinutes) / 60).toFixed(1);
+        }
+      }
+      
+      imported.push(mapped);
+    }
+    
+    if (errors.length > 0) {
+      toast.warning(`${errors.length} rows had errors. Importing valid rows...`);
+      console.warn('Import errors:', errors);
+    }
+    
+    if (imported.length === 0) {
+      toast.error('No valid data to import');
+      return;
+    }
+    
+    // Confirm import
+    if (!confirm(`Import ${imported.length} overtime records?`)) {
+      return;
+    }
+    
+    // Import each record
+    let success = 0;
+    for (const record of imported) {
+      try {
+        await fetchJson('/api/overtime', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        success++;
+      } catch (err) {
+        console.error('Failed to import record:', record, err);
+      }
+    }
+    
+    toast.success(`Imported ${success} of ${imported.length} overtime records`);
+    await loadOvertime();
+    
+  } catch (err) {
+    console.error('Import failed:', err);
+    toast.error('Failed to import CSV file');
+  }
+  
+  // Reset file input
+  e.target.value = '';
+});
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   // Esc to close modal

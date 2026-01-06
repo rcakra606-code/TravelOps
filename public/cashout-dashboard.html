@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cash Out Reporting - TravelOps</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/dark-mode.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-modal.css">
+  <link rel="stylesheet" href="/css/ui-enhancements.css">
+  <script src="/js/theme-toggle.js"></script>
+  <style>
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .stat-card {
+      background: var(--card, #fff);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    
+    .stat-card h4 {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    
+    .stat-subtitle {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .status-badge.pending { background: #fef3c7; color: #92400e; }
+    .status-badge.approved { background: #d1fae5; color: #065f46; }
+    .status-badge.completed { background: #dbeafe; color: #1e40af; }
+    .status-badge.rejected { background: #fee2e2; color: #991b1b; }
+    
+    .action-btn {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    
+    .action-btn.edit { background: var(--primary); color: white; }
+    .action-btn.delete { background: #ef4444; color: white; }
+    .action-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+    
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    
+    .search-box {
+      padding: 10px 14px;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      font-size: 14px;
+      min-width: 200px;
+    }
+    
+    .search-box:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+  </style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html">🏠 Main Dashboard</a>
+      <a href="/sales-dashboard.html">💰 Sales</a>
+      <a href="/tours-dashboard.html">🧳 Tours</a>
+      <a href="/my-tours.html">📋 My Tours</a>
+      <a href="/documents-dashboard.html">📄 Documents</a>
+      <a href="/tracking-dashboard.html">📦 Tracking</a>
+      <a href="/targets-dashboard.html">🎯 Targets</a>
+      <a href="/telecom-dashboard.html">📞 Telecom</a>
+      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
+      <a href="/overtime-dashboard.html">⏰ Overtime</a>
+      <a href="/cruise-dashboard.html">🚢 Cruise</a>
+      <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html" class="active">💸 Cash Out</a>
+      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
+      <a href="/reports-dashboard.html">📊 Reports</a>
+      <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h2>💸 Cash Out Reporting</h2>
+        <div class="small">Manage cash out requests and settlements</div>
+      </div>
+      <div class="header-actions">
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search...">
+        <button id="filterBtn" class="btn btn-secondary">🔍 Filter</button>
+        <button id="exportBtn" class="btn btn-secondary">📤 Export</button>
+        <button id="addCashoutBtn" class="btn btn-primary">+ New Cash Out</button>
+      </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h4>Total Requests</h4>
+        <div class="stat-value" id="totalRequests">0</div>
+        <div class="stat-subtitle">All time</div>
+      </div>
+      <div class="stat-card">
+        <h4>Pending Amount</h4>
+        <div class="stat-value" id="pendingAmount">Rp 0</div>
+        <div class="stat-subtitle">Awaiting approval</div>
+      </div>
+      <div class="stat-card">
+        <h4>Approved This Month</h4>
+        <div class="stat-value" id="approvedThisMonth">Rp 0</div>
+        <div class="stat-subtitle">Current month</div>
+      </div>
+      <div class="stat-card">
+        <h4>Settled</h4>
+        <div class="stat-value" id="settledAmount">Rp 0</div>
+        <div class="stat-subtitle">Completed settlements</div>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="margin:0;">📋 Cash Out Records</h3>
+        <span id="recordCount" style="color:var(--text-secondary);font-size:13px;">0 records</span>
+      </div>
+      <div style="overflow-x: auto;">
+        <table class="table" id="cashoutTable">
+          <thead>
+            <tr>
+              <th>Tanggal Permintaan</th>
+              <th>Staff Name</th>
+              <th>Jumlah Uang</th>
+              <th>Keperluan</th>
+              <th>Cust Code</th>
+              <th>No. Jira Request</th>
+              <th>No. Jira Settlement</th>
+              <th>Tgl Settlement</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cashoutTableBody">
+            <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--text-secondary);">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 id="modalTitle">New Cash Out Request</h3>
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="cashoutForm">
+      <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+        <input type="hidden" name="id" id="formId">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label>Tanggal Permintaan <span style="color:#ef4444;">*</span></label>
+            <input type="date" name="request_date" id="requestDate" required>
+          </div>
+          
+          <div class="form-group">
+            <label>Staff Name <span style="color:#ef4444;">*</span></label>
+            <input type="text" name="staff_name" id="staffName" required readonly>
+          </div>
+          
+          <div class="form-group">
+            <label>Jumlah Uang (Rp) <span style="color:#ef4444;">*</span></label>
+            <input type="number" name="amount" id="amount" min="0" step="1000" required placeholder="0">
+          </div>
+          
+          <div class="form-group">
+            <label>Cust Code</label>
+            <input type="text" name="cust_code" id="custCode" placeholder="e.g., CUST-001">
+          </div>
+          
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Keperluan <span style="color:#ef4444;">*</span></label>
+            <textarea name="purpose" id="purpose" rows="3" required placeholder="Describe the purpose of cash out request..."></textarea>
+          </div>
+          
+          <div class="form-group">
+            <label>Nomor Jira (Request)</label>
+            <input type="text" name="jira_request" id="jiraRequest" placeholder="e.g., TRAVEL-123">
+          </div>
+          
+          <div class="form-group">
+            <label>Nomor Jira (Settlement)</label>
+            <input type="text" name="jira_settlement" id="jiraSettlement" placeholder="e.g., TRAVEL-456">
+          </div>
+          
+          <div class="form-group">
+            <label>Tanggal Pembuatan Penyelesaian</label>
+            <input type="date" name="settlement_date" id="settlementDate">
+          </div>
+          
+          <div class="form-group">
+            <label>Status</label>
+            <select name="status" id="status">
+              <option value="pending">⏳ Pending</option>
+              <option value="approved">✅ Approved</option>
+              <option value="completed">🎉 Completed</option>
+              <option value="rejected">❌ Rejected</option>
+            </select>
+          </div>
+          
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label>Notes</label>
+            <textarea name="notes" id="notes" rows="2" placeholder="Additional notes..."></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script type="module" src="/js/auth-common.js"></script>
+<script type="module" src="/js/dashboard.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+
+<script>
+  const el = id => document.getElementById(id);
+  let allCashouts = [];
+  let currentUser = null;
+  
+  // Format currency
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount || 0);
+  }
+  
+  // Authenticated fetch
+  async function fetchJson(url, options = {}) {
+    const token = localStorage.getItem('token');
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...options.headers
+    };
+    
+    const response = await fetch(url, { ...options, headers });
+    
+    if (response.status === 401 || response.status === 403) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login.html';
+      throw new Error('Session expired');
+    }
+    
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err.error || 'Request failed');
+    }
+    
+    return response.json();
+  }
+  
+  // Initialize
+  async function init() {
+    try {
+      // Check authentication
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      // Get current user
+      currentUser = await fetchJson('/api/me');
+      el('userName').textContent = currentUser.name || currentUser.username || '—';
+      el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[currentUser.type] || currentUser.type;
+      
+      // Show admin link
+      if (currentUser.type === 'admin') {
+        el('adminSettingsLink').style.display = 'block';
+      }
+      
+      // Set default staff name
+      el('staffName').value = currentUser.name || currentUser.username;
+      
+      // Load data
+      await loadData();
+      
+      // Setup event listeners
+      setupEventListeners();
+      
+    } catch (err) {
+      console.error('Init error:', err);
+      window.toast?.error('Failed to initialize: ' + err.message);
+    }
+  }
+  
+  async function loadData() {
+    try {
+      allCashouts = await fetchJson('/api/cashout');
+      renderTable();
+      updateStats();
+    } catch (err) {
+      console.error('Load error:', err);
+      allCashouts = [];
+      renderTable();
+    }
+  }
+  
+  function updateStats() {
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    
+    const total = allCashouts.length;
+    const pending = allCashouts.filter(c => c.status === 'pending').reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+    const approvedThisMonth = allCashouts
+      .filter(c => (c.status === 'approved' || c.status === 'completed') && c.request_date?.startsWith(currentMonth))
+      .reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+    const settled = allCashouts.filter(c => c.status === 'completed').reduce((sum, c) => sum + (parseFloat(c.amount) || 0), 0);
+    
+    el('totalRequests').textContent = total;
+    el('pendingAmount').textContent = formatCurrency(pending);
+    el('approvedThisMonth').textContent = formatCurrency(approvedThisMonth);
+    el('settledAmount').textContent = formatCurrency(settled);
+  }
+  
+  function renderTable() {
+    const searchTerm = el('searchInput').value.toLowerCase();
+    
+    let filtered = allCashouts;
+    if (searchTerm) {
+      filtered = allCashouts.filter(c => 
+        (c.staff_name || '').toLowerCase().includes(searchTerm) ||
+        (c.purpose || '').toLowerCase().includes(searchTerm) ||
+        (c.cust_code || '').toLowerCase().includes(searchTerm) ||
+        (c.jira_request || '').toLowerCase().includes(searchTerm) ||
+        (c.jira_settlement || '').toLowerCase().includes(searchTerm)
+      );
+    }
+    
+    // Sort by request_date descending
+    filtered.sort((a, b) => (b.request_date || '').localeCompare(a.request_date || ''));
+    
+    el('recordCount').textContent = `${filtered.length} records`;
+    
+    if (filtered.length === 0) {
+      el('cashoutTableBody').innerHTML = `
+        <tr>
+          <td colspan="10" style="text-align:center;padding:60px;color:var(--text-secondary);">
+            <div style="font-size:48px;margin-bottom:16px;">📭</div>
+            <div>No cash out records found</div>
+            <div style="font-size:13px;margin-top:8px;">Click "+ New Cash Out" to create one</div>
+          </td>
+        </tr>
+      `;
+      return;
+    }
+    
+    el('cashoutTableBody').innerHTML = filtered.map(c => {
+      const statusClass = c.status || 'pending';
+      const statusIcon = { pending: '⏳', approved: '✅', completed: '🎉', rejected: '❌' }[statusClass] || '⏳';
+      const statusText = statusClass.charAt(0).toUpperCase() + statusClass.slice(1);
+      
+      return `
+        <tr>
+          <td>${c.request_date || '-'}</td>
+          <td><strong>${c.staff_name || '-'}</strong></td>
+          <td style="font-weight:600;">${formatCurrency(c.amount)}</td>
+          <td title="${c.purpose || ''}">${truncate(c.purpose, 30)}</td>
+          <td>${c.cust_code || '-'}</td>
+          <td>${c.jira_request || '-'}</td>
+          <td>${c.jira_settlement || '-'}</td>
+          <td>${c.settlement_date || '-'}</td>
+          <td><span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span></td>
+          <td>
+            <button class="action-btn edit" onclick="editCashout(${c.id})">✏️ Edit</button>
+            ${currentUser?.type === 'admin' ? `<button class="action-btn delete" onclick="deleteCashout(${c.id})" style="margin-left:4px;">🗑️</button>` : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+  
+  function truncate(str, len) {
+    if (!str) return '-';
+    return str.length > len ? str.substring(0, len) + '...' : str;
+  }
+  
+  function setupEventListeners() {
+    el('addCashoutBtn').addEventListener('click', () => openModal());
+    el('searchInput').addEventListener('input', renderTable);
+    el('cashoutForm').addEventListener('submit', handleSave);
+    el('exportBtn').addEventListener('click', exportData);
+    
+    // Set default date to today
+    el('requestDate').value = new Date().toISOString().split('T')[0];
+  }
+  
+  function openModal(cashout = null) {
+    el('modalTitle').textContent = cashout ? 'Edit Cash Out Request' : 'New Cash Out Request';
+    el('formId').value = cashout?.id || '';
+    el('requestDate').value = cashout?.request_date || new Date().toISOString().split('T')[0];
+    el('staffName').value = cashout?.staff_name || currentUser?.name || currentUser?.username || '';
+    el('amount').value = cashout?.amount || '';
+    el('custCode').value = cashout?.cust_code || '';
+    el('purpose').value = cashout?.purpose || '';
+    el('jiraRequest').value = cashout?.jira_request || '';
+    el('jiraSettlement').value = cashout?.jira_settlement || '';
+    el('settlementDate').value = cashout?.settlement_date || '';
+    el('status').value = cashout?.status || 'pending';
+    el('notes').value = cashout?.notes || '';
+    
+    // Admin can edit staff name
+    el('staffName').readOnly = currentUser?.type !== 'admin';
+    
+    el('modal').classList.add('active');
+  }
+  
+  function closeModal() {
+    el('modal').classList.remove('active');
+  }
+  
+  window.editCashout = function(id) {
+    const cashout = allCashouts.find(c => c.id === id);
+    if (cashout) openModal(cashout);
+  };
+  
+  window.deleteCashout = async function(id) {
+    if (!confirm('Are you sure you want to delete this cash out record?')) return;
+    
+    try {
+      await fetchJson(`/api/cashout/${id}`, { method: 'DELETE' });
+      window.toast?.success('Record deleted successfully');
+      await loadData();
+    } catch (err) {
+      window.toast?.error('Delete failed: ' + err.message);
+    }
+  };
+  
+  async function handleSave(e) {
+    e.preventDefault();
+    
+    const id = el('formId').value;
+    const data = {
+      request_date: el('requestDate').value,
+      staff_name: el('staffName').value,
+      amount: parseFloat(el('amount').value) || 0,
+      cust_code: el('custCode').value,
+      purpose: el('purpose').value,
+      jira_request: el('jiraRequest').value,
+      jira_settlement: el('jiraSettlement').value,
+      settlement_date: el('settlementDate').value || null,
+      status: el('status').value,
+      notes: el('notes').value
+    };
+    
+    try {
+      if (id) {
+        await fetchJson(`/api/cashout/${id}`, {
+          method: 'PUT',
+          body: JSON.stringify(data)
+        });
+        window.toast?.success('Record updated successfully');
+      } else {
+        await fetchJson('/api/cashout', {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        window.toast?.success('Record created successfully');
+      }
+      
+      closeModal();
+      await loadData();
+    } catch (err) {
+      window.toast?.error('Save failed: ' + err.message);
+    }
+  }
+  
+  function exportData() {
+    if (allCashouts.length === 0) {
+      window.toast?.info('No data to export');
+      return;
+    }
+    
+    const headers = ['Tanggal Permintaan', 'Staff Name', 'Jumlah', 'Keperluan', 'Cust Code', 'No. Jira Request', 'No. Jira Settlement', 'Tgl Settlement', 'Status', 'Notes'];
+    const rows = allCashouts.map(c => [
+      c.request_date || '',
+      c.staff_name || '',
+      c.amount || 0,
+      (c.purpose || '').replace(/,/g, ';'),
+      c.cust_code || '',
+      c.jira_request || '',
+      c.jira_settlement || '',
+      c.settlement_date || '',
+      c.status || '',
+      (c.notes || '').replace(/,/g, ';')
+    ]);
+    
+    const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cashout_report_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    window.toast?.success('Export completed');
+  }
+  
+  // Initialize on load
+  document.addEventListener('DOMContentLoaded', init);
+</script>
+
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/keyboard-shortcuts.js"></script>
+</body>
+</html>

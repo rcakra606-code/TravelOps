@@ -414,6 +414,7 @@
       <a href="/overtime-dashboard.html">⏰ Overtime</a>
       <a href="/cruise-dashboard.html">🚢 Cruise</a>
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html" class="active">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
@@ -559,7 +560,21 @@
         <button id="exportExcelBtn" class="btn-secondary" disabled>📊 Export Excel</button>
         <button id="exportCsvBtn" class="btn-secondary" disabled>📋 Export CSV</button>
         <button id="printBtn" class="btn-secondary" disabled>🖨️ Print</button>
+        <button id="saveReportBtn" class="btn-secondary" disabled>💾 Save Report</button>
+        <button id="clearReportBtn" class="btn-secondary" disabled>🗑️ Clear</button>
       </div>
+    </div>
+
+    <!-- Saved Reports History Section -->
+    <div class="config-card" id="savedReportsSection" style="margin-bottom: 20px; display: none;">
+      <div class="config-header" style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span style="font-size: 24px;">📚</span>
+          <h3>Saved Reports History</h3>
+        </div>
+        <button id="clearAllHistoryBtn" class="btn-secondary" style="padding: 8px 16px; font-size: 13px;">🗑️ Clear All</button>
+      </div>
+      <div id="savedReportsList" style="max-height: 300px; overflow-y: auto;"></div>
     </div>
 
     <!-- Report Preview -->

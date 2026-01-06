@@ -42,6 +42,7 @@
       <a href="/overtime-dashboard.html">⏰ Overtime</a>
       <a href="/cruise-dashboard.html" class="active">🚢 Cruise</a>
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
@@ -77,7 +78,9 @@
         <input type="date" id="startDateFilter" placeholder="Sailing From" style="min-width: 150px;" />
         <input type="date" id="endDateFilter" placeholder="Sailing To" style="min-width: 150px;" />
         <button id="clearFilters" class="btn btn-secondary">Clear Filters</button>
+        <button id="importBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
         <button id="exportBtn" class="btn btn-outline">📊 Export CSV</button>
+        <input type="file" id="importFileInput" accept=".csv" style="display:none;">
       </div>
     </div>
 

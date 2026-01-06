@@ -46,6 +46,7 @@
       <a href="/overtime-dashboard.html">⏰ Overtime</a>
       <a href="/cruise-dashboard.html">🚢 Cruise</a>
       <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+      <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <a href="/reports-dashboard.html">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
@@ -173,9 +174,11 @@
         </div>
       </div>
 
-      <!-- Export Button -->
-      <div style="text-align: right; margin-top: 20px;">
+      <!-- Export/Import Buttons -->
+      <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+        <button id="importDocumentsBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
         <button id="exportDocumentsCSV" class="btn">⬇ Export Documents Data</button>
+        <input type="file" id="importDocumentsFileInput" accept=".csv" style="display:none;">
       </div>
     </div>
 

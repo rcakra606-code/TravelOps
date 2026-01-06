@@ -300,6 +300,25 @@ async function createSchema(db) {
     created_at ${ts} ${createdDefault}
   )`);
 
+  // Cash Out Reporting
+  await db.run(`CREATE TABLE IF NOT EXISTS cashout (
+    id ${idCol},
+    request_date ${text()},
+    staff_name TEXT,
+    amount ${num()} DEFAULT 0,
+    purpose TEXT,
+    cust_code TEXT,
+    jira_request TEXT,
+    jira_settlement TEXT,
+    settlement_date ${text()},
+    status TEXT DEFAULT 'pending',
+    notes TEXT,
+    created_by TEXT,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts},
+    updated_by TEXT
+  )`);
+
   // Seed admin if no users
   const count = await db.get('SELECT COUNT(*) AS c FROM users');
   if (!count || count.c === 0 || count.count === 0) {

@@ -176,12 +176,20 @@ function setupEventListeners() {
   document.getElementById('printBtn').addEventListener('click', printReport);
   document.getElementById('refreshBtn').addEventListener('click', () => location.reload());
   
+  // New: Save and Clear Report buttons
+  document.getElementById('saveReportBtn')?.addEventListener('click', saveReportToHistory);
+  document.getElementById('clearReportBtn')?.addEventListener('click', clearCurrentReport);
+  document.getElementById('clearAllHistoryBtn')?.addEventListener('click', clearAllReportHistory);
+  
   // Quick period selector
   document.getElementById('quickPeriod').addEventListener('change', (e) => {
     setQuickPeriod(e.target.value);
   });
   
   // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
+  
+  // Load saved reports on startup
+  loadSavedReportsHistory();
 }
 
 function setDefaultDates() {
@@ -292,15 +300,17 @@ async function generateReport() {
     localStorage.setItem('lastReportTime', Date.now().toString());
     updateHeroStats();
     
-    // Enable export buttons
-    const exportButtons = ['exportPdfBtn', 'exportExcelBtn', 'exportCsvBtn', 'printBtn'];
+    // Enable export buttons (including new save/clear buttons)
+    const exportButtons = ['exportPdfBtn', 'exportExcelBtn', 'exportCsvBtn', 'printBtn', 'saveReportBtn', 'clearReportBtn'];
     exportButtons.forEach(btnId => {
       const btn = document.getElementById(btnId);
-      btn.disabled = false;
-      btn.style.background = 'var(--card)';
-      btn.style.color = 'var(--text-primary)';
-      btn.style.cursor = 'pointer';
-      btn.style.borderColor = 'var(--border-medium)';
+      if (btn) {
+        btn.disabled = false;
+        btn.style.background = 'var(--card)';
+        btn.style.color = 'var(--text-primary)';
+        btn.style.cursor = 'pointer';
+        btn.style.borderColor = 'var(--border-medium)';
+      }
     });
     
     showNotification('Report generated successfully', 'success');
@@ -1242,4 +1252,171 @@ function formatDate(dateStr) {
     month: 'short',
     day: 'numeric'
   });
+}
+
+// ============================================
+// REPORT HISTORY FUNCTIONS
+// ============================================
+const SAVED_REPORTS_KEY = 'travelops_saved_reports';
+
+function saveReportToHistory() {
+  if (!reportData) {
+    showNotification('No report to save', 'error');
+    return;
+  }
+
+  const reportType = document.getElementById('reportType').value;
+  const dateFrom = document.getElementById('dateFrom').value;
+  const dateTo = document.getElementById('dateTo').value;
+  const reportTitle = document.getElementById('reportTitle')?.textContent || reportType;
+
+  const savedReport = {
+    id: Date.now(),
+    type: reportType,
+    title: reportTitle,
+    dateFrom,
+    dateTo,
+    savedAt: new Date().toISOString(),
+    summary: reportData.summary || {},
+    recordCount: reportData.tableData?.length || 0
+  };
+
+  const savedReports = JSON.parse(localStorage.getItem(SAVED_REPORTS_KEY) || '[]');
+  savedReports.unshift(savedReport);
+  
+  // Keep only last 20 reports
+  if (savedReports.length > 20) {
+    savedReports.pop();
+  }
+  
+  localStorage.setItem(SAVED_REPORTS_KEY, JSON.stringify(savedReports));
+  loadSavedReportsHistory();
+  showNotification('Report saved to history', 'success');
+}
+
+function clearCurrentReport() {
+  // Hide report preview
+  document.getElementById('reportPreview').style.display = 'none';
+  document.getElementById('emptyState').style.display = 'block';
+  
+  // Reset report data
+  reportData = null;
+  
+  // Disable export buttons
+  const exportButtons = ['exportPdfBtn', 'exportExcelBtn', 'exportCsvBtn', 'printBtn', 'saveReportBtn', 'clearReportBtn'];
+  exportButtons.forEach(btnId => {
+    const btn = document.getElementById(btnId);
+    if (btn) {
+      btn.disabled = true;
+      btn.style.background = '';
+      btn.style.color = '';
+      btn.style.cursor = '';
+      btn.style.borderColor = '';
+    }
+  });
+  
+  // Clear charts
+  destroyCharts();
+  
+  showNotification('Report cleared', 'info');
+}
+
+function clearAllReportHistory() {
+  if (!confirm('Are you sure you want to clear all saved reports history?')) {
+    return;
+  }
+  
+  localStorage.removeItem(SAVED_REPORTS_KEY);
+  loadSavedReportsHistory();
+  showNotification('Report history cleared', 'success');
+}
+
+function loadSavedReportsHistory() {
+  const savedReports = JSON.parse(localStorage.getItem(SAVED_REPORTS_KEY) || '[]');
+  const section = document.getElementById('savedReportsSection');
+  const listContainer = document.getElementById('savedReportsList');
+  
+  if (!section || !listContainer) return;
+  
+  if (savedReports.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+  
+  section.style.display = 'block';
+  
+  const reportTypeNames = {
+    'sales-summary': '📈 Sales Summary',
+    'sales-detailed': '📋 Sales Detailed',
+    'tours-profitability': '💰 Tours Profitability',
+    'tours-participants': '👥 Tours Participants',
+    'documents-status': '📄 Documents Status',
+    'staff-performance': '⭐ Staff Performance',
+    'regional-comparison': '🗺️ Regional Comparison',
+    'executive-summary': '📊 Executive Summary'
+  };
+  
+  listContainer.innerHTML = savedReports.map(report => {
+    const savedDate = new Date(report.savedAt);
+    const formattedDate = savedDate.toLocaleDateString('id-ID', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    return `
+      <div class="saved-report-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s;">
+        <div style="flex: 1;">
+          <div style="font-weight: 600; margin-bottom: 4px;">${reportTypeNames[report.type] || report.type}</div>
+          <div style="font-size: 13px; color: var(--text-secondary);">
+            Period: ${report.dateFrom} to ${report.dateTo} • ${report.recordCount} records
+          </div>
+          <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">
+            Saved: ${formattedDate}
+          </div>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button onclick="loadSavedReport(${report.id})" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px;">
+            📂 Load
+          </button>
+          <button onclick="deleteSavedReport(${report.id})" class="btn-secondary" style="padding: 6px 12px; font-size: 12px; border-radius: 6px; color: var(--danger);">
+            🗑️
+          </button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function loadSavedReport(reportId) {
+  const savedReports = JSON.parse(localStorage.getItem(SAVED_REPORTS_KEY) || '[]');
+  const report = savedReports.find(r => r.id === reportId);
+  
+  if (!report) {
+    showNotification('Report not found', 'error');
+    return;
+  }
+  
+  // Set form values
+  document.getElementById('reportType').value = report.type;
+  document.getElementById('dateFrom').value = report.dateFrom;
+  document.getElementById('dateTo').value = report.dateTo;
+  
+  // Generate the report with the same parameters
+  showNotification('Loading saved report...', 'info');
+  generateReport();
+}
+
+function deleteSavedReport(reportId) {
+  if (!confirm('Delete this saved report?')) {
+    return;
+  }
+  
+  const savedReports = JSON.parse(localStorage.getItem(SAVED_REPORTS_KEY) || '[]');
+  const updatedReports = savedReports.filter(r => r.id !== reportId);
+  localStorage.setItem(SAVED_REPORTS_KEY, JSON.stringify(updatedReports));
+  loadSavedReportsHistory();
+  showNotification('Report deleted', 'success');
 }

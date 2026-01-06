@@ -478,6 +478,103 @@ el('exportBtn').addEventListener('click', () => {
   ]);
 });
 
+// Import handler
+el('importBtn')?.addEventListener('click', () => {
+  el('importFileInput').click();
+});
+
+el('importFileInput')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  
+  try {
+    const text = await file.text();
+    const lines = text.trim().split('\n');
+    if (lines.length < 2) {
+      toast.error('CSV file is empty or has no data rows');
+      return;
+    }
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+    const imported = [];
+    const errors = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim().replace(/^"|"$/g, ''));
+      const row = {};
+      headers.forEach((h, idx) => {
+        row[h] = values[idx] || '';
+      });
+      
+      // Map common header names to our field names
+      const mapped = {
+        cruise_brand: row['cruise line'] || row['cruise_line'] || row['cruise brand'] || row['cruise_brand'] || '',
+        ship_name: row['ship name'] || row['ship_name'] || row['ship'] || '',
+        sailing_start: row['departure date'] || row['departure_date'] || row['sailing start'] || row['sailing_start'] || '',
+        sailing_end: row['return date'] || row['return_date'] || row['sailing end'] || row['sailing_end'] || '',
+        route: row['route'] || row['destination'] || row['departure port'] || row['departure_port'] || '',
+        pic_name: row['lead passenger'] || row['lead_passenger'] || row['pic name'] || row['pic_name'] || '',
+        participant_names: row['participants'] || row['participant_names'] || row['passengers'] || '',
+        participant_count: row['passenger count'] || row['passenger_count'] || row['pax'] || '',
+        phone_number: row['phone'] || row['phone_number'] || '',
+        email: row['email'] || '',
+        reservation_code: row['reservation code'] || row['reservation_code'] || row['confirmation'] || '',
+        cabin_type: row['cabin type'] || row['cabin_type'] || row['cabin'] || '',
+        staff_name: row['staff name'] || row['staff_name'] || row['staff'] || user.name || user.username,
+        notes: row['notes'] || ''
+      };
+      
+      // Validate required fields
+      if (!mapped.cruise_brand || !mapped.pic_name) {
+        errors.push(`Row ${i + 1}: Cruise brand and PIC name are required`);
+        continue;
+      }
+      
+      imported.push(mapped);
+    }
+    
+    if (errors.length > 0) {
+      toast.warning(`${errors.length} rows had errors. Importing valid rows...`);
+      console.warn('Import errors:', errors);
+    }
+    
+    if (imported.length === 0) {
+      toast.error('No valid data to import');
+      return;
+    }
+    
+    // Confirm import
+    if (!confirm(`Import ${imported.length} cruise bookings?`)) {
+      return;
+    }
+    
+    // Import each record
+    let success = 0;
+    for (const record of imported) {
+      try {
+        await fetchJson('/api/cruise', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(record)
+        });
+        success++;
+      } catch (err) {
+        console.error('Failed to import record:', record, err);
+      }
+    }
+    
+    toast.success(`Imported ${success} of ${imported.length} cruise bookings`);
+    await loadCruise();
+    
+  } catch (err) {
+    console.error('Import failed:', err);
+    toast.error('Failed to import CSV file');
+  }
+  
+  // Reset file input
+  e.target.value = '';
+});
+
 // Keyboard shortcuts
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
