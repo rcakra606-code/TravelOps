@@ -473,6 +473,7 @@
       <!-- Settings Tabs -->
       <div class="settings-tabs">
         <button class="settings-tab active" data-tab="general">⚙️ General</button>
+        <button class="settings-tab" data-tab="users">👥 Users</button>
         <button class="settings-tab" data-tab="email">📧 Email</button>
         <button class="settings-tab" data-tab="backup">💾 Backup</button>
         <button class="settings-tab" data-tab="import-export">📦 Import/Export</button>
@@ -596,6 +597,72 @@
         <div class="settings-actions">
           <button class="btn-save" onclick="saveGeneralSettings()">💾 Save Settings</button>
           <button class="btn-reset" onclick="resetGeneralSettings()">↩️ Reset to Default</button>
+        </div>
+      </div>
+
+      <!-- Users Management Panel -->
+      <div class="settings-panel" id="panel-users">
+        <div class="settings-section">
+          <h3>User Management</h3>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div style="display: flex; gap: 10px; flex: 1;">
+              <input type="text" id="userSearchInput" placeholder="Search by username, name, or email..." style="flex: 1; max-width: 300px;">
+              <select id="userTypeFilter">
+                <option value="">All Types</option>
+                <option value="admin">Admin</option>
+                <option value="semi-admin">Semi Admin</option>
+                <option value="basic">Basic</option>
+              </select>
+            </div>
+            <button class="btn-save" onclick="showAddUserModal()">+ Add User</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-alt); text-align: left;">
+                  <th style="padding: 12px;">Username</th>
+                  <th style="padding: 12px;">Name</th>
+                  <th style="padding: 12px;">Email</th>
+                  <th style="padding: 12px;">Type</th>
+                  <th style="padding: 12px;">Status</th>
+                  <th style="padding: 12px;">Last Login</th>
+                  <th style="padding: 12px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="usersTableBody">
+                <tr><td colspan="7" style="text-align: center; padding: 40px; color: var(--text-secondary);">Loading users...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="usersPagination" style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;"></div>
+        </div>
+        
+        <!-- System Health Stats -->
+        <div class="settings-section">
+          <h3>System Health Dashboard</h3>
+          <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 16px;">
+            <div class="status-card">
+              <div class="status-card-icon">👥</div>
+              <div class="status-card-value" id="statTotalUsersAdmin">-</div>
+              <div class="status-card-label">Total Users</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">✅</div>
+              <div class="status-card-value" id="statActiveUsersAdmin">-</div>
+              <div class="status-card-label">Active (24h)</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">🔒</div>
+              <div class="status-card-value" id="statLockedUsersAdmin">-</div>
+              <div class="status-card-label">Locked Users</div>
+            </div>
+            <div class="status-card">
+              <div class="status-card-icon">📊</div>
+              <div class="status-card-value" id="statTotalRecordsAdmin">-</div>
+              <div class="status-card-label">Total Records</div>
+            </div>
+          </div>
+          <button class="btn-reset" onclick="refreshUserStats()">🔄 Refresh Stats</button>
         </div>
       </div>
 
@@ -1088,8 +1155,286 @@
         // Load panel-specific data
         if (tab.dataset.tab === 'activity') loadActivityLog();
         if (tab.dataset.tab === 'system') loadSystemStats();
+        if (tab.dataset.tab === 'users') loadUsers();
       });
     });
+    
+    // ============ USER MANAGEMENT ============
+    let allUsersData = [];
+    let usersCurrentPage = 1;
+    const usersPerPage = 10;
+    
+    async function loadUsers() {
+      try {
+        const users = await fetchJson('/api/users');
+        allUsersData = users;
+        renderUsersTable();
+        refreshUserStats();
+      } catch (err) {
+        console.error('Failed to load users:', err);
+        document.getElementById('usersTableBody').innerHTML = 
+          '<tr><td colspan="7" style="text-align:center;padding:40px;color:#ef4444;">Failed to load users</td></tr>';
+      }
+    }
+    
+    function renderUsersTable() {
+      const searchTerm = (document.getElementById('userSearchInput')?.value || '').toLowerCase();
+      const typeFilter = document.getElementById('userTypeFilter')?.value || '';
+      
+      let filtered = allUsersData.filter(u => {
+        const matchSearch = !searchTerm || 
+          (u.username || '').toLowerCase().includes(searchTerm) ||
+          (u.name || '').toLowerCase().includes(searchTerm) ||
+          (u.email || '').toLowerCase().includes(searchTerm);
+        const matchType = !typeFilter || u.type === typeFilter;
+        return matchSearch && matchType;
+      });
+      
+      const totalPages = Math.ceil(filtered.length / usersPerPage);
+      const start = (usersCurrentPage - 1) * usersPerPage;
+      const paged = filtered.slice(start, start + usersPerPage);
+      
+      const tbody = document.getElementById('usersTableBody');
+      if (paged.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--text-secondary);">No users found</td></tr>';
+      } else {
+        tbody.innerHTML = paged.map(u => `
+          <tr>
+            <td style="padding:12px;"><strong>${u.username}</strong></td>
+            <td style="padding:12px;">${u.name || '-'}</td>
+            <td style="padding:12px;">${u.email || '-'}</td>
+            <td style="padding:12px;">
+              <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
+                background:${u.type==='admin'?'#fef3c7':u.type==='semi-admin'?'#dbeafe':'#f3f4f6'};
+                color:${u.type==='admin'?'#d97706':u.type==='semi-admin'?'#2563eb':'#6b7280'};">
+                ${u.type}
+              </span>
+            </td>
+            <td style="padding:12px;">
+              <span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;
+                background:${u.locked?'#fee2e2':'#dcfce7'};color:${u.locked?'#dc2626':'#16a34a'};">
+                ${u.locked ? 'Locked' : 'Active'}
+              </span>
+            </td>
+            <td style="padding:12px;font-size:12px;color:var(--text-secondary);">
+              ${u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}
+            </td>
+            <td style="padding:12px;">
+              <div style="display:flex;gap:6px;">
+                <button onclick="editUserAdmin(${u.id})" style="padding:6px 10px;border:none;background:var(--bg-alt);border-radius:6px;cursor:pointer;" title="Edit">✏️</button>
+                ${u.locked ? 
+                  `<button onclick="unlockUserAdmin(${u.id})" style="padding:6px 10px;border:none;background:#dcfce7;border-radius:6px;cursor:pointer;" title="Unlock">🔓</button>` :
+                  `<button onclick="lockUserAdmin(${u.id})" style="padding:6px 10px;border:none;background:#fee2e2;border-radius:6px;cursor:pointer;" title="Lock">🔒</button>`
+                }
+                <button onclick="deleteUserAdmin(${u.id})" style="padding:6px 10px;border:none;background:#fee2e2;border-radius:6px;cursor:pointer;color:#dc2626;" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+      
+      // Pagination
+      const pagination = document.getElementById('usersPagination');
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+      } else {
+        pagination.innerHTML = `
+          <button ${usersCurrentPage===1?'disabled':''} onclick="usersCurrentPage=1;renderUsersTable()" style="padding:6px 12px;border:1px solid var(--border-light);border-radius:6px;cursor:pointer;">«</button>
+          <button ${usersCurrentPage===1?'disabled':''} onclick="usersCurrentPage--;renderUsersTable()" style="padding:6px 12px;border:1px solid var(--border-light);border-radius:6px;cursor:pointer;">‹</button>
+          <span style="padding:6px 12px;">Page ${usersCurrentPage} of ${totalPages}</span>
+          <button ${usersCurrentPage===totalPages?'disabled':''} onclick="usersCurrentPage++;renderUsersTable()" style="padding:6px 12px;border:1px solid var(--border-light);border-radius:6px;cursor:pointer;">›</button>
+          <button ${usersCurrentPage===totalPages?'disabled':''} onclick="usersCurrentPage=${totalPages};renderUsersTable()" style="padding:6px 12px;border:1px solid var(--border-light);border-radius:6px;cursor:pointer;">»</button>
+        `;
+      }
+    }
+    
+    // User search and filter
+    document.getElementById('userSearchInput')?.addEventListener('input', () => { usersCurrentPage = 1; renderUsersTable(); });
+    document.getElementById('userTypeFilter')?.addEventListener('change', () => { usersCurrentPage = 1; renderUsersTable(); });
+    
+    async function refreshUserStats() {
+      try {
+        const stats = await fetchJson('/api/admin/stats');
+        document.getElementById('statTotalUsersAdmin').textContent = stats.totalUsers || allUsersData.length;
+        document.getElementById('statActiveUsersAdmin').textContent = stats.activeUsers || '-';
+        document.getElementById('statLockedUsersAdmin').textContent = stats.lockedUsers || allUsersData.filter(u => u.locked).length;
+        document.getElementById('statTotalRecordsAdmin').textContent = stats.totalRecords || '-';
+      } catch (err) {
+        document.getElementById('statTotalUsersAdmin').textContent = allUsersData.length;
+        document.getElementById('statLockedUsersAdmin').textContent = allUsersData.filter(u => u.locked).length;
+      }
+    }
+    
+    function showAddUserModal() {
+      const modal = document.createElement('div');
+      modal.id = 'userFormModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = `
+        <div style="background:var(--card,#fff);border-radius:16px;width:90%;max-width:500px;max-height:90vh;overflow:auto;">
+          <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;">➕ Add New User</h3>
+            <button onclick="document.getElementById('userFormModal').remove()" style="border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+          </div>
+          <form id="addUserForm" style="padding:24px;">
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Username *</label>
+              <input type="text" id="newUsername" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Name</label>
+              <input type="text" id="newName" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Email</label>
+              <input type="email" id="newEmail" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Password *</label>
+              <input type="password" id="newPassword" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">User Type</label>
+              <select id="newType" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+                <option value="basic">Basic</option>
+                <option value="semi-admin">Semi Admin</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+              <button type="button" onclick="document.getElementById('userFormModal').remove()" style="padding:10px 20px;border:1px solid var(--border-light);background:none;border-radius:8px;cursor:pointer;">Cancel</button>
+              <button type="submit" style="padding:10px 20px;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;">Add User</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('addUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await fetchJson('/api/users', {
+            method: 'POST',
+            body: JSON.stringify({
+              username: document.getElementById('newUsername').value,
+              name: document.getElementById('newName').value,
+              email: document.getElementById('newEmail').value,
+              password: document.getElementById('newPassword').value,
+              type: document.getElementById('newType').value
+            })
+          });
+          toast.success('User created successfully');
+          document.getElementById('userFormModal').remove();
+          loadUsers();
+        } catch (err) {
+          toast.error('Failed to create user: ' + (err.message || 'Error'));
+        }
+      });
+    }
+    
+    async function editUserAdmin(id) {
+      const user = allUsersData.find(u => u.id === id);
+      if (!user) return;
+      
+      const modal = document.createElement('div');
+      modal.id = 'userFormModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = `
+        <div style="background:var(--card,#fff);border-radius:16px;width:90%;max-width:500px;max-height:90vh;overflow:auto;">
+          <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;">✏️ Edit User</h3>
+            <button onclick="document.getElementById('userFormModal').remove()" style="border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+          </div>
+          <form id="editUserForm" style="padding:24px;">
+            <input type="hidden" id="editUserId" value="${user.id}">
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Username</label>
+              <input type="text" id="editUsername" value="${user.username}" readonly style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;background:var(--bg-alt);">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Name</label>
+              <input type="text" id="editName" value="${user.name || ''}" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Email</label>
+              <input type="email" id="editEmail" value="${user.email || ''}" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">New Password (leave blank to keep)</label>
+              <input type="password" id="editPassword" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">User Type</label>
+              <select id="editType" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+                <option value="basic" ${user.type==='basic'?'selected':''}>Basic</option>
+                <option value="semi-admin" ${user.type==='semi-admin'?'selected':''}>Semi Admin</option>
+                <option value="admin" ${user.type==='admin'?'selected':''}>Admin</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+              <button type="button" onclick="document.getElementById('userFormModal').remove()" style="padding:10px 20px;border:1px solid var(--border-light);background:none;border-radius:8px;cursor:pointer;">Cancel</button>
+              <button type="submit" style="padding:10px 20px;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('editUserForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const data = {
+          name: document.getElementById('editName').value,
+          email: document.getElementById('editEmail').value,
+          type: document.getElementById('editType').value
+        };
+        const password = document.getElementById('editPassword').value;
+        if (password) data.password = password;
+        
+        try {
+          await fetchJson(`/api/users/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+          toast.success('User updated successfully');
+          document.getElementById('userFormModal').remove();
+          loadUsers();
+        } catch (err) {
+          toast.error('Failed to update user: ' + (err.message || 'Error'));
+        }
+      });
+    }
+    
+    async function lockUserAdmin(id) {
+      if (!confirm('Lock this user? They will not be able to login.')) return;
+      try {
+        await fetchJson(`/api/users/${id}/lock`, { method: 'POST' });
+        toast.success('User locked');
+        loadUsers();
+      } catch (err) {
+        toast.error('Failed to lock user');
+      }
+    }
+    
+    async function unlockUserAdmin(id) {
+      try {
+        await fetchJson(`/api/users/${id}/unlock`, { method: 'POST' });
+        toast.success('User unlocked');
+        loadUsers();
+      } catch (err) {
+        toast.error('Failed to unlock user');
+      }
+    }
+    
+    async function deleteUserAdmin(id) {
+      if (!confirm('Delete this user? This cannot be undone.')) return;
+      try {
+        await fetchJson(`/api/users/${id}`, { method: 'DELETE' });
+        toast.success('User deleted');
+        loadUsers();
+      } catch (err) {
+        toast.error('Failed to delete user');
+      }
+    }
+    // ============ END USER MANAGEMENT ============
 
     // Load saved settings
     function loadSettings() {

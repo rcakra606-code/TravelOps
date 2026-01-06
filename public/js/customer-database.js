@@ -258,7 +258,24 @@ class CustomerDatabase {
 
   addCustomerButton() {
     setTimeout(() => {
-      const header = document.querySelector('.header-actions, .header > div:last-child');
+      // Try multiple selectors to find header area
+      let header = document.querySelector('.header-actions');
+      
+      // If no header-actions, try to create one in the header
+      if (!header) {
+        const mainHeader = document.querySelector('.header');
+        if (mainHeader) {
+          // Check if header-actions already exists
+          header = mainHeader.querySelector('.header-actions');
+          if (!header) {
+            header = document.createElement('div');
+            header.className = 'header-actions';
+            header.style.cssText = 'display: flex; gap: 8px; align-items: center;';
+            mainHeader.appendChild(header);
+          }
+        }
+      }
+      
       if (!header || document.getElementById('customerDbBtn')) return;
 
       const btn = document.createElement('button');

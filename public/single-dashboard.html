@@ -104,10 +104,8 @@
       <a href="/cashout-dashboard.html">💸 Cash Out</a>
       <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
       <button data-section="regions">🌍 Regions</button>
-      <button data-section="users">👥 Users</button>
       <a href="/reports-dashboard.html" id="reportsLink" style="display: none;">📊 Reports</a>
       <a href="/admin-settings.html" id="adminSettingsLink" style="display: none;">⚙️ Admin Settings</a>
-      <button data-section="admin" id="adminNavBtn" style="display: none;">🛡️ Admin</button>
       <button data-section="profile">⚙️ Profile</button>
       <a id="logoutLink" href="/logout.html">🚪 Logout</a>
     </div>
@@ -504,33 +502,6 @@
 </section>
 
 
-    <!-- Users -->
-    <section id="users" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <h3>Users</h3>
-        <div>
-          <button id="addUserBtn" class="btn primary">+ Tambah User</button>
-          <button data-filter-entity="users" class="btn">🔍 Filter</button>
-        </div>
-      </div>
-      <div class="searchbar">
-        <input id="usersSearch" placeholder="Cari username / nama / email..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
-        <select id="usersPageSize" data-pagesize-entity="users">
-          <option value="5">5</option>
-          <option value="10" selected>10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-      </div>
-      <table class="table"><thead><tr>
-        <th class="sortable" data-column="username">Username</th>
-        <th class="sortable" data-column="name">Name</th>
-        <th class="sortable" data-column="type">Type</th>
-        <th>Aksi</th>
-      </tr></thead><tbody id="tblUsers"></tbody></table>
-      <div class="pagination" id="usersPagination"></div>
-    </section>
-
     <!-- Telecom -->
     <section id="telecom" class="card section">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -783,105 +754,6 @@
                 <tbody id="statsTableBody"></tbody>
               </table>
             </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Admin Panel (Admin Only) -->
-    <section id="admin" class="section">
-      <div style="display: grid; gap: 24px;">
-        <!-- System Health Card -->
-        <div class="card">
-          <h3 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 28px;">🛡️</span> System Health Dashboard
-          </h3>
-          <div id="systemStatsLoading" style="text-align: center; padding: 40px;">
-            <div class="loading-spinner large"></div>
-            <p style="margin-top: 16px; color: #6b7280;">Loading system stats...</p>
-          </div>
-          <div id="systemStatsContent" style="display: none;">
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 16px; margin-bottom: 24px;">
-              <div class="stat-card">
-                <div class="stat-value" id="statTotalUsers">-</div>
-                <div class="stat-label">Total Users</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value" id="statActiveUsers">-</div>
-                <div class="stat-label">Active (24h)</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value" id="statLockedUsers">-</div>
-                <div class="stat-label">Locked Users</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value" id="statTotalSales">-</div>
-                <div class="stat-label">Sales Records</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value" id="statTotalTours">-</div>
-                <div class="stat-label">Tours</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value" id="statTotalDocs">-</div>
-                <div class="stat-label">Documents</div>
-              </div>
-            </div>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-              <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; border: 1px solid #bbf7d0;">
-                <div style="font-weight: 600; color: #166534;">Database</div>
-                <div style="font-size: 14px; color: #15803d;" id="dbInfo">-</div>
-              </div>
-              <div style="background: #eff6ff; padding: 16px; border-radius: 8px; border: 1px solid #bfdbfe;">
-                <div style="font-weight: 600; color: #1d4ed8;">Server Uptime</div>
-                <div style="font-size: 14px; color: #2563eb;" id="serverUptime">-</div>
-              </div>
-              <div style="background: #fef3c7; padding: 16px; border-radius: 8px; border: 1px solid #fde68a;">
-                <div style="font-weight: 600; color: #92400e;">Activity (7 days)</div>
-                <div style="font-size: 14px; color: #b45309;" id="recentActivity">-</div>
-              </div>
-            </div>
-            <button id="refreshSystemStats" class="btn btn-secondary" style="margin-top: 20px;">
-              🔄 Refresh Stats
-            </button>
-          </div>
-        </div>
-
-        <!-- Activity Logs Card -->
-        <div class="card">
-          <h3 style="margin: 0 0 20px 0; display: flex; align-items: center; gap: 10px;">
-            <span style="font-size: 28px;">📋</span> Activity Logs
-          </h3>
-          <div class="controls" style="margin-bottom: 16px;">
-            <input type="text" id="activitySearch" placeholder="Search logs..." style="max-width: 300px;">
-            <select id="activityFilter" style="max-width: 150px;">
-              <option value="">All Actions</option>
-              <option value="LOGIN">Login</option>
-              <option value="LOGOUT">Logout</option>
-              <option value="CREATE">Create</option>
-              <option value="UPDATE">Update</option>
-              <option value="DELETE">Delete</option>
-              <option value="LOCK">Lock</option>
-              <option value="UNLOCK">Unlock</option>
-            </select>
-            <button id="refreshActivityLogs" class="btn btn-secondary">🔄 Refresh</button>
-          </div>
-          <div style="overflow-x: auto; max-height: 500px; overflow-y: auto;">
-            <table class="table" id="activityLogsTable">
-              <thead>
-                <tr>
-                  <th>Time</th>
-                  <th>User</th>
-                  <th>Action</th>
-                  <th>Entity</th>
-                  <th>Record ID</th>
-                  <th>Description</th>
-                </tr>
-              </thead>
-              <tbody id="activityLogsBody">
-                <tr><td colspan="6" style="text-align: center; padding: 40px;">Loading...</td></tr>
-              </tbody>
-            </table>
           </div>
         </div>
       </div>
