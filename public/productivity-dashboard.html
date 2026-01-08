@@ -245,9 +245,11 @@
         <h2>📈 Productivity Dashboard</h2>
         <div class="small">Track sales performance by product category</div>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button id="filterBtn" class="btn">🔍 Filter</button>
+        <button id="importBtn" class="btn" style="background: #10b981; color: white;">⬆️ Import</button>
         <button id="exportBtn" class="btn">⬇️ Export</button>
+        <button id="downloadTemplateBtn" class="btn" style="background: #6366f1; color: white;">📄 Template</button>
       </div>
     </div>
 
@@ -364,17 +366,65 @@
   </div>
 </div>
 
+<!-- Import Modal -->
+<div class="modal" id="importModal" style="display:none;">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3>⬆️ Import Productivity Data</h3>
+      <button class="modal-close" onclick="closeImportModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="margin-bottom: 20px; padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
+        <h4 style="margin: 0 0 8px 0; color: #1e40af;">📋 Import Instructions</h4>
+        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #1e40af;">
+          <li>Download the template first using the "Template" button</li>
+          <li>Fill in your data following the template format</li>
+          <li>Save as CSV (comma-separated values)</li>
+          <li>Upload the file below</li>
+        </ul>
+      </div>
+      
+      <div style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px; text-align: center; background: #f9fafb; cursor: pointer;" id="dropZone">
+        <input type="file" id="importFile" accept=".csv" style="display: none;">
+        <div style="font-size: 48px; margin-bottom: 12px;">📁</div>
+        <p style="margin: 0 0 8px 0; font-weight: 600; color: #374151;">Drag & drop your CSV file here</p>
+        <p style="margin: 0; color: #6b7280; font-size: 13px;">or click to browse</p>
+      </div>
+      
+      <div id="importPreview" style="display: none; margin-top: 20px;">
+        <h4 style="margin: 0 0 12px 0;">📊 Preview (first 5 rows)</h4>
+        <div style="overflow-x: auto; max-height: 200px;">
+          <table id="previewTable" class="table" style="font-size: 12px;">
+            <thead id="previewHeader"></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top: 12px; padding: 12px; background: #ecfdf5; border-radius: 8px;">
+          <span id="importStats" style="color: #059669; font-weight: 500;"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
+      <button class="btn" onclick="closeImportModal()">Cancel</button>
+      <button class="btn" id="confirmImportBtn" style="background: #10b981; color: white;" disabled>
+        ⬆️ Import Data
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div id="toastContainer" class="toast-container"></div>
 
 <!-- Scripts -->
 <script src="/js/auth-common.js"></script>
-<script src="/js/modal-system.js"></script>
 <script src="/js/crud-modal.js"></script>
 <script src="/js/toast.js"></script>
 <script src="/js/form-validator.js"></script>
-<script src="/js/pagination-utils.js"></script>
 <script src="/js/productivity-dashboard.js"></script>
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script src="/js/keyboard-shortcuts.js"></script>
 <script src="/js/sidebar-groups.js"></script>
 </body>
 </html>

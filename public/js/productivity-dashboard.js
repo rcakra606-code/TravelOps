@@ -32,17 +32,17 @@ let currentFilters = {
 };
 
 /* === DISPLAY USER INFO === */
-(() => {
-  const user = window.getUser();
+function initUserInfo() {
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
   el('userName').textContent = user.name || user.username || '—';
-  el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+  el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
   
   // Show admin settings link for admin users
   if (user.type === 'admin') {
     const adminLink = el('adminSettingsLink');
     if (adminLink) adminLink.style.display = 'block';
   }
-})();
+}
 
 /* === UTILITY FUNCTIONS === */
 function formatCurrency(value) {
@@ -887,8 +887,319 @@ el('exportBtn')?.addEventListener('click', async () => {
   window.toast?.success('Data exported successfully');
 });
 
+/* === IMPORT FUNCTIONALITY === */
+let importData = [];
+
+// Download CSV Template
+el('downloadTemplateBtn')?.addEventListener('click', () => {
+  const headers = [
+    'month', 'year', 'product_type', 'staff_name',
+    'retail_sales', 'retail_profit', 'corporate_sales', 'corporate_profit'
+  ];
+  
+  // Sample data rows
+  const sampleRows = [
+    ['1', '2026', 'flight', 'John Doe', '50000000', '5000000', '100000000', '8000000'],
+    ['1', '2026', 'hotel', 'Jane Smith', '30000000', '4500000', '60000000', '9000000'],
+    ['2', '2026', 'tour', 'John Doe', '75000000', '11250000', '150000000', '22500000']
+  ];
+  
+  const csvContent = [
+    '# PRODUCTIVITY IMPORT TEMPLATE',
+    '# Instructions:',
+    '# - month: 1-12 (January=1, December=12)',
+    '# - year: 4-digit year (e.g., 2026)',
+    '# - product_type: flight, hotel, tour, package, cruise, admission, passport, visa, insurance, train, other',
+    '# - staff_name: Name of the staff member',
+    '# - retail_sales: Retail sales amount (number only, no currency symbol)',
+    '# - retail_profit: Retail profit amount',
+    '# - corporate_sales: Corporate sales amount',
+    '# - corporate_profit: Corporate profit amount',
+    '# Delete these comment lines before importing!',
+    '',
+    headers.join(','),
+    ...sampleRows.map(r => r.join(','))
+  ].join('\n');
+  
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'productivity_import_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  
+  window.toast?.success('Template downloaded! Fill it with your data and import.');
+});
+
+// Open Import Modal
+el('importBtn')?.addEventListener('click', () => {
+  el('importModal').style.display = 'flex';
+  el('importFile').value = '';
+  el('importPreview').style.display = 'none';
+  el('confirmImportBtn').disabled = true;
+  importData = [];
+});
+
+// Close Import Modal
+window.closeImportModal = function() {
+  el('importModal').style.display = 'none';
+  importData = [];
+};
+
+// Setup drag and drop
+const dropZone = el('dropZone');
+const importFile = el('importFile');
+
+dropZone?.addEventListener('click', () => importFile?.click());
+
+dropZone?.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#3b82f6';
+  dropZone.style.background = '#eff6ff';
+});
+
+dropZone?.addEventListener('dragleave', (e) => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#d1d5db';
+  dropZone.style.background = '#f9fafb';
+});
+
+dropZone?.addEventListener('drop', (e) => {
+  e.preventDefault();
+  dropZone.style.borderColor = '#d1d5db';
+  dropZone.style.background = '#f9fafb';
+  
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.csv')) {
+    processImportFile(file);
+  } else {
+    window.toast?.error('Please upload a CSV file');
+  }
+});
+
+importFile?.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    processImportFile(file);
+  }
+});
+
+// Process CSV file
+function processImportFile(file) {
+  const reader = new FileReader();
+  
+  reader.onload = (e) => {
+    try {
+      const text = e.target.result;
+      const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l && !l.startsWith('#')); // Remove empty lines and comments
+      
+      if (lines.length < 2) {
+        window.toast?.error('File must have header row and at least one data row');
+        return;
+      }
+      
+      // Parse header
+      const headers = parseCSVLine(lines[0]);
+      const requiredHeaders = ['month', 'year', 'product_type', 'staff_name', 'retail_sales', 'retail_profit', 'corporate_sales', 'corporate_profit'];
+      
+      const missingHeaders = requiredHeaders.filter(h => !headers.includes(h));
+      if (missingHeaders.length > 0) {
+        window.toast?.error(`Missing required columns: ${missingHeaders.join(', ')}`);
+        return;
+      }
+      
+      // Parse data rows
+      importData = [];
+      const errors = [];
+      
+      for (let i = 1; i < lines.length; i++) {
+        const values = parseCSVLine(lines[i]);
+        if (values.length !== headers.length) continue;
+        
+        const row = {};
+        headers.forEach((h, idx) => row[h] = values[idx]);
+        
+        // Validate row
+        const rowErrors = validateImportRow(row, i + 1);
+        if (rowErrors.length > 0) {
+          errors.push(...rowErrors);
+          continue;
+        }
+        
+        importData.push({
+          month: parseInt(row.month),
+          year: parseInt(row.year),
+          product_type: row.product_type.toLowerCase(),
+          staff_name: row.staff_name,
+          retail_sales: parseFloat(row.retail_sales) || 0,
+          retail_profit: parseFloat(row.retail_profit) || 0,
+          corporate_sales: parseFloat(row.corporate_sales) || 0,
+          corporate_profit: parseFloat(row.corporate_profit) || 0
+        });
+      }
+      
+      if (errors.length > 0 && importData.length === 0) {
+        window.toast?.error(`Import failed: ${errors.slice(0, 3).join('; ')}`);
+        return;
+      }
+      
+      // Show preview
+      showImportPreview(headers, importData, errors);
+      
+    } catch (err) {
+      console.error('Import error:', err);
+      window.toast?.error('Failed to parse CSV file: ' + err.message);
+    }
+  };
+  
+  reader.readAsText(file);
+}
+
+// Parse CSV line handling quoted values
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    
+    if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === ',' && !inQuotes) {
+      result.push(current.trim());
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  result.push(current.trim());
+  
+  return result;
+}
+
+// Validate import row
+function validateImportRow(row, rowNum) {
+  const errors = [];
+  const validProductTypes = ['flight', 'hotel', 'tour', 'package', 'cruise', 'admission', 'passport', 'visa', 'insurance', 'train', 'other'];
+  
+  const month = parseInt(row.month);
+  if (isNaN(month) || month < 1 || month > 12) {
+    errors.push(`Row ${rowNum}: Invalid month (must be 1-12)`);
+  }
+  
+  const year = parseInt(row.year);
+  if (isNaN(year) || year < 2000 || year > 2100) {
+    errors.push(`Row ${rowNum}: Invalid year`);
+  }
+  
+  if (!validProductTypes.includes(row.product_type?.toLowerCase())) {
+    errors.push(`Row ${rowNum}: Invalid product_type`);
+  }
+  
+  if (!row.staff_name || row.staff_name.trim() === '') {
+    errors.push(`Row ${rowNum}: Missing staff_name`);
+  }
+  
+  return errors;
+}
+
+// Show import preview
+function showImportPreview(headers, data, errors) {
+  const previewDiv = el('importPreview');
+  const previewHeader = el('previewHeader');
+  const previewBody = el('previewBody');
+  const importStats = el('importStats');
+  const confirmBtn = el('confirmImportBtn');
+  
+  // Build header
+  previewHeader.innerHTML = `<tr>${['#', 'Month', 'Year', 'Product', 'Staff', 'Retail Sales', 'Corp Sales'].map(h => `<th>${h}</th>`).join('')}</tr>`;
+  
+  // Build body (show first 5 rows)
+  const previewRows = data.slice(0, 5);
+  previewBody.innerHTML = previewRows.map((d, i) => `
+    <tr>
+      <td>${i + 1}</td>
+      <td>${getMonthName(d.month)}</td>
+      <td>${d.year}</td>
+      <td>${d.product_type}</td>
+      <td>${d.staff_name}</td>
+      <td>${formatCurrency(d.retail_sales)}</td>
+      <td>${formatCurrency(d.corporate_sales)}</td>
+    </tr>
+  `).join('');
+  
+  // Stats
+  let statsText = `✅ ${data.length} rows ready to import`;
+  if (errors.length > 0) {
+    statsText += ` | ⚠️ ${errors.length} rows skipped due to errors`;
+  }
+  if (data.length > 5) {
+    statsText += ` | Showing first 5 of ${data.length} rows`;
+  }
+  importStats.textContent = statsText;
+  
+  previewDiv.style.display = 'block';
+  confirmBtn.disabled = data.length === 0;
+}
+
+// Confirm Import
+el('confirmImportBtn')?.addEventListener('click', async () => {
+  if (importData.length === 0) {
+    window.toast?.warning('No data to import');
+    return;
+  }
+  
+  const confirmBtn = el('confirmImportBtn');
+  confirmBtn.disabled = true;
+  confirmBtn.textContent = '⏳ Importing...';
+  
+  let successCount = 0;
+  let errorCount = 0;
+  
+  // Get current user for staff ownership
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+  
+  for (const row of importData) {
+    try {
+      const response = await fetch('/api/productivity', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(row)
+      });
+      
+      if (response.ok) {
+        successCount++;
+      } else {
+        errorCount++;
+      }
+    } catch (err) {
+      console.error('Import row error:', err);
+      errorCount++;
+    }
+  }
+  
+  closeImportModal();
+  
+  if (errorCount === 0) {
+    window.toast?.success(`Successfully imported ${successCount} records!`);
+  } else {
+    window.toast?.warning(`Imported ${successCount} records, ${errorCount} failed`);
+  }
+  
+  // Reload data
+  await loadData();
+});
+
 /* === INITIALIZATION === */
 window.addEventListener('DOMContentLoaded', async () => {
+  initUserInfo();
   initTabs();
   await loadData();
 });
