@@ -490,8 +490,231 @@ function getCruiseEmailTemplate(cruise, daysUntil) {
   `;
 }
 
+/**
+ * Send return arrival reminder email to staff
+ * Notifies staff that their guest has arrived back in Indonesia (Jakarta)
+ * @param {Object} tour - Tour details
+ * @param {number} daysUntil - Days until return (0 = today, negative = already returned)
+ */
+async function sendReturnArrivalReminder(tour, daysUntil) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping return arrival reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
+  try {
+    const subject = getReturnArrivalSubject(daysUntil, tour.tour_code);
+    const htmlContent = getReturnArrivalEmailTemplate(tour, daysUntil);
+    
+    // Send to staff user's email
+    if (!tour.staff_email) {
+      logger.warn(`No staff email found for tour ${tour.tour_code}`);
+      return { success: false, error: 'No staff email address' };
+    }
+
+    const mailOptions = {
+      from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
+      to: tour.staff_email,
+      subject: subject,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(`Return arrival reminder sent for tour ${tour.tour_code} (${daysUntil} days) to ${tour.staff_email}`);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error(`Failed to send return arrival reminder for tour ${tour.tour_code}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate subject line based on days until return arrival
+ */
+function getReturnArrivalSubject(daysUntil, tourCode) {
+  if (daysUntil === 0) {
+    return `🛬 Guest Arrives in Jakarta TODAY! - ${tourCode}`;
+  } else if (daysUntil === 1) {
+    return `⏰ Guest Arrives in Jakarta TOMORROW - ${tourCode}`;
+  } else {
+    return `📅 Guest Return to Jakarta in ${daysUntil} Days - ${tourCode}`;
+  }
+}
+
+/**
+ * Generate HTML email template for return arrival reminder
+ */
+function getReturnArrivalEmailTemplate(tour, daysUntil) {
+  const urgencyLevel = daysUntil <= 1 ? 'high' : daysUntil <= 3 ? 'medium' : 'low';
+  const urgencyColor = urgencyLevel === 'high' ? '#059669' : urgencyLevel === 'medium' ? '#0891b2' : '#2563eb';
+  
+  let messageText = '';
+  if (daysUntil === 0) {
+    messageText = '🛬 <strong>Your guest arrives back in Jakarta TODAY!</strong> Please prepare for their arrival and follow up.';
+  } else if (daysUntil === 1) {
+    messageText = '⏰ <strong>Your guest arrives back in Jakarta TOMORROW!</strong> Make sure everything is ready for their return.';
+  } else {
+    messageText = `📅 Your guest returns to Jakarta in <strong>${daysUntil} days</strong>. Plan any necessary follow-up actions.`;
+  }
+
+  // Format dates
+  const returnDate = new Date(tour.return_date).toLocaleDateString('en-US', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  });
+  const departureDate = tour.departure_date ? new Date(tour.departure_date).toLocaleDateString('en-US', { 
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+  }) : 'N/A';
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
+    .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; }
+    .header { background: linear-gradient(135deg, #059669 0%, #0d9488 100%); padding: 40px 30px; text-align: center; color: white; }
+    .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
+    .content { padding: 40px 30px; }
+    .alert-box { background-color: ${urgencyColor}10; border-left: 4px solid ${urgencyColor}; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .tour-details { background-color: #ecfdf5; padding: 25px; border-radius: 12px; margin: 25px 0; border: 2px solid #10b981; }
+    .detail-row { display: flex; padding: 12px 0; border-bottom: 1px solid #d1fae5; }
+    .detail-row:last-child { border-bottom: none; }
+    .detail-label { font-weight: 600; color: #047857; width: 140px; flex-shrink: 0; }
+    .detail-value { color: #1f2937; flex: 1; }
+    .checklist { background-color: #eff6ff; padding: 25px; border-radius: 12px; margin: 25px 0; border: 1px solid #3b82f6; }
+    .checklist h3 { margin-top: 0; color: #1d4ed8; }
+    .checklist ul { margin: 10px 0; padding-left: 25px; }
+    .checklist li { margin: 8px 0; color: #1e40af; }
+    .footer { background-color: #f9fafb; padding: 30px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; }
+    .countdown { text-align: center; font-size: 48px; font-weight: 700; color: ${urgencyColor}; margin: 20px 0; }
+    .welcome-badge { background-color: #059669; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; display: inline-block; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛬 TravelOps Return Arrival Reminder</h1>
+    </div>
+    
+    <div class="content">
+      <div style="text-align: center;">
+        <span class="welcome-badge">Welcome Back to Indonesia!</span>
+      </div>
+      
+      <div class="alert-box">
+        <p style="margin: 0; font-size: 16px; line-height: 1.6;">${messageText}</p>
+      </div>
+      
+      <div class="countdown">${daysUntil}</div>
+      <p style="text-align: center; color: #6b7280; margin-top: -10px;">
+        ${daysUntil === 0 ? 'Arriving Today!' : daysUntil === 1 ? 'Day until arrival' : 'Days until arrival'}
+      </p>
+      
+      <div class="tour-details">
+        <h2 style="margin-top: 0; color: #047857;">📋 Tour Details</h2>
+        
+        <div class="detail-row">
+          <span class="detail-label">Tour Code:</span>
+          <span class="detail-value"><strong>${tour.tour_code || 'N/A'}</strong></span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Booking Code:</span>
+          <span class="detail-value">${tour.booking_code || 'N/A'}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Lead Passenger:</span>
+          <span class="detail-value"><strong>${tour.lead_passenger || 'N/A'}</strong></span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Participants:</span>
+          <span class="detail-value">${tour.jumlah_peserta || 0} people</span>
+        </div>
+        
+        ${tour.all_passengers ? `
+        <div class="detail-row">
+          <span class="detail-label">All Passengers:</span>
+          <span class="detail-value">${tour.all_passengers}</span>
+        </div>
+        ` : ''}
+        
+        <div class="detail-row">
+          <span class="detail-label">Departure Date:</span>
+          <span class="detail-value">${departureDate}</span>
+        </div>
+        
+        <div class="detail-row">
+          <span class="detail-label">Return to Jakarta:</span>
+          <span class="detail-value"><strong style="color: ${urgencyColor};">${returnDate}</strong></span>
+        </div>
+        
+        ${tour.phone_number ? `
+        <div class="detail-row">
+          <span class="detail-label">Contact Phone:</span>
+          <span class="detail-value">${tour.phone_number}</span>
+        </div>
+        ` : ''}
+        
+        ${tour.email ? `
+        <div class="detail-row">
+          <span class="detail-label">Contact Email:</span>
+          <span class="detail-value">${tour.email}</span>
+        </div>
+        ` : ''}
+        
+        <div class="detail-row">
+          <span class="detail-label">Region:</span>
+          <span class="detail-value">${tour.region_name || 'N/A'}</span>
+        </div>
+      </div>
+      
+      <div class="checklist">
+        <h3>✅ Post-Tour Follow-up Checklist</h3>
+        <ul>
+          <li>Confirm guest's safe arrival in Jakarta</li>
+          <li>Send welcome back message to guest</li>
+          <li>Request feedback or review about the tour experience</li>
+          <li>Check if any documents need to be returned</li>
+          <li>Follow up on any outstanding payments</li>
+          <li>Update tour status in system if needed</li>
+          ${daysUntil === 0 ? '<li><strong>Check airport pickup arrangements if applicable</strong></li>' : ''}
+          ${daysUntil === 0 ? '<li><strong>Prepare any welcome back gifts or vouchers</strong></li>' : ''}
+        </ul>
+      </div>
+      
+      ${tour.remarks ? `
+      <p style="margin-top: 30px; padding: 20px; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
+        <strong>📝 Tour Notes:</strong><br>
+        <span style="color: #6b7280;">${tour.remarks}</span>
+      </p>
+      ` : ''}
+      
+      <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+        This is an automated reminder from TravelOps. Please ensure appropriate follow-up with the guest upon their return to Indonesia.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p><strong>TravelOps</strong></p>
+      <p>Travel Operations Management System</p>
+      <p style="margin-top: 20px; font-size: 12px;">
+        This email was sent to ${tour.staff_email} as the assigned staff member for this tour.
+      </p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export {
   sendDepartureReminder,
   sendCruiseReminder,
+  sendReturnArrivalReminder,
   sendTestEmail
 };

@@ -27,6 +27,7 @@
 <link rel="stylesheet" href="/css/form-enhancements.css">
 <link rel="stylesheet" href="/css/crud-enhancements.css">
 <link rel="stylesheet" href="/css/ui-enhancements.css">
+<link rel="stylesheet" href="/css/sidebar-groups.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="/js/theme-toggle.js"></script>
 <style>
@@ -89,23 +90,59 @@
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
     <div class="nav" id="mainNav">
-      <button data-section="summary" class="active">🏠 Dashboard</button>
-      <a href="/sales-dashboard.html">💰 Sales</a>
-      <a href="/tours-dashboard.html">🧳 Tours</a>
-      <a href="/my-tours.html">📋 My Tours</a>
-      <a href="/documents-dashboard.html">📄 Documents</a>
-      <a href="/tracking-dashboard.html">📦 Tracking</a>
-      <a href="/targets-dashboard.html">🎯 Targets</a>
-      <a href="/telecom-dashboard.html">📞 Telecom</a>
-      <a href="/hotel-dashboard.html">🏨 Hotel Bookings</a>
-      <a href="/overtime-dashboard.html">⏰ Overtime</a>
-      <a href="/cruise-dashboard.html">🚢 Cruise</a>
-      <a href="/outstanding-dashboard.html">📋 Outstanding</a>
-      <a href="/cashout-dashboard.html">💸 Cash Out</a>
-      <hr style="margin: 12px 0; border: 1px solid #e5e7eb;">
-      <button data-section="regions">🌍 Regions</button>
-      <a href="/reports-dashboard.html" id="reportsLink" style="display: none;">📊 Reports</a>
-      <a href="/admin-settings.html" id="adminSettingsLink" style="display: none;">⚙️ Admin Settings</a>
+      <!-- Main Dashboard -->
+      <button data-section="summary" class="nav-main-item active">🏠 Dashboard</button>
+      
+      <!-- Product Input Group -->
+      <div class="nav-group" id="groupProductInput">
+        <button class="nav-group-header" data-group="product-input">
+          <span class="group-icon">📦</span>
+          <span class="group-title">Product Input</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/my-tours.html">📋 My Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <button data-section="regions">🌍 Regions</button>
+        </div>
+      </div>
+      
+      <!-- Productivity Group -->
+      <div class="nav-group" id="groupProductivity">
+        <button class="nav-group-header" data-group="productivity">
+          <span class="group-icon">📊</span>
+          <span class="group-title">Productivity</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/sales-dashboard.html">💰 Sales</a>
+          <a href="/targets-dashboard.html">🎯 Targets</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/reports-dashboard.html" id="reportsLink" style="display: none;">📊 Reports</a>
+        </div>
+      </div>
+      
+      <!-- Administration Group -->
+      <div class="nav-group" id="groupAdmin">
+        <button class="nav-group-header" data-group="administration">
+          <span class="group-icon">⚙️</span>
+          <span class="group-title">Administration</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display: none;">⚙️ Admin Settings</a>
+        </div>
+      </div>
+      
+      <hr class="nav-divider">
       <button data-section="profile">⚙️ Profile</button>
       <a id="logoutLink" href="/logout.html">🚪 Logout</a>
     </div>
@@ -861,5 +898,6 @@
 <script src="/js/advanced-reporting.js"></script>
 <script src="/js/staff-management.js"></script>
 <script src="/js/dashboard-analytics.js"></script>
+<script src="/js/sidebar-groups.js"></script>
 </body>
 </html>

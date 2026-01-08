@@ -128,6 +128,7 @@ async function createSchema(db) {
     tour_code TEXT,
     region_id INTEGER,
     departure_date ${text()},
+    return_date ${text()},
     booking_code TEXT,
     tour_price ${num()} DEFAULT 0,
     sales_amount ${num()} DEFAULT 0,
@@ -319,6 +320,26 @@ async function createSchema(db) {
     updated_by TEXT
   )`);
 
+  // Productivity - Sales tracking by product category
+  await db.run(`CREATE TABLE IF NOT EXISTS productivity (
+    id ${idCol},
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    product_type TEXT NOT NULL,
+    retail_sales ${num()} DEFAULT 0,
+    retail_profit ${num()} DEFAULT 0,
+    corporate_sales ${num()} DEFAULT 0,
+    corporate_profit ${num()} DEFAULT 0,
+    staff_name TEXT NOT NULL,
+    retail_margin ${num()} DEFAULT 0,
+    corporate_margin ${num()} DEFAULT 0,
+    total_sales ${num()} DEFAULT 0,
+    total_profit ${num()} DEFAULT 0,
+    total_margin ${num()} DEFAULT 0,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts}
+  )`);
+
   // Seed admin if no users
   const count = await db.get('SELECT COUNT(*) AS c FROM users');
   if (!count || count.c === 0 || count.count === 0) {
@@ -413,6 +434,7 @@ async function createSchema(db) {
   await ensureColumn('tours', 'remarks', 'TEXT');
   await ensureColumn('tours', 'total_nominal_sales', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
   await ensureColumn('tours', 'invoice_number', 'TEXT');
+  await ensureColumn('tours', 'return_date', 'TEXT');
 
   // Telecom: all columns used by frontend
   await ensureColumn('telecom', 'nama', 'TEXT');

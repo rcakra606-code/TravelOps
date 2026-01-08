@@ -1,10 +1,11 @@
 import cron from 'node-cron';
-import { sendDepartureReminder, sendCruiseReminder } from './emailService.js';
+import { sendDepartureReminder, sendCruiseReminder, sendReturnArrivalReminder } from './emailService.js';
 import { logger } from './logger.js';
 
-// Reminder intervals in days before departure/sailing
+// Reminder intervals in days before departure/sailing/return
 const TOUR_REMINDER_DAYS = [7, 3, 2, 1, 0];
 const CRUISE_REMINDER_DAYS = [30, 15, 7, 3, 2, 1];
+const RETURN_REMINDER_DAYS = [3, 2, 1, 0]; // Days before return to Jakarta
 
 let db;
 let schedulerActive = false;
@@ -55,6 +56,7 @@ function initScheduler(database) {
     try {
       await checkAndSendReminders();
       await checkAndSendCruiseReminders();
+      await checkAndSendReturnReminders();
     } catch (error) {
       logger.error({ error: error.message }, 'Error in scheduled reminder check');
     }
@@ -66,10 +68,11 @@ function initScheduler(database) {
   // cron.schedule('0 9-18 * * *', async () => {
   //   await checkAndSendReminders();
   //   await checkAndSendCruiseReminders();
+  //   await checkAndSendReturnReminders();
   // });
 
   schedulerActive = true;
-  logger.info('Tour and Cruise reminder scheduler initialized - Daily at 9:00 AM Asia/Jakarta (UTC+7)');
+  logger.info('Tour, Cruise, and Return arrival reminder scheduler initialized - Daily at 9:00 AM Asia/Jakarta (UTC+7)');
   logger.info('Note: Email reminders require SMTP configuration to function');
   
   // Run once on startup for testing (optional - commented out by default)
@@ -419,10 +422,171 @@ async function recordCruiseReminderSent(cruiseId, daysUntil) {
   }
 }
 
+/**
+ * Check for tours that need return arrival reminders and send emails
+ */
+async function checkAndSendReturnReminders() {
+  try {
+    // Use Jakarta timezone for consistent date calculations
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    today.setHours(0, 0, 0, 0);
+
+    logger.info('Checking for tours requiring return arrival reminders...');
+
+    // Get all tours with upcoming return dates
+    const tours = await getToursWithUpcomingReturn();
+    
+    if (tours.length === 0) {
+      logger.info('No tours with upcoming return dates found');
+      return;
+    }
+
+    logger.info(`Found ${tours.length} tours with upcoming return dates`);
+
+    const remindersSent = [];
+    const errors = [];
+
+    for (const tour of tours) {
+      const returnDate = new Date(tour.return_date);
+      returnDate.setHours(0, 0, 0, 0);
+      
+      const daysUntil = Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
+      
+      // Check if this tour needs a return reminder today
+      if (RETURN_REMINDER_DAYS.includes(daysUntil)) {
+        // Check if reminder was already sent for this day
+        const alreadySent = await checkReturnReminderSent(tour.id, daysUntil);
+        
+        if (!alreadySent) {
+          logger.info(`Sending ${daysUntil}-day return arrival reminder for tour ${tour.tour_code}`);
+          
+          const result = await sendReturnArrivalReminder(tour, daysUntil);
+          
+          if (result.success) {
+            await recordReturnReminderSent(tour.id, daysUntil);
+            remindersSent.push({ tour: tour.tour_code, days: daysUntil });
+          } else {
+            errors.push({ tour: tour.tour_code, days: daysUntil, error: result.error });
+          }
+          
+          // Add delay between emails to avoid rate limiting
+          await delay(1000);
+        } else {
+          logger.info(`Return reminder already sent for tour ${tour.tour_code} (${daysUntil} days)`);
+        }
+      }
+    }
+
+    // Log summary
+    if (remindersSent.length > 0) {
+      logger.info(`Successfully sent ${remindersSent.length} return arrival reminders`);
+    }
+    if (errors.length > 0) {
+      logger.error(`Failed to send ${errors.length} return reminders:`, errors);
+    }
+
+    return { sent: remindersSent, errors };
+  } catch (error) {
+    logger.error('Error in checkAndSendReturnReminders:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all tours with upcoming return dates from database
+ */
+async function getToursWithUpcomingReturn() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    
+    const sql = `
+      SELECT 
+        t.*,
+        r.region_name,
+        u.username as staff_username,
+        u.email as staff_email
+      FROM tours t
+      LEFT JOIN regions r ON t.region_id = r.id
+      LEFT JOIN users u ON t.staff_name = u.name
+      WHERE t.return_date IS NOT NULL
+        AND t.return_date != ''
+        AND t.return_date >= ?
+        AND t.status != 'tidak jalan'
+        AND u.email IS NOT NULL
+        AND u.email != ''
+      ORDER BY t.return_date ASC
+    `;
+
+    const rows = await db.all(sql, [today]);
+    return rows || [];
+  } catch (err) {
+    logger.error('Error getting tours with upcoming return:', err);
+    return [];
+  }
+}
+
+/**
+ * Check if a return reminder has already been sent
+ */
+async function checkReturnReminderSent(tourId, daysUntil) {
+  try {
+    // First, ensure the table exists
+    const createTableSql = db.dialect === 'postgres' 
+      ? `CREATE TABLE IF NOT EXISTS return_reminders (
+          id SERIAL PRIMARY KEY,
+          tour_id INTEGER NOT NULL,
+          days_until_return INTEGER NOT NULL,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(tour_id, days_until_return)
+        )`
+      : `CREATE TABLE IF NOT EXISTS return_reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          tour_id INTEGER NOT NULL,
+          days_until_return INTEGER NOT NULL,
+          sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(tour_id, days_until_return)
+        )`;
+
+    await db.run(createTableSql);
+
+    // Check if reminder exists
+    const sql = `
+      SELECT COUNT(*) as count 
+      FROM return_reminders 
+      WHERE tour_id = ? AND days_until_return = ?
+    `;
+
+    const row = await db.get(sql, [tourId, daysUntil]);
+    return row && row.count > 0;
+  } catch (err) {
+    logger.error('Error checking return reminder sent:', err);
+    return false;
+  }
+}
+
+/**
+ * Record that a return reminder was sent
+ */
+async function recordReturnReminderSent(tourId, daysUntil) {
+  try {
+    // Handle INSERT OR IGNORE for both SQLite and Postgres
+    const isPostgres = db.dialect === 'postgres';
+    const sql = isPostgres
+      ? `INSERT INTO return_reminders (tour_id, days_until_return) VALUES (?, ?) ON CONFLICT (tour_id, days_until_return) DO NOTHING`
+      : `INSERT OR IGNORE INTO return_reminders (tour_id, days_until_return) VALUES (?, ?)`;
+
+    await db.run(sql, [tourId, daysUntil]);
+  } catch (err) {
+    logger.error('Error recording return reminder sent:', err);
+    throw err;
+  }
+}
+
 export {
   initScheduler,
   checkAndSendReminders,
   checkAndSendCruiseReminders,
+  checkAndSendReturnReminders,
   manualTrigger,
   getReminderStats
 };

@@ -135,6 +135,7 @@ function validateEntity(entity, data) {
     case 'tours':
       if (validators.required(data.lead_passenger, 'Lead Passenger')) errors.push(validators.required(data.lead_passenger, 'Lead Passenger'));
       if (validators.date(data.departure_date, 'Departure Date')) errors.push(validators.date(data.departure_date, 'Departure Date'));
+      if (validators.date(data.return_date, 'Return Date')) errors.push(validators.date(data.return_date, 'Return Date'));
       if (validators.email(data.email)) errors.push(validators.email(data.email));
       if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
       if (validators.positiveNumber(data.jumlah_peserta, 'Participants')) errors.push(validators.positiveNumber(data.jumlah_peserta, 'Participants'));
@@ -174,6 +175,17 @@ function validateEntity(entity, data) {
       if (validators.required(data.staff_name, 'Staff Name')) errors.push(validators.required(data.staff_name, 'Staff Name'));
       if (validators.date(data.event_date, 'Event Date')) errors.push(validators.date(data.event_date, 'Event Date'));
       if (validators.positiveNumber(data.hours, 'Hours')) errors.push(validators.positiveNumber(data.hours, 'Hours'));
+      break;
+      
+    case 'productivity':
+      if (validators.required(data.month, 'Month')) errors.push(validators.required(data.month, 'Month'));
+      if (validators.required(data.year, 'Year')) errors.push(validators.required(data.year, 'Year'));
+      if (validators.required(data.staff_name, 'Staff Name')) errors.push(validators.required(data.staff_name, 'Staff Name'));
+      if (validators.required(data.product_type, 'Product Type')) errors.push(validators.required(data.product_type, 'Product Type'));
+      if (validators.positiveNumber(data.retail_sales, 'Retail Sales')) errors.push(validators.positiveNumber(data.retail_sales, 'Retail Sales'));
+      if (validators.positiveNumber(data.retail_profit, 'Retail Profit')) errors.push(validators.positiveNumber(data.retail_profit, 'Retail Profit'));
+      if (validators.positiveNumber(data.corporate_sales, 'Corporate Sales')) errors.push(validators.positiveNumber(data.corporate_sales, 'Corporate Sales'));
+      if (validators.positiveNumber(data.corporate_profit, 'Corporate Profit')) errors.push(validators.positiveNumber(data.corporate_profit, 'Corporate Profit'));
       break;
   }
   
@@ -549,8 +561,8 @@ export async function createApp() {
     }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout'];
-  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding','cashout']);
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity'];
+  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity']);
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{
@@ -680,6 +692,15 @@ export async function createApp() {
             rows = await db.all(`SELECT * FROM cashout ${cashoutWhere} ORDER BY request_date DESC`, params);
           } else {
             rows = await db.all(`SELECT * FROM cashout ${whereClause} ORDER BY request_date DESC`, params);
+          }
+        } else if (t === 'productivity') {
+          // Productivity: basic users see only their own, admin/semi-admin see all
+          if (req.user.type === 'basic') {
+            const prodWhere = whereClause ? `${whereClause} AND staff_name=${isPg ? `$${params.length+1}` : '?'}` : `WHERE staff_name=${isPg ? '$1' : '?'}`;
+            params.push(req.user.name);
+            rows = await db.all(`SELECT * FROM productivity ${prodWhere} ORDER BY year DESC, month DESC`, params);
+          } else {
+            rows = await db.all(`SELECT * FROM productivity ${whereClause} ORDER BY year DESC, month DESC`, params);
           }
         } else {
           rows = await db.all(`SELECT * FROM ${t}`);

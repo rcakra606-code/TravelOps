@@ -613,7 +613,7 @@ el('exportToursCSV')?.addEventListener('click', async () => {
     // Comprehensive headers with all tour fields
     const headers = [
       'ID', 'Registration Date', 'Lead Passenger', 'All Passengers', 'Tour Code', 
-      'Region', 'Departure Date', 'Booking Code', 'Tour Price', 'Sales Amount', 
+      'Region', 'Departure Date', 'Return Date', 'Booking Code', 'Tour Price', 'Sales Amount', 
       'Total Nominal Sales', 'Profit Amount', 'Discount Amount', 'Discount Remarks',
       'Staff', 'Participants', 'Phone', 'Email', 'Status', 'Payment Link', 
       'Invoice Number', 'Created At'
@@ -627,6 +627,7 @@ el('exportToursCSV')?.addEventListener('click', async () => {
       d.tour_code || '',
       regionMap[String(d.region_id)] || '',
       d.departure_date || '',
+      d.return_date || '',
       d.booking_code || '',
       d.tour_price || 0,
       d.sales_amount || 0,
@@ -856,6 +857,7 @@ window.editTour = async function(id) {
     { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
     { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
     { type: 'date', name: 'departure_date', label: 'Departure Date', required: true },
+    { type: 'date', name: 'return_date', label: 'Return Date (Arrival in Jakarta)', icon: '🛬' },
     { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
     { type: 'select', name: 'status', label: 'Status', required: true, options: [
       { value: 'belum jalan', label: 'Belum Jalan' },
@@ -928,6 +930,7 @@ if (el('addTourBtn')) {
       { type: 'text', name: 'tour_code', label: 'Tour Code', required: true, icon: '🎫', placeholder: 'TRV-001' },
       { type: 'text', name: 'booking_code', label: 'Booking Code', icon: '📋', placeholder: 'BKG-001' },
       { type: 'date', name: 'departure_date', label: 'Departure Date', required: true },
+      { type: 'date', name: 'return_date', label: 'Return Date (Arrival in Jakarta)', icon: '🛬' },
       { type: 'select', name: 'region_id', label: 'Region', required: true, options: regionsData.map(r => ({ value: r.id, label: r.region_name })) },
       { type: 'select', name: 'status', label: 'Status', required: true, options: [
         { value: 'belum jalan', label: 'Belum Jalan' },

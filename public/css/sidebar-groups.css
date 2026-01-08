@@ -1,0 +1,137 @@
+/* Sidebar Groups - Collapsible Navigation */
+
+.nav-group {
+  margin-bottom: 4px;
+}
+
+.nav-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+}
+
+.nav-group-header:hover {
+  background: var(--bg-alt);
+  color: var(--text);
+}
+
+.nav-group-header .group-icon {
+  font-size: 14px;
+  margin-right: 8px;
+}
+
+.nav-group-header .group-title {
+  flex: 1;
+  text-align: left;
+}
+
+.nav-group-header .group-arrow {
+  font-size: 10px;
+  transition: transform 0.3s ease;
+}
+
+.nav-group.collapsed .group-arrow {
+  transform: rotate(-90deg);
+}
+
+.nav-group-items {
+  overflow: hidden;
+  max-height: 500px;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  opacity: 1;
+}
+
+.nav-group.collapsed .nav-group-items {
+  max-height: 0;
+  opacity: 0;
+}
+
+.nav-group-items a,
+.nav-group-items button {
+  padding-left: 36px !important;
+  font-size: 13px !important;
+}
+
+/* Main Dashboard link - standalone */
+.nav-main-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: var(--text);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+.nav-main-item:hover {
+  background: var(--bg-alt);
+}
+
+.nav-main-item.active {
+  background: var(--primary);
+  color: white;
+}
+
+/* Divider styling */
+.nav-divider {
+  margin: 12px 16px;
+  border: none;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Bottom section (Logout, Profile) */
+.nav-bottom {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .nav-group-header {
+    padding: 12px 16px;
+  }
+  
+  .nav-group-items a,
+  .nav-group-items button {
+    padding-left: 40px !important;
+  }
+}
+
+/* Dark mode adjustments */
+[data-theme="dark"] .nav-group-header:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .nav-divider {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Active state for group when child is active */
+.nav-group.has-active .nav-group-header {
+  color: var(--primary);
+}
+
+/* Badge for group item count */
+.nav-group-badge {
+  background: var(--primary);
+  color: white;
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 8px;
+}
