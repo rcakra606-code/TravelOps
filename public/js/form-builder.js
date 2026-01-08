@@ -50,6 +50,10 @@ class FormBuilder {
     let inputHtml = '';
     
     switch (field.type) {
+      case 'divider':
+        return this.renderDivider(field);
+      case 'calculated':
+        return this.renderCalculatedField(field, fieldId);
       case 'text':
       case 'email':
       case 'url':
@@ -150,6 +154,29 @@ class FormBuilder {
           ${attrs}
           class="form-control ${prefix ? 'with-prefix' : ''}"
         >
+      </div>
+    `;
+  }
+
+  renderDivider(field) {
+    return `
+      <div class="form-field-full form-divider" style="grid-column: 1 / -1; margin: 16px 0 8px 0; padding: 12px 0 8px 0; border-top: 1px solid var(--border-light, #e5e7eb);">
+        <span style="font-weight: 600; font-size: 14px; color: var(--text, #374151);">${field.label || ''}</span>
+      </div>
+    `;
+  }
+
+  renderCalculatedField(field, fieldId) {
+    return `
+      <div class="form-field" data-field-name="${field.name}">
+        <label class="form-label">${field.label}</label>
+        <div class="calculated-display" id="${fieldId}" 
+             data-formula="${this.escapeHtml(field.formula || '')}"
+             data-dependencies="${(field.dependencies || []).join(',')}"
+             style="padding: 12px; background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 2px dashed var(--primary, #3b82f6); border-radius: 8px; text-align: center; font-size: 18px; font-weight: 700; color: var(--primary, #3b82f6);">
+          0%
+        </div>
+        <input type="hidden" name="${field.name}" value="">
       </div>
     `;
   }
@@ -563,6 +590,61 @@ class FormBuilder {
       });
       
       updateSelected();
+    });
+  }
+
+  /**
+   * Initialize calculated fields after form is rendered
+   */
+  static initCalculatedFields(container) {
+    const calculatedDisplays = container.querySelectorAll('.calculated-display');
+    
+    calculatedDisplays.forEach(display => {
+      const formula = display.dataset.formula;
+      const dependencies = (display.dataset.dependencies || '').split(',').filter(d => d);
+      
+      if (!formula || dependencies.length === 0) return;
+      
+      // Function to update calculated value
+      const updateCalculated = () => {
+        try {
+          // Get values from dependency fields
+          const values = {};
+          dependencies.forEach(dep => {
+            const input = container.querySelector(`[name="${dep}"]`);
+            if (input) {
+              // Parse number, removing any formatting
+              let val = input.value.replace(/[^\d.-]/g, '');
+              values[dep] = parseFloat(val) || 0;
+            }
+          });
+          
+          // Create function from formula with dependency variables
+          const funcBody = `
+            const { ${dependencies.join(', ')} } = values;
+            return ${formula};
+          `;
+          const calcFunc = new Function('values', funcBody);
+          const result = calcFunc(values);
+          
+          display.textContent = isNaN(result) || !isFinite(result) ? '0%' : result;
+        } catch (e) {
+          console.warn('Calculated field error:', e);
+          display.textContent = '0%';
+        }
+      };
+      
+      // Attach listeners to dependency fields
+      dependencies.forEach(dep => {
+        const input = container.querySelector(`[name="${dep}"]`);
+        if (input) {
+          input.addEventListener('input', updateCalculated);
+          input.addEventListener('change', updateCalculated);
+        }
+      });
+      
+      // Initial calculation
+      updateCalculated();
     });
   }
 }

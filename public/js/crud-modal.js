@@ -64,6 +64,7 @@ class CRUDModal {
     CRUDModal.waitForElement('#modalForm').then(form => {
       if (form) {
         FormBuilder.enhance(form);
+        FormBuilder.initCalculatedFields(form);
         
         // Setup validation
         if (options.validation) {
@@ -154,6 +155,7 @@ class CRUDModal {
     CRUDModal.waitForElement('#modalForm').then(form => {
       if (form) {
         FormBuilder.enhance(form);
+        FormBuilder.initCalculatedFields(form);
         
         // Setup validation
         if (options.validation) {
