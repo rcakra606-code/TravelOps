@@ -454,21 +454,6 @@ window.startTokenRefresh = startTokenRefresh;
 window.checkInactivity = checkInactivity;
 window.handleSessionExpired = handleSessionExpired;
 
-// ES Module exports (for module scripts using import)
-export { 
-  api, 
-  getHeaders, 
-  fetchJson, 
-  formatCurrency, 
-  formatNumberWithCommas, 
-  parseFormattedNumber, 
-  getUser, 
-  refreshTokenIfNeeded, 
-  startTokenRefresh, 
-  checkInactivity, 
-  handleSessionExpired 
-};
-
 // Auto-start token refresh when module loads (after auth check)
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
