@@ -462,18 +462,3 @@ if (document.readyState === 'loading') {
 } else {
   if (authCheckPassed) startTokenRefresh();
 }
-
-// ES Module exports (for import statements)
-export { 
-  api, 
-  getHeaders, 
-  fetchJson, 
-  formatCurrency, 
-  formatNumberWithCommas, 
-  parseFormattedNumber, 
-  getUser, 
-  refreshTokenIfNeeded, 
-  startTokenRefresh, 
-  checkInactivity, 
-  handleSessionExpired 
-};

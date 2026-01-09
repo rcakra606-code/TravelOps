@@ -560,18 +560,17 @@
 <script src="/js/utils.js"></script>
 <script src="/js/confirm-dialog.js"></script>
 <script src="/js/mobile-menu.js"></script>
-<script type="module" src="/js/auth-common.js?v=20251215"></script>
+<script src="/js/auth-common.js?v=20251215"></script>
 <script src="/js/logout-handler.js?v=20251215"></script>
 <script src="/js/app-enhancements.js"></script>
-<script type="module">
-  import { getUser, fetchJson, startTokenRefresh } from '/js/auth-common.js?v=20251215';
+<script>
+  // Use global functions from auth-common.js
+  const getUser = window.getUser;
+  const fetchJson = window.fetchJson;
+  const startTokenRefresh = window.startTokenRefresh;
   
   // Start token refresh system
-  startTokenRefresh();
-  
-  // Make available globally
-  window.getUser = getUser;
-  window.fetchJson = fetchJson;
+  if (startTokenRefresh) startTokenRefresh();
   
   const el = id => document.getElementById(id);
   
