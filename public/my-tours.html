@@ -564,13 +564,8 @@
 <script src="/js/logout-handler.js?v=20251215"></script>
 <script src="/js/app-enhancements.js"></script>
 <script>
-  // Use global functions from auth-common.js
-  const getUser = window.getUser;
-  const fetchJson = window.fetchJson;
-  const startTokenRefresh = window.startTokenRefresh;
-  
-  // Start token refresh system
-  if (startTokenRefresh) startTokenRefresh();
+  // Start token refresh system (uses window.startTokenRefresh from auth-common.js)
+  if (window.startTokenRefresh) window.startTokenRefresh();
   
   const el = id => document.getElementById(id);
   

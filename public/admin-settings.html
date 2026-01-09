@@ -1143,13 +1143,8 @@
   <script src="/js/logout-handler.js?v=20251215"></script>
   <script src="/js/confirm-dialog.js"></script>
   <script>
-    // Use global functions from auth-common.js
-    const getUser = window.getUser;
-    const fetchJson = window.fetchJson;
-    const startTokenRefresh = window.startTokenRefresh;
-    
-    // Start token refresh system
-    if (startTokenRefresh) startTokenRefresh();
+    // Start token refresh system (uses window.startTokenRefresh from auth-common.js)
+    if (window.startTokenRefresh) window.startTokenRefresh();
     
     // Initialize user info and auth check
     document.addEventListener('DOMContentLoaded', () => {
@@ -1161,7 +1156,7 @@
       }
       
       try {
-        const user = getUser();
+        const user = window.getUser();
         // Admin only page
         if (user.type !== 'admin') {
           window.location.href = '/single-dashboard.html';
