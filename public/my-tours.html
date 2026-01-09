@@ -475,6 +475,24 @@
       <select class="filter-select" id="filterStaff" style="display:none;">
         <option value="">All Staff</option>
       </select>
+      <select class="filter-select" id="filterYear">
+        <option value="">All Years</option>
+      </select>
+      <select class="filter-select" id="filterMonth">
+        <option value="">All Months</option>
+        <option value="01">January</option>
+        <option value="02">February</option>
+        <option value="03">March</option>
+        <option value="04">April</option>
+        <option value="05">May</option>
+        <option value="06">June</option>
+        <option value="07">July</option>
+        <option value="08">August</option>
+        <option value="09">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
       <select class="filter-select" id="filterStatus">
         <option value="">All Status</option>
         <option value="belum jalan">⏳ Belum Jalan</option>
@@ -486,7 +504,6 @@
         <option value="invoiced">✅ Invoiced</option>
         <option value="not-invoiced">⏳ Not Invoiced</option>
       </select>
-      <input type="month" class="filter-select" id="filterMonth" title="Filter by departure month">
     </div>
 
     <!-- Tours Table -->
@@ -622,14 +639,28 @@
         );
       }
       
-      // Apply filters and render
+      // Populate year filter dropdown based on available data
+      populateYearFilter();
+      
+      // Apply filters and render (also updates stats)
       applyFilters();
-      updateStats();
       
     } catch (err) {
       console.error('Error loading data:', err);
       toast.error('Failed to load tour data');
     }
+  }
+  
+  function populateYearFilter() {
+    // Get unique years from tour data (based on departure_date)
+    const years = [...new Set(allTours
+      .map(t => t.departure_date ? t.departure_date.substring(0, 4) : null)
+      .filter(Boolean)
+    )].sort((a, b) => b - a); // Sort descending (newest first)
+    
+    const yearSelect = el('filterYear');
+    yearSelect.innerHTML = '<option value="">All Years</option>' + 
+      years.map(y => `<option value="${y}">${y}</option>`).join('');
   }
   
   function setupEventListeners() {
@@ -638,9 +669,10 @@
     
     // Filter dropdowns
     el('filterStaff').addEventListener('change', applyFilters);
+    el('filterYear').addEventListener('change', applyFilters);
+    el('filterMonth').addEventListener('change', applyFilters);
     el('filterStatus').addEventListener('change', applyFilters);
     el('filterInvoice').addEventListener('change', applyFilters);
-    el('filterMonth').addEventListener('change', applyFilters);
     
     // Modal close
     el('modalClose').addEventListener('click', closeModal);
@@ -661,12 +693,22 @@
     };
   }
   
+  function hasActiveFilters() {
+    return el('searchInput').value.trim() ||
+           el('filterStaff').value ||
+           el('filterYear').value ||
+           el('filterMonth').value ||
+           el('filterStatus').value ||
+           el('filterInvoice').value;
+  }
+  
   function applyFilters() {
     const search = el('searchInput').value.toLowerCase().trim();
     const staffFilter = el('filterStaff').value;
+    const yearFilter = el('filterYear').value;
+    const monthFilter = el('filterMonth').value;
     const statusFilter = el('filterStatus').value;
     const invoiceFilter = el('filterInvoice').value;
-    const monthFilter = el('filterMonth').value;
     
     filteredTours = allTours.filter(tour => {
       // Staff filter (for admin view)
@@ -688,6 +730,18 @@
         if (!searchFields.includes(search)) return false;
       }
       
+      // Year filter (based on departure_date)
+      if (yearFilter && tour.departure_date) {
+        const tourYear = tour.departure_date.substring(0, 4);
+        if (tourYear !== yearFilter) return false;
+      }
+      
+      // Month filter (based on departure_date)
+      if (monthFilter && tour.departure_date) {
+        const tourMonth = tour.departure_date.substring(5, 7);
+        if (tourMonth !== monthFilter) return false;
+      }
+      
       // Status filter
       if (statusFilter && tour.status !== statusFilter) return false;
       
@@ -695,23 +749,21 @@
       if (invoiceFilter === 'invoiced' && (!tour.invoice_number || !tour.invoice_number.trim())) return false;
       if (invoiceFilter === 'not-invoiced' && tour.invoice_number && tour.invoice_number.trim()) return false;
       
-      // Month filter (based on departure_date)
-      if (monthFilter && tour.departure_date) {
-        const tourMonth = tour.departure_date.substring(0, 7);
-        if (tourMonth !== monthFilter) return false;
-      }
-      
       return true;
     });
     
     renderTable();
+    updateStats(); // Update stats based on filtered data
   }
   
   function updateStats() {
+    // Use filtered tours for stats when filters are applied
+    const dataForStats = filteredTours.length > 0 || hasActiveFilters() ? filteredTours : allTours;
+    
     // Total counts
-    const totalTours = allTours.length;
-    const totalPassengers = allTours.reduce((sum, t) => sum + (parseInt(t.jumlah_peserta) || 0), 0);
-    const totalSales = allTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+    const totalTours = dataForStats.length;
+    const totalPassengers = dataForStats.reduce((sum, t) => sum + (parseInt(t.jumlah_peserta) || 0), 0);
+    const totalSales = dataForStats.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
     const avgPax = totalTours > 0 ? Math.round(totalPassengers / totalTours) : 0;
     
     el('totalMyTours').textContent = totalTours;
@@ -732,7 +784,7 @@
       'tidak jalan': 0
     };
     
-    allTours.forEach(t => {
+    dataForStats.forEach(t => {
       const status = (t.status || 'belum jalan').toLowerCase();
       const pax = parseInt(t.jumlah_peserta) || 0;
       
@@ -759,8 +811,8 @@
     el('toursCancelled').textContent = toursByStatus['tidak jalan'];
     
     // Invoice stats
-    const invoicedTours = allTours.filter(t => t.invoice_number && t.invoice_number.trim());
-    const notInvoicedTours = allTours.filter(t => !t.invoice_number || !t.invoice_number.trim());
+    const invoicedTours = dataForStats.filter(t => t.invoice_number && t.invoice_number.trim());
+    const notInvoicedTours = dataForStats.filter(t => !t.invoice_number || !t.invoice_number.trim());
     
     const invoicedCount = invoicedTours.length;
     const notInvoicedCount = notInvoicedTours.length;
