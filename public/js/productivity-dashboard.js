@@ -24,6 +24,8 @@ const PRODUCT_TYPES = [
 let productivityData = [];
 let usersData = [];
 let charts = {};
+let currentUser = null;
+let isBasicUser = false;
 let currentFilters = {
   year: new Date().getFullYear(),
   month: '',
@@ -34,11 +36,14 @@ let currentFilters = {
 /* === DISPLAY USER INFO === */
 function initUserInfo() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
+  currentUser = user;
+  isBasicUser = user.type === 'basic';
+  
   el('userName').textContent = user.name || user.username || '—';
   el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
   
   // Show admin settings link for admin users
-  if (user.type === 'admin') {
+  if (user.type === 'admin' || user.type === 'semi-admin') {
     const adminLink = el('adminSettingsLink');
     if (adminLink) adminLink.style.display = 'block';
   }
@@ -207,7 +212,7 @@ function renderProductTable(productType) {
         <td class="text-right"><strong>${formatCurrency(totalSales)}</strong></td>
         <td class="actions">
           <button class="btn btn-sm" onclick="editProductivity(${item.id})">✏️</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteProductivity(${item.id})">🗑️</button>
+          ${!isBasicUser ? `<button class="btn btn-sm btn-danger" onclick="deleteProductivity(${item.id})">🗑️</button>` : ''}
         </td>
       </tr>
     `;
@@ -746,13 +751,7 @@ el('filterBtn')?.addEventListener('click', () => {
               <option value="12" ${currentFilters.month === '12' ? 'selected' : ''}>December</option>
             </select>
           </div>
-          <div class="filter-group">
-            <label><span class="icon">👤</span> Staff</label>
-            <select name="staff">
-              <option value="all">All Staff</option>
-              ${usersData.map(u => `<option value="${u.name}" ${currentFilters.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
-            </select>
-          </div>
+          ${!isBasicUser ? '<div class="filter-group"><label><span class="icon">👤</span> Staff</label><select name="staff"><option value="all">All Staff</option>' + usersData.map(u => '<option value="' + u.name + '"' + (currentFilters.staff === u.name ? ' selected' : '') + '>' + u.name + '</option>').join('') + '</select></div>' : ''}
           <div class="filter-group">
             <label><span class="icon">📦</span> Product</label>
             <select name="product">
@@ -1201,5 +1200,15 @@ el('confirmImportBtn')?.addEventListener('click', async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   initUserInfo();
   initTabs();
+  
+  // Hide import button for basic users (they can only view their own data)
+  if (isBasicUser) {
+    const importBtn = el('importBtn');
+    if (importBtn) importBtn.style.display = 'none';
+    
+    const downloadTemplateBtn = el('downloadTemplateBtn');
+    if (downloadTemplateBtn) downloadTemplateBtn.style.display = 'none';
+  }
+  
   await loadData();
 });
