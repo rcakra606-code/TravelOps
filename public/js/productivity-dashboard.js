@@ -120,9 +120,9 @@ function initProductTab(productType) {
   tabContent.innerHTML = `
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
       <h3>${product.icon} ${product.name} Sales</h3>
-      <button class="btn btn-primary" onclick="openAddProductivityModal('${productType}')">
+      ${!isBasicUser ? `<button class="btn btn-primary" onclick="openAddProductivityModal('${productType}')">
         ➕ Add ${product.name} Record
-      </button>
+      </button>` : ''}
     </div>
     
     <!-- Product Metrics -->
@@ -211,8 +211,8 @@ function renderProductTable(productType) {
         <td class="text-right"><span class="profit-margin ${getMarginClass(corpMargin)}">${formatPercent(corpMargin)}</span></td>
         <td class="text-right"><strong>${formatCurrency(totalSales)}</strong></td>
         <td class="actions">
-          <button class="btn btn-sm" onclick="editProductivity(${item.id})">✏️</button>
-          ${!isBasicUser ? `<button class="btn btn-sm btn-danger" onclick="deleteProductivity(${item.id})">🗑️</button>` : ''}
+          ${!isBasicUser ? `<button class="btn btn-sm" onclick="editProductivity(${item.id})">✏️</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteProductivity(${item.id})">🗑️</button>` : '<span style="color: var(--text-secondary);">View only</span>'}
         </td>
       </tr>
     `;
@@ -248,13 +248,23 @@ async function loadData() {
     // Load productivity data
     productivityData = await window.fetchJson('/api/productivity') || [];
     
-    // Load users for staff dropdown
-    try {
-      usersData = await window.fetchJson('/api/users') || [];
-    } catch (err) {
-      // For basic users who can't access /api/users
-      const user = window.getUser();
-      usersData = [{ name: user.name || user.username }];
+    // Load users for staff dropdown (admin/semi-admin only)
+    if (!isBasicUser) {
+      try {
+        const allUsers = await window.fetchJson('/api/users') || [];
+        // Filter to get users with valid names
+        usersData = allUsers.filter(u => u.name && u.name.trim());
+        // If no users with names, use usernames
+        if (usersData.length === 0) {
+          usersData = allUsers.filter(u => u.username).map(u => ({ ...u, name: u.name || u.username }));
+        }
+      } catch (err) {
+        console.error('Error loading users:', err);
+        usersData = [];
+      }
+    } else {
+      // Basic users don't need the dropdown
+      usersData = [];
     }
     
     renderOverview();
@@ -487,6 +497,12 @@ function renderOverviewCharts() {
 
 /* === OPEN ADD MODAL === */
 window.openAddProductivityModal = function(productType) {
+  // Prevent basic users from adding
+  if (isBasicUser) {
+    window.toast?.error('You do not have permission to add productivity records');
+    return;
+  }
+  
   const product = PRODUCT_TYPES.find(p => p.id === productType);
   if (!product) return;
   
@@ -618,6 +634,12 @@ function setupMarginCalculation() {
 
 /* === EDIT PRODUCTIVITY === */
 window.editProductivity = async function(id) {
+  // Prevent basic users from editing
+  if (isBasicUser) {
+    window.toast?.error('You do not have permission to edit productivity records');
+    return;
+  }
+  
   const item = productivityData.find(d => d.id === id);
   if (!item) return;
   
@@ -697,6 +719,12 @@ window.editProductivity = async function(id) {
 
 /* === DELETE PRODUCTIVITY === */
 window.deleteProductivity = async function(id) {
+  // Prevent basic users from deleting
+  if (isBasicUser) {
+    window.toast?.error('You do not have permission to delete productivity records');
+    return;
+  }
+  
   const item = productivityData.find(d => d.id === id);
   if (!item) return;
   
