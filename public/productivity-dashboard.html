@@ -2,6 +2,9 @@
 <html lang="id">
 <head>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Productivity Dashboard - TravelOps</title>
@@ -171,6 +174,451 @@
       grid-template-columns: 1fr;
     }
   }
+  
+  /* Comparison Feature Styles */
+  .comparison-container {
+    padding: 20px 0;
+  }
+  .comparison-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .period-selector {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .period-btn {
+    padding: 8px 16px;
+    border: 2px solid var(--border-light);
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .period-btn:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+  }
+  .period-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: white;
+  }
+  .comparison-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .comparison-controls select {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 13px;
+  }
+  .comparison-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 24px;
+  }
+  .comparison-card {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+  }
+  .comparison-card-header {
+    padding: 16px;
+    background: linear-gradient(135deg, var(--bg-tertiary) 0%, var(--bg-secondary) 100%);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .comparison-card-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comparison-card-body {
+    padding: 16px;
+  }
+  .comparison-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .comparison-row:last-child {
+    margin-bottom: 0;
+  }
+  .comparison-item {
+    text-align: center;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+  }
+  .comparison-item.current {
+    background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+    border: 1px solid #3b82f6;
+  }
+  .comparison-item.previous {
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border: 1px solid #9ca3af;
+  }
+  .comparison-item.change {
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+  }
+  .comparison-item .label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .comparison-item .value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .comparison-item .value.positive {
+    color: #10b981;
+  }
+  .comparison-item .value.negative {
+    color: #ef4444;
+  }
+  .comparison-item .sub-label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+  .change-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .change-indicator.up {
+    background: #dcfce7;
+    color: #166534;
+  }
+  .change-indicator.down {
+    background: #fee2e2;
+    color: #991b1b;
+  }
+  .change-indicator.neutral {
+    background: #f3f4f6;
+    color: #6b7280;
+  }
+  .comparison-summary {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 2px solid #3b82f6;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .comparison-summary h4 {
+    margin: 0 0 16px 0;
+    color: #1e40af;
+    font-size: 16px;
+  }
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .summary-item {
+    text-align: center;
+  }
+  .summary-item .label {
+    font-size: 11px;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .summary-item .value {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1e40af;
+  }
+  .comparison-chart-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+  }
+  .comparison-chart-box {
+    background: var(--bg-secondary);
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+  }
+  .comparison-chart-box h4 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comparison-table-container {
+    margin-top: 24px;
+    overflow-x: auto;
+  }
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .comparison-table th,
+  .comparison-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-light);
+  }
+  .comparison-table th {
+    background: var(--bg-tertiary);
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    letter-spacing: 0.5px;
+  }
+  .comparison-table td {
+    font-size: 13px;
+  }
+  .comparison-table tr:hover {
+    background: var(--bg-tertiary);
+  }
+  @media (max-width: 768px) {
+    .comparison-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .period-selector {
+      width: 100%;
+    }
+    .period-btn {
+      flex: 1;
+      text-align: center;
+      padding: 10px 8px;
+      font-size: 11px;
+    }
+    .comparison-row {
+      grid-template-columns: 1fr;
+    }
+    .comparison-chart-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Export Dropdown Styles */
+  .export-dropdown {
+    position: relative;
+  }
+  .export-menu {
+    animation: fadeInDown 0.2s ease;
+  }
+  .export-option:hover {
+    background: var(--bg-tertiary) !important;
+  }
+  .export-option:first-child {
+    border-radius: 8px 8px 0 0;
+  }
+  .export-option:last-child {
+    border-radius: 0 0 8px 8px;
+  }
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  /* Loading Overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+  }
+  .loading-overlay.active {
+    display: flex;
+  }
+  .loading-spinner {
+    background: white;
+    padding: 30px 50px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+  }
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e5e7eb;
+    border-top-color: #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  .loading-text {
+    font-size: 14px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+  
+  /* Table Search Box */
+  .table-search-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+  }
+  .table-search-box input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .table-search-box input::placeholder {
+    color: var(--text-secondary);
+  }
+  .search-results-count {
+    font-size: 12px;
+    color: var(--text-secondary);
+  }
+  
+  /* Pagination */
+  .pagination-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin-top: 20px;
+    padding: 16px 0;
+  }
+  .pagination-btn {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    background: var(--bg-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+  }
+  .pagination-btn:hover:not(:disabled) {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .pagination-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .pagination-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+  }
+  .pagination-info {
+    font-size: 12px;
+    color: var(--text-secondary);
+    padding: 0 12px;
+  }
+  
+  /* Keyboard Shortcuts Badge */
+  .kbd-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    font-size: 10px;
+    font-family: monospace;
+    color: var(--text-secondary);
+    margin-left: 8px;
+  }
+  
+  /* Data Validation Warning */
+  .validation-warning {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #fef3c7;
+    border: 1px solid #f59e0b;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #92400e;
+  }
+  .validation-warning.error {
+    background: #fee2e2;
+    border-color: #ef4444;
+    color: #991b1b;
+  }
+  
+  /* Print Styles */
+  @media print {
+    .sidebar, .dark-mode-toggle, .header, .productivity-tabs,
+    .export-dropdown, #filterBtn, #importBtn, #downloadTemplateBtn,
+    .btn, .actions, .loading-overlay, .modal, #importModal {
+      display: none !important;
+    }
+    .main {
+      margin: 0;
+      padding: 20px;
+    }
+    .card {
+      box-shadow: none;
+      border: 1px solid #ddd;
+    }
+    .tab-content {
+      display: block !important;
+    }
+    .tab-content:not(.active) {
+      display: none !important;
+    }
+    .chart-box, .comparison-chart-box {
+      break-inside: avoid;
+    }
+    body {
+      background: white !important;
+    }
+  }
 </style>
 </head>
 <body>
@@ -248,7 +696,21 @@
       <div style="display: flex; gap: 10px; flex-wrap: wrap;">
         <button id="filterBtn" class="btn">🔍 Filter</button>
         <button id="importBtn" class="btn" style="background: #10b981; color: white;">⬆️ Import</button>
-        <button id="exportBtn" class="btn">⬇️ Export</button>
+        <div class="export-dropdown" style="position: relative;">
+          <button id="exportBtn" class="btn" style="display: flex; align-items: center; gap: 4px;">⬇️ Export <span style="font-size: 10px;">▼</span></button>
+          <div id="exportMenu" class="export-menu" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; min-width: 160px; margin-top: 4px;">
+            <button class="export-option" data-format="csv" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
+              📄 Export CSV
+            </button>
+            <button class="export-option" data-format="xlsx" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
+              📊 Export Excel
+            </button>
+            <button class="export-option" data-format="pdf" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
+              📑 Export PDF
+            </button>
+          </div>
+        </div>
+        <button id="printBtn" class="btn" title="Print (Ctrl+P)">🖨️ Print</button>
         <button id="downloadTemplateBtn" class="btn" style="background: #6366f1; color: white;">📄 Template</button>
       </div>
     </div>
@@ -257,6 +719,7 @@
     <div class="card">
       <div class="productivity-tabs" id="productTabs">
         <button class="tab-btn active" data-tab="overview">📊 Overview</button>
+        <button class="tab-btn" data-tab="comparison">📈 Comparison</button>
         <button class="tab-btn" data-tab="flight">✈️ Flight</button>
         <button class="tab-btn" data-tab="hotel">🏨 Hotel</button>
         <button class="tab-btn" data-tab="tour">🧳 Tour</button>
@@ -335,6 +798,77 @@
               <tr><td colspan="6" class="text-center">Loading...</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+
+      <!-- Comparison Tab -->
+      <div class="tab-content" id="tab-comparison">
+        <div class="comparison-container">
+          <div class="comparison-header">
+            <div>
+              <h3 style="margin: 0 0 8px 0;">📈 Period Comparison Analysis</h3>
+              <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">Compare performance across different time periods</p>
+            </div>
+            <div class="comparison-controls">
+              <select id="comparisonYear">
+                <!-- Populated dynamically -->
+              </select>
+              <select id="comparisonStaff">
+                <option value="all">All Staff</option>
+                <!-- Populated dynamically -->
+              </select>
+              <select id="comparisonProduct">
+                <option value="all">All Products</option>
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+          </div>
+          
+          <!-- Period Selector -->
+          <div class="period-selector" id="periodSelector">
+            <button class="period-btn active" data-period="month">📅 Monthly</button>
+            <button class="period-btn" data-period="quarter">📊 Quarterly</button>
+            <button class="period-btn" data-period="semester">📈 Semester</button>
+            <button class="period-btn" data-period="ytd">🎯 Year to Date</button>
+          </div>
+          
+          <!-- Summary Section -->
+          <div class="comparison-summary" id="comparisonSummary">
+            <h4>📊 Comparison Summary</h4>
+            <div class="summary-grid" id="summaryGrid">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+          
+          <!-- Comparison Cards -->
+          <div class="comparison-cards" id="comparisonCards">
+            <!-- Populated dynamically -->
+          </div>
+          
+          <!-- Comparison Charts -->
+          <div class="comparison-chart-container">
+            <div class="comparison-chart-box">
+              <h4>📈 Sales Comparison</h4>
+              <canvas id="chartComparison" style="max-height: 300px;"></canvas>
+            </div>
+            <div class="comparison-chart-box">
+              <h4>💰 Profit Margin Trend</h4>
+              <canvas id="chartMarginTrend" style="max-height: 300px;"></canvas>
+            </div>
+          </div>
+          
+          <!-- Detailed Comparison Table -->
+          <div class="comparison-table-container">
+            <h4 style="margin: 0 0 16px 0;">📋 Detailed Breakdown</h4>
+            <table class="comparison-table data-table" id="comparisonTable">
+              <thead id="comparisonTableHead">
+                <!-- Populated dynamically -->
+              </thead>
+              <tbody id="comparisonTableBody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -421,9 +955,21 @@
 <!-- Toast Container -->
 <div id="toastContainer" class="toast-container"></div>
 
+<!-- Confirm Dialog Container -->
+<div id="confirmDialogContainer"></div>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" class="loading-overlay">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+</div>
+
 <!-- Scripts -->
 <script src="/js/auth-common.js"></script>
 <script src="/js/toast.js"></script>
+<script src="/js/confirm-dialog.js"></script>
 <script src="/js/dashboard.js"></script>
 <script src="/js/form-builder.js"></script>
 <script src="/js/crud-modal.js"></script>

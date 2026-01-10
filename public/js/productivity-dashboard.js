@@ -33,6 +33,14 @@ let currentFilters = {
   product: 'all'
 };
 
+// Comparison state
+let comparisonState = {
+  period: 'month',
+  year: new Date().getFullYear(),
+  staff: 'all',
+  product: 'all'
+};
+
 /* === DISPLAY USER INFO === */
 function initUserInfo() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -78,6 +86,284 @@ function getMonthName(month) {
   return months[parseInt(month) - 1] || '';
 }
 
+/* === LOADING STATE MANAGEMENT === */
+function showLoading(message = 'Loading...') {
+  const overlay = el('loadingOverlay');
+  if (overlay) {
+    const textEl = overlay.querySelector('.loading-text');
+    if (textEl) textEl.textContent = message;
+    overlay.classList.add('active');
+  }
+}
+
+function hideLoading() {
+  const overlay = el('loadingOverlay');
+  if (overlay) {
+    overlay.classList.remove('active');
+  }
+}
+
+/* === PRINT FUNCTIONALITY === */
+function initPrintButton() {
+  const printBtn = el('printBtn');
+  if (printBtn) {
+    printBtn.addEventListener('click', () => {
+      // Set print title
+      const activeTab = document.querySelector('.tab-btn.active');
+      const tabName = activeTab ? activeTab.textContent.trim() : 'Productivity Report';
+      document.title = `Productivity Dashboard - ${tabName}`;
+      window.print();
+    });
+  }
+}
+
+/* === KEYBOARD SHORTCUTS === */
+function initKeyboardShortcuts() {
+  document.addEventListener('keydown', (e) => {
+    // Don't trigger shortcuts when typing in inputs
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+      return;
+    }
+    
+    // Ctrl+E - Export menu
+    if (e.ctrlKey && e.key === 'e') {
+      e.preventDefault();
+      const exportDropdown = document.querySelector('.export-dropdown');
+      if (exportDropdown) {
+        exportDropdown.classList.toggle('active');
+      }
+    }
+    
+    // Ctrl+P - Print
+    if (e.ctrlKey && e.key === 'p') {
+      e.preventDefault();
+      el('printBtn')?.click();
+    }
+    
+    // Ctrl+F - Focus filter (when not in browser find)
+    if (e.ctrlKey && e.shiftKey && e.key === 'F') {
+      e.preventDefault();
+      el('filterYear')?.focus();
+    }
+    
+    // Escape - Close modals/dropdowns
+    if (e.key === 'Escape') {
+      // Close export dropdown
+      document.querySelectorAll('.export-dropdown.active').forEach(d => d.classList.remove('active'));
+      // Close filter modal
+      el('filterModal')?.classList.remove('active');
+    }
+    
+    // Number keys 1-9 for quick tab navigation
+    if (!e.ctrlKey && !e.altKey && e.key >= '1' && e.key <= '9') {
+      const tabIndex = parseInt(e.key) - 1;
+      const tabs = document.querySelectorAll('.tab-btn');
+      if (tabs[tabIndex]) {
+        tabs[tabIndex].click();
+      }
+    }
+  });
+}
+
+/* === TABLE SEARCH FUNCTIONALITY === */
+function initTableSearch(productType) {
+  const container = el(`tab-${productType}`);
+  if (!container) return;
+  
+  // Check if search already exists
+  if (container.querySelector('.table-search-box')) return;
+  
+  const table = container.querySelector('.data-table');
+  if (!table) return;
+  
+  // Create search box
+  const searchBox = document.createElement('div');
+  searchBox.className = 'table-search-box';
+  searchBox.innerHTML = `
+    <input type="text" id="search-${productType}" placeholder="🔍 Search in table..." class="table-search-input">
+  `;
+  
+  // Insert before table
+  table.parentNode.insertBefore(searchBox, table);
+  
+  // Add search listener
+  const searchInput = el(`search-${productType}`);
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
+      filterTable(productType, e.target.value);
+    });
+  }
+}
+
+function filterTable(productType, searchTerm) {
+  const tbody = el(`table-${productType}`);
+  if (!tbody) return;
+  
+  const rows = tbody.querySelectorAll('tr');
+  const term = searchTerm.toLowerCase().trim();
+  
+  rows.forEach(row => {
+    if (!term) {
+      row.style.display = '';
+      return;
+    }
+    
+    const text = row.textContent.toLowerCase();
+    row.style.display = text.includes(term) ? '' : 'none';
+  });
+  
+  // Update visible count
+  const visibleRows = tbody.querySelectorAll('tr:not([style*="display: none"])');
+  const container = el(`tab-${productType}`);
+  let countEl = container?.querySelector('.search-count');
+  
+  if (!countEl && container) {
+    countEl = document.createElement('div');
+    countEl.className = 'search-count';
+    countEl.style.cssText = 'margin: 8px 0; font-size: 0.85rem; color: var(--text-secondary);';
+    const searchBox = container.querySelector('.table-search-box');
+    searchBox?.appendChild(countEl);
+  }
+  
+  if (countEl && term) {
+    countEl.textContent = `Showing ${visibleRows.length} of ${rows.length} records`;
+  } else if (countEl) {
+    countEl.textContent = '';
+  }
+}
+
+/* === DATA VALIDATION === */
+function validateProductivityData(data) {
+  const warnings = [];
+  
+  // Check if profit > sales (unusual)
+  const totalRetail = (parseFloat(data.retail_sales) || 0);
+  const retailProfit = (parseFloat(data.retail_profit) || 0);
+  const totalCorp = (parseFloat(data.corporate_sales) || 0);
+  const corpProfit = (parseFloat(data.corporate_profit) || 0);
+  
+  if (retailProfit > totalRetail && totalRetail > 0) {
+    warnings.push('⚠️ Retail profit exceeds retail sales - please verify');
+  }
+  
+  if (corpProfit > totalCorp && totalCorp > 0) {
+    warnings.push('⚠️ Corporate profit exceeds corporate sales - please verify');
+  }
+  
+  // Check for negative values
+  if (totalRetail < 0 || retailProfit < 0 || totalCorp < 0 || corpProfit < 0) {
+    warnings.push('⚠️ Negative values detected - please verify');
+  }
+  
+  // Check margin (unusual if > 50%)
+  const totalSales = totalRetail + totalCorp;
+  const totalProfit = retailProfit + corpProfit;
+  if (totalSales > 0) {
+    const margin = (totalProfit / totalSales) * 100;
+    if (margin > 50) {
+      warnings.push(`⚠️ Unusually high profit margin (${margin.toFixed(1)}%) - please verify`);
+    }
+  }
+  
+  return warnings;
+}
+
+function showValidationWarnings(warnings) {
+  const container = document.querySelector('.validation-warnings') || createValidationContainer();
+  
+  if (warnings.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  container.innerHTML = warnings.map(w => `<div class="validation-warning">${w}</div>`).join('');
+  container.style.display = 'block';
+}
+
+function createValidationContainer() {
+  const container = document.createElement('div');
+  container.className = 'validation-warnings';
+  container.style.cssText = 'margin-bottom: 15px;';
+  
+  // Find modal body to insert
+  const modalBody = document.querySelector('.modal-body');
+  if (modalBody) {
+    modalBody.insertBefore(container, modalBody.firstChild);
+  }
+  
+  return container;
+}
+
+/* === PAGINATION === */
+const ITEMS_PER_PAGE = 20;
+let paginationState = {};
+
+function initPagination(productType, totalItems) {
+  const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE);
+  
+  if (!paginationState[productType]) {
+    paginationState[productType] = { currentPage: 1, totalPages };
+  } else {
+    paginationState[productType].totalPages = totalPages;
+  }
+  
+  renderPaginationControls(productType);
+}
+
+function renderPaginationControls(productType) {
+  const container = el(`pagination-${productType}`);
+  if (!container) return;
+  
+  const state = paginationState[productType];
+  if (!state || state.totalPages <= 1) {
+    container.innerHTML = '';
+    return;
+  }
+  
+  const { currentPage, totalPages } = state;
+  
+  let html = `
+    <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage('${productType}', 1)">⟪</button>
+    <button class="pagination-btn" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage('${productType}', ${currentPage - 1})">←</button>
+  `;
+  
+  // Page numbers
+  const startPage = Math.max(1, currentPage - 2);
+  const endPage = Math.min(totalPages, currentPage + 2);
+  
+  for (let i = startPage; i <= endPage; i++) {
+    html += `<button class="pagination-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage('${productType}', ${i})">${i}</button>`;
+  }
+  
+  html += `
+    <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage('${productType}', ${currentPage + 1})">→</button>
+    <button class="pagination-btn" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage('${productType}', ${totalPages})">⟫</button>
+    <span class="pagination-info">Page ${currentPage} of ${totalPages}</span>
+  `;
+  
+  container.innerHTML = html;
+}
+
+function goToPage(productType, page) {
+  const state = paginationState[productType];
+  if (!state) return;
+  
+  page = Math.max(1, Math.min(page, state.totalPages));
+  state.currentPage = page;
+  
+  renderProductTable(productType);
+}
+
+function getPaginatedData(data, productType) {
+  const state = paginationState[productType];
+  if (!state) return data;
+  
+  const start = (state.currentPage - 1) * ITEMS_PER_PAGE;
+  const end = start + ITEMS_PER_PAGE;
+  
+  return data.slice(start, end);
+}
+
 /* === TAB MANAGEMENT === */
 function initTabs() {
   const tabs = document.querySelectorAll('.tab-btn');
@@ -96,7 +382,9 @@ function initTabs() {
       if (content) content.classList.add('active');
       
       // Initialize tab content if needed
-      if (tabId !== 'overview') {
+      if (tabId === 'comparison') {
+        initComparisonTab();
+      } else if (tabId !== 'overview') {
         initProductTab(tabId);
       }
     });
@@ -179,11 +467,17 @@ function renderProductTable(productType) {
   const tbody = el(`table-${productType}`);
   if (!tbody) return;
   
+  // Initialize table search if not already done
+  initTableSearch(productType);
+  
   const filtered = productivityData.filter(d => d.product_type === productType);
   
   if (filtered.length === 0) {
     tbody.innerHTML = `<tr><td colspan="10" class="text-center">No ${productType} records found. Click "Add ${productType} Record" to create one.</td></tr>`;
     updateProductMetrics(productType, []);
+    // Clear pagination
+    const paginationContainer = el(`pagination-${productType}`);
+    if (paginationContainer) paginationContainer.innerHTML = '';
     return;
   }
   
@@ -193,7 +487,13 @@ function renderProductTable(productType) {
     return b.month - a.month;
   });
   
-  tbody.innerHTML = filtered.map(item => {
+  // Initialize pagination
+  initPagination(productType, filtered.length);
+  
+  // Get paginated data
+  const paginatedData = getPaginatedData(filtered, productType);
+  
+  tbody.innerHTML = paginatedData.map(item => {
     const retailMargin = calculateMargin(item.retail_sales, item.retail_profit);
     const corpMargin = calculateMargin(item.corporate_sales, item.corporate_profit);
     const totalSales = (parseFloat(item.retail_sales) || 0) + (parseFloat(item.corporate_sales) || 0);
@@ -549,6 +849,25 @@ window.openAddProductivityModal = function(productType) {
       }
     });
     
+    // Validate data before saving
+    const warnings = validateProductivityData(formData);
+    if (warnings.length > 0) {
+      // Show warnings but allow to continue
+      const proceed = await new Promise(resolve => {
+        if (window.confirmDialog) {
+          window.confirmDialog(
+            'Data Validation Warnings',
+            `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        } else {
+          resolve(confirm(warnings.join('\n') + '\n\nDo you want to save anyway?'));
+        }
+      });
+      if (!proceed) return;
+    }
+    
     // Add product type
     formData.product_type = productType;
     
@@ -678,6 +997,24 @@ window.editProductivity = async function(id) {
         formData[f] = 0;
       }
     });
+    
+    // Validate data before saving
+    const warnings = validateProductivityData(formData);
+    if (warnings.length > 0) {
+      const proceed = await new Promise(resolve => {
+        if (window.confirmDialog) {
+          window.confirmDialog(
+            'Data Validation Warnings',
+            `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
+            () => resolve(true),
+            () => resolve(false)
+          );
+        } else {
+          resolve(confirm(warnings.join('\n') + '\n\nDo you want to save anyway?'));
+        }
+      });
+      if (!proceed) return;
+    }
     
     // Keep product type
     formData.product_type = item.product_type;
@@ -813,31 +1150,34 @@ function applyFilters(data) {
     product: data.product || 'all'
   };
   
-  // Filter data
-  let filtered = [...productivityData];
+  // Filter data and store in a separate variable
+  let filteredData = [...productivityData];
   
   if (currentFilters.year) {
-    filtered = filtered.filter(d => d.year === currentFilters.year);
+    filteredData = filteredData.filter(d => d.year === currentFilters.year);
   }
   if (currentFilters.month) {
-    filtered = filtered.filter(d => d.month === parseInt(currentFilters.month));
+    filteredData = filteredData.filter(d => d.month === parseInt(currentFilters.month));
   }
   if (currentFilters.staff !== 'all') {
-    filtered = filtered.filter(d => d.staff_name === currentFilters.staff);
+    filteredData = filteredData.filter(d => d.staff_name === currentFilters.staff);
   }
   if (currentFilters.product !== 'all') {
-    filtered = filtered.filter(d => d.product_type === currentFilters.product);
+    filteredData = filteredData.filter(d => d.product_type === currentFilters.product);
   }
   
-  // Update productivityData temporarily for display
+  // Store filtered data for export and display
+  window.filteredProductivityData = filteredData;
+  
+  // Temporarily swap for rendering
   const originalData = productivityData;
-  productivityData = filtered;
+  productivityData = filteredData;
   
   renderOverview();
   
   // Re-render current tab
   const activeTab = document.querySelector('.tab-btn.active');
-  if (activeTab && activeTab.dataset.tab !== 'overview') {
+  if (activeTab && activeTab.dataset.tab !== 'overview' && activeTab.dataset.tab !== 'comparison') {
     renderProductTable(activeTab.dataset.tab);
   }
   
@@ -845,7 +1185,7 @@ function applyFilters(data) {
   productivityData = originalData;
   
   window.closeModal?.();
-  window.toast?.info('Filters applied');
+  window.toast?.info(`Filters applied - ${filteredData.length} records found`);
 }
 
 window.resetFilters = function() {
@@ -855,17 +1195,73 @@ window.resetFilters = function() {
     staff: 'all',
     product: 'all'
   };
+  // Clear filtered data
+  window.filteredProductivityData = null;
   window.closeModal?.();
   loadData();
   window.toast?.info('Filters reset');
 };
 
-/* === EXPORT === */
-el('exportBtn')?.addEventListener('click', async () => {
-  if (productivityData.length === 0) {
-    window.toast?.warning('No data to export');
-    return;
+/* === EXPORT FUNCTIONALITY === */
+
+// Export dropdown toggle
+el('exportBtn')?.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const menu = el('exportMenu');
+  if (menu) {
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
   }
+});
+
+// Close dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const menu = el('exportMenu');
+  const btn = el('exportBtn');
+  if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+    menu.style.display = 'none';
+  }
+});
+
+// Add hover effect to export options
+document.querySelectorAll('.export-option').forEach(opt => {
+  opt.addEventListener('mouseenter', () => {
+    opt.style.background = 'var(--bg-tertiary)';
+  });
+  opt.addEventListener('mouseleave', () => {
+    opt.style.background = 'none';
+  });
+});
+
+// Handle export option clicks
+document.querySelectorAll('.export-option').forEach(opt => {
+  opt.addEventListener('click', (e) => {
+    const format = e.currentTarget.dataset.format;
+    el('exportMenu').style.display = 'none';
+    
+    const dataToExport = window.filteredProductivityData || productivityData;
+    if (dataToExport.length === 0) {
+      window.toast?.warning('No data to export');
+      return;
+    }
+    
+    switch (format) {
+      case 'csv':
+        exportToCSV();
+        break;
+      case 'xlsx':
+        exportToExcel();
+        break;
+      case 'pdf':
+        exportToPDF();
+        break;
+    }
+  });
+});
+
+// Get export data with calculations
+function getExportData() {
+  // Use filtered data if filters are applied, otherwise use all data
+  const dataToExport = window.filteredProductivityData || productivityData;
   
   const headers = [
     'Month', 'Year', 'Product Type', 'Staff', 
@@ -874,45 +1270,333 @@ el('exportBtn')?.addEventListener('click', async () => {
     'Total Sales', 'Total Profit', 'Total Margin %'
   ];
   
-  const rows = productivityData.map(d => {
+  const rows = dataToExport.map(d => {
     const retailMargin = calculateMargin(d.retail_sales, d.retail_profit);
     const corpMargin = calculateMargin(d.corporate_sales, d.corporate_profit);
     const totalSales = (parseFloat(d.retail_sales) || 0) + (parseFloat(d.corporate_sales) || 0);
     const totalProfit = (parseFloat(d.retail_profit) || 0) + (parseFloat(d.corporate_profit) || 0);
     const totalMargin = calculateMargin(totalSales, totalProfit);
     
-    return [
-      getMonthName(d.month),
-      d.year,
-      d.product_type,
-      d.staff_name,
-      d.retail_sales || 0,
-      d.retail_profit || 0,
-      retailMargin.toFixed(1),
-      d.corporate_sales || 0,
-      d.corporate_profit || 0,
-      corpMargin.toFixed(1),
+    return {
+      month: getMonthName(d.month),
+      year: d.year,
+      productType: d.product_type,
+      staff: d.staff_name,
+      retailSales: d.retail_sales || 0,
+      retailProfit: d.retail_profit || 0,
+      retailMargin: retailMargin.toFixed(1),
+      corporateSales: d.corporate_sales || 0,
+      corporateProfit: d.corporate_profit || 0,
+      corporateMargin: corpMargin.toFixed(1),
       totalSales,
       totalProfit,
-      totalMargin.toFixed(1)
-    ];
+      totalMargin: totalMargin.toFixed(1)
+    };
   });
   
-  const csv = [
-    headers.join(','),
-    ...rows.map(r => r.join(','))
-  ].join('\n');
+  return { headers, rows };
+}
+
+// Export to CSV
+function exportToCSV() {
+  showLoading('Exporting to CSV...');
   
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `productivity_export_${new Date().toISOString().slice(0, 10)}.csv`;
-  a.click();
-  URL.revokeObjectURL(url);
+  setTimeout(() => {
+    try {
+      const { headers, rows } = getExportData();
+      
+      const csvRows = rows.map(r => [
+        r.month, r.year, r.productType, r.staff,
+        r.retailSales, r.retailProfit, r.retailMargin,
+        r.corporateSales, r.corporateProfit, r.corporateMargin,
+        r.totalSales, r.totalProfit, r.totalMargin
+      ]);
+      
+      const csv = [
+        headers.join(','),
+        ...csvRows.map(r => r.join(','))
+      ].join('\n');
+      
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `productivity_export_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      
+      window.toast?.success('CSV exported successfully');
+    } catch (err) {
+      console.error('CSV export error:', err);
+      window.toast?.error('Failed to export CSV');
+    } finally {
+      hideLoading();
+    }
+  }, 100);
+}
+
+// Export to Excel (XLSX)
+function exportToExcel() {
+  showLoading('Exporting to Excel...');
   
-  window.toast?.success('Data exported successfully');
-});
+  setTimeout(() => {
+    try {
+      const { headers, rows } = getExportData();
+      
+      // Prepare data for worksheet
+      const wsData = [headers];
+      rows.forEach(r => {
+        wsData.push([
+          r.month, r.year, r.productType, r.staff,
+          parseFloat(r.retailSales), parseFloat(r.retailProfit), parseFloat(r.retailMargin),
+          parseFloat(r.corporateSales), parseFloat(r.corporateProfit), parseFloat(r.corporateMargin),
+          parseFloat(r.totalSales), parseFloat(r.totalProfit), parseFloat(r.totalMargin)
+        ]);
+      });
+      
+      // Create workbook and worksheet
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.aoa_to_sheet(wsData);
+      
+      // Set column widths
+    ws['!cols'] = [
+      { wch: 10 }, // Month
+      { wch: 8 },  // Year
+      { wch: 12 }, // Product Type
+      { wch: 20 }, // Staff
+      { wch: 15 }, // Retail Sales
+      { wch: 15 }, // Retail Profit
+      { wch: 12 }, // Retail Margin
+      { wch: 15 }, // Corporate Sales
+      { wch: 15 }, // Corporate Profit
+      { wch: 14 }, // Corporate Margin
+      { wch: 15 }, // Total Sales
+      { wch: 15 }, // Total Profit
+      { wch: 12 }  // Total Margin
+    ];
+    
+    // Add summary sheet
+    const summaryData = [
+      ['Productivity Report Summary'],
+      ['Generated:', new Date().toLocaleString()],
+      ['Total Records:', productivityData.length],
+      [],
+      ['Product Summary'],
+      ['Product', 'Total Sales', 'Total Profit', 'Avg Margin']
+    ];
+    
+    const productSummary = {};
+    rows.forEach(r => {
+      if (!productSummary[r.productType]) {
+        productSummary[r.productType] = { sales: 0, profit: 0, count: 0 };
+      }
+      productSummary[r.productType].sales += parseFloat(r.totalSales);
+      productSummary[r.productType].profit += parseFloat(r.totalProfit);
+      productSummary[r.productType].count++;
+    });
+    
+    Object.entries(productSummary).forEach(([product, data]) => {
+      const margin = data.sales > 0 ? (data.profit / data.sales * 100).toFixed(1) : '0.0';
+      summaryData.push([product, data.sales, data.profit, margin + '%']);
+    });
+    
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    wsSummary['!cols'] = [{ wch: 15 }, { wch: 15 }, { wch: 15 }, { wch: 12 }];
+    
+    // Add sheets to workbook
+    XLSX.utils.book_append_sheet(wb, ws, 'Productivity Data');
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+    
+    // Generate and download
+    XLSX.writeFile(wb, `productivity_export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    
+    window.toast?.success('Excel file exported successfully');
+    } catch (err) {
+      console.error('Excel export error:', err);
+      window.toast?.error('Failed to export Excel file');
+    } finally {
+      hideLoading();
+    }
+  }, 100);
+}
+
+// Export to PDF
+function exportToPDF() {
+  showLoading('Generating PDF...');
+  
+  setTimeout(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4'); // Landscape for more columns
+      
+      const { headers, rows } = getExportData();
+      
+      // Title
+      doc.setFontSize(18);
+      doc.setTextColor(59, 130, 246);
+      doc.text('Productivity Report', 14, 15);
+      
+      // Subtitle with filter info
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+      
+    // Show active filters
+    let filterInfo = [];
+    if (currentFilters.year) filterInfo.push(`Year: ${currentFilters.year}`);
+    if (currentFilters.month) filterInfo.push(`Month: ${getMonthName(parseInt(currentFilters.month))}`);
+    if (currentFilters.staff !== 'all') filterInfo.push(`Staff: ${currentFilters.staff}`);
+    if (currentFilters.product !== 'all') filterInfo.push(`Product: ${currentFilters.product}`);
+    
+    const filterText = filterInfo.length > 0 ? `Filters: ${filterInfo.join(', ')}` : 'All Data';
+    doc.text(`${filterText} | Records: ${rows.length}`, 14, 27);
+    
+    // Summary metrics
+    const totalSales = rows.reduce((sum, r) => sum + parseFloat(r.totalSales), 0);
+    const totalProfit = rows.reduce((sum, r) => sum + parseFloat(r.totalProfit), 0);
+    const avgMargin = totalSales > 0 ? (totalProfit / totalSales * 100).toFixed(1) : '0.0';
+    
+    doc.setFontSize(11);
+    doc.setTextColor(0);
+    doc.text(`Total Sales: ${formatCurrency(totalSales)}`, 14, 35);
+    doc.text(`Total Profit: ${formatCurrency(totalProfit)}`, 100, 35);
+    doc.text(`Avg Margin: ${avgMargin}%`, 190, 35);
+    
+    // Table data
+    const tableData = rows.map(r => [
+      r.month,
+      r.year,
+      r.productType,
+      r.staff,
+      formatCurrency(r.retailSales),
+      formatCurrency(r.retailProfit),
+      r.retailMargin + '%',
+      formatCurrency(r.corporateSales),
+      formatCurrency(r.corporateProfit),
+      r.corporateMargin + '%',
+      formatCurrency(r.totalSales),
+      formatCurrency(r.totalProfit),
+      r.totalMargin + '%'
+    ]);
+    
+    // Generate table
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 42,
+      styles: {
+        fontSize: 7,
+        cellPadding: 2
+      },
+      headStyles: {
+        fillColor: [59, 130, 246],
+        textColor: 255,
+        fontStyle: 'bold'
+      },
+      alternateRowStyles: {
+        fillColor: [245, 247, 250]
+      },
+      columnStyles: {
+        0: { cellWidth: 15 },  // Month
+        1: { cellWidth: 12 },  // Year
+        2: { cellWidth: 18 },  // Product Type
+        3: { cellWidth: 25 },  // Staff
+        4: { cellWidth: 22, halign: 'right' },  // Retail Sales
+        5: { cellWidth: 22, halign: 'right' },  // Retail Profit
+        6: { cellWidth: 15, halign: 'right' },  // Retail Margin
+        7: { cellWidth: 22, halign: 'right' },  // Corp Sales
+        8: { cellWidth: 22, halign: 'right' },  // Corp Profit
+        9: { cellWidth: 15, halign: 'right' },  // Corp Margin
+        10: { cellWidth: 22, halign: 'right' }, // Total Sales
+        11: { cellWidth: 22, halign: 'right' }, // Total Profit
+        12: { cellWidth: 15, halign: 'right' }  // Total Margin
+      }
+    });
+    
+    // Add product summary on new page if there's data
+    if (rows.length > 0) {
+      doc.addPage();
+      
+      doc.setFontSize(16);
+      doc.setTextColor(59, 130, 246);
+      doc.text('Product Category Summary', 14, 15);
+      
+      // Build product summary
+      const productSummary = {};
+      PRODUCT_TYPES.forEach(p => {
+        productSummary[p.id] = { name: p.name, icon: p.icon, sales: 0, profit: 0 };
+      });
+      
+      rows.forEach(r => {
+        if (productSummary[r.productType]) {
+          productSummary[r.productType].sales += parseFloat(r.totalSales);
+          productSummary[r.productType].profit += parseFloat(r.totalProfit);
+        }
+      });
+      
+      const summaryTableData = Object.entries(productSummary)
+        .filter(([_, data]) => data.sales > 0)
+        .map(([id, data]) => {
+          const margin = data.sales > 0 ? (data.profit / data.sales * 100).toFixed(1) : '0.0';
+          return [
+            data.name,
+            formatCurrency(data.sales),
+            formatCurrency(data.profit),
+            margin + '%'
+          ];
+        });
+      
+      doc.autoTable({
+        head: [['Product Category', 'Total Sales', 'Total Profit', 'Margin']],
+        body: summaryTableData,
+        startY: 22,
+        styles: {
+          fontSize: 10,
+          cellPadding: 4
+        },
+        headStyles: {
+          fillColor: [16, 185, 129],
+          textColor: 255,
+          fontStyle: 'bold'
+        },
+        alternateRowStyles: {
+          fillColor: [240, 253, 244]
+        },
+        columnStyles: {
+          0: { cellWidth: 50 },
+          1: { cellWidth: 45, halign: 'right' },
+          2: { cellWidth: 45, halign: 'right' },
+          3: { cellWidth: 30, halign: 'right' }
+        }
+      });
+    }
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(
+        `Page ${i} of ${pageCount} - TravelOps Productivity Report`,
+        doc.internal.pageSize.width / 2,
+        doc.internal.pageSize.height - 10,
+        { align: 'center' }
+      );
+    }
+    
+    // Save
+    doc.save(`productivity_export_${new Date().toISOString().slice(0, 10)}.pdf`);
+    
+    window.toast?.success('PDF exported successfully');
+    } catch (err) {
+      console.error('PDF export error:', err);
+      window.toast?.error('Failed to export PDF file');
+    } finally {
+      hideLoading();
+    }
+  }, 100);
+}
 
 /* === IMPORT FUNCTIONALITY === */
 let importData = [];
@@ -1228,6 +1912,9 @@ el('confirmImportBtn')?.addEventListener('click', async () => {
 window.addEventListener('DOMContentLoaded', async () => {
   initUserInfo();
   initTabs();
+  initComparisonControls();
+  initPrintButton();
+  initKeyboardShortcuts();
   
   // Hide import button for basic users (they can only view their own data)
   if (isBasicUser) {
@@ -1238,5 +1925,635 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (downloadTemplateBtn) downloadTemplateBtn.style.display = 'none';
   }
   
+  showLoading('Loading productivity data...');
   await loadData();
+  hideLoading();
 });
+
+/* =========================================================
+   COMPARISON FEATURE - Month, Quarter, Semester, YTD Analysis
+   ========================================================= */
+
+/* === PERIOD HELPERS === */
+function getQuarter(month) {
+  return Math.ceil(month / 3);
+}
+
+function getSemester(month) {
+  return month <= 6 ? 1 : 2;
+}
+
+function getQuarterMonths(quarter) {
+  const start = (quarter - 1) * 3 + 1;
+  return [start, start + 1, start + 2];
+}
+
+function getSemesterMonths(semester) {
+  return semester === 1 ? [1, 2, 3, 4, 5, 6] : [7, 8, 9, 10, 11, 12];
+}
+
+function getYTDMonths(currentMonth) {
+  return Array.from({ length: currentMonth }, (_, i) => i + 1);
+}
+
+function getPeriodLabel(period, value, year) {
+  switch (period) {
+    case 'month':
+      return `${getMonthName(value)} ${year}`;
+    case 'quarter':
+      return `Q${value} ${year}`;
+    case 'semester':
+      return `${value === 1 ? 'H1' : 'H2'} ${year}`;
+    case 'ytd':
+      return `YTD ${year}`;
+    default:
+      return '';
+  }
+}
+
+function getCurrentPeriodValue(period) {
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  
+  switch (period) {
+    case 'month':
+      return currentMonth;
+    case 'quarter':
+      return getQuarter(currentMonth);
+    case 'semester':
+      return getSemester(currentMonth);
+    case 'ytd':
+      return currentMonth;
+    default:
+      return 1;
+  }
+}
+
+function getPreviousPeriod(period, value, year) {
+  switch (period) {
+    case 'month':
+      if (value === 1) {
+        return { value: 12, year: year - 1 };
+      }
+      return { value: value - 1, year };
+    case 'quarter':
+      if (value === 1) {
+        return { value: 4, year: year - 1 };
+      }
+      return { value: value - 1, year };
+    case 'semester':
+      if (value === 1) {
+        return { value: 2, year: year - 1 };
+      }
+      return { value: value - 1, year };
+    case 'ytd':
+      return { value: value, year: year - 1 };
+    default:
+      return { value, year };
+  }
+}
+
+function getMonthsForPeriod(period, value) {
+  switch (period) {
+    case 'month':
+      return [value];
+    case 'quarter':
+      return getQuarterMonths(value);
+    case 'semester':
+      return getSemesterMonths(value);
+    case 'ytd':
+      return getYTDMonths(value);
+    default:
+      return [];
+  }
+}
+
+/* === INITIALIZE COMPARISON CONTROLS === */
+function initComparisonControls() {
+  // Period selector buttons
+  const periodBtns = document.querySelectorAll('.period-btn');
+  periodBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      periodBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      comparisonState.period = btn.dataset.period;
+      renderComparison();
+    });
+  });
+  
+  // Year selector
+  const yearSelect = el('comparisonYear');
+  if (yearSelect) {
+    const now = new Date();
+    for (let y = now.getFullYear(); y >= now.getFullYear() - 5; y--) {
+      const opt = document.createElement('option');
+      opt.value = y;
+      opt.textContent = y;
+      opt.selected = y === comparisonState.year;
+      yearSelect.appendChild(opt);
+    }
+    yearSelect.addEventListener('change', (e) => {
+      comparisonState.year = parseInt(e.target.value);
+      renderComparison();
+    });
+  }
+  
+  // Staff selector
+  const staffSelect = el('comparisonStaff');
+  if (staffSelect) {
+    staffSelect.addEventListener('change', (e) => {
+      comparisonState.staff = e.target.value;
+      renderComparison();
+    });
+  }
+  
+  // Product selector
+  const productSelect = el('comparisonProduct');
+  if (productSelect) {
+    PRODUCT_TYPES.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = `${p.icon} ${p.name}`;
+      productSelect.appendChild(opt);
+    });
+    productSelect.addEventListener('change', (e) => {
+      comparisonState.product = e.target.value;
+      renderComparison();
+    });
+  }
+}
+
+/* === INITIALIZE COMPARISON TAB === */
+function initComparisonTab() {
+  // Update staff dropdown with users data
+  const staffSelect = el('comparisonStaff');
+  if (staffSelect && usersData.length > 0) {
+    // Keep the "All Staff" option
+    staffSelect.innerHTML = '<option value="all">All Staff</option>';
+    usersData.forEach(u => {
+      const opt = document.createElement('option');
+      opt.value = u.name;
+      opt.textContent = u.name;
+      staffSelect.appendChild(opt);
+    });
+  }
+  
+  renderComparison();
+}
+
+/* === GET FILTERED DATA FOR PERIOD === */
+function getDataForPeriod(year, months, staff, product) {
+  return productivityData.filter(d => {
+    if (d.year !== year) return false;
+    if (!months.includes(d.month)) return false;
+    if (staff !== 'all' && d.staff_name !== staff) return false;
+    if (product !== 'all' && d.product_type !== product) return false;
+    return true;
+  });
+}
+
+/* === CALCULATE PERIOD TOTALS === */
+function calculatePeriodTotals(data) {
+  const totals = {
+    retailSales: 0,
+    retailProfit: 0,
+    corporateSales: 0,
+    corporateProfit: 0,
+    totalSales: 0,
+    totalProfit: 0,
+    recordCount: data.length
+  };
+  
+  data.forEach(d => {
+    totals.retailSales += parseFloat(d.retail_sales) || 0;
+    totals.retailProfit += parseFloat(d.retail_profit) || 0;
+    totals.corporateSales += parseFloat(d.corporate_sales) || 0;
+    totals.corporateProfit += parseFloat(d.corporate_profit) || 0;
+  });
+  
+  totals.totalSales = totals.retailSales + totals.corporateSales;
+  totals.totalProfit = totals.retailProfit + totals.corporateProfit;
+  totals.margin = calculateMargin(totals.totalSales, totals.totalProfit);
+  totals.retailMargin = calculateMargin(totals.retailSales, totals.retailProfit);
+  totals.corporateMargin = calculateMargin(totals.corporateSales, totals.corporateProfit);
+  
+  return totals;
+}
+
+/* === CALCULATE CHANGE === */
+function calculateChange(current, previous) {
+  if (previous === 0) {
+    return current > 0 ? 100 : 0;
+  }
+  return ((current - previous) / previous) * 100;
+}
+
+/* === GET CHANGE CLASS === */
+function getChangeClass(change) {
+  if (change > 0) return 'up';
+  if (change < 0) return 'down';
+  return 'neutral';
+}
+
+/* === GET CHANGE ICON === */
+function getChangeIcon(change) {
+  if (change > 0) return '↑';
+  if (change < 0) return '↓';
+  return '→';
+}
+
+/* === RENDER COMPARISON === */
+function renderComparison() {
+  const { period, year, staff, product } = comparisonState;
+  const currentPeriodValue = getCurrentPeriodValue(period);
+  
+  // Get current and previous period data
+  const currentMonths = getMonthsForPeriod(period, currentPeriodValue);
+  const prev = getPreviousPeriod(period, currentPeriodValue, year);
+  const previousMonths = getMonthsForPeriod(period, prev.value);
+  
+  const currentData = getDataForPeriod(year, currentMonths, staff, product);
+  const previousData = getDataForPeriod(prev.year, previousMonths, staff, product);
+  
+  const currentTotals = calculatePeriodTotals(currentData);
+  const previousTotals = calculatePeriodTotals(previousData);
+  
+  // Calculate changes
+  const salesChange = calculateChange(currentTotals.totalSales, previousTotals.totalSales);
+  const profitChange = calculateChange(currentTotals.totalProfit, previousTotals.totalProfit);
+  const marginChange = currentTotals.margin - previousTotals.margin;
+  
+  // Render summary
+  renderComparisonSummary(currentTotals, previousTotals, salesChange, profitChange, marginChange, period, currentPeriodValue, year, prev);
+  
+  // Render comparison cards
+  renderComparisonCards(currentTotals, previousTotals, period, currentPeriodValue, year, prev);
+  
+  // Render charts
+  renderComparisonCharts(period, year, staff, product);
+  
+  // Render detailed table
+  renderComparisonTable(period, year, staff, product);
+}
+
+/* === RENDER COMPARISON SUMMARY === */
+function renderComparisonSummary(currentTotals, previousTotals, salesChange, profitChange, marginChange, period, currentPeriodValue, year, prev) {
+  const summaryGrid = el('summaryGrid');
+  if (!summaryGrid) return;
+  
+  summaryGrid.innerHTML = `
+    <div class="summary-item">
+      <div class="label">Period</div>
+      <div class="value">${getPeriodLabel(period, currentPeriodValue, year)}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Total Sales</div>
+      <div class="value">${formatCurrency(currentTotals.totalSales)}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Sales Growth</div>
+      <div class="value">
+        <span class="change-indicator ${getChangeClass(salesChange)}">
+          ${getChangeIcon(salesChange)} ${Math.abs(salesChange).toFixed(1)}%
+        </span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Total Profit</div>
+      <div class="value">${formatCurrency(currentTotals.totalProfit)}</div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Profit Growth</div>
+      <div class="value">
+        <span class="change-indicator ${getChangeClass(profitChange)}">
+          ${getChangeIcon(profitChange)} ${Math.abs(profitChange).toFixed(1)}%
+        </span>
+      </div>
+    </div>
+    <div class="summary-item">
+      <div class="label">Avg Margin</div>
+      <div class="value">
+        <span class="profit-margin ${getMarginClass(currentTotals.margin)}">${formatPercent(currentTotals.margin)}</span>
+      </div>
+    </div>
+  `;
+}
+
+/* === RENDER COMPARISON CARDS === */
+function renderComparisonCards(currentTotals, previousTotals, period, currentPeriodValue, year, prev) {
+  const cardsContainer = el('comparisonCards');
+  if (!cardsContainer) return;
+  
+  const metrics = [
+    {
+      title: '💰 Total Sales',
+      current: currentTotals.totalSales,
+      previous: previousTotals.totalSales,
+      format: 'currency'
+    },
+    {
+      title: '📈 Total Profit',
+      current: currentTotals.totalProfit,
+      previous: previousTotals.totalProfit,
+      format: 'currency'
+    },
+    {
+      title: '🏪 Retail Sales',
+      current: currentTotals.retailSales,
+      previous: previousTotals.retailSales,
+      format: 'currency'
+    },
+    {
+      title: '🏢 Corporate Sales',
+      current: currentTotals.corporateSales,
+      previous: previousTotals.corporateSales,
+      format: 'currency'
+    },
+    {
+      title: '📊 Retail Margin',
+      current: currentTotals.retailMargin,
+      previous: previousTotals.retailMargin,
+      format: 'percent'
+    },
+    {
+      title: '📊 Corporate Margin',
+      current: currentTotals.corporateMargin,
+      previous: previousTotals.corporateMargin,
+      format: 'percent'
+    }
+  ];
+  
+  cardsContainer.innerHTML = metrics.map(m => {
+    const change = m.format === 'percent' 
+      ? m.current - m.previous 
+      : calculateChange(m.current, m.previous);
+    const changeClass = getChangeClass(change);
+    const formattedCurrent = m.format === 'currency' ? formatCurrency(m.current) : formatPercent(m.current);
+    const formattedPrevious = m.format === 'currency' ? formatCurrency(m.previous) : formatPercent(m.previous);
+    const formattedChange = m.format === 'percent' 
+      ? `${change >= 0 ? '+' : ''}${change.toFixed(1)}pp`
+      : `${getChangeIcon(change)} ${Math.abs(change).toFixed(1)}%`;
+    
+    return `
+      <div class="comparison-card">
+        <div class="comparison-card-header">
+          <h4>${m.title}</h4>
+        </div>
+        <div class="comparison-card-body">
+          <div class="comparison-row">
+            <div class="comparison-item current">
+              <div class="label">Current</div>
+              <div class="value">${formattedCurrent}</div>
+              <div class="sub-label">${getPeriodLabel(period, currentPeriodValue, year)}</div>
+            </div>
+            <div class="comparison-item previous">
+              <div class="label">Previous</div>
+              <div class="value">${formattedPrevious}</div>
+              <div class="sub-label">${getPeriodLabel(period, prev.value, prev.year)}</div>
+            </div>
+            <div class="comparison-item change">
+              <div class="label">Change</div>
+              <div class="value ${change >= 0 ? 'positive' : 'negative'}">${formattedChange}</div>
+              <div class="sub-label">${changeClass === 'up' ? 'Increase' : changeClass === 'down' ? 'Decrease' : 'No Change'}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+/* === RENDER COMPARISON CHARTS === */
+function renderComparisonCharts(period, year, staff, product) {
+  // Destroy existing comparison charts
+  if (charts.comparison) charts.comparison.destroy();
+  if (charts.marginTrend) charts.marginTrend.destroy();
+  
+  const labels = [];
+  const salesData = [];
+  const profitData = [];
+  const marginData = [];
+  
+  // Get data points based on period
+  let periods = [];
+  switch (period) {
+    case 'month':
+      periods = Array.from({ length: 12 }, (_, i) => i + 1);
+      labels.push(...periods.map(m => getMonthName(m)));
+      break;
+    case 'quarter':
+      periods = [1, 2, 3, 4];
+      labels.push(...periods.map(q => `Q${q}`));
+      break;
+    case 'semester':
+      periods = [1, 2];
+      labels.push('H1', 'H2');
+      break;
+    case 'ytd':
+      // For YTD, show monthly progression
+      const currentMonth = getCurrentPeriodValue(period);
+      periods = Array.from({ length: currentMonth }, (_, i) => i + 1);
+      labels.push(...periods.map(m => getMonthName(m)));
+      break;
+  }
+  
+  // Current year data
+  periods.forEach(p => {
+    const months = period === 'ytd' 
+      ? [p] // For YTD, use individual months
+      : getMonthsForPeriod(period, p);
+    const data = getDataForPeriod(year, months, staff, product);
+    const totals = calculatePeriodTotals(data);
+    salesData.push(totals.totalSales);
+    profitData.push(totals.totalProfit);
+    marginData.push(totals.margin);
+  });
+  
+  // Previous year data for comparison
+  const prevYearSalesData = [];
+  const prevYearProfitData = [];
+  const prevYearMarginData = [];
+  
+  periods.forEach(p => {
+    const months = period === 'ytd' 
+      ? [p]
+      : getMonthsForPeriod(period, p);
+    const data = getDataForPeriod(year - 1, months, staff, product);
+    const totals = calculatePeriodTotals(data);
+    prevYearSalesData.push(totals.totalSales);
+    prevYearProfitData.push(totals.totalProfit);
+    prevYearMarginData.push(totals.margin);
+  });
+  
+  // Sales Comparison Chart
+  const ctxComparison = el('chartComparison')?.getContext('2d');
+  if (ctxComparison) {
+    charts.comparison = new Chart(ctxComparison, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: `${year} Sales`,
+            data: salesData,
+            backgroundColor: 'rgba(59, 130, 246, 0.8)',
+            borderRadius: 6
+          },
+          {
+            label: `${year - 1} Sales`,
+            data: prevYearSalesData,
+            backgroundColor: 'rgba(156, 163, 175, 0.5)',
+            borderRadius: 6
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+  }
+  
+  // Margin Trend Chart
+  const ctxMargin = el('chartMarginTrend')?.getContext('2d');
+  if (ctxMargin) {
+    charts.marginTrend = new Chart(ctxMargin, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: `${year} Margin`,
+            data: marginData,
+            borderColor: '#10b981',
+            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            fill: true,
+            tension: 0.4
+          },
+          {
+            label: `${year - 1} Margin`,
+            data: prevYearMarginData,
+            borderColor: '#9ca3af',
+            backgroundColor: 'rgba(156, 163, 175, 0.1)',
+            fill: true,
+            tension: 0.4,
+            borderDash: [5, 5]
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'top' }
+        },
+        scales: {
+          y: { 
+            beginAtZero: true,
+            max: 100,
+            title: {
+              display: true,
+              text: 'Margin %'
+            }
+          }
+        }
+      }
+    });
+  }
+}
+
+/* === RENDER COMPARISON TABLE === */
+function renderComparisonTable(period, year, staff, product) {
+  const thead = el('comparisonTableHead');
+  const tbody = el('comparisonTableBody');
+  if (!thead || !tbody) return;
+  
+  // Build header
+  thead.innerHTML = `
+    <tr>
+      <th>Period</th>
+      <th class="text-right">Retail Sales</th>
+      <th class="text-right">Corp Sales</th>
+      <th class="text-right">Total Sales</th>
+      <th class="text-right">Total Profit</th>
+      <th class="text-right">Margin</th>
+      <th class="text-right">vs Prev Period</th>
+      <th class="text-right">vs Last Year</th>
+    </tr>
+  `;
+  
+  // Get periods to display
+  let periods = [];
+  switch (period) {
+    case 'month':
+      periods = Array.from({ length: 12 }, (_, i) => ({ value: i + 1, label: getMonthName(i + 1) }));
+      break;
+    case 'quarter':
+      periods = [1, 2, 3, 4].map(q => ({ value: q, label: `Q${q}` }));
+      break;
+    case 'semester':
+      periods = [1, 2].map(s => ({ value: s, label: s === 1 ? 'H1' : 'H2' }));
+      break;
+    case 'ytd':
+      // Show single YTD row with cumulative data
+      periods = [{ value: getCurrentPeriodValue(period), label: `YTD (Jan-${getMonthName(getCurrentPeriodValue(period))})` }];
+      break;
+  }
+  
+  tbody.innerHTML = periods.map((p, idx) => {
+    const months = getMonthsForPeriod(period, p.value);
+    const currentData = getDataForPeriod(year, months, staff, product);
+    const currentTotals = calculatePeriodTotals(currentData);
+    
+    // Previous period calculation
+    let prevPeriodChange = 0;
+    if (idx > 0 || period === 'ytd') {
+      const prev = period === 'ytd' 
+        ? getPreviousPeriod(period, p.value, year)
+        : { value: periods[idx - 1]?.value, year };
+      if (prev.value) {
+        const prevMonths = getMonthsForPeriod(period, prev.value);
+        const prevData = getDataForPeriod(prev.year || year, prevMonths, staff, product);
+        const prevTotals = calculatePeriodTotals(prevData);
+        prevPeriodChange = calculateChange(currentTotals.totalSales, prevTotals.totalSales);
+      }
+    }
+    
+    // Last year comparison
+    const lastYearMonths = getMonthsForPeriod(period, p.value);
+    const lastYearData = getDataForPeriod(year - 1, lastYearMonths, staff, product);
+    const lastYearTotals = calculatePeriodTotals(lastYearData);
+    const yearOverYearChange = calculateChange(currentTotals.totalSales, lastYearTotals.totalSales);
+    
+    return `
+      <tr>
+        <td><strong>${p.label} ${year}</strong></td>
+        <td class="text-right">${formatCurrency(currentTotals.retailSales)}</td>
+        <td class="text-right">${formatCurrency(currentTotals.corporateSales)}</td>
+        <td class="text-right"><strong>${formatCurrency(currentTotals.totalSales)}</strong></td>
+        <td class="text-right">${formatCurrency(currentTotals.totalProfit)}</td>
+        <td class="text-right">
+          <span class="profit-margin ${getMarginClass(currentTotals.margin)}">${formatPercent(currentTotals.margin)}</span>
+        </td>
+        <td class="text-right">
+          ${idx > 0 || period === 'ytd' ? `
+            <span class="change-indicator ${getChangeClass(prevPeriodChange)}">
+              ${getChangeIcon(prevPeriodChange)} ${Math.abs(prevPeriodChange).toFixed(1)}%
+            </span>
+          ` : '<span style="color: var(--text-secondary);">—</span>'}
+        </td>
+        <td class="text-right">
+          <span class="change-indicator ${getChangeClass(yearOverYearChange)}">
+            ${getChangeIcon(yearOverYearChange)} ${Math.abs(yearOverYearChange).toFixed(1)}%
+          </span>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
