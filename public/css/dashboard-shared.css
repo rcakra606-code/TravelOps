@@ -757,25 +757,26 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
-  /* Override parent text gradient styles */
-  background-clip: unset !important;
-  -webkit-background-clip: unset !important;
-  -webkit-text-fill-color: unset !important;
+  /* Override parent text gradient styles - must be explicit */
+  background-clip: padding-box !important;
+  -webkit-background-clip: padding-box !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-fill-color: currentColor !important;
 }
 
 .profit-margin.high {
-  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
-  color: #047857;
+  background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
+  color: #047857 !important;
 }
 
 .profit-margin.medium {
-  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-  color: #b45309;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+  color: #b45309 !important;
 }
 
 .profit-margin.low {
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  color: #b91c1c;
+  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%) !important;
+  color: #b91c1c !important;
 }
 
 /* Ensure profit-margin badges display properly inside metric values */
@@ -783,6 +784,7 @@
 .stat-card .value .profit-margin,
 .metric-card .metric-value .profit-margin {
   font-size: 1.5rem;
+  padding: 8px 18px;
 }
 
 /* === LEADERBOARD === */

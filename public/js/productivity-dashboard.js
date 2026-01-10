@@ -75,16 +75,30 @@ function calculateMargin(sales, profit) {
   return (p / s) * 100;
 }
 
-function getMarginThresholds() {
+function getMarginThresholds(productType = null) {
   const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+  const defaultHigh = parseFloat(settings.marginHighThreshold) || 20;
+  const defaultMedium = parseFloat(settings.marginMediumThreshold) || 10;
+  
+  // If product type specified, check for per-product settings
+  if (productType && settings.productMargins && settings.productMargins[productType]) {
+    const pm = settings.productMargins[productType];
+    if (!pm.useDefault) {
+      return {
+        high: parseFloat(pm.high) || defaultHigh,
+        medium: parseFloat(pm.medium) || defaultMedium
+      };
+    }
+  }
+  
   return {
-    high: parseFloat(settings.marginHighThreshold) || 20,
-    medium: parseFloat(settings.marginMediumThreshold) || 10
+    high: defaultHigh,
+    medium: defaultMedium
   };
 }
 
-function getMarginClass(margin) {
-  const thresholds = getMarginThresholds();
+function getMarginClass(margin, productType = null) {
+  const thresholds = getMarginThresholds(productType);
   if (margin >= thresholds.high) return 'high';
   if (margin >= thresholds.medium) return 'medium';
   return 'low';
@@ -514,10 +528,10 @@ function renderProductTable(productType) {
         <td>${item.staff_name || '—'}</td>
         <td class="text-right">${formatCurrency(item.retail_sales)}</td>
         <td class="text-right">${formatCurrency(item.retail_profit)}</td>
-        <td class="text-right"><span class="profit-margin ${getMarginClass(retailMargin)}">${formatPercent(retailMargin)}</span></td>
+        <td class="text-right"><span class="profit-margin ${getMarginClass(retailMargin, productType)}">${formatPercent(retailMargin)}</span></td>
         <td class="text-right">${formatCurrency(item.corporate_sales)}</td>
         <td class="text-right">${formatCurrency(item.corporate_profit)}</td>
-        <td class="text-right"><span class="profit-margin ${getMarginClass(corpMargin)}">${formatPercent(corpMargin)}</span></td>
+        <td class="text-right"><span class="profit-margin ${getMarginClass(corpMargin, productType)}">${formatPercent(corpMargin)}</span></td>
         <td class="text-right"><strong>${formatCurrency(totalSales)}</strong></td>
         <td class="actions">
           ${!isBasicUser ? `<button class="btn btn-sm" onclick="editProductivity(${item.id})">✏️</button>
@@ -546,9 +560,9 @@ function updateProductMetrics(productType, data) {
   const cmEl = el(`${productType}-corporate-margin`);
   
   if (rsEl) rsEl.textContent = formatCurrency(retailSales);
-  if (rmEl) rmEl.innerHTML = `<span class="profit-margin ${getMarginClass(retailMargin)}">${formatPercent(retailMargin)}</span>`;
+  if (rmEl) rmEl.innerHTML = `<span class="profit-margin ${getMarginClass(retailMargin, productType)}">${formatPercent(retailMargin)}</span>`;
   if (csEl) csEl.textContent = formatCurrency(corpSales);
-  if (cmEl) cmEl.innerHTML = `<span class="profit-margin ${getMarginClass(corpMargin)}">${formatPercent(corpMargin)}</span>`;
+  if (cmEl) cmEl.innerHTML = `<span class="profit-margin ${getMarginClass(corpMargin, productType)}">${formatPercent(corpMargin)}</span>`;
 }
 
 /* === LOAD DATA === */
@@ -653,7 +667,7 @@ function renderProductSummaryTable() {
         <td class="text-right">${formatCurrency(s.corpSales)}</td>
         <td class="text-right"><strong>${formatCurrency(s.totalSales)}</strong></td>
         <td class="text-right">${formatCurrency(s.totalProfit)}</td>
-        <td class="text-right"><span class="profit-margin ${getMarginClass(margin)}">${formatPercent(margin)}</span></td>
+        <td class="text-right"><span class="profit-margin ${getMarginClass(margin, p.id)}">${formatPercent(margin)}</span></td>
       </tr>
     `;
   }).join('');
@@ -911,12 +925,12 @@ window.openAddProductivityModal = function(productType) {
   
   // Add margin calculation listeners after modal opens
   setTimeout(() => {
-    setupMarginCalculation();
+    setupMarginCalculation(productType);
   }, 200);
 };
 
 /* === SETUP MARGIN CALCULATION === */
-function setupMarginCalculation() {
+function setupMarginCalculation(productType) {
   const retailSalesInput = document.querySelector('input[name="retail_sales"]');
   const retailProfitInput = document.querySelector('input[name="retail_profit"]');
   const corpSalesInput = document.querySelector('input[name="corporate_sales"]');
@@ -942,10 +956,10 @@ function setupMarginCalculation() {
     const cm = calculateMargin(cs, cp);
     
     if (retailMarginDisplay) {
-      retailMarginDisplay.innerHTML = `<span class="profit-margin ${getMarginClass(rm)}">${formatPercent(rm)}</span>`;
+      retailMarginDisplay.innerHTML = `<span class="profit-margin ${getMarginClass(rm, productType)}">${formatPercent(rm)}</span>`;
     }
     if (corpMarginDisplay) {
-      corpMarginDisplay.innerHTML = `<span class="profit-margin ${getMarginClass(cm)}">${formatPercent(cm)}</span>`;
+      corpMarginDisplay.innerHTML = `<span class="profit-margin ${getMarginClass(cm, productType)}">${formatPercent(cm)}</span>`;
     }
   }
   
@@ -1059,7 +1073,7 @@ window.editProductivity = async function(id) {
   
   // Add margin calculation listeners after modal opens
   setTimeout(() => {
-    setupMarginCalculation();
+    setupMarginCalculation(item.product_type);
   }, 200);
 };
 
@@ -2242,7 +2256,7 @@ function renderComparisonSummary(currentTotals, previousTotals, salesChange, pro
     <div class="summary-item">
       <div class="label">Avg Margin</div>
       <div class="value">
-        <span class="profit-margin ${getMarginClass(currentTotals.margin)}">${formatPercent(currentTotals.margin)}</span>
+        <span class="profit-margin ${getMarginClass(currentTotals.margin, comparisonState.product !== 'all' ? comparisonState.product : null)}">${formatPercent(currentTotals.margin)}</span>
       </div>
     </div>
   `;
@@ -2548,7 +2562,7 @@ function renderComparisonTable(period, year, staff, product) {
         <td class="text-right"><strong>${formatCurrency(currentTotals.totalSales)}</strong></td>
         <td class="text-right">${formatCurrency(currentTotals.totalProfit)}</td>
         <td class="text-right">
-          <span class="profit-margin ${getMarginClass(currentTotals.margin)}">${formatPercent(currentTotals.margin)}</span>
+          <span class="profit-margin ${getMarginClass(currentTotals.margin, comparisonState.product !== 'all' ? comparisonState.product : null)}">${formatPercent(currentTotals.margin)}</span>
         </td>
         <td class="text-right">
           ${idx > 0 || period === 'ytd' ? `
