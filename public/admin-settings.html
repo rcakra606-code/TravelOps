@@ -511,6 +511,7 @@
       <div class="settings-tabs">
         <button class="settings-tab active" data-tab="general">⚙️ General</button>
         <button class="settings-tab" data-tab="users">👥 Users</button>
+        <button class="settings-tab" data-tab="regions">🌍 Regions</button>
         <button class="settings-tab" data-tab="email">📧 Email</button>
         <button class="settings-tab" data-tab="backup">💾 Backup</button>
         <button class="settings-tab" data-tab="import-export">📦 Import/Export</button>
@@ -700,6 +701,34 @@
             </div>
           </div>
           <button class="btn-reset" onclick="refreshUserStats()">🔄 Refresh Stats</button>
+        </div>
+      </div>
+
+      <!-- Regions Management Panel -->
+      <div class="settings-panel" id="panel-regions">
+        <div class="settings-section">
+          <h3>Region Management</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">Manage regions for sales and tour data categorization.</p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <input type="text" id="regionSearchInput" placeholder="Search regions..." style="flex: 1; max-width: 300px; padding: 8px 12px; border: 1px solid var(--border-light); border-radius: 6px;">
+            <button class="btn-save" onclick="showAddRegionModal()">+ Add Region</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-alt); text-align: left;">
+                  <th style="padding: 12px;">ID</th>
+                  <th style="padding: 12px;">Region Name</th>
+                  <th style="padding: 12px;">Description</th>
+                  <th style="padding: 12px;">Sales Count</th>
+                  <th style="padding: 12px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="regionsTableBody">
+                <tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">Loading regions...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
@@ -972,6 +1001,14 @@
                 <input type="radio" name="importEntity" value="hotel_bookings">
                 <span>Hotels</span>
               </label>
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="productivity">
+                <span>Productivity</span>
+              </label>
+              <label class="entity-option">
+                <input type="radio" name="importEntity" value="targets">
+                <span>Targets</span>
+              </label>
             </div>
             <button class="btn-save" onclick="importData()" style="width: 100%;">📥 Import</button>
           </div>
@@ -1004,6 +1041,26 @@
               <label class="entity-option">
                 <input type="checkbox" name="exportEntity" value="telecom" checked>
                 <span>Telecom</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="productivity" checked>
+                <span>Productivity</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="targets" checked>
+                <span>Targets</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="overtime" checked>
+                <span>Overtime</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="outstanding" checked>
+                <span>Outstanding</span>
+              </label>
+              <label class="entity-option">
+                <input type="checkbox" name="exportEntity" value="cashout" checked>
+                <span>Cash Out</span>
               </label>
             </div>
             <select id="exportFormat" style="width: 100%; padding: 10px; margin-bottom: 12px; border-radius: 6px; border: 1px solid var(--border-light);">
@@ -1188,6 +1245,7 @@
         if (tab.dataset.tab === 'activity') loadActivityLog();
         if (tab.dataset.tab === 'system') loadSystemStats();
         if (tab.dataset.tab === 'users') loadUsers();
+        if (tab.dataset.tab === 'regions') loadRegions();
       });
     });
     
@@ -1199,7 +1257,26 @@
     async function loadUsers() {
       try {
         const users = await fetchJson('/api/users');
-        allUsersData = users;
+        
+        // Try to get last login times from activity logs
+        let loginTimes = {};
+        try {
+          const logs = await fetchJson('/api/activity_logs');
+          logs.filter(l => l.action === 'LOGIN').forEach(log => {
+            if (!loginTimes[log.username]) {
+              loginTimes[log.username] = log.created_at;
+            }
+          });
+        } catch (e) {
+          console.warn('Could not load activity logs for last login times');
+        }
+        
+        // Enrich users with last_login from activity logs
+        allUsersData = users.map(u => ({
+          ...u,
+          last_login: loginTimes[u.username] || null
+        }));
+        
         renderUsersTable();
         refreshUserStats();
       } catch (err) {
@@ -1286,14 +1363,18 @@
     
     async function refreshUserStats() {
       try {
-        const stats = await fetchJson('/api/admin/stats');
-        document.getElementById('statTotalUsersAdmin').textContent = stats.totalUsers || allUsersData.length;
-        document.getElementById('statActiveUsersAdmin').textContent = stats.activeUsers || '-';
-        document.getElementById('statLockedUsersAdmin').textContent = stats.lockedUsers || allUsersData.filter(u => u.locked).length;
-        document.getElementById('statTotalRecordsAdmin').textContent = stats.totalRecords || '-';
+        const stats = await fetchJson('/api/system/stats');
+        document.getElementById('statTotalUsersAdmin').textContent = stats.counts?.users || allUsersData.length;
+        document.getElementById('statActiveUsersAdmin').textContent = stats.activeUsers24h || '-';
+        document.getElementById('statLockedUsersAdmin').textContent = stats.lockedUsers || allUsersData.filter(u => u.locked_until).length;
+        // Calculate total records from counts
+        const totalRecords = Object.values(stats.counts || {}).reduce((a, b) => a + b, 0);
+        document.getElementById('statTotalRecordsAdmin').textContent = totalRecords.toLocaleString();
       } catch (err) {
         document.getElementById('statTotalUsersAdmin').textContent = allUsersData.length;
-        document.getElementById('statLockedUsersAdmin').textContent = allUsersData.filter(u => u.locked).length;
+        document.getElementById('statLockedUsersAdmin').textContent = allUsersData.filter(u => u.locked_until).length;
+        document.getElementById('statActiveUsersAdmin').textContent = '-';
+        document.getElementById('statTotalRecordsAdmin').textContent = '-';
       }
     }
     
@@ -1436,23 +1517,27 @@
     }
     
     async function lockUserAdmin(id) {
-      if (!confirm('Lock this user? They will not be able to login.')) return;
+      const user = allUsersData.find(u => u.id === id);
+      if (!user) return;
+      if (!confirm(`Lock user "${user.username}"? They will not be able to login.`)) return;
       try {
-        await fetchJson(`/api/users/${id}/lock`, { method: 'POST' });
+        await fetchJson(`/api/users/${user.username}/lock`, { method: 'POST' });
         toast.success('User locked');
         loadUsers();
       } catch (err) {
-        toast.error('Failed to lock user');
+        toast.error('Failed to lock user: ' + (err.message || 'Error'));
       }
     }
     
     async function unlockUserAdmin(id) {
+      const user = allUsersData.find(u => u.id === id);
+      if (!user) return;
       try {
-        await fetchJson(`/api/users/${id}/unlock`, { method: 'POST' });
+        await fetchJson(`/api/users/${user.username}/unlock`, { method: 'POST' });
         toast.success('User unlocked');
         loadUsers();
       } catch (err) {
-        toast.error('Failed to unlock user');
+        toast.error('Failed to unlock user: ' + (err.message || 'Error'));
       }
     }
     
@@ -1467,6 +1552,176 @@
       }
     }
     // ============ END USER MANAGEMENT ============
+
+    // ============ REGIONS MANAGEMENT ============
+    let allRegionsData = [];
+    
+    async function loadRegions() {
+      try {
+        const regions = await fetchJson('/api/regions');
+        allRegionsData = regions || [];
+        
+        // Get sales counts per region
+        let salesCounts = {};
+        try {
+          const sales = await fetchJson('/api/sales');
+          sales.forEach(s => {
+            if (s.region_id) {
+              salesCounts[s.region_id] = (salesCounts[s.region_id] || 0) + 1;
+            }
+          });
+        } catch (e) {
+          console.warn('Could not load sales for region counts');
+        }
+        
+        renderRegionsTable(salesCounts);
+      } catch (err) {
+        console.error('Failed to load regions:', err);
+        document.getElementById('regionsTableBody').innerHTML = 
+          '<tr><td colspan="5" style="text-align:center;padding:40px;color:#ef4444;">Failed to load regions</td></tr>';
+      }
+    }
+    
+    function renderRegionsTable(salesCounts = {}) {
+      const searchTerm = (document.getElementById('regionSearchInput')?.value || '').toLowerCase();
+      
+      let filtered = allRegionsData.filter(r => {
+        return !searchTerm || (r.region_name || '').toLowerCase().includes(searchTerm);
+      });
+      
+      const tbody = document.getElementById('regionsTableBody');
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--text-secondary);">No regions found. Click "Add Region" to create one.</td></tr>';
+      } else {
+        tbody.innerHTML = filtered.map(r => `
+          <tr>
+            <td style="padding:12px;">${r.id}</td>
+            <td style="padding:12px;"><strong>${r.region_name || '-'}</strong></td>
+            <td style="padding:12px;">${r.description || '-'}</td>
+            <td style="padding:12px;">${salesCounts[r.id] || 0}</td>
+            <td style="padding:12px;">
+              <div style="display:flex;gap:6px;">
+                <button onclick="editRegion(${r.id})" style="padding:6px 10px;border:none;background:var(--bg-alt);border-radius:6px;cursor:pointer;" title="Edit">✏️</button>
+                <button onclick="deleteRegion(${r.id})" style="padding:6px 10px;border:none;background:#fee2e2;border-radius:6px;cursor:pointer;color:#dc2626;" title="Delete">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+      }
+    }
+    
+    // Region search listener
+    document.getElementById('regionSearchInput')?.addEventListener('input', () => renderRegionsTable());
+    
+    function showAddRegionModal() {
+      const modal = document.createElement('div');
+      modal.id = 'regionFormModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = `
+        <div style="background:var(--card,#fff);border-radius:16px;width:90%;max-width:450px;max-height:90vh;overflow:auto;">
+          <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;">🌍 Add New Region</h3>
+            <button onclick="document.getElementById('regionFormModal').remove()" style="border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+          </div>
+          <form id="addRegionForm" style="padding:24px;">
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Region Name *</label>
+              <input type="text" id="newRegionName" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;" placeholder="e.g., Asia Pacific">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Description</label>
+              <textarea id="newRegionDesc" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;min-height:80px;" placeholder="Optional description"></textarea>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+              <button type="button" onclick="document.getElementById('regionFormModal').remove()" style="padding:10px 20px;border:1px solid var(--border-light);background:none;border-radius:8px;cursor:pointer;">Cancel</button>
+              <button type="submit" style="padding:10px 20px;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;">Add Region</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('addRegionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await fetchJson('/api/regions', {
+            method: 'POST',
+            body: JSON.stringify({
+              region_name: document.getElementById('newRegionName').value,
+              description: document.getElementById('newRegionDesc').value
+            })
+          });
+          toast.success('Region created successfully');
+          document.getElementById('regionFormModal').remove();
+          loadRegions();
+        } catch (err) {
+          toast.error('Failed to create region: ' + (err.message || 'Error'));
+        }
+      });
+    }
+    
+    async function editRegion(id) {
+      const region = allRegionsData.find(r => r.id === id);
+      if (!region) return;
+      
+      const modal = document.createElement('div');
+      modal.id = 'regionFormModal';
+      modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:10000;';
+      modal.innerHTML = `
+        <div style="background:var(--card,#fff);border-radius:16px;width:90%;max-width:450px;max-height:90vh;overflow:auto;">
+          <div style="padding:20px;border-bottom:1px solid var(--border-light);display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;">✏️ Edit Region</h3>
+            <button onclick="document.getElementById('regionFormModal').remove()" style="border:none;background:none;font-size:24px;cursor:pointer;">&times;</button>
+          </div>
+          <form id="editRegionForm" style="padding:24px;">
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Region Name *</label>
+              <input type="text" id="editRegionName" value="${region.region_name || ''}" required style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;">
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="display:block;margin-bottom:6px;font-weight:500;">Description</label>
+              <textarea id="editRegionDesc" style="width:100%;padding:10px;border:1px solid var(--border-light);border-radius:8px;min-height:80px;">${region.description || ''}</textarea>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;">
+              <button type="button" onclick="document.getElementById('regionFormModal').remove()" style="padding:10px 20px;border:1px solid var(--border-light);background:none;border-radius:8px;cursor:pointer;">Cancel</button>
+              <button type="submit" style="padding:10px 20px;border:none;background:var(--primary);color:white;border-radius:8px;cursor:pointer;">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      
+      document.getElementById('editRegionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        try {
+          await fetchJson(`/api/regions/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify({
+              region_name: document.getElementById('editRegionName').value,
+              description: document.getElementById('editRegionDesc').value
+            })
+          });
+          toast.success('Region updated successfully');
+          document.getElementById('regionFormModal').remove();
+          loadRegions();
+        } catch (err) {
+          toast.error('Failed to update region: ' + (err.message || 'Error'));
+        }
+      });
+    }
+    
+    async function deleteRegion(id) {
+      const region = allRegionsData.find(r => r.id === id);
+      if (!confirm(`Delete region "${region?.region_name}"? This cannot be undone.`)) return;
+      try {
+        await fetchJson(`/api/regions/${id}`, { method: 'DELETE' });
+        toast.success('Region deleted');
+        loadRegions();
+      } catch (err) {
+        toast.error('Failed to delete region: ' + (err.message || 'Error'));
+      }
+    }
+    // ============ END REGIONS MANAGEMENT ============
 
     // Load saved settings
     function loadSettings() {
@@ -1872,9 +2127,13 @@
         document.getElementById('totalRecords').textContent = totalRecords.toLocaleString();
         document.getElementById('dbSize').textContent = data.database?.sizeMB ? `${data.database.sizeMB} MB` : '-';
         document.getElementById('lastSync').textContent = 'Just now';
-        document.getElementById('uptime').textContent = data.uptime || '-';
+        
+        // Format uptime properly
+        const uptimeSeconds = data.uptime || 0;
+        document.getElementById('uptime').textContent = formatUptime(uptimeSeconds);
+        
         document.getElementById('dbType').textContent = data.database?.dialect?.toUpperCase() || 'SQLite';
-        document.getElementById('nodeVersion').textContent = data.nodeVersion || '-';
+        document.getElementById('nodeVersion').textContent = data.nodeVersion || process.version || '-';
         
         // Entity stats from counts
         if (data.counts) {
@@ -1887,6 +2146,11 @@
             telecom: 'Telecom',
             hotel_bookings: 'Hotel Bookings',
             regions: 'Regions',
+            productivity: 'Productivity',
+            overtime: 'Overtime',
+            outstanding: 'Outstanding',
+            cruise: 'Cruise',
+            cashout: 'Cash Out',
             activity_logs: 'Activity Logs'
           };
           document.getElementById('entityStats').innerHTML = Object.entries(data.counts)
@@ -1924,7 +2188,19 @@
         console.error('Failed to load system stats:', err);
         document.getElementById('totalRecords').textContent = '-';
         document.getElementById('dbSize').textContent = '-';
+        document.getElementById('uptime').textContent = '-';
       }
+    }
+    
+    function formatUptime(seconds) {
+      if (!seconds || seconds <= 0) return '-';
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      const mins = Math.floor((seconds % 3600) / 60);
+      
+      if (days > 0) return `${days}d ${hours}h ${mins}m`;
+      if (hours > 0) return `${hours}h ${mins}m`;
+      return `${mins}m`;
     }
 
     function clearCache() {

@@ -178,7 +178,8 @@ async function createSchema(db) {
   // Regions
   await db.run(`CREATE TABLE IF NOT EXISTS regions (
     id ${idCol},
-    region_name TEXT
+    region_name TEXT,
+    description TEXT
   )`);
 
   // Telecom

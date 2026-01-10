@@ -1037,7 +1037,7 @@ export async function createApp() {
       
       // Get table counts with individual error handling
       const counts = {};
-      const tables = ['users', 'sales', 'tours', 'documents', 'targets', 'telecom', 'hotel_bookings', 'regions', 'activity_logs'];
+      const tables = ['users', 'sales', 'tours', 'documents', 'targets', 'telecom', 'hotel_bookings', 'regions', 'productivity', 'overtime', 'outstanding', 'cruise', 'cashout', 'activity_logs'];
       for (const table of tables) {
         try {
           const result = await db.get(`SELECT COUNT(*) as count FROM ${table}`);
@@ -1109,7 +1109,8 @@ export async function createApp() {
         recentActivity7d,
         database: dbInfo,
         serverTime: new Date().toISOString(),
-        uptime: process.uptime()
+        uptime: process.uptime(),
+        nodeVersion: process.version
       });
     } catch (err) {
       logger.error({ err, stack: err.stack }, 'System stats error');
