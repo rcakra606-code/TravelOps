@@ -529,6 +529,129 @@
         toggleIcon.textContent = '👁️';
       }
     }
+    
+    // Show device conflict dialog
+    function showDeviceConflictDialog(deviceInfo) {
+      const overlay = document.createElement('div');
+      overlay.id = 'deviceConflictOverlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 99999;
+      `;
+      
+      const loginTime = deviceInfo?.loginTime ? new Date(deviceInfo.loginTime).toLocaleString() : 'Unknown time';
+      
+      overlay.innerHTML = `
+        <div style="background: white; padding: 32px; border-radius: 16px; max-width: 450px; text-align: center; box-shadow: 0 25px 60px rgba(0,0,0,0.3);">
+          <div style="font-size: 48px; margin-bottom: 16px;">⚠️</div>
+          <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 20px;">Account Already Active</h3>
+          <p style="margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.5;">
+            This account is currently logged in on another device.
+          </p>
+          <div style="background: #f8fafc; padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; text-align: left;">
+            <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280;">Login time: <strong>${loginTime}</strong></p>
+            ${deviceInfo?.ip ? `<p style="margin: 0; font-size: 13px; color: #6b7280;">IP: <strong>${deviceInfo.ip}</strong></p>` : ''}
+          </div>
+          <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 13px;">
+            Do you want to terminate that session and login here instead?
+          </p>
+          <div style="display: flex; gap: 12px; justify-content: center;">
+            <button id="cancelLoginBtn" style="background: #e5e7eb; color: #374151; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;">
+              Cancel
+            </button>
+            <button id="forceLoginBtn" style="background: #dc2626; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; font-weight: 600;">
+              Login Here
+            </button>
+          </div>
+        </div>
+      `;
+      
+      document.body.appendChild(overlay);
+      
+      document.getElementById('cancelLoginBtn').onclick = () => overlay.remove();
+      document.getElementById('forceLoginBtn').onclick = async () => {
+        overlay.remove();
+        await doLogin(true); // Force login
+      };
+    }
+    
+    // Handle login
+    async function doLogin(forceLogin = false) {
+      const form = document.getElementById('loginForm');
+      const errorMsg = document.getElementById('errorMsg');
+      const submitBtn = form.querySelector('.btn');
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      
+      form.classList.add('loading');
+      errorMsg.style.display = 'none';
+      
+      try {
+        const response = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password, forceLogin })
+        });
+        
+        const data = await response.json();
+        
+        if (response.ok) {
+          // Success - store token and redirect
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify({
+            id: data.id,
+            username: data.username,
+            name: data.name,
+            email: data.email,
+            type: data.type
+          }));
+          if (data.sessionId) {
+            localStorage.setItem('sessionId', data.sessionId);
+          }
+          
+          window.location.href = '/single-dashboard.html';
+          return;
+        }
+        
+        // Handle different error cases
+        if (response.status === 409 && data.code === 'ALREADY_LOGGED_IN') {
+          // Device conflict - show dialog
+          form.classList.remove('loading');
+          showDeviceConflictDialog(data.deviceInfo);
+          return;
+        }
+        
+        // Other errors
+        errorMsg.textContent = data.error || 'Login failed. Please try again.';
+        errorMsg.style.display = 'block';
+        
+      } catch (err) {
+        console.error('Login error:', err);
+        errorMsg.textContent = 'Network error. Please check your connection.';
+        errorMsg.style.display = 'block';
+      }
+      
+      form.classList.remove('loading');
+    }
+    
+    // Form submit handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      await doLogin(false);
+    });
+    
+    // Clear any stale session data on login page load
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('sessionId');
   </script>
 </body>
 </html>

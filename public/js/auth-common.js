@@ -156,13 +156,55 @@ async function refreshTokenIfNeeded(force = false) {
 /**
  * Handle session expiration
  */
-function handleSessionExpired() {
+function handleSessionExpired(message = 'Your session has expired. Please login again.') {
   localStorage.clear();
   sessionStorage.clear();
-  toast.error('Session Anda telah berakhir. Silakan login kembali.');
+  toast.error(message);
   setTimeout(() => {
     window.location.href = '/login.html';
   }, 1500);
+}
+
+/**
+ * Handle session invalidated (logged in from another device)
+ */
+function handleSessionInvalidated() {
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  // Show prominent notification about another device
+  const overlay = document.createElement('div');
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+  `;
+  
+  overlay.innerHTML = `
+    <div style="background: white; padding: 32px; border-radius: 12px; max-width: 450px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+      <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+      <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 20px;">Session Terminated</h3>
+      <p style="margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.5;">
+        Your account has been logged in from another device.<br>
+        For security, this session has been terminated.
+      </p>
+      <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 13px;">
+        If this wasn't you, please change your password immediately.
+      </p>
+      <button onclick="window.location.href='/login.html'" style="background: #2563eb; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
+        Go to Login
+      </button>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
 }
 
 /**
@@ -276,6 +318,17 @@ async function fetchJson(url, opts = {}) {
   
   // Only logout on 401 (invalid/expired token), not 403 (forbidden by permission)
   if (res.status === 401) {
+    // Check if session was invalidated (logged in from another device)
+    try {
+      const errorData = await res.clone().json();
+      if (errorData.code === 'SESSION_INVALIDATED') {
+        handleSessionInvalidated();
+        throw new Error('Session invalidated');
+      }
+    } catch (e) {
+      if (e.message === 'Session invalidated') throw e;
+    }
+    
     // Try one token refresh before giving up
     if (!url.includes('/api/refresh') && !url.includes('/api/login')) {
       console.log('🔄 Got 401, attempting token refresh...');
@@ -296,12 +349,7 @@ async function fetchJson(url, opts = {}) {
     
     // If refresh failed or this is a refresh/login endpoint, logout
     console.warn('Token refresh failed or not applicable, logging out...');
-    toast.error('Sesi login telah berakhir. Silakan login kembali.');
-    localStorage.clear();
-    sessionStorage.clear();
-    setTimeout(() => {
-      location.href = '/login.html';
-    }, 1500);
+    handleSessionExpired('Your session has expired. Please login again.');
     throw new Error('Session expired');
   }
   

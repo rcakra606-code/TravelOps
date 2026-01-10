@@ -103,6 +103,7 @@
   gap: 8px;
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
 .dashboard-tabs .tab-btn::before,
@@ -114,7 +115,7 @@
   background: var(--gradient-primary);
   opacity: 0;
   transition: opacity 0.3s ease;
-  z-index: 0;
+  z-index: -1;
 }
 
 .dashboard-tabs .tab-btn:hover,

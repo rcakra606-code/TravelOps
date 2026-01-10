@@ -18,8 +18,23 @@ import { initScheduler, manualTrigger, getReminderStats } from './notificationSc
 
 dotenv.config();
 
+// Common passwords to reject
+const COMMON_PASSWORDS = [
+  'password', 'password1', 'password123', '12345678', '123456789', 'qwerty123',
+  'admin123', 'letmein', 'welcome1', 'monkey123', 'dragon123', 'master123',
+  'login123', 'abc12345', 'passw0rd', 'admin1234', 'root1234', 'user1234'
+];
+
 function isStrongPassword(pw='') {
-  return pw.length >= 8 && /[A-Z]/.test(pw) && /[a-z]/.test(pw) && /\d/.test(pw);
+  // Minimum 8 chars, uppercase, lowercase, digit, and special character
+  if (pw.length < 8) return false;
+  if (!/[A-Z]/.test(pw)) return false;
+  if (!/[a-z]/.test(pw)) return false;
+  if (!/\d/.test(pw)) return false;
+  if (!/[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'`~]/.test(pw)) return false;
+  // Check against common passwords
+  if (COMMON_PASSWORDS.includes(pw.toLowerCase())) return false;
+  return true;
 }
 
 // Input sanitization helper to prevent XSS
@@ -197,10 +212,58 @@ export async function createApp() {
   if (process.env.TRUST_PROXY === 'true' || process.env.NODE_ENV === 'production') {
     app.set('trust proxy', 1);
   }
-  const SECRET = process.env.JWT_SECRET || 'dev-insecure-secret';
+  
+  // SECURITY: Enforce strong JWT_SECRET in production
+  const SECRET = process.env.JWT_SECRET;
+  if (!SECRET || SECRET.length < 32) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('SECURITY ERROR: JWT_SECRET environment variable must be set with at least 32 characters in production');
+    }
+    // Allow weak secret only in development/test with warning
+    console.warn('⚠️  WARNING: Using weak JWT_SECRET. Set JWT_SECRET env var (min 32 chars) for production!');
+  }
+  const JWT_SECRET = SECRET || 'dev-insecure-secret-for-development-only';
+  
   const LOCKOUT_MINUTES = parseInt(process.env.LOCKOUT_MINUTES || '15', 10);
   const db = await initDb();
   logger.info({ path: path.resolve('data/travelops.db'), dialect: db.dialect }, 'Database config');
+  
+  // ===================================================================
+  // SINGLE DEVICE SESSION TRACKING
+  // ===================================================================
+  // Store active sessions: Map<userId, { sessionId, deviceInfo, loginTime }>
+  const activeSessions = new Map();
+  
+  function generateSessionId() {
+    return crypto.randomBytes(32).toString('hex');
+  }
+  
+  function getDeviceInfo(req) {
+    const ua = req.headers['user-agent'] || 'Unknown';
+    const ip = req.ip || req.connection?.remoteAddress || 'Unknown';
+    return { userAgent: ua.substring(0, 100), ip };
+  }
+  
+  function checkActiveSession(userId) {
+    return activeSessions.get(userId) || null;
+  }
+  
+  function setActiveSession(userId, sessionId, deviceInfo) {
+    activeSessions.set(userId, { 
+      sessionId, 
+      deviceInfo, 
+      loginTime: new Date().toISOString() 
+    });
+  }
+  
+  function clearSession(userId) {
+    activeSessions.delete(userId);
+  }
+  
+  function validateSession(userId, sessionId) {
+    const session = activeSessions.get(userId);
+    return session && session.sessionId === sessionId;
+  }
 
   async function logActivity(username, action, entity, recordId = null, description='') {
     try {
@@ -338,13 +401,48 @@ export async function createApp() {
       if (!token && required) return res.status(401).json({ error: 'No token' });
       if (!token) return next();
       try {
-        const decoded = jwt.verify(token, SECRET);
+        const decoded = jwt.verify(token, JWT_SECRET);
+        
+        // Validate session is still active (single device enforcement)
+        if (decoded.sessionId && !validateSession(decoded.id, decoded.sessionId)) {
+          return res.status(401).json({ 
+            error: 'Session expired', 
+            code: 'SESSION_INVALIDATED',
+            message: 'Your session has been terminated. You may have logged in from another device.'
+          });
+        }
+        
         req.user = decoded;
         next();
       } catch (err) {
         return res.status(403).json({ error: 'Invalid or expired token' });
       }
     };
+  }
+  
+  // ===================================================================
+  // CSRF MIDDLEWARE - Validate on state-changing requests
+  // ===================================================================
+  function csrfMiddleware(req, res, next) {
+    // Skip CSRF for GET, HEAD, OPTIONS requests
+    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+      return next();
+    }
+    // Skip CSRF for login/logout (no user context yet)
+    if (req.path === '/api/login' || req.path === '/api/logout' || req.path === '/api/refresh') {
+      return next();
+    }
+    // If user is authenticated, validate CSRF token
+    if (req.user) {
+      const csrfToken = req.headers['x-csrf-token'];
+      if (!csrfToken || !validateCsrfToken(req.user.id, csrfToken)) {
+        // Log but don't block for now - gradual rollout
+        logger.warn({ userId: req.user.id, path: req.path }, 'Missing or invalid CSRF token');
+        // Uncomment below to enforce:
+        // return res.status(403).json({ error: 'Invalid CSRF token' });
+      }
+    }
+    next();
   }
 
   app.post('/api/login', async (req,res) => {
@@ -358,11 +456,15 @@ export async function createApp() {
       }
       await app.locals.loginLimiter.consume(req.ip);
     } catch {
-      return res.status(429).json({ error: 'Terlalu banyak percobaan login. Coba lagi nanti.' });
+      return res.status(429).json({ error: 'Too many login attempts. Please try again later.' });
     }
-    const { username, password } = req.body;
+    const { username, password, forceLogin } = req.body;
     const now = Date.now();
     let user = await db.get('SELECT * FROM users WHERE username=?', [username]);
+    
+    // SECURITY FIX: Generic error message to prevent user enumeration
+    const GENERIC_LOGIN_ERROR = 'Invalid username or password';
+    
     if (!user) {
       // If no admin exists yet (fresh DB or mis-seeded), auto-create default admin
       try {
@@ -374,17 +476,18 @@ export async function createApp() {
           const hashed = await bcrypt.hash(seedPass, 10);
           const r = await db.run('INSERT INTO users (username,password,name,email,type) VALUES (?,?,?,?,?)', [seedUser, hashed, 'Administrator', 'admin@example.com', 'admin']);
           await logActivity(seedUser, 'ADMIN_SEED_CREATE', 'users', r.lastID, 'Auto-seeded admin (no admins present)');
-          return res.status(409).json({ error: 'Admin otomatis dibuat. Silakan login ulang dengan kredensial admin default.', username: seedUser });
+          return res.status(409).json({ error: 'System initialized. Please login with default admin credentials.', username: seedUser });
         }
       } catch (e) {
         logger.error({ err: e }, 'Auto-seed admin check failed');
       }
-      return res.status(401).json({ error: 'User tidak ditemukan', hint: 'Pastikan username benar. Default admin biasanya "admin" kecuali diubah via ADMIN_USERNAME.' });
+      // Use same generic error as wrong password
+      return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
     }
     if (user.type !== 'admin' && user.locked_until) {
       const lockedUntilMs = Date.parse(user.locked_until);
       if (!isNaN(lockedUntilMs) && lockedUntilMs > now) {
-        return res.status(423).json({ error: 'Akun terkunci. Hubungi administrator untuk membuka kunci akun Anda.' });
+        return res.status(423).json({ error: 'Account locked. Contact administrator to unlock your account.' });
       }
     }
     const valid = await bcrypt.compare(password, user.password);
@@ -397,21 +500,63 @@ export async function createApp() {
         await db.run('UPDATE users SET failed_attempts=?, locked_until=? WHERE id=?', [attempts, lockedUntil, user.id]);
         if (lockedUntil) {
           await logActivity(username, 'LOCKED', 'users', user.id, `Account locked after ${attempts} failed attempts`);
-          return res.status(423).json({ error: 'Akun terkunci karena 3x salah password. Hubungi administrator untuk membuka kunci.' });
+          return res.status(423).json({ error: 'Account locked due to multiple failed attempts. Contact administrator to unlock.' });
         }
       }
       await logActivity(username, 'LOGIN_FAIL', 'auth', user.id, 'Bad password');
-      return res.status(401).json({ error: 'Password salah' });
+      // Use generic error message
+      return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
     }
+    
+    // ===================================================================
+    // SINGLE DEVICE SESSION ENFORCEMENT
+    // ===================================================================
+    const existingSession = checkActiveSession(user.id);
+    if (existingSession && !forceLogin) {
+      // User is already logged in on another device
+      const loginTime = new Date(existingSession.loginTime).toLocaleString();
+      return res.status(409).json({ 
+        error: 'Already logged in on another device',
+        code: 'ALREADY_LOGGED_IN',
+        message: `This account is currently active on another device (logged in at ${loginTime}). Do you want to terminate that session and login here?`,
+        deviceInfo: {
+          ip: existingSession.deviceInfo.ip,
+          loginTime: existingSession.loginTime
+        }
+      });
+    }
+    
+    // Generate new session
+    const sessionId = generateSessionId();
+    const deviceInfo = getDeviceInfo(req);
+    
+    // Clear any existing session and set new one
+    setActiveSession(user.id, sessionId, deviceInfo);
+    
     if (user.type !== 'admin') await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
-    const safeUser = { id: user.id, username: user.username, name: user.name, email: user.email, type: user.type };
-  const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m'; // Reduced from 30m for better security
-  const token = jwt.sign(safeUser, SECRET, { expiresIn: TOKEN_EXPIRES });
-    await logActivity(username, 'LOGIN', 'auth', user.id);
-    res.json({ ...safeUser, token });
+    
+    const safeUser = { 
+      id: user.id, 
+      username: user.username, 
+      name: user.name, 
+      email: user.email, 
+      type: user.type,
+      sessionId: sessionId  // Include sessionId in token for validation
+    };
+    const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m';
+    const token = jwt.sign(safeUser, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
+    await logActivity(username, 'LOGIN', 'auth', user.id, `Device: ${deviceInfo.ip}`);
+    res.json({ ...safeUser, token, sessionId });
   });
 
-  app.post('/api/logout', (req,res)=>res.json({ ok:true }));
+  app.post('/api/logout', authMiddleware(false), async (req, res) => {
+    // Clear the user's active session
+    if (req.user && req.user.id) {
+      clearSession(req.user.id);
+      await logActivity(req.user.username, 'LOGOUT', 'auth', req.user.id);
+    }
+    res.json({ ok: true });
+  });
   
   // Get current user info (requires valid token)
   app.get('/api/me', authMiddleware(), async (req, res) => {
@@ -542,19 +687,30 @@ export async function createApp() {
     const token = (req.headers.authorization || '').replace('Bearer ', '');
     if (!token) return res.status(401).json({ error: 'No token' });
     try {
-      const decoded = jwt.verify(token, SECRET, { ignoreExpiration: true });
+      const decoded = jwt.verify(token, JWT_SECRET, { ignoreExpiration: true });
       const nowSec = Math.floor(Date.now()/1000);
-      const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '60', 10); // Reduced from 120 to 60
-      // Clamp negative (not yet expired) to 0 for simpler logic
+      const GRACE_SECONDS = parseInt(process.env.REFRESH_GRACE_SECONDS || '60', 10);
       const expSec = decoded.exp;
       if (!expSec) return res.status(403).json({ error: 'Token missing exp' });
       const secondsPastExpiry = Math.max(0, nowSec - expSec);
       if (secondsPastExpiry > GRACE_SECONDS) {
+        // Clear session if token fully expired
+        if (decoded.id) clearSession(decoded.id);
         return res.status(403).json({ error: 'Token expired' });
       }
-      const { iat, exp, ...payload } = decoded; // strip timing claims
-      const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m'; // Reduced from 30m for better security
-      const newToken = jwt.sign(payload, SECRET, { expiresIn: TOKEN_EXPIRES });
+      
+      // Validate session is still active (single device enforcement)
+      if (decoded.sessionId && !validateSession(decoded.id, decoded.sessionId)) {
+        return res.status(401).json({ 
+          error: 'Session expired', 
+          code: 'SESSION_INVALIDATED',
+          message: 'Your session has been terminated. You may have logged in from another device.'
+        });
+      }
+      
+      const { iat, exp, ...payload } = decoded; // strip timing claims but keep sessionId
+      const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m';
+      const newToken = jwt.sign(payload, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
       return res.json({ token: newToken });
     } catch (err) {
       return res.status(403).json({ error: 'Invalid token' });
@@ -717,7 +873,7 @@ export async function createApp() {
         if (t === 'tours') console.log('🧳 Tours POST request:', req.body);
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
         if (t === 'users' && req.body.password) {
-          if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil dan angka' });
+          if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*...)' });
           req.body.password = await bcrypt.hash(req.body.password, 10);
         }
         // Auto-set overtime status to 'pending' for new records
@@ -1021,9 +1177,50 @@ export async function createApp() {
   });
 
   app.post('/api/users/reset-password', authMiddleware(), async (req,res)=>{
-    const { username, password } = req.body; if (req.user.username !== username && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, username]); res.json({ ok:true });
+    const { username, password } = req.body; if (req.user.username !== username && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, username]); res.json({ ok:true });
   });
-  app.post('/api/users/:username/reset', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const { password } = req.body; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password lemah (min 8, huruf besar, huruf kecil, angka)' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, req.params.username]); res.json({ ok:true }); });
+  app.post('/api/users/:username/reset', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const { password } = req.body; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, req.params.username]); res.json({ ok:true }); });
+
+  // ===================================================================
+  // ACTIVE SESSIONS MANAGEMENT (Admin only)
+  // ===================================================================
+  app.get('/api/sessions/active', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    
+    try {
+      // Get all active sessions with user info
+      const sessions = [];
+      for (const [userId, session] of activeSessions.entries()) {
+        const user = await db.get('SELECT id, username, name, type FROM users WHERE id=?', [userId]);
+        if (user) {
+          sessions.push({
+            userId,
+            username: user.username,
+            name: user.name,
+            type: user.type,
+            loginTime: session.loginTime,
+            deviceInfo: session.deviceInfo
+          });
+        }
+      }
+      res.json({ sessions, count: sessions.length });
+    } catch (err) {
+      logger.error({ err }, 'Failed to get active sessions');
+      res.status(500).json({ error: 'Failed to get active sessions' });
+    }
+  });
+
+  app.post('/api/sessions/:userId/terminate', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    
+    const targetUserId = parseInt(req.params.userId);
+    if (clearSession(targetUserId)) {
+      await logActivity(req.user.username, 'TERMINATE_SESSION', 'sessions', targetUserId, 'Admin terminated user session');
+      res.json({ ok: true, message: 'Session terminated successfully' });
+    } else {
+      res.status(404).json({ error: 'No active session found for this user' });
+    }
+  });
 
   app.get('/api/backup', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); if (db.dialect === 'postgres') return res.status(400).json({ error:'Backup endpoint hanya untuk mode SQLite' }); const src = path.resolve('data/travelops.db'); const backupDir = path.resolve('backup'); if (!fs.existsSync(backupDir)) fs.mkdirSync(backupDir); const dest = path.join(backupDir, `travelops_${new Date().toISOString().slice(0,10)}.db`); fs.copyFileSync(src,dest); res.json({ ok:true, file:dest }); });
 
@@ -1564,31 +1761,37 @@ export async function createApp() {
 
   app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
 
-  // Debug endpoint to check data counts
+  // Debug endpoint to check data counts - RESTRICTED to admin only in production
   app.get('/api/debug/data-counts', authMiddleware(), async (req, res) => {
+    // Security: Only allow in development mode OR for admin users
+    if (process.env.NODE_ENV === 'production' && req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Debug endpoints are restricted to admin users' });
+    }
+    
     try {
       const salesCount = await db.get('SELECT COUNT(*) as count FROM sales');
       const toursCount = await db.get('SELECT COUNT(*) as count FROM tours');
-      const cruisesCount = await db.get('SELECT COUNT(*) as count FROM cruises');
-      const hotelsCount = await db.get('SELECT COUNT(*) as count FROM hotels');
+      const cruiseCount = await db.get('SELECT COUNT(*) as count FROM cruise');
+      const hotelCount = await db.get('SELECT COUNT(*) as count FROM hotel_bookings');
       const documentsCount = await db.get('SELECT COUNT(*) as count FROM documents');
       
-      // Get sample sales records
-      const sampleSales = await db.all('SELECT id, transaction_date, staff_name, sales_amount, profit_amount FROM sales LIMIT 5');
-      const sampleTours = await db.all('SELECT id, tour_code, departure_date, lead_passenger FROM tours LIMIT 5');
+      // Only return sample data for admin users
+      let samples = {};
+      if (req.user.type === 'admin') {
+        const sampleSales = await db.all('SELECT id, transaction_date, staff_name, sales_amount, profit_amount FROM sales LIMIT 5');
+        const sampleTours = await db.all('SELECT id, tour_code, departure_date, lead_passenger FROM tours LIMIT 5');
+        samples = { sales: sampleSales, tours: sampleTours };
+      }
       
       res.json({
         counts: {
-          sales: salesCount.count,
-          tours: toursCount.count,
-          cruises: cruisesCount.count,
-          hotels: hotelsCount.count,
-          documents: documentsCount.count
+          sales: salesCount?.count || 0,
+          tours: toursCount?.count || 0,
+          cruise: cruiseCount?.count || 0,
+          hotels: hotelCount?.count || 0,
+          documents: documentsCount?.count || 0
         },
-        samples: {
-          sales: sampleSales,
-          tours: sampleTours
-        }
+        samples
       });
     } catch (err) {
       logger.error({ err }, 'Failed to get data counts');

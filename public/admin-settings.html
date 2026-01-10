@@ -511,7 +511,7 @@
   <main class="main">
     <div class="header">
       <div>
-        <h2>⚙️ Admin Settings</h2>
+        <h2>Admin Settings</h2>
         <div class="small">System configuration and management</div>
       </div>
     </div>
@@ -522,6 +522,7 @@
       <div class="settings-tabs">
         <button class="settings-tab active" data-tab="general">⚙️ General</button>
         <button class="settings-tab" data-tab="users">👥 Users</button>
+        <button class="settings-tab" data-tab="sessions">🔐 Sessions</button>
         <button class="settings-tab" data-tab="regions">🌍 Regions</button>
         <button class="settings-tab" data-tab="email">📧 Email</button>
         <button class="settings-tab" data-tab="backup">💾 Backup</button>
@@ -712,6 +713,66 @@
             </div>
           </div>
           <button class="btn-reset" onclick="refreshUserStats()">🔄 Refresh Stats</button>
+        </div>
+      </div>
+
+      <!-- Active Sessions Panel -->
+      <div class="settings-panel" id="panel-sessions">
+        <div class="settings-section">
+          <h3>Active Sessions</h3>
+          <p style="color: var(--text-secondary); margin-bottom: 16px;">
+            Manage currently active user sessions. Each user can only be logged in on one device at a time.
+          </p>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <div class="status-card" style="margin: 0; padding: 12px 20px;">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 24px;">🟢</span>
+                <div>
+                  <div class="status-card-value" id="activeSessionCount" style="font-size: 20px;">0</div>
+                  <div class="status-card-label">Active Sessions</div>
+                </div>
+              </div>
+            </div>
+            <button class="btn-reset" onclick="loadActiveSessions()">🔄 Refresh</button>
+          </div>
+          <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: var(--bg-alt); text-align: left;">
+                  <th style="padding: 12px;">User</th>
+                  <th style="padding: 12px;">Role</th>
+                  <th style="padding: 12px;">Login Time</th>
+                  <th style="padding: 12px;">IP Address</th>
+                  <th style="padding: 12px;">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sessionsTableBody">
+                <tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">Loading sessions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <div class="settings-section">
+          <h3>Session Security</h3>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Single Device Policy</div>
+              <div class="setting-description">Users can only be logged in on one device at a time. New logins will prompt to terminate existing session.</div>
+            </div>
+            <div class="setting-control">
+              <span style="color: #10b981; font-weight: 600;">✓ Enabled</span>
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Session Timeout</div>
+              <div class="setting-description">Users are automatically logged out after 30 minutes of inactivity</div>
+            </div>
+            <div class="setting-control">
+              <span style="color: var(--text-secondary);">30 minutes</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2296,6 +2357,88 @@
     document.addEventListener('DOMContentLoaded', () => {
       setupDropzone('importDropzone', 'importFile');
       setupDropzone('restoreDropzone', 'restoreFile');
+    });
+    
+    // ===================================================================
+    // ACTIVE SESSIONS MANAGEMENT
+    // ===================================================================
+    async function loadActiveSessions() {
+      try {
+        const data = await fetchJson('/api/sessions/active');
+        const tbody = document.getElementById('sessionsTableBody');
+        const countEl = document.getElementById('activeSessionCount');
+        
+        if (countEl) countEl.textContent = data.count || 0;
+        
+        if (!data.sessions || data.sessions.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 40px; color: var(--text-secondary);">No active sessions</td></tr>`;
+          return;
+        }
+        
+        tbody.innerHTML = data.sessions.map(session => {
+          const loginTime = new Date(session.loginTime).toLocaleString();
+          const roleColors = {
+            'admin': '#ef4444',
+            'semi-admin': '#f59e0b',
+            'basic': '#3b82f6'
+          };
+          const roleColor = roleColors[session.type] || '#6b7280';
+          
+          return `
+            <tr>
+              <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">
+                <div style="font-weight: 600;">${session.name || session.username}</div>
+                <div style="font-size: 12px; color: var(--text-secondary);">@${session.username}</div>
+              </td>
+              <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">
+                <span style="background: ${roleColor}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; text-transform: uppercase;">
+                  ${session.type}
+                </span>
+              </td>
+              <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">${loginTime}</td>
+              <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">
+                <span style="font-family: monospace; font-size: 13px;">${session.deviceInfo?.ip || 'Unknown'}</span>
+              </td>
+              <td style="padding: 12px; border-bottom: 1px solid var(--border-light);">
+                <button onclick="terminateSession(${session.userId}, '${session.username}')" 
+                        class="btn-action delete" 
+                        style="padding: 6px 12px; font-size: 12px; border-radius: 5px; cursor: pointer; background: #fee2e2; color: #dc2626; border: 1px solid #fca5a5;">
+                  🚫 Terminate
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+      } catch (err) {
+        console.error('Failed to load active sessions:', err);
+        document.getElementById('sessionsTableBody').innerHTML = `
+          <tr><td colspan="5" style="text-align: center; padding: 40px; color: #dc2626;">Failed to load sessions</td></tr>
+        `;
+      }
+    }
+    
+    async function terminateSession(userId, username) {
+      if (!confirm(`Terminate session for "${username}"? They will be logged out immediately.`)) {
+        return;
+      }
+      
+      try {
+        await fetchJson(`/api/sessions/${userId}/terminate`, { method: 'POST' });
+        toast.success(`Session for ${username} has been terminated`);
+        loadActiveSessions(); // Refresh the list
+      } catch (err) {
+        console.error('Failed to terminate session:', err);
+        toast.error('Failed to terminate session');
+      }
+    }
+    
+    // Load sessions when tab is activated
+    document.addEventListener('DOMContentLoaded', () => {
+      const sessionsTab = document.querySelector('[data-tab="sessions"]');
+      if (sessionsTab) {
+        sessionsTab.addEventListener('click', loadActiveSessions);
+      }
     });
   </script>
 <script src="/js/sidebar-enhancements.js?v=20251215"></script>

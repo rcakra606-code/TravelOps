@@ -52,6 +52,43 @@
   background: #334155;
 }
 
+/* Dark mode zebra striping fix */
+[data-theme="dark"] .table tbody tr:nth-child(odd),
+[data-theme="dark"] .table tbody tr:nth-child(even),
+[data-theme="dark"] .table-striped tbody tr:nth-child(odd),
+[data-theme="dark"] .table-striped tbody tr:nth-child(even) {
+  background: var(--card, #1e293b);
+  color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .table tbody tr:nth-child(even),
+[data-theme="dark"] .table-striped tbody tr:nth-child(even) {
+  background: rgba(51, 65, 85, 0.5);
+}
+
+[data-theme="dark"] .table tbody tr:hover,
+[data-theme="dark"] .table-striped tbody tr:hover {
+  background: #334155 !important;
+}
+
+[data-theme="dark"] .table tbody td,
+[data-theme="dark"] .table-striped tbody td {
+  color: var(--text-primary, #e2e8f0);
+}
+
+/* Table header dark mode */
+[data-theme="dark"] .table thead,
+[data-theme="dark"] .table-striped thead {
+  background: var(--card, #1e293b);
+}
+
+[data-theme="dark"] .table thead th,
+[data-theme="dark"] .table-striped thead th {
+  color: var(--text-primary, #e2e8f0);
+  background: var(--card, #1e293b);
+  border-bottom-color: var(--border-light, #334155);
+}
+
 [data-theme="dark"] input,
 [data-theme="dark"] select,
 [data-theme="dark"] textarea {
@@ -86,6 +123,21 @@
 
 [data-theme="dark"] .modal-footer {
   border-top-color: var(--border-light);
+}
+
+/* Base button dark mode override */
+[data-theme="dark"] .btn {
+  background: #475569;
+  color: var(--text-primary, #e2e8f0);
+}
+
+[data-theme="dark"] .btn:hover {
+  background: #64748b;
+}
+
+[data-theme="dark"] .btn.primary {
+  background: var(--primary);
+  color: #fff;
 }
 
 [data-theme="dark"] .btn-secondary {
