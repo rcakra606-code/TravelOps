@@ -109,7 +109,6 @@
           <a href="/cruise-dashboard.html">🚢 Cruise</a>
           <a href="/telecom-dashboard.html">📞 Telecom</a>
           <a href="/tracking-dashboard.html">📦 Tracking</a>
-          <button data-section="regions">🌍 Regions</button>
         </div>
       </div>
       
@@ -492,32 +491,6 @@
       </tr></thead>
       <tbody id="tblTargets"></tbody></table>
       <div class="pagination" id="targetsPagination"></div>
-    </section>
-
-    <!-- Regions -->
-    <section id="regions" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-        <h3>Regions</h3>
-        <div>
-          <button id="addRegionBtn" class="btn primary">+ Add Region</button>
-          <button data-filter-entity="regions" class="btn">🔍 Filter</button>
-        </div>
-      </div>
-      <div class="searchbar">
-        <input id="regionsSearch" placeholder="Search region name..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
-        <select id="regionsPageSize" data-pagesize-entity="regions">
-          <option value="5">5</option>
-          <option value="10" selected>10</option>
-          <option value="25">25</option>
-          <option value="50">50</option>
-        </select>
-      </div>
-      <table class="table"><thead><tr>
-        <th class="sortable" data-column="id">ID</th>
-        <th class="sortable" data-column="region_name">Region</th>
-        <th>Action</th>
-      </tr></thead><tbody id="tblRegions"></tbody></table>
-      <div class="pagination" id="regionsPagination"></div>
     </section>
 
 <section id="activity" class="section">
