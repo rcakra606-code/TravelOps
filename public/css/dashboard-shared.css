@@ -74,7 +74,8 @@
 }
 
 /* === DASHBOARD TABS STYLES === */
-.dashboard-tabs {
+.dashboard-tabs,
+.productivity-tabs {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;

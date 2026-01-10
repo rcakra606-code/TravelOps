@@ -59,8 +59,8 @@ async function handleLogout() {
   `;
   message.innerHTML = `
     <div style="font-size: 48px; margin-bottom: 16px;">👋</div>
-    <h2 style="margin: 0 0 8px 0; color: #111827;">Sampai Jumpa, ${userName}!</h2>
-    <p style="margin: 0; color: #6b7280;">Terima kasih telah menggunakan TravelOps</p>
+    <h2 style="margin: 0 0 8px 0; color: #111827;">See You Soon, ${userName}!</h2>
+    <p style="margin: 0; color: #6b7280;">Thank you for using TravelOps</p>
   `;
   
   overlay.appendChild(message);
