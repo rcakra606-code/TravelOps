@@ -644,6 +644,41 @@
           </div>
         </div>
 
+        <div class="settings-section">
+          <h3>📊 Productivity Benchmarks</h3>
+          <p style="color: var(--text-secondary); font-size: 13px; margin-bottom: 16px;">
+            Configure profit margin thresholds used to color-code margins in the Productivity Dashboard.
+          </p>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">High Margin Threshold (%)</div>
+              <div class="setting-description">Margins at or above this are shown in green</div>
+            </div>
+            <div class="setting-control">
+              <input type="number" id="marginHighThreshold" min="0" max="100" step="0.1" value="20" style="width: 100px;">
+            </div>
+          </div>
+          <div class="setting-row">
+            <div class="setting-info">
+              <div class="setting-label">Medium Margin Threshold (%)</div>
+              <div class="setting-description">Margins at or above this (but below high) are shown in yellow</div>
+            </div>
+            <div class="setting-control">
+              <input type="number" id="marginMediumThreshold" min="0" max="100" step="0.1" value="10" style="width: 100px;">
+            </div>
+          </div>
+          <div style="background: var(--bg-alt, #f8fafc); border-radius: 8px; padding: 12px; margin-top: 8px;">
+            <div style="font-size: 13px; color: var(--text-secondary);">
+              <strong>Preview:</strong><br>
+              <span style="display: inline-block; margin-top: 8px;">
+                <span class="profit-margin high" style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); color: #047857;">≥<span id="previewHighThreshold">20</span>% High</span>
+                <span class="profit-margin medium" style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #b45309; margin-left: 8px;">≥<span id="previewMediumThreshold">10</span>% Medium</span>
+                <span class="profit-margin low" style="padding: 4px 10px; border-radius: 12px; font-size: 12px; background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%); color: #b91c1c; margin-left: 8px;">&lt;<span id="previewLowThreshold">10</span>% Low</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
         <div class="settings-actions">
           <button class="btn-save" onclick="saveGeneralSettings()">💾 Save Settings</button>
           <button class="btn-reset" onclick="resetGeneralSettings()">↩️ Reset to Default</button>
@@ -1808,13 +1843,48 @@
       if (settings.autoRefresh) document.getElementById('autoRefresh').value = settings.autoRefresh;
       if (settings.soundNotifications) document.getElementById('soundNotifications').checked = settings.soundNotifications;
       
+      // Load margin benchmark settings
+      const marginHighEl = document.getElementById('marginHighThreshold');
+      const marginMediumEl = document.getElementById('marginMediumThreshold');
+      if (marginHighEl) marginHighEl.value = settings.marginHighThreshold ?? 20;
+      if (marginMediumEl) marginMediumEl.value = settings.marginMediumThreshold ?? 10;
+      
+      // Update preview
+      updateMarginPreview();
+      
+      // Add event listeners for live preview
+      marginHighEl?.addEventListener('input', updateMarginPreview);
+      marginMediumEl?.addEventListener('input', updateMarginPreview);
+      
       // Apply dark mode if enabled
       if (settings.darkMode) {
         document.body.classList.add('dark-mode');
       }
     }
+    
+    function updateMarginPreview() {
+      const highVal = document.getElementById('marginHighThreshold')?.value || 20;
+      const mediumVal = document.getElementById('marginMediumThreshold')?.value || 10;
+      
+      const previewHigh = document.getElementById('previewHighThreshold');
+      const previewMedium = document.getElementById('previewMediumThreshold');
+      const previewLow = document.getElementById('previewLowThreshold');
+      
+      if (previewHigh) previewHigh.textContent = highVal;
+      if (previewMedium) previewMedium.textContent = mediumVal;
+      if (previewLow) previewLow.textContent = mediumVal;
+    }
 
     function saveGeneralSettings() {
+      const marginHigh = parseFloat(document.getElementById('marginHighThreshold')?.value) || 20;
+      const marginMedium = parseFloat(document.getElementById('marginMediumThreshold')?.value) || 10;
+      
+      // Validate margin thresholds
+      if (marginMedium >= marginHigh) {
+        toast.warning('Medium threshold must be lower than High threshold');
+        return;
+      }
+      
       const settings = {
         companyName: document.getElementById('companyName').value,
         dateFormat: document.getElementById('dateFormat').value,
@@ -1823,7 +1893,9 @@
         darkMode: document.getElementById('darkMode').checked,
         animations: document.getElementById('animations').checked,
         autoRefresh: document.getElementById('autoRefresh').value,
-        soundNotifications: document.getElementById('soundNotifications').checked
+        soundNotifications: document.getElementById('soundNotifications').checked,
+        marginHighThreshold: marginHigh,
+        marginMediumThreshold: marginMedium
       };
       
       localStorage.setItem('appSettings', JSON.stringify(settings));

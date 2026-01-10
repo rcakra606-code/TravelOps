@@ -757,6 +757,10 @@
   border-radius: 20px;
   font-size: 13px;
   font-weight: 700;
+  /* Override parent text gradient styles */
+  background-clip: unset !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: unset !important;
 }
 
 .profit-margin.high {
@@ -772,6 +776,13 @@
 .profit-margin.low {
   background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
   color: #b91c1c;
+}
+
+/* Ensure profit-margin badges display properly inside metric values */
+.metric-box .value .profit-margin,
+.stat-card .value .profit-margin,
+.metric-card .metric-value .profit-margin {
+  font-size: 1.5rem;
 }
 
 /* === LEADERBOARD === */

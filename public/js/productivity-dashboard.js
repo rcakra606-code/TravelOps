@@ -75,9 +75,18 @@ function calculateMargin(sales, profit) {
   return (p / s) * 100;
 }
 
+function getMarginThresholds() {
+  const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+  return {
+    high: parseFloat(settings.marginHighThreshold) || 20,
+    medium: parseFloat(settings.marginMediumThreshold) || 10
+  };
+}
+
 function getMarginClass(margin) {
-  if (margin >= 20) return 'high';
-  if (margin >= 10) return 'medium';
+  const thresholds = getMarginThresholds();
+  if (margin >= thresholds.high) return 'high';
+  if (margin >= thresholds.medium) return 'medium';
   return 'low';
 }
 
