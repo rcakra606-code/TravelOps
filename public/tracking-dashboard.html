@@ -536,31 +536,31 @@
     <!-- Hero Banner -->
     <div class="hero-banner">
       <h1>📦 Tracking & Expedition</h1>
-      <p>Kelola pengiriman dan penerimaan dokumen dengan mudah</p>
+      <p>Manage shipments and document receiving with ease</p>
       <div class="hero-stats">
         <div class="hero-stat">
           <div class="hero-stat-value" id="statDelivering">0</div>
-          <div class="hero-stat-label">Dalam Pengiriman</div>
+          <div class="hero-stat-label">In Transit</div>
         </div>
         <div class="hero-stat">
           <div class="hero-stat-value" id="statDelivered">0</div>
-          <div class="hero-stat-label">Terkirim</div>
+          <div class="hero-stat-label">Delivered</div>
         </div>
         <div class="hero-stat">
           <div class="hero-stat-value" id="statReceived">0</div>
-          <div class="hero-stat-label">Diterima</div>
+          <div class="hero-stat-label">Received</div>
         </div>
       </div>
     </div>
 
     <!-- Quick Track Widget -->
     <div class="quick-track-widget">
-      <h3>🔍 Lacak Pengiriman</h3>
+      <h3>🔍 Track Shipment</h3>
       <div class="quick-track-form">
         <div class="form-group">
-          <label>Kurir</label>
+          <label>Courier</label>
           <select id="quickTrackCourier">
-            <option value="">Pilih Kurir</option>
+            <option value="">Select Courier</option>
             <option value="jne">🚚 JNE</option>
             <option value="jnt">🚛 J&T Express</option>
             <option value="sicepat">⚡ SiCepat</option>
@@ -570,10 +570,10 @@
           </select>
         </div>
         <div class="form-group" style="flex: 2;">
-          <label>Nomor Resi</label>
-          <input type="text" id="quickTrackNumber" placeholder="Masukkan nomor resi...">
+          <label>Tracking Number</label>
+          <input type="text" id="quickTrackNumber" placeholder="Enter tracking number...">
         </div>
-        <button type="button" id="quickTrackBtn">🔍 Lacak</button>
+        <button type="button" id="quickTrackBtn">🔍 Track</button>
       </div>
       <div id="quickTrackResult" class="tracking-result"></div>
     </div>
@@ -594,27 +594,27 @@
     <div id="deliveringTab" class="tab-content active">
       <div class="table-card">
         <div class="table-card-header">
-          <h3>📤 Riwayat Pengiriman</h3>
+          <h3>📤 Delivery History</h3>
           <div class="header-actions">
-            <input type="text" class="search-input" id="deliverySearch" placeholder="🔍 Cari...">
+            <input type="text" class="search-input" id="deliverySearch" placeholder="🔍 Search...">
             <button class="btn btn-secondary" id="exportDeliveries">📥 Export</button>
-            <button class="btn btn-primary" id="addDeliveryBtn">+ Tambah</button>
+            <button class="btn btn-primary" id="addDeliveryBtn">+ Add</button>
           </div>
         </div>
         <div style="overflow-x: auto;">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Tanggal</th>
-                <th>Kurir & Resi</th>
-                <th>Penerima</th>
+                <th>Date</th>
+                <th>Courier & Tracking</th>
+                <th>Recipient</th>
                 <th>Invoice / Booking</th>
                 <th>Status</th>
-                <th style="text-align: center;">Aksi</th>
+                <th style="text-align: center;">Action</th>
               </tr>
             </thead>
             <tbody id="deliveryTableBody">
-              <tr><td colspan="6"><div class="empty-state"><div class="icon">📦</div><p>Belum ada data pengiriman</p></div></td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="icon">📦</div><p>No delivery data yet</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -625,27 +625,27 @@
     <div id="receivingTab" class="tab-content">
       <div class="table-card">
         <div class="table-card-header">
-          <h3>📥 Riwayat Penerimaan</h3>
+          <h3>📥 Receiving History</h3>
           <div class="header-actions">
-            <input type="text" class="search-input" id="receivingSearch" placeholder="🔍 Cari...">
+            <input type="text" class="search-input" id="receivingSearch" placeholder="🔍 Search...">
             <button class="btn btn-secondary" id="exportReceivings">📥 Export</button>
-            <button class="btn btn-primary" id="addReceivingBtn">+ Tambah</button>
+            <button class="btn btn-primary" id="addReceivingBtn">+ Add</button>
           </div>
         </div>
         <div style="overflow-x: auto;">
           <table class="data-table">
             <thead>
               <tr>
-                <th>Tanggal</th>
-                <th>No. Resi</th>
-                <th>Pengirim</th>
+                <th>Date</th>
+                <th>Tracking No.</th>
+                <th>Sender</th>
                 <th>Passport</th>
-                <th>Detail</th>
-                <th style="text-align: center;">Aksi</th>
+                <th>Details</th>
+                <th style="text-align: center;">Action</th>
               </tr>
             </thead>
             <tbody id="receivingTableBody">
-              <tr><td colspan="6"><div class="empty-state"><div class="icon">📥</div><p>Belum ada data penerimaan</p></div></td></tr>
+              <tr><td colspan="6"><div class="empty-state"><div class="icon">📥</div><p>No receiving data yet</p></div></td></tr>
             </tbody>
           </table>
         </div>
@@ -658,7 +658,7 @@
 <div id="deliveryModal" class="modal">
   <div class="modal-card">
     <div class="modal-header">
-      <h3 id="deliveryModalTitle">📤 Tambah Pengiriman</h3>
+      <h3 id="deliveryModalTitle">📤 Add Delivery</h3>
       <button class="modal-close" id="closeDeliveryModal">&times;</button>
     </div>
     <form id="deliveryForm">
@@ -667,30 +667,30 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label>Tanggal Kirim *</label>
+            <label>Send Date *</label>
             <input type="date" id="deliverySendDate" required>
           </div>
           <div class="form-group">
-            <label>Jumlah Passport</label>
-            <input type="number" id="deliveryPassportCount" min="0" placeholder="Opsional">
+            <label>Passport Count</label>
+            <input type="number" id="deliveryPassportCount" min="0" placeholder="Optional">
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
             <label>Invoice Number</label>
-            <input type="text" id="deliveryInvoice" placeholder="Akan sync ke Documents">
-            <span class="help-text">🔗 Auto-sync tanggal kirim ke Documents</span>
+            <input type="text" id="deliveryInvoice" placeholder="Will sync to Documents">
+            <span class="help-text">🔗 Auto-sync send date to Documents</span>
           </div>
           <div class="form-group">
             <label>Booking Code</label>
-            <input type="text" id="deliveryBookingCode" placeholder="Akan sync ke Documents">
+            <input type="text" id="deliveryBookingCode" placeholder="Will sync to Documents">
           </div>
         </div>
         
         <div class="form-row full">
           <div class="form-group">
-            <label>Pilih Kurir *</label>
+            <label>Select Courier *</label>
             <div class="courier-grid" id="courierSelect">
               <div class="courier-item" data-courier="jne"><span class="emoji">🚚</span><span class="name">JNE</span></div>
               <div class="courier-item" data-courier="jnt"><span class="emoji">🚛</span><span class="name">J&T</span></div>
@@ -698,7 +698,7 @@
               <div class="courier-item" data-courier="anteraja"><span class="emoji">📦</span><span class="name">AnterAja</span></div>
               <div class="courier-item" data-courier="pos"><span class="emoji">📮</span><span class="name">POS</span></div>
               <div class="courier-item" data-courier="tiki"><span class="emoji">🚀</span><span class="name">TIKI</span></div>
-              <div class="courier-item" data-courier="other"><span class="emoji">📋</span><span class="name">Lainnya</span></div>
+              <div class="courier-item" data-courier="other"><span class="emoji">📋</span><span class="name">Other</span></div>
             </div>
             <input type="hidden" id="deliveryCourier">
           </div>
@@ -706,40 +706,40 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label>Nomor Resi</label>
-            <input type="text" id="deliveryTrackingNo" placeholder="Opsional - untuk tracking">
+            <label>Tracking Number</label>
+            <input type="text" id="deliveryTrackingNo" placeholder="Optional - for tracking">
           </div>
           <div class="form-group">
             <label>Status</label>
             <select id="deliveryStatus">
               <option value="pending">⏳ Pending</option>
-              <option value="in-transit">🚚 Dalam Perjalanan</option>
-              <option value="delivered">✅ Terkirim</option>
+              <option value="in-transit">🚚 In Transit</option>
+              <option value="delivered">✅ Delivered</option>
             </select>
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label>Nama Penerima</label>
-            <input type="text" id="deliveryRecipient" placeholder="Nama penerima">
+            <label>Recipient Name</label>
+            <input type="text" id="deliveryRecipient" placeholder="Recipient name">
           </div>
           <div class="form-group">
-            <label>Alamat Tujuan</label>
-            <input type="text" id="deliveryAddress" placeholder="Alamat pengiriman">
+            <label>Destination Address</label>
+            <input type="text" id="deliveryAddress" placeholder="Shipping address">
           </div>
         </div>
         
         <div class="form-row full">
           <div class="form-group">
-            <label>Detail Pengiriman</label>
-            <textarea id="deliveryDetails" placeholder="Catatan detail pengiriman..."></textarea>
+            <label>Delivery Details</label>
+            <textarea id="deliveryDetails" placeholder="Delivery notes..."></textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelDeliveryBtn">Batal</button>
-        <button type="submit" class="btn btn-primary">💾 Simpan</button>
+        <button type="button" class="btn btn-secondary" id="cancelDeliveryBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save</button>
       </div>
     </form>
   </div>
@@ -749,7 +749,7 @@
 <div id="receivingModal" class="modal">
   <div class="modal-card">
     <div class="modal-header">
-      <h3 id="receivingModalTitle">📥 Tambah Penerimaan</h3>
+      <h3 id="receivingModalTitle">📥 Add Receiving</h3>
       <button class="modal-close" id="closeReceivingModal">&times;</button>
     </div>
     <form id="receivingForm">
@@ -758,36 +758,36 @@
         
         <div class="form-row">
           <div class="form-group">
-            <label>Tanggal Terima *</label>
+            <label>Receive Date *</label>
             <input type="date" id="receiveDate" required>
           </div>
           <div class="form-group">
-            <label>Jumlah Passport</label>
-            <input type="number" id="receivePassportCount" min="0" placeholder="Opsional">
+            <label>Passport Count</label>
+            <input type="number" id="receivePassportCount" min="0" placeholder="Optional">
           </div>
         </div>
         
         <div class="form-row">
           <div class="form-group">
-            <label>Pengirim</label>
-            <input type="text" id="receiveSender" placeholder="Nama pengirim">
+            <label>Sender</label>
+            <input type="text" id="receiveSender" placeholder="Sender name">
           </div>
           <div class="form-group">
-            <label>Nomor Resi</label>
-            <input type="text" id="receiveTrackingNo" placeholder="Opsional">
+            <label>Tracking Number</label>
+            <input type="text" id="receiveTrackingNo" placeholder="Optional">
           </div>
         </div>
         
         <div class="form-row full">
           <div class="form-group">
-            <label>Detail Penerimaan</label>
-            <textarea id="receiveDetails" placeholder="Catatan detail penerimaan..."></textarea>
+            <label>Receiving Details</label>
+            <textarea id="receiveDetails" placeholder="Receiving notes..."></textarea>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" id="cancelReceivingBtn">Batal</button>
-        <button type="submit" class="btn btn-primary">💾 Simpan</button>
+        <button type="button" class="btn btn-secondary" id="cancelReceivingBtn">Cancel</button>
+        <button type="submit" class="btn btn-primary">💾 Save</button>
       </div>
     </form>
   </div>
@@ -797,15 +797,15 @@
 <div id="trackingModal" class="modal">
   <div class="modal-card" style="max-width: 500px;">
     <div class="modal-header">
-      <h3>📍 Detail Tracking</h3>
+      <h3>📍 Tracking Details</h3>
       <button class="modal-close" id="closeTrackingModal">&times;</button>
     </div>
     <div class="modal-body" id="trackingModalBody">
       <!-- Tracking content -->
     </div>
     <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" id="closeTrackingModalBtn">Tutup</button>
-      <button type="button" class="btn btn-primary" id="openCourierSiteBtn">🔗 Buka Website Kurir</button>
+      <button type="button" class="btn btn-secondary" id="closeTrackingModalBtn">Close</button>
+      <button type="button" class="btn btn-primary" id="openCourierSiteBtn">🔗 Open Courier Website</button>
     </div>
   </div>
 </div>

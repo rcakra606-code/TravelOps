@@ -98,7 +98,7 @@
     <div class="header">
       <div>
         <h2>🏨 Hotel Bookings</h2>
-        <div class="small">Kelola reservasi hotel untuk tour dan perjalanan</div>
+        <div class="small">Manage hotel reservations for tours and travel</div>
       </div>
     </div>
 
@@ -138,9 +138,10 @@
 
       <!-- Export/Import Buttons -->
       <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button id="importHotelBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
-        <button id="exportHotelBtn" class="btn">⬇ Export Hotel Data</button>
+        <button id="importHotelBtn" class="btn btn-secondary" title="Import from CSV">⬆️ Import</button>
+        <button id="exportHotelBtn" class="btn">⬇️ Export Hotel Data</button>
         <input type="file" id="importHotelFileInput" accept=".csv" style="display:none;">
+      </div>
       </div>
     </div>
 
@@ -187,8 +188,8 @@
     <form id="modalForm" class="modal-form">
       <div id="modalBody" class="modal-body"></div>
       <div class="modal-footer">
-        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
-        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
+        <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Save</button>
       </div>
     </form>
   </div>

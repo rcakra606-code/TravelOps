@@ -163,8 +163,8 @@
    <section id="summary" class="card section active">
   <!-- === WELCOME MESSAGE === -->
   <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 12px; color: white; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 700;">Selamat Datang di TravelOps! 👋</h1>
-    <p style="margin: 0; font-size: 18px; opacity: 0.95;" id="welcomeMessage">Kelola bisnis travel Anda dengan mudah</p>
+    <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 700;">Welcome to TravelOps! 👋</h1>
+    <p style="margin: 0; font-size: 18px; opacity: 0.95;" id="welcomeMessage">Manage your travel business with ease</p>
   </div>
 
   <!-- === COMPARISON TOGGLE === -->
@@ -212,22 +212,22 @@
     <div class="metric-card">
       <div class="metric-title">📄 Pending Documents</div>
       <div class="metric-value" id="pendingDocsCount">0</div>
-      <div class="metric-subtitle">Perlu diproses</div>
+      <div class="metric-subtitle">Needs processing</div>
     </div>
     <div class="metric-card">
       <div class="metric-title">🚢 Upcoming Cruise</div>
       <div class="metric-value" id="upcomingCruiseCount">0</div>
-      <div class="metric-subtitle">Dalam 30 hari</div>
+      <div class="metric-subtitle">Within 30 days</div>
     </div>
     <div class="metric-card">
       <div class="metric-title">🏨 Hotel Bookings</div>
       <div class="metric-value" id="hotelBookingsCount">0</div>
-      <div class="metric-subtitle">Bulan ini</div>
+      <div class="metric-subtitle">This month</div>
     </div>
     <div class="metric-card">
       <div class="metric-title">📞 Telecom Rentals</div>
       <div class="metric-value" id="telecomRentalsCount">0</div>
-      <div class="metric-subtitle">Bulan ini</div>
+      <div class="metric-subtitle">This month</div>
     </div>
   </div>
 
@@ -299,17 +299,17 @@
       <table class="table">
         <thead>
           <tr>
-            <th>Tanggal Keberangkatan</th>
-            <th>Kode Tour</th>
-            <th>Penumpang Utama</th>
+            <th>Departure Date</th>
+            <th>Tour Code</th>
+            <th>Lead Passenger</th>
             <th>Region</th>
-            <th>Jumlah Peserta</th>
+            <th>Participants</th>
             <th>Staff</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="upcomingToursTable">
-          <tr><td colspan="7" style="text-align: center; padding: 20px; color: #9ca3af;">Memuat data...</td></tr>
+          <tr><td colspan="7" style="text-align: center; padding: 20px; color: #9ca3af;">Loading data...</td></tr>
         </tbody>
       </table>
     </div>
@@ -321,7 +321,7 @@
       <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#3b82f6'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.transform='translateY(0)';">
         <div style="font-size: 48px; margin-bottom: 12px;">💰</div>
         <div style="font-size: 18px; font-weight: 600; color: #111827;">Sales Dashboard</div>
-        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Analisis penjualan lengkap dengan filter</div>
+        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Complete sales analytics with filters</div>
       </div>
     </a>
     
@@ -329,7 +329,7 @@
       <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#10b981'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.transform='translateY(0)';">
         <div style="font-size: 48px; margin-bottom: 12px;">🧳</div>
         <div style="font-size: 18px; font-weight: 600; color: #111827;">Tours Dashboard</div>
-        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Kelola tour & peserta dengan filter</div>
+        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Manage tours & participants with filters</div>
       </div>
     </a>
     
@@ -337,7 +337,7 @@
       <div style="background: white; border: 2px solid #e5e7eb; border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#f59e0b'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='#e5e7eb'; this.style.transform='translateY(0)';">
         <div style="font-size: 48px; margin-bottom: 12px;">📄</div>
         <div style="font-size: 18px; font-weight: 600; color: #111827;">Documents Dashboard</div>
-        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Proses dokumen dengan filter detail</div>
+        <div style="font-size: 14px; color: #6b7280; margin-top: 4px;">Process documents with detailed filters</div>
       </div>
     </a>
   </div>
@@ -347,8 +347,8 @@
     <div style="display: flex; align-items: start; gap: 12px;">
       <div style="font-size: 1.5rem;">ℹ️</div>
       <div>
-        <strong style="color: #1e40af; font-size: 1.05rem;">Butuh Filter Data?</strong>
-        <p style="margin: 4px 0 0 0; color: #1e3a8a; font-size: 0.9rem; line-height: 1.5;">Gunakan <strong>dashboard khusus</strong> di atas untuk filter berdasarkan staff, region, periode, dan kriteria lainnya. Dashboard utama ini menampilkan <strong>ringkasan keseluruhan data</strong> tanpa filter.</p>
+        <strong style="color: #1e40af; font-size: 1.05rem;">Need to Filter Data?</strong>
+        <p style="margin: 4px 0 0 0; color: #1e3a8a; font-size: 0.9rem; line-height: 1.5;">Use the <strong>dedicated dashboards</strong> above to filter by staff, region, period, and other criteria. This main dashboard displays an <strong>overall data summary</strong> without filters.</p>
       </div>
     </div>
   </div>
@@ -359,7 +359,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Sales</h3>
         <div>
-          <button id="addSalesBtn" class="btn primary">+ Tambah Sales</button>
+          <button id="addSalesBtn" class="btn primary">+ Add Sales</button>
           <button data-filter-entity="sales" class="btn">🔍 Filter</button>
           <button id="exportSales" class="btn">Export CSV</button>
           <button id="downloadSalesTemplate" class="btn">Download Template</button>
@@ -368,7 +368,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="salesSearch" placeholder="Cari invoice / staff / status..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="salesSearch" placeholder="Search invoice / staff / status..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="salesPageSize" data-pagesize-entity="sales">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -377,12 +377,12 @@
         </select>
       </div>
       <table class="table"><thead><tr>
-        <th class="sortable" data-column="transaction_date">Tanggal</th>
+        <th class="sortable" data-column="transaction_date">Date</th>
         <th class="sortable" data-column="invoice_no">Invoice</th>
         <th class="sortable" data-column="staff_name">Staff</th>
         <th class="sortable" data-column="sales_amount">Sales</th>
         <th class="sortable" data-column="profit_amount">Profit</th>
-        <th>Aksi</th>
+        <th>Action</th>
       </tr></thead><tbody id="tblSales"></tbody></table>
       <div class="pagination" id="salesPagination"></div>
     </section>
@@ -392,7 +392,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Tours</h3>
         <div>
-          <button id="addTourBtn" class="btn primary">+ Tambah Tour</button>
+          <button id="addTourBtn" class="btn primary">+ Add Tour</button>
           <button data-filter-entity="tours" class="btn">🔍 Filter</button>
           <button id="exportTours" class="btn">Export CSV</button>
           <button id="downloadToursTemplate" class="btn">Download Template</button>
@@ -401,7 +401,7 @@
         </div>
       </div>
             <div class="searchbar">
-        <input id="toursSearch" placeholder="Cari code / staff / region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="toursSearch" placeholder="Search code / staff / region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="toursPageSize" data-pagesize-entity="tours">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -432,7 +432,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Documents</h3>
         <div>
-          <button id="addDocBtn" class="btn primary">+ Tambah Dokumen</button>
+          <button id="addDocBtn" class="btn primary">+ Add Document</button>
           <button data-filter-entity="documents" class="btn">🔍 Filter</button>
           <button id="exportDocs" class="btn">Export CSV</button>
           <button id="downloadDocsTemplate" class="btn">Download Template</button>
@@ -441,7 +441,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="documentsSearch" placeholder="Cari nama / passport / booking..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="documentsSearch" placeholder="Search name / passport / booking..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="docsPageSize" data-pagesize-entity="documents">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -454,7 +454,7 @@
         <th class="sortable" data-column="guest_name">Guest</th>
         <th class="sortable" data-column="process_type">Process</th>
         <th class="sortable" data-column="staff_name">Staff</th>
-        <th>Aksi</th>
+        <th>Action</th>
       </tr></thead><tbody id="tblDocs"></tbody></table>
       <div class="pagination" id="docsPagination"></div>
     </section>
@@ -464,7 +464,7 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Targets</h3>
         <div>
-          <button id="addTargetBtn" class="btn primary">+ Tambah Target</button>
+          <button id="addTargetBtn" class="btn primary">+ Add Target</button>
           <button data-filter-entity="targets" class="btn">🔍 Filter</button>
           <button id="exportTargets" class="btn">Export CSV</button>
           <button id="downloadTargetsTemplate" class="btn">Download Template</button>
@@ -473,7 +473,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="targetsSearch" placeholder="Cari staff / bulan / tahun..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="targetsSearch" placeholder="Search staff / month / year..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="targetsPageSize" data-pagesize-entity="targets">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -482,12 +482,12 @@
         </select>
       </div>
       <table class="table"><thead><tr>
-        <th class="sortable" data-column="month">Bulan</th>
-        <th class="sortable" data-column="year">Tahun</th>
+        <th class="sortable" data-column="month">Month</th>
+        <th class="sortable" data-column="year">Year</th>
         <th class="sortable" data-column="staff_name">Staff</th>
         <th class="sortable" data-column="target_sales">Target Sales</th>
         <th class="sortable" data-column="target_profit">Target Profit</th>
-        <th>Aksi</th>
+        <th>Action</th>
       </tr></thead>
       <tbody id="tblTargets"></tbody></table>
       <div class="pagination" id="targetsPagination"></div>
@@ -498,12 +498,12 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Regions</h3>
         <div>
-          <button id="addRegionBtn" class="btn primary">+ Tambah Region</button>
+          <button id="addRegionBtn" class="btn primary">+ Add Region</button>
           <button data-filter-entity="regions" class="btn">🔍 Filter</button>
         </div>
       </div>
       <div class="searchbar">
-        <input id="regionsSearch" placeholder="Cari nama region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="regionsSearch" placeholder="Search region name..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="regionsPageSize" data-pagesize-entity="regions">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -514,23 +514,23 @@
       <table class="table"><thead><tr>
         <th class="sortable" data-column="id">ID</th>
         <th class="sortable" data-column="region_name">Region</th>
-        <th>Aksi</th>
+        <th>Action</th>
       </tr></thead><tbody id="tblRegions"></tbody></table>
       <div class="pagination" id="regionsPagination"></div>
     </section>
 
 <section id="activity" class="section">
-  <div class="controls"><h3>Riwayat Aktivitas</h3></div>
+  <div class="controls"><h3>Activity History</h3></div>
   <div class="card">
     <table>
       <thead>
         <tr>
-          <th>Waktu</th>
+          <th>Time</th>
           <th>User</th>
-          <th>Aksi</th>
-          <th>Entitas</th>
+          <th>Action</th>
+          <th>Entity</th>
           <th>ID</th>
-          <th>Keterangan</th>
+          <th>Description</th>
         </tr>
       </thead>
       <tbody id="tblActivity"></tbody>
@@ -544,13 +544,13 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Telecom</h3>
         <div>
-          <button id="addTelecomBtn" class="btn primary">+ Tambah Telecom</button>
+          <button id="addTelecomBtn" class="btn primary">+ Add Telecom</button>
           <button data-filter-entity="telecom" class="btn">🔍 Filter</button>
           <button id="exportTelecom" class="btn">Export CSV</button>
         </div>
       </div>
       <div class="searchbar">
-        <input id="telecomSearch" placeholder="Cari nama / no telephone / type..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="telecomSearch" placeholder="Search name / phone / type..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="telecomPageSize" data-pagesize-entity="telecom">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -561,15 +561,15 @@
       <table class="table">
         <thead>
           <tr>
-            <th class="sortable" data-column="nama">Nama</th>
-            <th class="sortable" data-column="no_telephone">No Telephone</th>
-            <th class="sortable" data-column="type_product">Type Product</th>
-            <th class="sortable" data-column="region_id">Negara</th>
-            <th class="sortable" data-column="tanggal_mulai">Mulai</th>
-            <th class="sortable" data-column="tanggal_selesai">Selesai</th>
+            <th class="sortable" data-column="nama">Name</th>
+            <th class="sortable" data-column="no_telephone">Phone Number</th>
+            <th class="sortable" data-column="type_product">Product Type</th>
+            <th class="sortable" data-column="region_id">Country</th>
+            <th class="sortable" data-column="tanggal_mulai">Start</th>
+            <th class="sortable" data-column="tanggal_selesai">End</th>
             <th class="sortable" data-column="staff_name">Staff</th>
             <th class="sortable" data-column="deposit">Deposit</th>
-            <th>Aksi</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="tblTelecom"></tbody>
@@ -582,13 +582,13 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <h3>Hotel Bookings</h3>
         <div>
-          <button id="addHotelBookingBtn" class="btn primary">+ Tambah Booking</button>
+          <button id="addHotelBookingBtn" class="btn primary">+ Add Booking</button>
           <button data-filter-entity="hotel_bookings" class="btn">🔍 Filter</button>
           <button id="exportHotelBookings" class="btn">Export CSV</button>
         </div>
       </div>
       <div class="searchbar">
-        <input id="hotelBookingsSearch" placeholder="Cari hotel / guest / konfirmasi..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="hotelBookingsSearch" placeholder="Search hotel / guest / confirmation..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
         <select id="hotelBookingsPageSize" data-pagesize-entity="hotel_bookings">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -603,10 +603,10 @@
             <th class="sortable" data-column="check_out">Check Out</th>
             <th class="sortable" data-column="hotel_name">Hotel</th>
             <th class="sortable" data-column="region_id">Region</th>
-            <th class="sortable" data-column="confirmation_number">Konfirmasi</th>
+            <th class="sortable" data-column="confirmation_number">Confirmation</th>
             <th class="sortable" data-column="guest_list">Guest List</th>
             <th class="sortable" data-column="staff_name">Staff</th>
-            <th>Aksi</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody id="tblHotelBookings"></tbody>
@@ -656,28 +656,28 @@
 
         <!-- Change Password Card -->
         <div class="card profile-password">
-          <h3>Ubah Password</h3>
+          <h3>Change Password</h3>
           <p class="small" style="margin-bottom: 16px; color: #6b7280;">
-            Password minimal 8 karakter dan harus mengandung huruf besar, huruf kecil, serta angka.
+            Password must be at least 8 characters and contain uppercase, lowercase letters, and numbers.
           </p>
           <form id="pwForm">
             <div class="form-group">
-              <label>Password Baru</label>
-              <input type="password" name="password" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}" placeholder="Min 8: huruf besar, kecil & angka">
+              <label>New Password</label>
+              <input type="password" name="password" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}" placeholder="Min 8: upper, lower & number">
             </div>
             <div class="form-group">
-              <label>Konfirmasi Password</label>
-              <input type="password" name="password_confirm" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}" placeholder="Ketik ulang password baru">
+              <label>Confirm Password</label>
+              <input type="password" name="password_confirm" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}" placeholder="Re-type new password">
             </div>
             <button class="btn btn-primary" type="submit">
-              <span>🔒</span> Ubah Password
+              <span>🔒</span> Change Password
             </button>
           </form>
         </div>
 
         <!-- Activity Summary (if admin) -->
         <div class="card profile-stats" id="profileStats" style="display: none;">
-          <h3>Statistik Aktivitas</h3>
+          <h3>Activity Statistics</h3>
           <div class="stats-grid">
             <div class="stat-item">
               <div class="stat-value" id="statSales">0</div>
@@ -689,7 +689,7 @@
             </div>
             <div class="stat-item">
               <div class="stat-value" id="statDocs">0</div>
-              <div class="stat-label">Total Dokumen</div>
+              <div class="stat-label">Total Documents</div>
             </div>
           </div>
         </div>
@@ -809,8 +809,8 @@
     <form id="modalForm" class="modal-form">
       <div id="modalBody" class="modal-body"></div>
       <div class="modal-footer">
-        <button type="button" id="modalCancel" class="btn btn-secondary">Batal</button>
-        <button type="submit" id="modalSave" class="btn btn-primary">Simpan</button>
+        <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Save</button>
       </div>
     </form>
   </div>
