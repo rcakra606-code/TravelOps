@@ -32,7 +32,8 @@
 
   // Update toggle button icon
   function updateToggleIcon() {
-    const toggle = document.getElementById('themeToggle');
+    // Check for existing button in HTML (darkModeToggle) first, then themeToggle
+    const toggle = document.getElementById('darkModeToggle') || document.getElementById('themeToggle');
     if (!toggle) return;
     
     const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
@@ -40,18 +41,28 @@
     toggle.title = isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode';
   }
 
-  // Create toggle button
-  function createToggleButton() {
-    // Don't add on login page
-    if (window.location.pathname.includes('/login.html')) return;
+  // Initialize toggle button (use existing or create new)
+  function initToggleButton() {
+    // Don't add on login/logout pages
+    if (window.location.pathname.includes('/login.html') || window.location.pathname.includes('/logout.html')) return;
     
-    const toggle = document.createElement('button');
-    toggle.id = 'themeToggle';
-    toggle.className = 'theme-toggle';
-    toggle.setAttribute('aria-label', 'Toggle dark mode');
-    toggle.onclick = toggleTheme;
+    // Check if darkModeToggle already exists in HTML
+    const existingToggle = document.getElementById('darkModeToggle');
+    if (existingToggle) {
+      existingToggle.onclick = toggleTheme;
+      updateToggleIcon();
+      return;
+    }
     
-    document.body.appendChild(toggle);
+    // Only create new button if none exists
+    if (!document.getElementById('themeToggle')) {
+      const toggle = document.createElement('button');
+      toggle.id = 'themeToggle';
+      toggle.className = 'dark-mode-toggle';
+      toggle.setAttribute('aria-label', 'Toggle dark mode');
+      toggle.onclick = toggleTheme;
+      document.body.appendChild(toggle);
+    }
     updateToggleIcon();
   }
 
@@ -59,9 +70,9 @@
   initTheme();
   
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', createToggleButton);
+    document.addEventListener('DOMContentLoaded', initToggleButton);
   } else {
-    createToggleButton();
+    initToggleButton();
   }
 
   // Listen for system theme changes

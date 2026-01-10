@@ -19,9 +19,11 @@ class ActivityFeed {
 
   addActivityButton() {
     setTimeout(() => {
-      // Add to header
-      const header = document.querySelector('.header, header, nav');
-      if (!header || document.getElementById('activityFeedBtn')) return;
+      // Don't add on login/logout pages
+      if (window.location.pathname.includes('/login.html') || window.location.pathname.includes('/logout.html')) return;
+      
+      // Check if already exists
+      if (document.getElementById('activityFeedBtn')) return;
 
       const btn = document.createElement('button');
       btn.id = 'activityFeedBtn';
@@ -29,24 +31,6 @@ class ActivityFeed {
       btn.innerHTML = '🔔';
       btn.title = 'Recent Activity';
       btn.addEventListener('click', () => this.showFeed());
-
-      // Position it
-      btn.style.cssText = `
-        position: fixed;
-        bottom: 80px;
-        right: 24px;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #6366f1, #4f46e5);
-        color: white;
-        border: none;
-        font-size: 20px;
-        cursor: pointer;
-        box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);
-        z-index: 999;
-        transition: all 0.2s;
-      `;
 
       document.body.appendChild(btn);
 
@@ -141,22 +125,6 @@ class ActivityFeed {
       if (!badge) {
         badge = document.createElement('span');
         badge.id = 'activityBadge';
-        badge.style.cssText = `
-          position: absolute;
-          top: -5px;
-          right: -5px;
-          background: #ef4444;
-          color: white;
-          font-size: 11px;
-          font-weight: 700;
-          width: 20px;
-          height: 20px;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        `;
-        btn.style.position = 'relative';
         btn.appendChild(badge);
       }
       badge.textContent = count > 9 ? '9+' : count;
@@ -270,6 +238,49 @@ class ActivityFeed {
     const style = document.createElement('style');
     style.id = 'activityFeedStyles';
     style.textContent = `
+      /* Activity Feed Button */
+      .activity-feed-btn {
+        position: fixed;
+        bottom: 88px;
+        right: 24px;
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #6366f1, #4f46e5);
+        color: white;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+        z-index: 999;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .activity-feed-btn:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+      }
+
+      .activity-feed-btn #activityBadge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background: #ef4444;
+        color: white;
+        font-size: 10px;
+        font-weight: 700;
+        min-width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid white;
+      }
+
       .activity-modal {
         position: fixed;
         inset: 0;
