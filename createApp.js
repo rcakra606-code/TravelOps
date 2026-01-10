@@ -148,11 +148,17 @@ function validateEntity(entity, data) {
       break;
       
     case 'tours':
-      if (validators.required(data.lead_passenger, 'Lead Passenger')) errors.push(validators.required(data.lead_passenger, 'Lead Passenger'));
+      // data_version 2 (new format): lead_passenger comes from passengers array, so don't require it here
+      if (data.data_version !== 2) {
+        if (validators.required(data.lead_passenger, 'Lead Passenger')) errors.push(validators.required(data.lead_passenger, 'Lead Passenger'));
+      }
       if (validators.date(data.departure_date, 'Departure Date')) errors.push(validators.date(data.departure_date, 'Departure Date'));
       if (validators.date(data.return_date, 'Return Date')) errors.push(validators.date(data.return_date, 'Return Date'));
-      if (validators.email(data.email)) errors.push(validators.email(data.email));
-      if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
+      // For data_version 2, email and phone are on passengers, not required at tour level
+      if (data.data_version !== 2) {
+        if (validators.email(data.email)) errors.push(validators.email(data.email));
+        if (validators.phone(data.phone_number)) errors.push(validators.phone(data.phone_number));
+      }
       if (validators.positiveNumber(data.jumlah_peserta, 'Participants')) errors.push(validators.positiveNumber(data.jumlah_peserta, 'Participants'));
       break;
       
@@ -1002,6 +1008,308 @@ export async function createApp() {
       res.json({ deleted:true });
     });
   }
+
+  // ===============================================
+  // Tour Passengers API (for data_version 2 tours)
+  // ===============================================
+  
+  // Get passengers for a specific tour
+  app.get('/api/tours/:tourId/passengers', authMiddleware(), async (req, res) => {
+    try {
+      const { tourId } = req.params;
+      const passengers = await db.all(
+        'SELECT * FROM tour_passengers WHERE tour_id=? ORDER BY passenger_number ASC',
+        [tourId]
+      );
+      res.json(passengers);
+    } catch (error) {
+      console.error('GET /api/tours/:tourId/passengers error:', error);
+      res.status(500).json({ error: 'Failed to fetch passengers' });
+    }
+  });
+
+  // Create/update passengers for a tour (replaces all passengers)
+  app.post('/api/tours/:tourId/passengers', authMiddleware(), async (req, res) => {
+    try {
+      const { tourId } = req.params;
+      const { passengers } = req.body;
+      
+      if (!Array.isArray(passengers)) {
+        return res.status(400).json({ error: 'passengers must be an array' });
+      }
+      
+      // Verify tour exists and is data_version 2
+      const tour = await db.get('SELECT id, data_version FROM tours WHERE id=?', [tourId]);
+      if (!tour) return res.status(404).json({ error: 'Tour not found' });
+      if (tour.data_version !== 2) return res.status(400).json({ error: 'Tour is not data_version 2' });
+      
+      // Delete existing passengers for this tour
+      await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [tourId]);
+      
+      // Insert new passengers
+      const insertedIds = [];
+      for (let i = 0; i < passengers.length; i++) {
+        const p = passengers[i];
+        const result = await db.run(
+          `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            tourId,
+            i + 1,
+            p.name || '',
+            p.phone_number || null,
+            p.email || null,
+            parseFloat(p.base_price) || 0,
+            parseFloat(p.discount) || 0,
+            parseFloat(p.profit) || 0,
+            i === 0 ? 1 : 0 // First passenger is lead
+          ]
+        );
+        insertedIds.push(result.lastID);
+      }
+      
+      // Update tour with lead passenger info from first passenger
+      if (passengers.length > 0) {
+        const lead = passengers[0];
+        await db.run(
+          'UPDATE tours SET lead_passenger=?, phone_number=?, email=? WHERE id=?',
+          [lead.name, lead.phone_number || null, lead.email || null, tourId]
+        );
+      }
+      
+      await logActivity(req.user.username, 'UPDATE', 'tour_passengers', tourId, JSON.stringify({ count: passengers.length }));
+      res.json({ success: true, passengerIds: insertedIds });
+    } catch (error) {
+      console.error('POST /api/tours/:tourId/passengers error:', error);
+      res.status(500).json({ error: 'Failed to save passengers' });
+    }
+  });
+
+  // Create a new tour with passengers (data_version 2)
+  app.post('/api/tours/v2', authMiddleware(), async (req, res) => {
+    try {
+      const { tour, passengers } = req.body;
+      
+      if (!tour || !Array.isArray(passengers) || passengers.length === 0) {
+        return res.status(400).json({ error: 'Tour and passengers array required' });
+      }
+      
+      // Set data_version to 2
+      tour.data_version = 2;
+      tour.jumlah_peserta = passengers.length;
+      
+      // Set lead passenger info from first passenger
+      const lead = passengers[0];
+      tour.lead_passenger = lead.name;
+      tour.phone_number = lead.phone_number || null;
+      tour.email = lead.email || null;
+      
+      // Calculate totals from passengers
+      let totalBasePrice = 0;
+      let totalDiscount = 0;
+      let totalProfit = 0;
+      passengers.forEach(p => {
+        totalBasePrice += parseFloat(p.base_price) || 0;
+        totalDiscount += parseFloat(p.discount) || 0;
+        totalProfit += parseFloat(p.profit) || 0;
+      });
+      
+      tour.tour_price = totalBasePrice;
+      tour.discount_amount = totalDiscount;
+      tour.profit_amount = totalProfit;
+      tour.sales_amount = totalBasePrice - totalDiscount;
+      tour.total_nominal_sales = totalBasePrice - totalDiscount;
+      
+      // Staff assignment
+      if (req.user.type === 'basic') {
+        tour.staff_name = req.user.name;
+      } else if (!tour.staff_name) {
+        tour.staff_name = req.user.name;
+      }
+      
+      // Audit
+      tour.created_by = req.user.username || req.user.name;
+      
+      // Check for duplicate booking_code
+      if (tour.booking_code) {
+        const existing = await db.get('SELECT id FROM tours WHERE booking_code=?', [tour.booking_code]);
+        if (existing) return res.status(400).json({ error: `Booking code "${tour.booking_code}" already exists` });
+      }
+      
+      // Validate region
+      if (tour.region_id) {
+        const r = await db.get('SELECT id FROM regions WHERE id=?', [tour.region_id]);
+        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+      }
+      
+      // Insert tour
+      const tourKeys = Object.keys(tour);
+      const tourValues = Object.values(tour);
+      const tourPlaceholders = tourKeys.map(() => '?').join(',');
+      const tourSql = `INSERT INTO tours (${tourKeys.join(',')}) VALUES (${tourPlaceholders})`;
+      const tourResult = await db.run(tourSql, tourValues);
+      const tourId = tourResult.lastID;
+      
+      // Insert passengers
+      for (let i = 0; i < passengers.length; i++) {
+        const p = passengers[i];
+        await db.run(
+          `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            tourId,
+            i + 1,
+            p.name || '',
+            p.phone_number || null,
+            p.email || null,
+            parseFloat(p.base_price) || 0,
+            parseFloat(p.discount) || 0,
+            parseFloat(p.profit) || 0,
+            i === 0 ? 1 : 0
+          ]
+        );
+      }
+      
+      await logActivity(req.user.username, 'CREATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
+      console.log('✅ Tour v2 created:', tourId, 'with', passengers.length, 'passengers');
+      res.json({ id: tourId });
+    } catch (error) {
+      console.error('POST /api/tours/v2 error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create tour' });
+    }
+  });
+
+  // Update a tour with passengers (data_version 2)
+  app.put('/api/tours/v2/:id', authMiddleware(), async (req, res) => {
+    try {
+      const tourId = req.params.id;
+      const { tour, passengers } = req.body;
+      
+      if (!tour || !Array.isArray(passengers) || passengers.length === 0) {
+        return res.status(400).json({ error: 'Tour and passengers array required' });
+      }
+      
+      // Verify tour exists
+      const existing = await db.get('SELECT * FROM tours WHERE id=?', [tourId]);
+      if (!existing) return res.status(404).json({ error: 'Tour not found' });
+      
+      // Check ownership for basic users
+      if (req.user.type === 'basic' && existing.staff_name !== req.user.name) {
+        return res.status(403).json({ error: 'Unauthorized edit (ownership mismatch)' });
+      }
+      
+      // Define allowed fields for tours table (whitelist approach)
+      const allowedFields = [
+        'registration_date', 'tour_code', 'booking_code', 'departure_date', 'return_date',
+        'region_id', 'status', 'jumlah_peserta', 'staff_name', 'lead_passenger',
+        'phone_number', 'email', 'all_passengers', 'tour_price', 'sales_amount',
+        'discount_amount', 'discount_remarks', 'total_nominal_sales', 'profit_amount',
+        'remarks_request', 'invoice_number', 'link_pelunasan_tour', 'data_version',
+        'updated_by', 'updated_at'
+      ];
+      
+      // Build clean tour object with only allowed fields
+      const cleanTour = {};
+      allowedFields.forEach(field => {
+        if (field in tour) {
+          cleanTour[field] = tour[field];
+        }
+      });
+      
+      // Set system fields
+      cleanTour.data_version = 2;
+      cleanTour.jumlah_peserta = passengers.length;
+      
+      // Set lead passenger info from first passenger
+      const lead = passengers[0];
+      cleanTour.lead_passenger = lead.name;
+      cleanTour.phone_number = lead.phone_number || null;
+      cleanTour.email = lead.email || null;
+      
+      // Calculate totals from passengers
+      let totalBasePrice = 0;
+      let totalDiscount = 0;
+      let totalProfit = 0;
+      passengers.forEach(p => {
+        totalBasePrice += parseFloat(p.base_price) || 0;
+        totalDiscount += parseFloat(p.discount) || 0;
+        totalProfit += parseFloat(p.profit) || 0;
+      });
+      
+      cleanTour.tour_price = totalBasePrice;
+      cleanTour.discount_amount = totalDiscount;
+      cleanTour.profit_amount = totalProfit;
+      cleanTour.sales_amount = totalBasePrice - totalDiscount;
+      cleanTour.total_nominal_sales = totalBasePrice - totalDiscount;
+      
+      // Audit
+      cleanTour.updated_by = req.user.username || req.user.name;
+      cleanTour.updated_at = new Date().toISOString();
+      
+      // Validate region
+      if (cleanTour.region_id) {
+        const r = await db.get('SELECT id FROM regions WHERE id=?', [cleanTour.region_id]);
+        if (!r) return res.status(400).json({ error: 'Invalid region_id' });
+      }
+      
+      // Update tour
+      const tourKeys = Object.keys(cleanTour);
+      const tourValues = Object.values(cleanTour);
+      const tourSet = tourKeys.map(k => `${k}=?`).join(',');
+      await db.run(`UPDATE tours SET ${tourSet} WHERE id=?`, [...tourValues, tourId]);
+      
+      // Replace passengers
+      await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [tourId]);
+      for (let i = 0; i < passengers.length; i++) {
+        const p = passengers[i];
+        await db.run(
+          `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            tourId,
+            i + 1,
+            p.name || '',
+            p.phone_number || null,
+            p.email || null,
+            parseFloat(p.base_price) || 0,
+            parseFloat(p.discount) || 0,
+            parseFloat(p.profit) || 0,
+            i === 0 ? 1 : 0
+          ]
+        );
+      }
+      
+      await logActivity(req.user.username, 'UPDATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
+      console.log('✅ Tour v2 updated:', tourId, 'with', passengers.length, 'passengers');
+      res.json({ updated: true });
+    } catch (error) {
+      console.error('PUT /api/tours/v2/:id error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update tour' });
+    }
+  });
+
+  // Get a single tour with passengers
+  app.get('/api/tours/v2/:id', authMiddleware(), async (req, res) => {
+    try {
+      const tourId = req.params.id;
+      const tour = await db.get('SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id WHERE t.id=?', [tourId]);
+      if (!tour) return res.status(404).json({ error: 'Tour not found' });
+      
+      // If data_version 2, also get passengers
+      if (tour.data_version === 2) {
+        const passengers = await db.all(
+          'SELECT * FROM tour_passengers WHERE tour_id=? ORDER BY passenger_number ASC',
+          [tourId]
+        );
+        tour.passengers = passengers;
+      }
+      
+      res.json(tour);
+    } catch (error) {
+      console.error('GET /api/tours/v2/:id error:', error);
+      res.status(500).json({ error: 'Failed to fetch tour' });
+    }
+  });
 
   app.get('/api/metrics', authMiddleware(), async (req,res)=>{
     try {
