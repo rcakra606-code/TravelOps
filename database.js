@@ -358,6 +358,46 @@ async function createSchema(db) {
     updated_at ${ts}
   )`);
 
+  // Ticket Recaps - Flight booking management
+  await db.run(`CREATE TABLE IF NOT EXISTS ticket_recaps (
+    id ${idCol},
+    booking_code TEXT NOT NULL,
+    airline_code TEXT,
+    gds_system TEXT,
+    airline_name TEXT,
+    passenger_names TEXT,
+    staff_name TEXT,
+    status TEXT DEFAULT 'Active',
+    notes TEXT,
+    reminder_sent_7d INTEGER DEFAULT 0,
+    reminder_sent_3d INTEGER DEFAULT 0,
+    reminder_sent_2d INTEGER DEFAULT 0,
+    reminder_sent_1d INTEGER DEFAULT 0,
+    reminder_sent_0d INTEGER DEFAULT 0,
+    arrival_reminder_sent INTEGER DEFAULT 0,
+    created_by TEXT,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts},
+    updated_by TEXT
+  )`);
+
+  // Ticket Segments - Multi-leg flight segments
+  await db.run(`CREATE TABLE IF NOT EXISTS ticket_segments (
+    id ${idCol},
+    ticket_id INTEGER NOT NULL,
+    segment_order INTEGER DEFAULT 1,
+    origin TEXT NOT NULL,
+    destination TEXT NOT NULL,
+    flight_number TEXT,
+    departure_date ${text()},
+    departure_time TEXT,
+    arrival_date ${text()},
+    arrival_time TEXT,
+    transit_duration TEXT,
+    flight_status TEXT DEFAULT 'Scheduled',
+    created_at ${ts} ${createdDefault}
+  )`);
+
   // Seed admin if no users
   const count = await db.get('SELECT COUNT(*) AS c FROM users');
   if (!count || count.c === 0 || count.count === 0) {
@@ -565,6 +605,14 @@ async function createSchema(db) {
   await ensureIndex('tracking_deliveries', 'idx_tracking_del_booking', 'booking_code');
   await ensureIndex('tracking_deliveries', 'idx_tracking_del_tracking', 'tracking_no');
   await ensureIndex('tracking_receivings', 'idx_tracking_rec_date', 'receive_date');
+
+  // Ticket Recaps indexes
+  await ensureIndex('ticket_recaps', 'idx_ticket_booking', 'booking_code');
+  await ensureIndex('ticket_recaps', 'idx_ticket_airline', 'airline_code');
+  await ensureIndex('ticket_recaps', 'idx_ticket_staff', 'staff_name');
+  await ensureIndex('ticket_recaps', 'idx_ticket_status', 'status');
+  await ensureIndex('ticket_segments', 'idx_segment_ticket', 'ticket_id');
+  await ensureIndex('ticket_segments', 'idx_segment_departure', 'departure_date');
 
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by

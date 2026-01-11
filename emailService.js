@@ -712,9 +712,318 @@ function getReturnArrivalEmailTemplate(tour, daysUntil) {
   `;
 }
 
+/**
+ * Send ticket departure reminder email
+ * @param {Object} ticket - Ticket details with segments
+ * @param {number} daysUntil - Days until departure
+ */
+async function sendTicketDepartureReminder(ticket, daysUntil) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping ticket departure reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
+  try {
+    const subject = getTicketDepartureSubject(daysUntil, ticket.booking_code);
+    const htmlContent = getTicketDepartureEmailTemplate(ticket, daysUntil);
+    
+    if (!ticket.staff_email) {
+      logger.warn(`No staff email found for ticket ${ticket.booking_code}`);
+      return { success: false, error: 'No staff email address' };
+    }
+
+    const mailOptions = {
+      from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
+      to: ticket.staff_email,
+      subject: subject,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(`Ticket departure reminder sent for ${ticket.booking_code} (${daysUntil} days) to ${ticket.staff_email}`);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error(`Failed to send ticket reminder for ${ticket.booking_code}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Send ticket arrival reminder email
+ * @param {Object} ticket - Ticket details with segments
+ */
+async function sendTicketArrivalReminder(ticket) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping ticket arrival reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
+  try {
+    const subject = `🛬 Flight Arriving Today! - ${ticket.booking_code}`;
+    const htmlContent = getTicketArrivalEmailTemplate(ticket);
+    
+    if (!ticket.staff_email) {
+      logger.warn(`No staff email found for ticket ${ticket.booking_code}`);
+      return { success: false, error: 'No staff email address' };
+    }
+
+    const mailOptions = {
+      from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
+      to: ticket.staff_email,
+      subject: subject,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(`Ticket arrival reminder sent for ${ticket.booking_code} to ${ticket.staff_email}`);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error(`Failed to send ticket arrival reminder for ${ticket.booking_code}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate subject for ticket departure reminder
+ */
+function getTicketDepartureSubject(daysUntil, bookingCode) {
+  if (daysUntil === 0) {
+    return `✈️ Flight Departs TODAY! - ${bookingCode}`;
+  } else if (daysUntil === 1) {
+    return `⏰ Flight Departs TOMORROW - ${bookingCode}`;
+  } else if (daysUntil === 2) {
+    return `📅 Flight in 2 Days - ${bookingCode}`;
+  } else if (daysUntil === 3) {
+    return `📅 Flight in 3 Days - ${bookingCode}`;
+  } else {
+    return `📅 Flight in ${daysUntil} Days - ${bookingCode}`;
+  }
+}
+
+/**
+ * Generate ticket departure email template
+ */
+function getTicketDepartureEmailTemplate(ticket, daysUntil) {
+  const segments = ticket.segments || [];
+  const firstSegment = segments[0] || {};
+  const lastSegment = segments[segments.length - 1] || firstSegment;
+  
+  const passengers = (ticket.passenger_names || '').split('\n').filter(Boolean);
+  
+  let urgencyColor = '#3b82f6';
+  let urgencyText = '';
+  
+  if (daysUntil === 0) {
+    urgencyColor = '#dc2626';
+    urgencyText = '🛫 FLIGHT DEPARTS TODAY!';
+  } else if (daysUntil === 1) {
+    urgencyColor = '#f59e0b';
+    urgencyText = '⏰ Flight Tomorrow!';
+  } else if (daysUntil <= 3) {
+    urgencyColor = '#f59e0b';
+    urgencyText = `📅 ${daysUntil} Days Until Flight`;
+  } else {
+    urgencyText = `📅 ${daysUntil} Days Until Flight`;
+  }
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; }
+    .header { background: ${urgencyColor}; color: white; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .urgency-badge { background: ${urgencyColor}; color: white; display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; }
+    .info-card { background: #f8fafc; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid ${urgencyColor}; }
+    .info-row { display: flex; margin-bottom: 12px; }
+    .info-label { color: #6b7280; width: 140px; font-size: 14px; }
+    .info-value { color: #1f2937; font-weight: 500; flex: 1; }
+    .segment-list { margin-top: 20px; }
+    .segment-item { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin-bottom: 10px; }
+    .segment-route { font-weight: 600; font-size: 16px; color: #1f2937; }
+    .segment-details { color: #6b7280; font-size: 13px; margin-top: 8px; }
+    .passengers-list { background: #f0fdf4; border-radius: 8px; padding: 15px; margin-top: 20px; }
+    .passengers-list h3 { color: #166534; margin: 0 0 10px 0; font-size: 14px; }
+    .passengers-list ul { margin: 0; padding-left: 20px; }
+    .passengers-list li { color: #1f2937; margin-bottom: 5px; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✈️ Flight Reminder</h1>
+      <p style="margin: 10px 0 0 0; opacity: 0.9;">TravelOps Notification</p>
+    </div>
+    
+    <div class="content">
+      <div style="text-align: center;">
+        <span class="urgency-badge">${urgencyText}</span>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-row">
+          <span class="info-label">Booking Code:</span>
+          <span class="info-value" style="font-size: 18px; font-weight: bold;">${ticket.booking_code}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Airline:</span>
+          <span class="info-value">${ticket.airline_code ? ticket.airline_code + ' - ' : ''}${ticket.airline_name || 'Not specified'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">GDS/System:</span>
+          <span class="info-value">${ticket.gds_system ? ticket.gds_system.toUpperCase() : 'Not specified'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Route:</span>
+          <span class="info-value">${firstSegment.origin || '?'} → ${lastSegment.destination || '?'}</span>
+        </div>
+      </div>
+      
+      <h3 style="color: #1f2937; margin-bottom: 10px;">📋 Flight Segments</h3>
+      <div class="segment-list">
+        ${segments.map((s, i) => `
+          <div class="segment-item">
+            <div class="segment-route">
+              Segment ${i + 1}: ${s.origin || '?'} → ${s.destination || '?'}
+              ${s.flight_number ? `<span style="color: #3b82f6; font-size: 14px;">(${s.flight_number})</span>` : ''}
+            </div>
+            <div class="segment-details">
+              📅 Departure: ${s.departure_date || 'TBA'} ${s.departure_time || ''}
+              ${s.arrival_date ? `<br>📅 Arrival: ${s.arrival_date} ${s.arrival_time || ''}` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+      
+      ${passengers.length > 0 ? `
+      <div class="passengers-list">
+        <h3>👥 Passengers (${passengers.length})</h3>
+        <ul>
+          ${passengers.map(p => `<li>${p}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      
+      ${ticket.notes ? `
+      <div style="background: #fef3c7; border-radius: 8px; padding: 15px; margin-top: 20px;">
+        <h3 style="color: #d97706; margin: 0 0 10px 0; font-size: 14px;">📝 Notes</h3>
+        <p style="margin: 0; color: #1f2937;">${ticket.notes}</p>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="footer">
+      <p><strong>TravelOps</strong></p>
+      <p>Travel Operations Management System</p>
+      <p style="margin-top: 15px;">This reminder was sent to ${ticket.staff_email}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
+/**
+ * Generate ticket arrival email template
+ */
+function getTicketArrivalEmailTemplate(ticket) {
+  const segments = ticket.segments || [];
+  const lastSegment = segments[segments.length - 1] || {};
+  const passengers = (ticket.passenger_names || '').split('\n').filter(Boolean);
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; }
+    .header { background: #059669; color: white; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .arrival-badge { background: #059669; color: white; display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: bold; margin-bottom: 20px; }
+    .info-card { background: #f0fdf4; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #059669; }
+    .info-row { display: flex; margin-bottom: 12px; }
+    .info-label { color: #6b7280; width: 140px; font-size: 14px; }
+    .info-value { color: #1f2937; font-weight: 500; flex: 1; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🛬 Flight Arrival</h1>
+      <p style="margin: 10px 0 0 0; opacity: 0.9;">TravelOps Notification</p>
+    </div>
+    
+    <div class="content">
+      <div style="text-align: center;">
+        <span class="arrival-badge">🛬 ARRIVING TODAY!</span>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-row">
+          <span class="info-label">Booking Code:</span>
+          <span class="info-value" style="font-size: 18px; font-weight: bold;">${ticket.booking_code}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Airline:</span>
+          <span class="info-value">${ticket.airline_code ? ticket.airline_code + ' - ' : ''}${ticket.airline_name || 'Not specified'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Final Destination:</span>
+          <span class="info-value" style="font-size: 16px; font-weight: bold;">${lastSegment.destination || '?'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Arrival Time:</span>
+          <span class="info-value">${lastSegment.arrival_date || 'Today'} ${lastSegment.arrival_time || 'TBA'}</span>
+        </div>
+        ${lastSegment.flight_number ? `
+        <div class="info-row">
+          <span class="info-label">Flight Number:</span>
+          <span class="info-value">${lastSegment.flight_number}</span>
+        </div>
+        ` : ''}
+      </div>
+      
+      <p style="color: #166534; font-weight: 500; text-align: center;">
+        ✅ Please ensure arrangements are ready for guest arrival
+      </p>
+      
+      ${passengers.length > 0 ? `
+      <div style="background: #f0fdf4; border-radius: 8px; padding: 15px; margin-top: 20px;">
+        <h3 style="color: #166534; margin: 0 0 10px 0; font-size: 14px;">👥 Arriving Passengers (${passengers.length})</h3>
+        <ul style="margin: 0; padding-left: 20px;">
+          ${passengers.map(p => `<li style="color: #1f2937; margin-bottom: 5px;">${p}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="footer">
+      <p><strong>TravelOps</strong></p>
+      <p>Travel Operations Management System</p>
+      <p style="margin-top: 15px;">This reminder was sent to ${ticket.staff_email}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export {
   sendDepartureReminder,
   sendCruiseReminder,
   sendReturnArrivalReminder,
-  sendTestEmail
+  sendTestEmail,
+  sendTicketDepartureReminder,
+  sendTicketArrivalReminder
 };

@@ -723,8 +723,8 @@ export async function createApp() {
     }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity'];
-  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity']);
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity','ticket_recaps'];
+  const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity','ticket_recaps']);
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{
@@ -1318,6 +1318,263 @@ export async function createApp() {
     } catch (error) {
       console.error('GET /api/tours/v2/:id error:', error);
       res.status(500).json({ error: 'Failed to fetch tour' });
+    }
+  });
+
+  // ===================================================================
+  // TICKET RECAPS - Flight booking management with segments
+  // ===================================================================
+  
+  // Get all ticket recaps with segments
+  app.get('/api/ticket_recaps/full', authMiddleware(), async (req, res) => {
+    try {
+      const isPg = db.dialect === 'postgres';
+      let query = 'SELECT * FROM ticket_recaps';
+      let params = [];
+      
+      // Basic users only see their own
+      if (req.user.type === 'basic') {
+        query += isPg ? ' WHERE staff_name=$1' : ' WHERE staff_name=?';
+        params.push(req.user.name || req.user.username);
+      }
+      
+      query += ' ORDER BY created_at DESC';
+      const tickets = await db.all(query, params);
+      
+      // Get segments for each ticket
+      for (const ticket of tickets) {
+        const segments = await db.all(
+          'SELECT * FROM ticket_segments WHERE ticket_id=? ORDER BY segment_order ASC',
+          [ticket.id]
+        );
+        ticket.segments = segments;
+      }
+      
+      res.json(tickets);
+    } catch (error) {
+      console.error('GET /api/ticket_recaps/full error:', error);
+      res.status(500).json({ error: 'Failed to fetch ticket recaps' });
+    }
+  });
+  
+  // Get single ticket recap with segments
+  app.get('/api/ticket_recaps/:id/full', authMiddleware(), async (req, res) => {
+    try {
+      const ticketId = req.params.id;
+      const ticket = await db.get('SELECT * FROM ticket_recaps WHERE id=?', [ticketId]);
+      
+      if (!ticket) {
+        return res.status(404).json({ error: 'Ticket not found' });
+      }
+      
+      // Check permission for basic users
+      if (req.user.type === 'basic') {
+        const staffName = req.user.name || req.user.username;
+        if (ticket.staff_name !== staffName) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
+      }
+      
+      const segments = await db.all(
+        'SELECT * FROM ticket_segments WHERE ticket_id=? ORDER BY segment_order ASC',
+        [ticketId]
+      );
+      ticket.segments = segments;
+      
+      res.json(ticket);
+    } catch (error) {
+      console.error('GET /api/ticket_recaps/:id/full error:', error);
+      res.status(500).json({ error: 'Failed to fetch ticket recap' });
+    }
+  });
+  
+  // Create ticket recap with segments
+  app.post('/api/ticket_recaps/full', authMiddleware(), async (req, res) => {
+    try {
+      const { ticket, segments } = req.body;
+      
+      if (!ticket || !ticket.booking_code) {
+        return res.status(400).json({ error: 'Booking code is required' });
+      }
+      
+      if (!segments || segments.length === 0) {
+        return res.status(400).json({ error: 'At least one flight segment is required' });
+      }
+      
+      const isPg = db.dialect === 'postgres';
+      const now = new Date().toISOString();
+      
+      // Insert ticket recap
+      const result = await db.run(
+        `INSERT INTO ticket_recaps (
+          booking_code, airline_code, gds_system, airline_name, passenger_names,
+          staff_name, status, notes, created_by, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          ticket.booking_code,
+          ticket.airline_code || null,
+          ticket.gds_system || null,
+          ticket.airline_name || null,
+          ticket.passenger_names || null,
+          ticket.staff_name || req.user.name || req.user.username,
+          ticket.status || 'Active',
+          ticket.notes || null,
+          req.user.username,
+          now,
+          now
+        ]
+      );
+      
+      const ticketId = result.lastID;
+      
+      // Insert segments
+      for (let i = 0; i < segments.length; i++) {
+        const s = segments[i];
+        await db.run(
+          `INSERT INTO ticket_segments (
+            ticket_id, segment_order, origin, destination, flight_number,
+            departure_date, departure_time, arrival_date, arrival_time,
+            transit_duration, flight_status, created_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [
+            ticketId,
+            i + 1,
+            s.origin || '',
+            s.destination || '',
+            s.flight_number || null,
+            s.departure_date || null,
+            s.departure_time || null,
+            s.arrival_date || null,
+            s.arrival_time || null,
+            s.transit_duration || null,
+            s.flight_status || 'Scheduled',
+            now
+          ]
+        );
+      }
+      
+      await logActivity(req.user.username, 'CREATE', 'ticket_recaps', ticketId, JSON.stringify({ booking_code: ticket.booking_code, segments: segments.length }));
+      
+      res.json({ id: ticketId, created: true });
+    } catch (error) {
+      console.error('POST /api/ticket_recaps/full error:', error);
+      res.status(500).json({ error: error.message || 'Failed to create ticket recap' });
+    }
+  });
+  
+  // Update ticket recap with segments
+  app.put('/api/ticket_recaps/:id/full', authMiddleware(), async (req, res) => {
+    try {
+      const ticketId = req.params.id;
+      const { ticket, segments } = req.body;
+      
+      // Check if ticket exists
+      const existing = await db.get('SELECT * FROM ticket_recaps WHERE id=?', [ticketId]);
+      if (!existing) {
+        return res.status(404).json({ error: 'Ticket not found' });
+      }
+      
+      // Check permission for basic users
+      if (req.user.type === 'basic') {
+        const staffName = req.user.name || req.user.username;
+        if (existing.staff_name !== staffName) {
+          return res.status(403).json({ error: 'Unauthorized' });
+        }
+      }
+      
+      const now = new Date().toISOString();
+      
+      // Update ticket recap
+      await db.run(
+        `UPDATE ticket_recaps SET
+          booking_code=?, airline_code=?, gds_system=?, airline_name=?,
+          passenger_names=?, staff_name=?, status=?, notes=?,
+          updated_at=?, updated_by=?
+        WHERE id=?`,
+        [
+          ticket.booking_code || existing.booking_code,
+          ticket.airline_code ?? existing.airline_code,
+          ticket.gds_system ?? existing.gds_system,
+          ticket.airline_name ?? existing.airline_name,
+          ticket.passenger_names ?? existing.passenger_names,
+          ticket.staff_name ?? existing.staff_name,
+          ticket.status ?? existing.status,
+          ticket.notes ?? existing.notes,
+          now,
+          req.user.username,
+          ticketId
+        ]
+      );
+      
+      // Delete old segments and insert new ones
+      await db.run('DELETE FROM ticket_segments WHERE ticket_id=?', [ticketId]);
+      
+      if (segments && segments.length > 0) {
+        for (let i = 0; i < segments.length; i++) {
+          const s = segments[i];
+          await db.run(
+            `INSERT INTO ticket_segments (
+              ticket_id, segment_order, origin, destination, flight_number,
+              departure_date, departure_time, arrival_date, arrival_time,
+              transit_duration, flight_status, created_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [
+              ticketId,
+              i + 1,
+              s.origin || '',
+              s.destination || '',
+              s.flight_number || null,
+              s.departure_date || null,
+              s.departure_time || null,
+              s.arrival_date || null,
+              s.arrival_time || null,
+              s.transit_duration || null,
+              s.flight_status || 'Scheduled',
+              now
+            ]
+          );
+        }
+      }
+      
+      await logActivity(req.user.username, 'UPDATE', 'ticket_recaps', ticketId, JSON.stringify({ segments: segments?.length || 0 }));
+      
+      res.json({ updated: true });
+    } catch (error) {
+      console.error('PUT /api/ticket_recaps/:id/full error:', error);
+      res.status(500).json({ error: error.message || 'Failed to update ticket recap' });
+    }
+  });
+  
+  // Get upcoming departures for reminders (internal use)
+  app.get('/api/ticket_recaps/upcoming', authMiddleware(['admin', 'semi-admin']), async (req, res) => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      
+      // Get tickets with first segment departure in next 7 days
+      const tickets = await db.all(`
+        SELECT DISTINCT tr.*, ts.departure_date as first_departure
+        FROM ticket_recaps tr
+        INNER JOIN ticket_segments ts ON ts.ticket_id = tr.id AND ts.segment_order = 1
+        WHERE tr.status = 'Active'
+          AND ts.departure_date >= ?
+          AND ts.departure_date <= ?
+        ORDER BY ts.departure_date ASC
+      `, [today, sevenDaysFromNow]);
+      
+      // Get all segments for these tickets
+      for (const ticket of tickets) {
+        const segments = await db.all(
+          'SELECT * FROM ticket_segments WHERE ticket_id=? ORDER BY segment_order ASC',
+          [ticket.id]
+        );
+        ticket.segments = segments;
+      }
+      
+      res.json(tickets);
+    } catch (error) {
+      console.error('GET /api/ticket_recaps/upcoming error:', error);
+      res.status(500).json({ error: 'Failed to fetch upcoming tickets' });
     }
   });
 

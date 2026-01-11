@@ -1,11 +1,12 @@
 import cron from 'node-cron';
-import { sendDepartureReminder, sendCruiseReminder, sendReturnArrivalReminder } from './emailService.js';
+import { sendDepartureReminder, sendCruiseReminder, sendReturnArrivalReminder, sendTicketDepartureReminder, sendTicketArrivalReminder } from './emailService.js';
 import { logger } from './logger.js';
 
 // Reminder intervals in days before departure/sailing/return
 const TOUR_REMINDER_DAYS = [7, 3, 2, 1, 0];
 const CRUISE_REMINDER_DAYS = [30, 15, 7, 3, 2, 1];
 const RETURN_REMINDER_DAYS = [3, 2, 1, 0]; // Days before return to Jakarta
+const TICKET_REMINDER_DAYS = [7, 3, 2, 1, 0]; // Days before flight departure
 
 let db;
 let schedulerActive = false;
@@ -52,11 +53,12 @@ function initScheduler(database) {
   
   // Run daily at 9:00 AM Jakarta time (Asia/Jakarta = UTC+7)
   cron.schedule('0 9 * * *', async () => {
-    logger.info('Running daily tour and cruise reminder check...');
+    logger.info('Running daily tour, cruise, and ticket reminder check...');
     try {
       await checkAndSendReminders();
       await checkAndSendCruiseReminders();
       await checkAndSendReturnReminders();
+      await checkAndSendTicketReminders();
     } catch (error) {
       logger.error({ error: error.message }, 'Error in scheduled reminder check');
     }
@@ -582,11 +584,159 @@ async function recordReturnReminderSent(tourId, daysUntil) {
   }
 }
 
+// ===================================================================
+// TICKET RECAP REMINDERS
+// ===================================================================
+
+/**
+ * Check for tickets that need departure/arrival reminders
+ */
+async function checkAndSendTicketReminders() {
+  try {
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
+    
+    logger.info('Checking for tickets requiring flight reminders...');
+    
+    // Get all active tickets with upcoming departures
+    const tickets = await getUpcomingTickets();
+    
+    if (tickets.length === 0) {
+      logger.info('No upcoming ticket departures found');
+      return;
+    }
+    
+    logger.info(`Found ${tickets.length} upcoming tickets to check`);
+    
+    const remindersSent = [];
+    const errors = [];
+    
+    for (const ticket of tickets) {
+      // Get first segment for departure check
+      const firstSegment = ticket.segments?.[0];
+      const lastSegment = ticket.segments?.[ticket.segments.length - 1];
+      
+      if (!firstSegment) continue;
+      
+      // Check departure reminders
+      if (firstSegment.departure_date) {
+        const departureDate = new Date(firstSegment.departure_date);
+        departureDate.setHours(0, 0, 0, 0);
+        const daysUntil = Math.ceil((departureDate - today) / (1000 * 60 * 60 * 24));
+        
+        if (TICKET_REMINDER_DAYS.includes(daysUntil)) {
+          const reminderField = `reminder_sent_${daysUntil}d`;
+          
+          if (!ticket[reminderField]) {
+            logger.info(`Sending ${daysUntil}-day departure reminder for ticket ${ticket.booking_code}`);
+            
+            const result = await sendTicketDepartureReminder(ticket, daysUntil);
+            
+            if (result.success) {
+              await updateTicketReminderSent(ticket.id, reminderField);
+              remindersSent.push({ ticket: ticket.booking_code, type: 'departure', days: daysUntil });
+            } else {
+              errors.push({ ticket: ticket.booking_code, type: 'departure', error: result.error });
+            }
+            
+            await delay(1000);
+          }
+        }
+      }
+      
+      // Check arrival reminders (only for today)
+      if (lastSegment?.arrival_date === todayStr && !ticket.arrival_reminder_sent) {
+        logger.info(`Sending arrival reminder for ticket ${ticket.booking_code}`);
+        
+        const result = await sendTicketArrivalReminder(ticket);
+        
+        if (result.success) {
+          await updateTicketReminderSent(ticket.id, 'arrival_reminder_sent');
+          remindersSent.push({ ticket: ticket.booking_code, type: 'arrival' });
+        } else {
+          errors.push({ ticket: ticket.booking_code, type: 'arrival', error: result.error });
+        }
+        
+        await delay(1000);
+      }
+    }
+    
+    if (remindersSent.length > 0) {
+      logger.info(`Successfully sent ${remindersSent.length} ticket reminders`);
+    }
+    if (errors.length > 0) {
+      logger.error(`Failed to send ${errors.length} ticket reminders:`, errors);
+    }
+    
+    return { sent: remindersSent, errors };
+  } catch (error) {
+    logger.error('Error in checkAndSendTicketReminders:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get upcoming tickets with segments and staff email
+ */
+async function getUpcomingTickets() {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    
+    // Get active tickets with staff email
+    const sql = `
+      SELECT DISTINCT 
+        tr.*,
+        u.email as staff_email
+      FROM ticket_recaps tr
+      INNER JOIN ticket_segments ts ON ts.ticket_id = tr.id
+      LEFT JOIN users u ON tr.staff_name = u.name
+      WHERE tr.status = 'Active'
+        AND (ts.departure_date >= ? OR ts.arrival_date = ?)
+        AND ts.departure_date <= ?
+        AND u.email IS NOT NULL
+        AND u.email != ''
+      ORDER BY ts.departure_date ASC
+    `;
+    
+    const tickets = await db.all(sql, [today, today, sevenDaysFromNow]);
+    
+    // Get segments for each ticket
+    for (const ticket of tickets) {
+      const segments = await db.all(
+        'SELECT * FROM ticket_segments WHERE ticket_id = ? ORDER BY segment_order ASC',
+        [ticket.id]
+      );
+      ticket.segments = segments;
+    }
+    
+    return tickets || [];
+  } catch (err) {
+    logger.error('Error getting upcoming tickets:', err);
+    return [];
+  }
+}
+
+/**
+ * Update ticket reminder sent flag
+ */
+async function updateTicketReminderSent(ticketId, field) {
+  try {
+    const sql = `UPDATE ticket_recaps SET ${field} = 1 WHERE id = ?`;
+    await db.run(sql, [ticketId]);
+  } catch (err) {
+    logger.error('Error updating ticket reminder sent:', err);
+    throw err;
+  }
+}
+
 export {
   initScheduler,
   checkAndSendReminders,
   checkAndSendCruiseReminders,
   checkAndSendReturnReminders,
+  checkAndSendTicketReminders,
   manualTrigger,
   getReminderStats
 };
