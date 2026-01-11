@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import { sendDepartureReminder, sendCruiseReminder, sendReturnArrivalReminder, sendTicketDepartureReminder, sendTicketArrivalReminder } from './emailService.js';
+import { sendDepartureReminder, sendCruiseReminder, sendReturnArrivalReminder, sendTicketDepartureReminder, sendTicketArrivalReminder, sendOpenTicketReminder } from './emailService.js';
 import { logger } from './logger.js';
 
 // Reminder intervals in days before departure/sailing/return
@@ -59,6 +59,7 @@ function initScheduler(database) {
       await checkAndSendCruiseReminders();
       await checkAndSendReturnReminders();
       await checkAndSendTicketReminders();
+      await checkAndSendOpenTicketReminders();
     } catch (error) {
       logger.error({ error: error.message }, 'Error in scheduled reminder check');
     }
@@ -74,7 +75,7 @@ function initScheduler(database) {
   // });
 
   schedulerActive = true;
-  logger.info('Tour, Cruise, and Return arrival reminder scheduler initialized - Daily at 9:00 AM Asia/Jakarta (UTC+7)');
+  logger.info('Tour, Cruise, Return arrival and Open ticket reminder scheduler initialized - Daily at 9:00 AM Asia/Jakarta (UTC+7)');
   logger.info('Note: Email reminders require SMTP configuration to function');
   
   // Run once on startup for testing (optional - commented out by default)
@@ -731,12 +732,115 @@ async function updateTicketReminderSent(ticketId, field) {
   }
 }
 
+/**
+ * Check for open tickets and send daily reminders
+ * Open tickets are tickets with flexible dates that need staff attention
+ */
+async function checkAndSendOpenTicketReminders() {
+  try {
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    const todayStr = today.toISOString().split('T')[0];
+    
+    logger.info('Checking for open tickets requiring daily reminders...');
+    
+    // Get all active open tickets that haven't been reminded today
+    const openTickets = await getActiveOpenTickets(todayStr);
+    
+    if (openTickets.length === 0) {
+      logger.info('No open tickets requiring daily reminders');
+      return;
+    }
+    
+    logger.info(`Found ${openTickets.length} open tickets to remind`);
+    
+    const remindersSent = [];
+    const errors = [];
+    
+    for (const ticket of openTickets) {
+      logger.info(`Sending daily open ticket reminder for ${ticket.booking_code} to ${ticket.staff_email}`);
+      
+      const result = await sendOpenTicketReminder(ticket);
+      
+      if (result.success) {
+        await updateOpenTicketReminderDate(ticket.id, todayStr);
+        remindersSent.push({ ticket: ticket.booking_code, staff: ticket.staff_name });
+      } else {
+        errors.push({ ticket: ticket.booking_code, error: result.error });
+      }
+      
+      await delay(1000); // Rate limiting
+    }
+    
+    if (remindersSent.length > 0) {
+      logger.info(`Successfully sent ${remindersSent.length} open ticket reminders`);
+    }
+    if (errors.length > 0) {
+      logger.error(`Failed to send ${errors.length} open ticket reminders:`, errors);
+    }
+    
+    return { sent: remindersSent, errors };
+  } catch (error) {
+    logger.error('Error in checkAndSendOpenTicketReminders:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get all active open tickets that haven't been reminded today
+ */
+async function getActiveOpenTickets(todayStr) {
+  try {
+    const sql = `
+      SELECT 
+        tr.*,
+        u.email as staff_email
+      FROM ticket_recaps tr
+      LEFT JOIN users u ON tr.staff_name = u.name
+      WHERE tr.is_open_ticket = 1
+        AND tr.status = 'Active'
+        AND (tr.open_ticket_reminder_sent_date IS NULL OR tr.open_ticket_reminder_sent_date != ?)
+        AND u.email IS NOT NULL
+        AND u.email != ''
+    `;
+    
+    const tickets = await db.all(sql, [todayStr]);
+    
+    // Get segments for each ticket
+    for (const ticket of tickets) {
+      const segments = await db.all(
+        'SELECT * FROM ticket_segments WHERE ticket_id = ? ORDER BY segment_order ASC',
+        [ticket.id]
+      );
+      ticket.segments = segments;
+    }
+    
+    return tickets || [];
+  } catch (err) {
+    logger.error('Error getting active open tickets:', err);
+    return [];
+  }
+}
+
+/**
+ * Update the open ticket reminder sent date
+ */
+async function updateOpenTicketReminderDate(ticketId, dateStr) {
+  try {
+    const sql = `UPDATE ticket_recaps SET open_ticket_reminder_sent_date = ? WHERE id = ?`;
+    await db.run(sql, [dateStr, ticketId]);
+  } catch (err) {
+    logger.error('Error updating open ticket reminder date:', err);
+    throw err;
+  }
+}
+
 export {
   initScheduler,
   checkAndSendReminders,
   checkAndSendCruiseReminders,
   checkAndSendReturnReminders,
   checkAndSendTicketReminders,
+  checkAndSendOpenTicketReminders,
   manualTrigger,
   getReminderStats
 };

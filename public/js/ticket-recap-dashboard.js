@@ -127,6 +127,7 @@ function applyFilters() {
   const airline = document.getElementById('airlineFilter').value;
   const gds = document.getElementById('gdsFilter').value;
   const status = document.getElementById('statusFilter').value;
+  const ticketType = document.getElementById('ticketTypeFilter').value;
   const departureDate = document.getElementById('departureDateFilter').value;
   
   filteredTickets = allTickets.filter(ticket => {
@@ -161,6 +162,13 @@ function applyFilters() {
     // Status filter
     if (status !== 'all' && ticket.status !== status) return false;
     
+    // Ticket type filter (open vs fixed)
+    if (ticketType !== 'all') {
+      const isOpen = ticket.is_open_ticket === 1 || ticket.is_open_ticket === true;
+      if (ticketType === 'open' && !isOpen) return false;
+      if (ticketType === 'fixed' && isOpen) return false;
+    }
+    
     // Departure date filter
     if (departureDate && ticket.segments && ticket.segments.length > 0) {
       const firstDeparture = ticket.segments[0].departure_date;
@@ -182,8 +190,14 @@ function updateMetrics() {
   let departingToday = 0;
   let upcoming7Days = 0;
   let arrivingToday = 0;
+  let openTickets = 0;
   
   allTickets.forEach(ticket => {
+    // Count open tickets (active ones only)
+    if ((ticket.is_open_ticket === 1 || ticket.is_open_ticket === true) && ticket.status === 'Active') {
+      openTickets++;
+    }
+    
     if (!ticket.segments || ticket.segments.length === 0) return;
     
     const firstSegment = ticket.segments[0];
@@ -206,6 +220,7 @@ function updateMetrics() {
   });
   
   document.getElementById('totalTickets').textContent = allTickets.length;
+  document.getElementById('openTickets').textContent = openTickets;
   document.getElementById('departingToday').textContent = departingToday;
   document.getElementById('upcoming7Days').textContent = upcoming7Days;
   document.getElementById('arrivingToday').textContent = arrivingToday;
@@ -248,6 +263,12 @@ function renderTable() {
     // Departure badge
     const departureBadge = getDepartureBadge(firstSegment.departure_date);
     
+    // Open ticket badge
+    const isOpenTicket = ticket.is_open_ticket === 1 || ticket.is_open_ticket === true;
+    const openTicketBadge = isOpenTicket 
+      ? '<span class="open-ticket-badge" title="Open Ticket - Daily reminders enabled">🎫 OPEN</span>'
+      : '';
+    
     // GDS badge
     const gdsBadge = ticket.gds_system 
       ? `<span class="gds-badge ${ticket.gds_system}">${ticket.gds_system.toUpperCase()}</span>`
@@ -263,13 +284,16 @@ function renderTable() {
       : '—';
     
     return `
-      <tr data-id="${ticket.id}">
+      <tr data-id="${ticket.id}" class="${isOpenTicket ? 'open-ticket-row' : ''}">
         <td style="text-align: center;">
           <button class="expand-segments" onclick="toggleSegments(${ticket.id})" title="View segments">
             ▼
           </button>
         </td>
-        <td><strong>${ticket.booking_code || '—'}</strong></td>
+        <td>
+          <strong>${ticket.booking_code || '—'}</strong>
+          ${openTicketBadge}
+        </td>
         <td>
           ${ticket.airline_code ? `<span style="font-weight: 600;">${ticket.airline_code}</span> ` : ''}
           ${ticket.airline_name || '—'}
@@ -414,6 +438,7 @@ function setupEventListeners() {
   document.getElementById('airlineFilter').addEventListener('change', applyFilters);
   document.getElementById('gdsFilter').addEventListener('change', applyFilters);
   document.getElementById('statusFilter').addEventListener('change', applyFilters);
+  document.getElementById('ticketTypeFilter').addEventListener('change', applyFilters);
   document.getElementById('departureDateFilter').addEventListener('change', applyFilters);
   
   // Clear filters
@@ -446,6 +471,7 @@ function clearFilters() {
   document.getElementById('airlineFilter').value = 'all';
   document.getElementById('gdsFilter').value = 'all';
   document.getElementById('statusFilter').value = 'all';
+  document.getElementById('ticketTypeFilter').value = 'all';
   document.getElementById('departureDateFilter').value = '';
   applyFilters();
 }
@@ -468,6 +494,7 @@ function openModal(ticket = null) {
     document.getElementById('status').value = ticket.status || 'Active';
     document.getElementById('staff_name').value = ticket.staff_name || '';
     document.getElementById('passenger_names').value = ticket.passenger_names || '';
+    document.getElementById('is_open_ticket').checked = ticket.is_open_ticket === 1 || ticket.is_open_ticket === true;
     document.getElementById('notes').value = ticket.notes || '';
     
     // Add segments
@@ -609,6 +636,7 @@ async function handleSubmit(e) {
     status: form.status.value || 'Active',
     staff_name: form.staff_name.value || null,
     passenger_names: form.passenger_names.value || null,
+    is_open_ticket: form.is_open_ticket.checked ? 1 : 0,
     notes: form.notes.value || null
   };
   

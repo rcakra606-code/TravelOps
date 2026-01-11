@@ -1019,11 +1019,178 @@ function getTicketArrivalEmailTemplate(ticket) {
   `;
 }
 
+/**
+ * Send open ticket daily reminder email
+ * @param {Object} ticket - Open ticket details with segments
+ */
+async function sendOpenTicketReminder(ticket) {
+  if (!isEmailConfigured || !transporter) {
+    logger.warn('Email service not configured - skipping open ticket reminder');
+    return { success: false, error: 'Email service not configured' };
+  }
+  
+  try {
+    const subject = `🎫 Daily Reminder: Open Ticket Pending - ${ticket.booking_code}`;
+    const htmlContent = getOpenTicketEmailTemplate(ticket);
+    
+    if (!ticket.staff_email) {
+      logger.warn(`No staff email found for open ticket ${ticket.booking_code}`);
+      return { success: false, error: 'No staff email address' };
+    }
+
+    const mailOptions = {
+      from: `"TravelOps Notifications" <${emailConfig.auth.user}>`,
+      to: ticket.staff_email,
+      subject: subject,
+      html: htmlContent
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    logger.info(`Open ticket reminder sent for ${ticket.booking_code} to ${ticket.staff_email}`);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    logger.error(`Failed to send open ticket reminder for ${ticket.booking_code}:`, error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Generate open ticket email template
+ */
+function getOpenTicketEmailTemplate(ticket) {
+  const segments = ticket.segments || [];
+  const firstSegment = segments[0] || {};
+  const lastSegment = segments[segments.length - 1] || firstSegment;
+  
+  const passengers = (ticket.passenger_names || '').split('\n').filter(Boolean);
+  const today = new Date().toLocaleDateString('en-GB', { 
+    weekday: 'long', 
+    day: '2-digit', 
+    month: 'long', 
+    year: 'numeric' 
+  });
+  
+  // Build route summary
+  let routeSummary = '';
+  if (segments.length > 0) {
+    if (segments.length === 1) {
+      routeSummary = `${firstSegment.origin || '?'} → ${firstSegment.destination || '?'}`;
+    } else {
+      const stops = segments.map(s => s.origin).concat([lastSegment.destination]);
+      routeSummary = stops.filter(Boolean).join(' → ');
+    }
+  }
+  
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 0; background: #f3f4f6; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; }
+    .header { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: white; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .header .date { opacity: 0.9; margin-top: 8px; font-size: 14px; }
+    .content { padding: 30px; }
+    .open-badge { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); color: #92400e; display: inline-block; padding: 10px 20px; border-radius: 8px; font-weight: bold; margin-bottom: 20px; border: 2px solid #f59e0b; }
+    .info-card { background: #fffbeb; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 4px solid #f59e0b; }
+    .info-row { display: flex; margin-bottom: 12px; }
+    .info-label { color: #92400e; width: 140px; font-size: 14px; }
+    .info-value { color: #1f2937; font-weight: 500; flex: 1; }
+    .action-box { background: #fef3c7; border: 2px dashed #f59e0b; border-radius: 12px; padding: 20px; margin: 20px 0; text-align: center; }
+    .action-title { color: #92400e; font-weight: 600; font-size: 16px; margin-bottom: 10px; }
+    .action-text { color: #78350f; font-size: 14px; }
+    .passenger-list { background: #f8fafc; border-radius: 8px; padding: 15px; margin-top: 15px; }
+    .passenger-list h4 { margin: 0 0 10px 0; color: #374151; font-size: 14px; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎫 Open Ticket Reminder</h1>
+      <div class="date">${today}</div>
+    </div>
+    
+    <div class="content">
+      <div style="text-align: center;">
+        <span class="open-badge">OPEN TICKET - Flexible Date</span>
+      </div>
+      
+      <div class="action-box">
+        <div class="action-title">⚠️ Action Required</div>
+        <div class="action-text">
+          This is an open ticket with flexible travel dates.<br>
+          Please follow up with the passenger to confirm their travel schedule.
+        </div>
+      </div>
+      
+      <div class="info-card">
+        <div class="info-row">
+          <span class="info-label">📋 Booking Code:</span>
+          <span class="info-value"><strong>${ticket.booking_code}</strong></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">✈️ Airline:</span>
+          <span class="info-value">${ticket.airline_code ? `[${ticket.airline_code}] ` : ''}${ticket.airline_name || '—'}</span>
+        </div>
+        ${routeSummary ? `
+        <div class="info-row">
+          <span class="info-label">🗺️ Route:</span>
+          <span class="info-value">${routeSummary}</span>
+        </div>
+        ` : ''}
+        ${ticket.gds_system ? `
+        <div class="info-row">
+          <span class="info-label">💻 GDS System:</span>
+          <span class="info-value">${ticket.gds_system.toUpperCase()}</span>
+        </div>
+        ` : ''}
+        <div class="info-row">
+          <span class="info-label">👤 Staff:</span>
+          <span class="info-value">${ticket.staff_name || '—'}</span>
+        </div>
+      </div>
+      
+      ${passengers.length > 0 ? `
+      <div class="passenger-list">
+        <h4>👥 Passengers (${passengers.length}):</h4>
+        <ul style="margin: 0; padding-left: 20px;">
+          ${passengers.map(p => `<li style="color: #1f2937; margin-bottom: 5px;">${p}</li>`).join('')}
+        </ul>
+      </div>
+      ` : ''}
+      
+      ${ticket.notes ? `
+      <div style="margin-top: 20px; padding: 15px; background: #f1f5f9; border-radius: 8px;">
+        <h4 style="margin: 0 0 8px 0; color: #374151; font-size: 14px;">📝 Notes:</h4>
+        <p style="margin: 0; color: #1f2937; font-size: 14px; white-space: pre-wrap;">${ticket.notes}</p>
+      </div>
+      ` : ''}
+    </div>
+    
+    <div class="footer">
+      <p><strong>TravelOps</strong></p>
+      <p>Travel Operations Management System</p>
+      <p style="margin-top: 10px; color: #92400e;">
+        📧 You will receive this reminder daily until the ticket is marked as Completed or Cancelled.
+      </p>
+      <p style="margin-top: 10px;">This reminder was sent to ${ticket.staff_email}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `;
+}
+
 export {
   sendDepartureReminder,
   sendCruiseReminder,
   sendReturnArrivalReminder,
   sendTestEmail,
   sendTicketDepartureReminder,
-  sendTicketArrivalReminder
+  sendTicketArrivalReminder,
+  sendOpenTicketReminder
 };

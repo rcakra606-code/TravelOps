@@ -203,6 +203,36 @@
     .flight-status.departed { background: #e0e7ff; color: #4338ca; }
     .flight-status.arrived { background: #d1fae5; color: #047857; }
     
+    /* Open ticket badge */
+    .open-ticket-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      color: #92400e;
+      border-radius: 4px;
+      margin-left: 8px;
+      vertical-align: middle;
+      border: 1px solid #f59e0b;
+      animation: pulse-open 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse-open {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+      50% { box-shadow: 0 0 0 4px rgba(245, 158, 11, 0); }
+    }
+    
+    /* Open ticket row highlight */
+    .open-ticket-row {
+      background: linear-gradient(135deg, rgba(254, 243, 199, 0.3) 0%, transparent 100%) !important;
+    }
+    
+    .open-ticket-row:hover {
+      background: linear-gradient(135deg, rgba(254, 243, 199, 0.5) 0%, rgba(253, 230, 138, 0.2) 100%) !important;
+    }
+    
     /* Expandable row for segments */
     .expand-segments {
       cursor: pointer;
@@ -367,6 +397,11 @@
           <option value="Completed">Completed</option>
           <option value="Cancelled">Cancelled</option>
         </select>
+        <select id="ticketTypeFilter" style="min-width: 130px;">
+          <option value="all">All Tickets</option>
+          <option value="open">🎫 Open Tickets</option>
+          <option value="fixed">Fixed Date</option>
+        </select>
         <input type="date" id="departureDateFilter" placeholder="Departure Date" style="min-width: 150px;" />
         <button id="clearFilters" class="btn btn-secondary">Clear</button>
         <button id="exportBtn" class="btn btn-outline">📊 Export</button>
@@ -380,6 +415,11 @@
           <div class="metric-title">Total Tickets</div>
           <div class="metric-value" id="totalTickets">0</div>
           <div class="metric-subtitle">All bookings</div>
+        </div>
+        <div class="metric-card" style="border-left: 3px solid var(--warning, #f59e0b);">
+          <div class="metric-title">🎫 Open Tickets</div>
+          <div class="metric-value" id="openTickets">0</div>
+          <div class="metric-subtitle">Pending dates</div>
         </div>
         <div class="metric-card">
           <div class="metric-title">Departing Today</div>
@@ -499,6 +539,17 @@
               <label for="staff_name">Staff Name</label>
               <input type="text" id="staff_name" name="staff_name" placeholder="Staff handling this booking">
             </div>
+          </div>
+          
+          <!-- Open Ticket Question -->
+          <div class="form-group" style="margin-top: 16px; padding: 16px; background: var(--bg-alt); border-radius: 12px; border-left: 4px solid var(--warning, #f59e0b);">
+            <label style="display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 500;">
+              <input type="checkbox" id="is_open_ticket" name="is_open_ticket" style="width: 20px; height: 20px; cursor: pointer;">
+              <span style="display: flex; flex-direction: column;">
+                <span style="font-size: 14px;">🎫 Is this an Open Ticket?</span>
+                <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">Open tickets have flexible travel dates. Staff will receive daily email reminders about pending open tickets.</span>
+              </span>
+            </label>
           </div>
         </div>
         

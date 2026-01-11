@@ -368,6 +368,8 @@ async function createSchema(db) {
     passenger_names TEXT,
     staff_name TEXT,
     status TEXT DEFAULT 'Active',
+    is_open_ticket INTEGER DEFAULT 0,
+    open_ticket_reminder_sent_date TEXT,
     notes TEXT,
     reminder_sent_7d INTEGER DEFAULT 0,
     reminder_sent_3d INTEGER DEFAULT 0,
