@@ -1185,6 +1185,8 @@ export async function createApp() {
       const tourId = req.params.id;
       const { tour, passengers } = req.body;
       
+      console.log('🔄 PUT /api/tours/v2/:id received:', { tourId, hasTour: !!tour, passengersCount: passengers?.length });
+      
       if (!tour || !Array.isArray(passengers) || passengers.length === 0) {
         return res.status(400).json({ error: 'Tour and passengers array required' });
       }
@@ -1192,6 +1194,8 @@ export async function createApp() {
       // Verify tour exists
       const existing = await db.get('SELECT * FROM tours WHERE id=?', [tourId]);
       if (!existing) return res.status(404).json({ error: 'Tour not found' });
+      
+      console.log('📋 Existing tour found:', existing.tour_code, 'staff:', existing.staff_name);
       
       // Check ownership for basic users
       if (req.user.type === 'basic' && existing.staff_name !== req.user.name) {
@@ -1256,10 +1260,15 @@ export async function createApp() {
       const tourKeys = Object.keys(cleanTour);
       const tourValues = Object.values(cleanTour);
       const tourSet = tourKeys.map(k => `${k}=?`).join(',');
+      
+      console.log('💾 Updating tour with keys:', tourKeys.join(', '));
       await db.run(`UPDATE tours SET ${tourSet} WHERE id=?`, [...tourValues, tourId]);
+      console.log('✅ Tour table updated');
       
       // Replace passengers
       await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [tourId]);
+      console.log('🗑️ Old passengers deleted');
+      
       for (let i = 0; i < passengers.length; i++) {
         const p = passengers[i];
         await db.run(
@@ -1278,6 +1287,7 @@ export async function createApp() {
           ]
         );
       }
+      console.log('✅ New passengers inserted:', passengers.length);
       
       await logActivity(req.user.username, 'UPDATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
       console.log('✅ Tour v2 updated:', tourId, 'with', passengers.length, 'passengers');

@@ -776,12 +776,20 @@ window.TourWizard = (function() {
       
       const payload = { tour: tourData, passengers };
       
+      console.log('💾 Saving tour...', {
+        editMode: wizardState.editMode,
+        tourId: wizardState.tourId,
+        tourData,
+        passengersCount: passengers.length
+      });
+      
       if (wizardState.editMode) {
-        await window.fetchJson(`/api/tours/v2/${wizardState.tourId}`, {
+        const response = await window.fetchJson(`/api/tours/v2/${wizardState.tourId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
+        console.log('✅ Tour update response:', response);
         window.toast.success('Tour updated successfully');
       } else {
         await window.fetchJson('/api/tours/v2', {

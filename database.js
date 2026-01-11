@@ -143,6 +143,23 @@ async function createSchema(db) {
     status TEXT DEFAULT 'Pending',
     link_pelunasan_tour TEXT,
     invoice_number TEXT,
+    data_version INTEGER DEFAULT 1,
+    remarks_request TEXT,
+    created_at ${ts} ${createdDefault}
+  )`);
+
+  // Tour Passengers - stores individual passenger details for data_version 2+ tours
+  await db.run(`CREATE TABLE IF NOT EXISTS tour_passengers (
+    id ${idCol},
+    tour_id INTEGER NOT NULL,
+    passenger_number INTEGER DEFAULT 1,
+    name TEXT NOT NULL,
+    phone_number TEXT,
+    email TEXT,
+    base_price ${num()} DEFAULT 0,
+    discount ${num()} DEFAULT 0,
+    profit ${num()} DEFAULT 0,
+    is_lead_passenger INTEGER DEFAULT 0,
     created_at ${ts} ${createdDefault}
   )`);
 
@@ -436,6 +453,19 @@ async function createSchema(db) {
   await ensureColumn('tours', 'total_nominal_sales', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
   await ensureColumn('tours', 'invoice_number', 'TEXT');
   await ensureColumn('tours', 'return_date', 'TEXT');
+  await ensureColumn('tours', 'data_version', 'INTEGER DEFAULT 1');
+  await ensureColumn('tours', 'remarks_request', 'TEXT');
+
+  // Tour Passengers: all columns (for new multi-passenger format)
+  await ensureColumn('tour_passengers', 'tour_id', 'INTEGER NOT NULL');
+  await ensureColumn('tour_passengers', 'passenger_number', 'INTEGER DEFAULT 1');
+  await ensureColumn('tour_passengers', 'name', 'TEXT');
+  await ensureColumn('tour_passengers', 'phone_number', 'TEXT');
+  await ensureColumn('tour_passengers', 'email', 'TEXT');
+  await ensureColumn('tour_passengers', 'base_price', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tour_passengers', 'discount', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tour_passengers', 'profit', isPg ? 'NUMERIC DEFAULT 0' : 'REAL DEFAULT 0');
+  await ensureColumn('tour_passengers', 'is_lead_passenger', 'INTEGER DEFAULT 0');
 
   // Telecom: all columns used by frontend
   await ensureColumn('telecom', 'nama', 'TEXT');
@@ -510,6 +540,11 @@ async function createSchema(db) {
   await ensureIndex('tours', 'idx_tours_staff', 'staff_name');
   await ensureIndex('tours', 'idx_tours_region', 'region_id');
   await ensureIndex('tours', 'idx_tours_status', 'status');
+  await ensureIndex('tours', 'idx_tours_data_version', 'data_version');
+  
+  // Tour Passengers indexes
+  await ensureIndex('tour_passengers', 'idx_tour_passengers_tour', 'tour_id');
+  await ensureIndex('tour_passengers', 'idx_tour_passengers_lead', 'is_lead_passenger');
   
   // Documents indexes
   await ensureIndex('documents', 'idx_docs_receive', 'receive_date');

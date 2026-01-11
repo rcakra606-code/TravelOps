@@ -703,6 +703,15 @@ window.addEventListener('DOMContentLoaded', async () => {
   await populateFilterDropdowns();
   renderDashboard();
   
+  // Initialize Tour Wizard with loaded data
+  initTourWizard();
+  
+  // Listen for wizard save events to refresh data
+  window.addEventListener('tourWizardSaved', () => {
+    loadToursData();
+    renderDashboard();
+  });
+  
   // Auto-refresh with visual indicator - store reference for cleanup
   let lastRefresh = Date.now();
   refreshInterval = setInterval(() => {
@@ -759,6 +768,20 @@ let toursFilters = { search: '' };
 let toursCurrentPage = 1;
 const toursPageSize = 25;
 
+// Initialize Tour Wizard when data is loaded
+function initTourWizard() {
+  if (window.TourWizard) {
+    window.TourWizard.init(regionsData, usersData);
+  }
+}
+
+// Helper: Check if a tour is from 2025 or earlier (view-only)
+function isTour2025OrEarlier(tour) {
+  if (!tour || !tour.departure_date) return true;
+  const depYear = new Date(tour.departure_date).getFullYear();
+  return depYear <= 2025;
+}
+
 async function loadToursData() {
   const tbody = el('toursTableBody');
   if (tbody && tbody.rows.length === 1) {
@@ -778,17 +801,32 @@ function renderToursTable() {
   const tbody = el('toursTableBody');
   if (!tbody) return;
   
-  // Event delegation for edit/delete buttons
+  // Event delegation for edit/delete/view buttons
   tbody.onclick = (e) => {
     const editBtn = e.target.closest('.btn-edit');
     const deleteBtn = e.target.closest('.btn-delete');
+    const viewBtn = e.target.closest('.btn-view-only');
     
     if (editBtn) {
       const id = parseInt(editBtn.dataset.id);
-      window.editTour(id);
+      const tour = toursDataForCRUD.find(t => t.id === id);
+      // Use wizard for 2026+ tours
+      if (tour && !isTour2025OrEarlier(tour) && window.TourWizard) {
+        window.TourWizard.edit(id);
+      } else {
+        window.editTour(id);
+      }
     } else if (deleteBtn) {
       const id = parseInt(deleteBtn.dataset.id);
       window.deleteTour(id);
+    } else if (viewBtn) {
+      const id = parseInt(viewBtn.dataset.id);
+      // Open wizard in view-only mode for 2025 tours
+      if (window.TourWizard) {
+        window.TourWizard.view(id);
+      } else {
+        window.editTour(id); // Fallback to old modal
+      }
     }
   };
   
@@ -819,10 +857,32 @@ function renderToursTable() {
     const region = regionsData.find(r => r.id === item.region_id);
     const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
     const formatDate = (val) => val ? new Date(val).toLocaleDateString('id-ID') : '—';
+    const is2025 = isTour2025OrEarlier(item);
+    const isV2 = item.data_version === 2;
+    
+    // Determine action buttons based on year
+    let actionButtons = '';
+    if (is2025) {
+      // 2025 and earlier: View only
+      actionButtons = `
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
+        <button class="btn btn-sm btn-view-only" data-id="${item.id}" title="View (Read-only)">🔍 View</button>
+      `;
+    } else {
+      // 2026+: Full edit
+      actionButtons = `
+        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
+        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
+        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+      `;
+    }
+    
+    // Add version badge for data_version 2 tours
+    const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
     
     return `
-    <tr class="table-row">
-      <td><strong>${item.tour_code || '—'}</strong></td>
+    <tr class="table-row ${is2025 ? 'tour-row-readonly' : ''}">
+      <td><strong>${item.tour_code || '—'}</strong>${versionBadge}</td>
       <td>${formatDate(item.registration_date)}</td>
       <td>${formatDate(item.departure_date)}</td>
       <td>${region ? region.region_name : '—'}</td>
@@ -833,9 +893,7 @@ function renderToursTable() {
       <td class="text-right">${formatCurrency(item.sales_amount)}</td>
       <td class="text-right">${formatCurrency(item.profit_amount)}</td>
       <td class="actions">
-        <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
-        <button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>
-        ${window.getUser().type !== 'basic' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+        ${actionButtons}
       </td>
     </tr>
   `;
@@ -923,7 +981,16 @@ window.deleteTour = async function(id) {
 if (el('addTourBtn')) {
   console.log('✅ Add Tour button found in DOM');
   el('addTourBtn').addEventListener('click', () => {
+    // Initialize wizard with regions and users data
+    initTourWizard();
     
+    // Use wizard for new tours (2026+ format)
+    if (window.TourWizard) {
+      window.TourWizard.create();
+      return;
+    }
+    
+    // Fallback to old modal if wizard not available
     try {
       window.CRUDModal.create('Add Tour', [
       { type: 'date', name: 'registration_date', label: 'Registration Date', required: true },

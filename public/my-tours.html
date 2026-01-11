@@ -24,6 +24,7 @@
   <link rel="stylesheet" href="/css/ui-enhancements.css">
   <link rel="stylesheet" href="/css/sidebar-groups.css">
 <link rel="stylesheet" href="/css/dashboard-shared.css">
+<link rel="stylesheet" href="/css/tour-wizard.css">
   <script src="/js/theme-toggle.js"></script>
   <style>
     .stats-grid {
@@ -568,6 +569,7 @@
 <script src="/js/mobile-menu.js"></script>
 <script src="/js/auth-common.js?v=20251215"></script>
 <script src="/js/logout-handler.js?v=20251215"></script>
+<script src="/js/tour-wizard.js?v=20251215"></script>
 <script src="/js/app-enhancements.js"></script>
 <script>
   // Start token refresh system (uses window.startTokenRefresh from auth-common.js)
@@ -871,10 +873,21 @@
       const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
       const staffColumn = isAdminView ? `<td class="staff-column">${tour.staff_name || '-'}</td>` : '';
       
+      // Check if tour is from 2025 or earlier (view-only)
+      const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
+      const is2025 = depYear <= 2025;
+      const isV2 = tour.data_version === 2;
+      const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
+      
+      // Different edit button based on year
+      const editButton = is2025 
+        ? `<button class="btn-view-only" onclick="viewTour(${tour.id})" title="View (Read-only)">🔍 View</button>`
+        : `<button class="btn-edit" onclick="openEditModal(${tour.id})">✏️ Edit</button>`;
+      
       return `
-        <tr>
+        <tr class="${is2025 ? 'tour-row-readonly' : ''}">
           <td>${tour.registration_date || '-'}</td>
-          <td><strong>${tour.tour_code || '-'}</strong></td>
+          <td><strong>${tour.tour_code || '-'}</strong>${versionBadge}</td>
           <td>${tour.booking_code || '-'}</td>
           <td title="${tour.lead_passenger || '-'}">${truncate(tour.lead_passenger, 20)}</td>
           ${staffColumn}
@@ -891,7 +904,7 @@
           </td>
           <td>${formatCurrency(tour.total_nominal_sales || tour.sales_amount || 0)}</td>
           <td>
-            <button class="btn-edit" onclick="openEditModal(${tour.id})">✏️ Edit</button>
+            ${editButton}
           </td>
         </tr>
       `;
@@ -903,43 +916,69 @@
     return str.length > len ? str.substring(0, len) + '...' : str;
   }
   
+  // View tour (read-only mode using wizard)
+  window.viewTour = function(id) {
+    if (window.TourWizard) {
+      // Initialize wizard with regions data
+      window.TourWizard.init(regions, [{name: currentUser.name}]);
+      window.TourWizard.view(id);
+    } else {
+      // Fallback to simple view
+      openEditModal(id, true);
+    }
+  };
+  
   // Open edit modal
-  window.openEditModal = function(id) {
+  window.openEditModal = function(id, viewOnly = false) {
     const tour = allTours.find(t => t.id === id);
     if (!tour) return;
     
-    const formatDate = (d) => d ? d.slice(0, 10) : '';
+    // Check if tour is 2026+ and use wizard
+    const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
+    const is2026Plus = depYear >= 2026;
     
-    el('modalTitle').textContent = `Edit Tour: ${tour.tour_code || 'N/A'}`;
+    if (is2026Plus && window.TourWizard && !viewOnly) {
+      // Use wizard for 2026+ tours
+      window.TourWizard.init(regions, [{name: currentUser.name}]);
+      window.TourWizard.edit(id);
+      return;
+    }
+    
+    const formatDate = (d) => d ? d.slice(0, 10) : '';
+    const disabled = viewOnly ? 'disabled' : '';
+    
+    el('modalTitle').textContent = viewOnly 
+      ? `View Tour: ${tour.tour_code || 'N/A'} (Read Only)`
+      : `Edit Tour: ${tour.tour_code || 'N/A'}`;
     el('modalBody').innerHTML = `
       <input type="hidden" name="id" value="${tour.id}">
       <div class="form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;">
         <div class="form-group">
           <label>Registration Date</label>
-          <input type="date" name="registration_date" value="${formatDate(tour.registration_date)}">
+          <input type="date" name="registration_date" value="${formatDate(tour.registration_date)}" ${disabled}>
         </div>
         <div class="form-group">
           <label>Tour Code *</label>
-          <input type="text" name="tour_code" value="${tour.tour_code || ''}" required>
+          <input type="text" name="tour_code" value="${tour.tour_code || ''}" required ${disabled}>
         </div>
         <div class="form-group">
           <label>Booking Code</label>
-          <input type="text" name="booking_code" value="${tour.booking_code || ''}">
+          <input type="text" name="booking_code" value="${tour.booking_code || ''}" ${disabled}>
         </div>
         <div class="form-group">
           <label>Departure Date *</label>
-          <input type="date" name="departure_date" value="${formatDate(tour.departure_date)}" required>
+          <input type="date" name="departure_date" value="${formatDate(tour.departure_date)}" required ${disabled}>
         </div>
         <div class="form-group">
           <label>Region</label>
-          <select name="region_id">
+          <select name="region_id" ${disabled}>
             <option value="">Select Region</option>
             ${regions.map(r => `<option value="${r.id}" ${r.id === tour.region_id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Status</label>
-          <select name="status">
+          <select name="status" ${disabled}>
             <option value="belum jalan" ${tour.status === 'belum jalan' ? 'selected' : ''}>⏳ Belum Jalan</option>
             <option value="sudah jalan" ${tour.status === 'sudah jalan' ? 'selected' : ''}>✅ Sudah Jalan</option>
             <option value="tidak jalan" ${tour.status === 'tidak jalan' ? 'selected' : ''}>❌ Tidak Jalan</option>
@@ -947,23 +986,23 @@
         </div>
         <div class="form-group">
           <label>Lead Passenger *</label>
-          <input type="text" name="lead_passenger" value="${tour.lead_passenger || ''}" required>
+          <input type="text" name="lead_passenger" value="${tour.lead_passenger || ''}" required ${disabled}>
         </div>
         <div class="form-group">
           <label>Number of Passengers *</label>
-          <input type="number" name="jumlah_peserta" value="${tour.jumlah_peserta || 1}" min="1" required>
+          <input type="number" name="jumlah_peserta" value="${tour.jumlah_peserta || 1}" min="1" required ${disabled}>
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" name="phone_number" value="${tour.phone_number || ''}">
+          <input type="tel" name="phone_number" value="${tour.phone_number || ''}" ${disabled}>
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" name="email" value="${tour.email || ''}">
+          <input type="email" name="email" value="${tour.email || ''}" ${disabled}>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>All Passengers</label>
-          <textarea name="all_passengers" rows="2" placeholder="List all passenger names">${tour.all_passengers || ''}</textarea>
+          <textarea name="all_passengers" rows="2" placeholder="List all passenger names" ${disabled}>${tour.all_passengers || ''}</textarea>
         </div>
         
         <div style="grid-column: 1 / -1; border-top: 2px solid var(--border-light); padding-top: 16px; margin-top: 8px;">
@@ -972,38 +1011,43 @@
         
         <div class="form-group">
           <label>Tour Price (per person)</label>
-          <input type="number" name="tour_price" value="${tour.tour_price || 0}" step="0.01">
+          <input type="number" name="tour_price" value="${tour.tour_price || 0}" step="0.01" ${disabled}>
         </div>
         <div class="form-group">
           <label>Sales Amount (after discount)</label>
-          <input type="number" name="sales_amount" value="${tour.sales_amount || 0}" step="0.01">
+          <input type="number" name="sales_amount" value="${tour.sales_amount || 0}" step="0.01" ${disabled}>
         </div>
         <div class="form-group">
           <label>Discount Amount</label>
-          <input type="number" name="discount_amount" value="${tour.discount_amount || 0}" step="0.01">
+          <input type="number" name="discount_amount" value="${tour.discount_amount || 0}" step="0.01" ${disabled}>
         </div>
         <div class="form-group">
           <label>Total Invoice Amount</label>
-          <input type="number" name="total_nominal_sales" value="${tour.total_nominal_sales || 0}" step="0.01">
+          <input type="number" name="total_nominal_sales" value="${tour.total_nominal_sales || 0}" step="0.01" ${disabled}>
         </div>
         <div class="form-group">
           <label>Profit Amount</label>
-          <input type="number" name="profit_amount" value="${tour.profit_amount || 0}" step="0.01">
+          <input type="number" name="profit_amount" value="${tour.profit_amount || 0}" step="0.01" ${disabled}>
         </div>
         <div class="form-group">
           <label>Invoice Number</label>
-          <input type="text" name="invoice_number" value="${tour.invoice_number || ''}" placeholder="INV-XXXX">
+          <input type="text" name="invoice_number" value="${tour.invoice_number || ''}" placeholder="INV-XXXX" ${disabled}>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Discount Remarks</label>
-          <textarea name="discount_remarks" rows="2">${tour.discount_remarks || ''}</textarea>
+          <textarea name="discount_remarks" rows="2" ${disabled}>${tour.discount_remarks || ''}</textarea>
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Payment Link (Google Drive / Lark)</label>
-          <input type="url" name="link_pelunasan_tour" value="${tour.link_pelunasan_tour || ''}" placeholder="https://...">
+          <input type="url" name="link_pelunasan_tour" value="${tour.link_pelunasan_tour || ''}" placeholder="https://..." ${disabled}>
         </div>
       </div>
+      ${viewOnly ? '<div style="padding: 16px; background: var(--bg-subtle); border-radius: 8px; margin-top: 16px; text-align: center; color: var(--text-secondary);"><strong>📋 View Only Mode</strong> - 2025 tours cannot be edited</div>' : ''}
     `;
+    
+    // Hide save button in view-only mode
+    const saveBtn = el('modalSave');
+    if (saveBtn) saveBtn.style.display = viewOnly ? 'none' : '';
     
     el('modal').classList.add('active');
   };
@@ -1059,6 +1103,11 @@
       toast.error('Failed to save: ' + (err.message || 'Unknown error'));
     }
   }
+  
+  // Listen for wizard save events
+  window.addEventListener('tourWizardSaved', () => {
+    loadTours();
+  });
   
   // Initialize on load
   document.addEventListener('DOMContentLoaded', init);
