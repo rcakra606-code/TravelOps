@@ -80,21 +80,28 @@ function getMarginThresholds(productType = null) {
   const defaultHigh = parseFloat(settings.marginHighThreshold) || 20;
   const defaultMedium = parseFloat(settings.marginMediumThreshold) || 10;
   
+  console.log('📊 getMarginThresholds called:', { productType, hasProductMargins: !!settings.productMargins });
+  
   // If product type specified, check for per-product settings
   if (productType && settings.productMargins && settings.productMargins[productType]) {
     const pm = settings.productMargins[productType];
+    console.log('📊 Product margin settings for', productType, ':', pm);
     if (!pm.useDefault) {
-      return {
+      const result = {
         high: parseFloat(pm.high) || defaultHigh,
         medium: parseFloat(pm.medium) || defaultMedium
       };
+      console.log('📊 Using custom thresholds:', result);
+      return result;
     }
   }
   
-  return {
+  const result = {
     high: defaultHigh,
     medium: defaultMedium
   };
+  console.log('📊 Using default thresholds:', result);
+  return result;
 }
 
 function getMarginClass(margin, productType = null) {

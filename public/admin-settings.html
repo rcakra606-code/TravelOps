@@ -2004,7 +2004,15 @@
         productMargins: productMargins
       };
       
+      console.log('💾 Saving settings:', settings);
+      console.log('💾 productMargins:', JSON.stringify(productMargins, null, 2));
+      
       localStorage.setItem('appSettings', JSON.stringify(settings));
+      
+      // Verify save
+      const saved = JSON.parse(localStorage.getItem('appSettings'));
+      console.log('✅ Verified saved settings:', saved);
+      console.log('✅ Saved productMargins:', saved.productMargins);
       
       // Apply dark mode
       if (settings.darkMode) {
