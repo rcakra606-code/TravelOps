@@ -477,6 +477,15 @@
 
     <!-- Tab 2: Corporate Account Management -->
     <div id="tab-accounts" class="tab-content">
+      <!-- Corporate Selector Banner -->
+      <div class="corporate-selector-banner" style="background: var(--bg-alt); padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; border: 1px solid var(--border-color);">
+        <label style="font-weight: 600; white-space: nowrap;">📁 Select Corporate:</label>
+        <select id="globalCorporateSelect" class="form-control" style="flex: 1; max-width: 400px;">
+          <option value="">-- Select Corporate Account --</option>
+        </select>
+        <span id="selectedCorporateInfo" style="color: var(--text-secondary); font-size: 13px;"></span>
+      </div>
+
       <!-- Sub-tabs -->
       <div class="sub-tabs">
         <button class="sub-tab active" data-subtab="list">📋 Corporate List</button>
@@ -695,6 +704,62 @@
 
     <!-- Tab 3: Sales Comparison -->
     <div id="tab-sales" class="tab-content">
+      <!-- Add Sales Section -->
+      <div class="corporate-form-section" style="background: var(--bg-alt); border: 1px solid var(--primary); border-radius: 8px;">
+        <h3 style="color: var(--primary);">➕ Add Sales Data</h3>
+        <form id="addSalesForm" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+          <div class="form-group" style="margin: 0; min-width: 180px;">
+            <label>Corporate *</label>
+            <select id="salesCorporateSelect" class="form-control" required>
+              <option value="">-- Select --</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0; min-width: 100px;">
+            <label>Year *</label>
+            <select id="salesYear" class="form-control" required>
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0; min-width: 100px;">
+            <label>Month *</label>
+            <select id="salesMonth" class="form-control" required>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0; min-width: 120px;">
+            <label>Type</label>
+            <select id="salesType" class="form-control">
+              <option value="Flight">Flight</option>
+              <option value="Hotel">Hotel</option>
+              <option value="Tour">Tour</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0; min-width: 150px;">
+            <label>Sales Amount *</label>
+            <input type="number" id="salesAmount" class="form-control" placeholder="0" required>
+          </div>
+          <div class="form-group" style="margin: 0; min-width: 150px;">
+            <label>Profit Amount *</label>
+            <input type="number" id="salesProfit" class="form-control" placeholder="0" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="height: 38px;">💾 Add Sales</button>
+        </form>
+      </div>
+
       <!-- Filter Controls -->
       <div class="corporate-form-section">
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
@@ -815,7 +880,6 @@
 <script src="/js/activity-feed.js"></script>
 <script src="/js/auth-common.js"></script>
 <script src="/js/sidebar-groups.js"></script>
-<script src="/js/loading-utils.js"></script>
 <script src="/js/toast.js"></script>
 <script type="module" src="/js/corporate-dashboard.js"></script>
 </body>

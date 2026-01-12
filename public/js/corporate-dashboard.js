@@ -338,8 +338,10 @@ function renderCorporateList() {
   `).join('');
 }
 
+let selectedCorporateIdx = null;
+
 function updateCorporateSelects() {
-  const selects = [el('serviceFeeCorpSelect'), el('airlinesCorpSelect'), el('salesFilterCorp')];
+  const selects = [el('serviceFeeCorpSelect'), el('airlinesCorpSelect'), el('salesFilterCorp'), el('globalCorporateSelect'), el('salesCorporateSelect')];
   
   selects.forEach(select => {
     if (!select) return;
@@ -357,6 +359,62 @@ function updateCorporateSelects() {
     
     select.value = currentValue;
   });
+}
+
+/* === GLOBAL CORPORATE SELECTOR === */
+function selectCorporate(idx) {
+  selectedCorporateIdx = idx;
+  
+  // Update all sub-tab selectors
+  if (el('serviceFeeCorpSelect')) {
+    el('serviceFeeCorpSelect').value = idx;
+    loadServiceFees(idx);
+  }
+  if (el('airlinesCorpSelect')) {
+    el('airlinesCorpSelect').value = idx;
+    loadAirlines(idx);
+  }
+  
+  // Update info display
+  const infoEl = el('selectedCorporateInfo');
+  if (infoEl && idx !== '' && corporateAccounts[idx]) {
+    const corp = corporateAccounts[idx];
+    infoEl.textContent = `Credit Limit: ${formatCurrency(corp.credit_limit || 0)} | Status: ${corp.status || 'active'}`;
+  } else if (infoEl) {
+    infoEl.textContent = '';
+  }
+  
+  // Load corporate detail if on detail tab
+  if (idx !== '' && corporateAccounts[idx]) {
+    loadCorporateDetailForm(idx);
+  }
+}
+
+function loadCorporateDetailForm(idx) {
+  const corp = corporateAccounts[idx];
+  if (!corp) return;
+  
+  const form = el('corporateDetailForm');
+  if (!form) return;
+  
+  form.account_code.value = corp.account_code || '';
+  form.corporate_name.value = corp.corporate_name || '';
+  form.address.value = corp.address || '';
+  form.office_email.value = corp.office_email || '';
+  form.credit_limit.value = corp.credit_limit || 0;
+  form.contract_link.value = corp.contract_link || '';
+  form.remarks.value = corp.remarks || '';
+  
+  // Load PIC Bookers
+  const picList = el('picBookersList');
+  if (picList) {
+    picList.innerHTML = '';
+    if (corp.pic_bookers && corp.pic_bookers.length > 0) {
+      corp.pic_bookers.forEach(pic => addPicBookerRow(pic));
+    } else {
+      addPicBookerRow();
+    }
+  }
 }
 
 /* === CORPORATE MODAL === */
@@ -431,7 +489,18 @@ function saveCorporateFromModal() {
 
 // Global functions for inline onclick handlers
 window.editCorporate = function(idx) {
-  openCorporateModal(idx);
+  // Set global selector
+  if (el('globalCorporateSelect')) {
+    el('globalCorporateSelect').value = idx;
+  }
+  selectCorporate(idx);
+  
+  // Switch to detail subtab
+  document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+  document.querySelector('.sub-tab[data-subtab="detail"]')?.classList.add('active');
+  
+  document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
+  el('subtab-detail')?.classList.add('active');
 };
 
 window.deleteCorporate = function(idx) {
@@ -730,6 +799,54 @@ function renderGrowthChart(accounts, year) {
   });
 }
 
+/* === SALES MANAGEMENT === */
+function addSalesData(e) {
+  e.preventDefault();
+  
+  const corpIdx = el('salesCorporateSelect').value;
+  if (corpIdx === '' || !corporateAccounts[corpIdx]) {
+    toast.error('Please select a corporate');
+    return;
+  }
+  
+  const year = parseInt(el('salesYear').value);
+  const month = parseInt(el('salesMonth').value);
+  const type = el('salesType').value;
+  const amount = parseFloat(el('salesAmount').value) || 0;
+  const profit = parseFloat(el('salesProfit').value) || 0;
+  
+  if (!amount) {
+    toast.error('Please enter sales amount');
+    return;
+  }
+  
+  // Initialize sales array if not exists
+  if (!corporateAccounts[corpIdx].sales) {
+    corporateAccounts[corpIdx].sales = [];
+  }
+  
+  // Add sales data
+  corporateAccounts[corpIdx].sales.push({
+    year,
+    month,
+    type,
+    amount,
+    profit,
+    created_at: new Date().toISOString()
+  });
+  
+  saveCorporateData();
+  toast.success('Sales data added successfully');
+  
+  // Reset form
+  el('salesAmount').value = '';
+  el('salesProfit').value = '';
+  
+  // Refresh displays
+  loadSalesComparison();
+  loadDashboardSummary();
+}
+
 /* === EVENT LISTENERS === */
 function initEventListeners() {
   // Add Corporate button
@@ -749,9 +866,20 @@ function initEventListeners() {
   // Add Airline
   el('addAirlineBtn')?.addEventListener('click', () => addAirlineRow());
   
+  // Global corporate selector
+  el('globalCorporateSelect')?.addEventListener('change', (e) => {
+    selectCorporate(e.target.value);
+  });
+  
   // Service fee corporate select
   el('serviceFeeCorpSelect')?.addEventListener('change', (e) => {
-    loadServiceFees(e.target.value);
+    const idx = e.target.value;
+    // Sync with global selector
+    if (el('globalCorporateSelect')) {
+      el('globalCorporateSelect').value = idx;
+      selectCorporate(idx);
+    }
+    loadServiceFees(idx);
   });
   
   // Save service fees
@@ -759,7 +887,13 @@ function initEventListeners() {
   
   // Airlines corporate select
   el('airlinesCorpSelect')?.addEventListener('change', (e) => {
-    loadAirlines(e.target.value);
+    const idx = e.target.value;
+    // Sync with global selector
+    if (el('globalCorporateSelect')) {
+      el('globalCorporateSelect').value = idx;
+      selectCorporate(idx);
+    }
+    loadAirlines(idx);
   });
   
   // Save airlines
@@ -769,6 +903,9 @@ function initEventListeners() {
   el('refreshSalesBtn')?.addEventListener('click', loadSalesComparison);
   el('salesCompareYear')?.addEventListener('change', loadSalesComparison);
   el('salesFilterCorp')?.addEventListener('change', loadSalesComparison);
+  
+  // Add sales form
+  el('addSalesForm')?.addEventListener('submit', addSalesData);
   
   // Corporate detail form
   el('corporateDetailForm')?.addEventListener('submit', (e) => {
