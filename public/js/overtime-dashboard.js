@@ -39,7 +39,10 @@ async function loadStaff() {
     const users = await fetchJson('/api/users');
     staffList = users || [];
   } catch (err) {
-    console.error('Failed to load staff:', err);
+    // For basic users (403 on /api/users), fallback to current user only
+    if (user?.name) {
+      staffList = [{ name: user.name, username: user.username, type: user.type }];
+    }
   }
 }
 

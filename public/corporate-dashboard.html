@@ -1,0 +1,822 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Corporate Dashboard - TravelOps</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+<link rel="stylesheet" href="/css/styles.css">
+<link rel="stylesheet" href="/css/dark-mode.css">
+<link rel="stylesheet" href="/css/app-v2.css">
+<link rel="stylesheet" href="/css/dashboard.css">
+<link rel="stylesheet" href="/css/modal.css">
+<link rel="stylesheet" href="/css/filters.css">
+<link rel="stylesheet" href="/css/table-enhancements.css">
+<link rel="stylesheet" href="/css/filter-enhancements.css">
+<link rel="stylesheet" href="/css/status-badges.css">
+<link rel="stylesheet" href="/css/animations.css">
+<link rel="stylesheet" href="/css/mobile-responsive.css">
+<link rel="stylesheet" href="/css/dashboard-customization.css">
+<link rel="stylesheet" href="/css/empty-states.css">
+<link rel="stylesheet" href="/css/form-enhancements.css">
+<link rel="stylesheet" href="/css/crud-enhancements.css">
+<link rel="stylesheet" href="/css/filter-modal.css">
+<link rel="stylesheet" href="/css/ui-enhancements.css">
+<link rel="stylesheet" href="/css/sidebar-groups.css">
+<link rel="stylesheet" href="/css/dashboard-shared.css">
+<script src="/js/theme-toggle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  /* Corporate Dashboard Specific Styles */
+  .corporate-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 2px solid var(--border-color, #ddd);
+    margin-bottom: 24px;
+    overflow-x: auto;
+  }
+  .corporate-tab {
+    padding: 12px 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-secondary, #666);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .corporate-tab:hover {
+    color: var(--primary-color, #4361ee);
+    background: var(--hover-bg, #f5f5f5);
+  }
+  .corporate-tab.active {
+    color: var(--primary-color, #4361ee);
+    border-bottom-color: var(--primary-color, #4361ee);
+  }
+  .tab-content {
+    display: none;
+  }
+  .tab-content.active {
+    display: block;
+  }
+  
+  /* Dashboard Cards */
+  .dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .dashboard-card {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid var(--border-color, #eee);
+  }
+  .dashboard-card .card-label {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .dashboard-card .card-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-primary, #333);
+  }
+  .dashboard-card .card-trend {
+    font-size: 12px;
+    margin-top: 8px;
+  }
+  .dashboard-card .card-trend.positive { color: #28a745; }
+  .dashboard-card .card-trend.negative { color: #dc3545; }
+  
+  /* Sub-tabs for Corporate Account */
+  .sub-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .sub-tab {
+    padding: 8px 16px;
+    border: 1px solid var(--border-color, #ddd);
+    background: var(--card-bg, #fff);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .sub-tab:hover {
+    border-color: var(--primary-color, #4361ee);
+    color: var(--primary-color, #4361ee);
+  }
+  .sub-tab.active {
+    background: var(--primary-color, #4361ee);
+    color: #fff;
+    border-color: var(--primary-color, #4361ee);
+  }
+  .sub-content {
+    display: none;
+  }
+  .sub-content.active {
+    display: block;
+  }
+  
+  /* Corporate Form Styles */
+  .corporate-form-section {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color, #eee);
+  }
+  .corporate-form-section h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    color: var(--text-primary, #333);
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color, #eee);
+  }
+  
+  /* PIC Bookers repeater */
+  .pic-bookers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .pic-booker-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    padding: 12px;
+    background: var(--hover-bg, #f9f9f9);
+    border-radius: 8px;
+  }
+  .pic-booker-row input {
+    padding: 10px 12px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .pic-booker-row input:focus {
+    border-color: var(--primary-color, #4361ee);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.1);
+  }
+  .pic-booker-row label {
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    margin-bottom: 4px;
+    display: block;
+  }
+  .btn-remove-pic {
+    background: #dc3545;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 10px 14px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  .btn-add-pic {
+    background: var(--primary-color, #4361ee);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    margin-top: 12px;
+  }
+  
+  /* Fee Table */
+  .fee-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+  }
+  .fee-table th, .fee-table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color, #eee);
+  }
+  .fee-table th {
+    background: var(--hover-bg, #f5f5f5);
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--text-secondary, #666);
+  }
+  .fee-table input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .fee-table select {
+    padding: 8px 10px;
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    font-size: 14px;
+    min-width: 80px;
+  }
+  .fee-input-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+  
+  /* Airlines Account */
+  .airlines-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .airline-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+    padding: 12px;
+    background: var(--hover-bg, #f9f9f9);
+    border-radius: 8px;
+  }
+  
+  /* Sales Comparison Table */
+  .sales-comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  .sales-comparison-table th, .sales-comparison-table td {
+    padding: 12px;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color, #eee);
+  }
+  .sales-comparison-table th {
+    background: var(--hover-bg, #f5f5f5);
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-secondary, #666);
+    position: sticky;
+    top: 0;
+  }
+  .sales-comparison-table td:first-child,
+  .sales-comparison-table th:first-child {
+    text-align: left;
+    position: sticky;
+    left: 0;
+    background: var(--card-bg, #fff);
+  }
+  .sales-comparison-table th:first-child {
+    background: var(--hover-bg, #f5f5f5);
+    z-index: 2;
+  }
+  .sales-comparison-table .growth-positive { color: #28a745; font-weight: 600; }
+  .sales-comparison-table .growth-negative { color: #dc3545; font-weight: 600; }
+  
+  /* Chart Container */
+  .chart-container {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color, #eee);
+  }
+  .chart-container h3 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+  }
+  
+  /* Corporate List */
+  .corporate-list-container {
+    background: var(--card-bg, #fff);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid var(--border-color, #eee);
+  }
+  .corporate-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  .corporate-list-header h3 {
+    margin: 0;
+    font-size: 16px;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .pic-booker-row, .airline-row {
+      grid-template-columns: 1fr;
+    }
+    .dashboard-cards {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+</style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <!-- Main Dashboard -->
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      
+      <!-- Product Input Group -->
+      <div class="nav-group" id="groupProductInput">
+        <button class="nav-group-header" data-group="product-input">
+          <span class="group-icon">📦</span>
+          <span class="group-title">Product Input</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/my-tours.html">📋 My Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+        </div>
+      </div>
+      
+      <!-- Productivity Group -->
+      <div class="nav-group" id="groupProductivity">
+        <button class="nav-group-header" data-group="productivity">
+          <span class="group-icon">📊</span>
+          <span class="group-title">Productivity</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/sales-dashboard.html">💰 Sales</a>
+          <a href="/targets-dashboard.html">🎯 Targets</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/reports-dashboard.html">📊 Reports</a>
+        </div>
+      </div>
+      
+      <!-- Corporate Group -->
+      <div class="nav-group" id="groupCorporate">
+        <button class="nav-group-header" data-group="corporate">
+          <span class="group-icon">🏢</span>
+          <span class="group-title">Corporate</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/corporate-dashboard.html" class="active">📊 Corporate Dashboard</a>
+        </div>
+      </div>
+      
+      <!-- Administration Group -->
+      <div class="nav-group" id="groupAdmin">
+        <button class="nav-group-header" data-group="administration">
+          <span class="group-icon">⚙️</span>
+          <span class="group-title">Administration</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+        </div>
+      </div>
+      
+      <hr class="nav-divider">
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1 class="title">🏢 Corporate Dashboard</h1>
+      <p class="subtitle">Corporate account management and sales analysis</p>
+    </div>
+
+    <!-- Main Tabs -->
+    <div class="corporate-tabs">
+      <button class="corporate-tab active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="corporate-tab" data-tab="accounts">🏢 Corporate Accounts</button>
+      <button class="corporate-tab" data-tab="sales">💹 Sales Comparison</button>
+    </div>
+
+    <!-- Tab 1: Main Dashboard -->
+    <div id="tab-dashboard" class="tab-content active">
+      <!-- Summary Cards -->
+      <div class="dashboard-cards">
+        <div class="dashboard-card">
+          <div class="card-label">Total Corporate Accounts</div>
+          <div class="card-value" id="totalAccounts">0</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Active Contracts</div>
+          <div class="card-value" id="activeContracts">0</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Total Revenue (YTD)</div>
+          <div class="card-value" id="totalRevenue">Rp 0</div>
+          <div class="card-trend positive" id="revenueTrend">↑ 0% vs last year</div>
+        </div>
+        <div class="dashboard-card">
+          <div class="card-label">Total Profit (YTD)</div>
+          <div class="card-value" id="totalProfit">Rp 0</div>
+          <div class="card-trend positive" id="profitTrend">↑ 0% vs last year</div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+        <div class="chart-container">
+          <h3>Monthly Revenue Trend</h3>
+          <canvas id="revenueChart" height="250"></canvas>
+        </div>
+        <div class="chart-container">
+          <h3>Top Corporate Accounts</h3>
+          <canvas id="topAccountsChart" height="250"></canvas>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="corporate-form-section">
+        <h3>📋 Recent Corporate Transactions</h3>
+        <div class="table-responsive">
+          <table class="table" id="recentTransactionsTable">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Corporate</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Profit</th>
+              </tr>
+            </thead>
+            <tbody id="recentTransactionsBody">
+              <tr><td colspan="5" class="text-center">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Corporate Account Management -->
+    <div id="tab-accounts" class="tab-content">
+      <!-- Sub-tabs -->
+      <div class="sub-tabs">
+        <button class="sub-tab active" data-subtab="list">📋 Corporate List</button>
+        <button class="sub-tab" data-subtab="detail">📝 Corporate Detail</button>
+        <button class="sub-tab" data-subtab="service-fee">💰 Service Fees</button>
+        <button class="sub-tab" data-subtab="airlines">✈️ Airlines Accounts</button>
+      </div>
+
+      <!-- Sub-content: Corporate List -->
+      <div id="subtab-list" class="sub-content active">
+        <div class="corporate-list-container">
+          <div class="corporate-list-header">
+            <h3>Corporate Accounts</h3>
+            <button class="btn btn-primary" id="addCorporateBtn">+ Add Corporate</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table" id="corporateListTable">
+              <thead>
+                <tr>
+                  <th>Account Code</th>
+                  <th>Corporate Name</th>
+                  <th>Address</th>
+                  <th>Credit Limit</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="corporateListBody">
+                <tr><td colspan="6" class="text-center">No corporate accounts yet</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sub-content: Corporate Detail Form -->
+      <div id="subtab-detail" class="sub-content">
+        <form id="corporateDetailForm">
+          <div class="corporate-form-section">
+            <h3>🏢 Corporate Information</h3>
+            <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+              <div class="form-group">
+                <label>Corporate Account Code</label>
+                <input type="text" name="account_code" placeholder="e.g., CORP001" required>
+              </div>
+              <div class="form-group">
+                <label>Corporate Name</label>
+                <input type="text" name="corporate_name" placeholder="Company name" required>
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label>Address</label>
+                <textarea name="address" rows="2" placeholder="Full address"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Office Email</label>
+                <input type="email" name="office_email" placeholder="office@company.com">
+              </div>
+              <div class="form-group">
+                <label>Credit Limit</label>
+                <input type="number" name="credit_limit" placeholder="0">
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label>Contract Link (Google Drive)</label>
+                <input type="url" name="contract_link" placeholder="https://drive.google.com/...">
+              </div>
+            </div>
+          </div>
+
+          <!-- PIC Bookers Section -->
+          <div class="corporate-form-section">
+            <h3>👤 PIC Bookers</h3>
+            <div class="pic-bookers-list" id="picBookersList">
+              <!-- Dynamic rows added here -->
+            </div>
+            <button type="button" class="btn-add-pic" id="addPicBtn">+ Add PIC Booker</button>
+          </div>
+
+          <!-- Remarks -->
+          <div class="corporate-form-section">
+            <h3>📝 Remarks</h3>
+            <textarea name="remarks" rows="4" placeholder="Additional notes about this corporate account..."></textarea>
+          </div>
+
+          <div style="display: flex; gap: 12px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" id="cancelDetailBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Save Corporate</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Sub-content: Service Fees -->
+      <div id="subtab-service-fee" class="sub-content">
+        <div class="corporate-form-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; border: none; padding: 0;">Select Corporate</h3>
+            <select id="serviceFeeCorpSelect" class="form-control" style="width: auto; min-width: 200px;">
+              <option value="">-- Select Corporate --</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Flight Service Fee -->
+        <div class="corporate-form-section">
+          <h3>✈️ Flight Service Fee</h3>
+          <table class="fee-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>International</th>
+                <th>Domestic</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Flight Ticket</td>
+                <td><div class="fee-input-group"><input type="number" name="flight_intl" placeholder="0"><select name="flight_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="flight_dom" placeholder="0"><select name="flight_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Reissued</td>
+                <td><div class="fee-input-group"><input type="number" name="reissue_intl" placeholder="0"><select name="reissue_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="reissue_dom" placeholder="0"><select name="reissue_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Refund</td>
+                <td><div class="fee-input-group"><input type="number" name="refund_intl" placeholder="0"><select name="refund_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="refund_dom" placeholder="0"><select name="refund_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Void</td>
+                <td colspan="2"><div class="fee-input-group"><input type="number" name="void_fee" placeholder="0"><select name="void_fee_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Revalidate</td>
+                <td colspan="2"><div class="fee-input-group"><input type="number" name="revalidate_fee" placeholder="0"><select name="revalidate_fee_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Hotel Service Fee -->
+        <div class="corporate-form-section">
+          <h3>🏨 Hotel Service Fee</h3>
+          <table class="fee-table">
+            <thead>
+              <tr>
+                <th>Service</th>
+                <th>International</th>
+                <th>Domestic</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Hotel Booking</td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_intl" placeholder="0"><select name="hotel_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_dom" placeholder="0"><select name="hotel_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Reschedule</td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_reschedule_intl" placeholder="0"><select name="hotel_reschedule_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_reschedule_dom" placeholder="0"><select name="hotel_reschedule_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>Refund</td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_refund_intl" placeholder="0"><select name="hotel_refund_intl_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td><div class="fee-input-group"><input type="number" name="hotel_refund_dom" placeholder="0"><select name="hotel_refund_dom_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>KAI / Train</td>
+                <td colspan="2"><div class="fee-input-group"><input type="number" name="train_fee" placeholder="0"><select name="train_fee_type"><option value="amount">Rp</option><option value="percent">%</option></select></div></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end;">
+          <button type="button" class="btn btn-primary" id="saveServiceFeeBtn">Save Service Fees</button>
+        </div>
+      </div>
+
+      <!-- Sub-content: Airlines Accounts -->
+      <div id="subtab-airlines" class="sub-content">
+        <div class="corporate-form-section">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h3 style="margin: 0; border: none; padding: 0;">Select Corporate</h3>
+            <select id="airlinesCorpSelect" class="form-control" style="width: auto; min-width: 200px;">
+              <option value="">-- Select Corporate --</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="corporate-form-section">
+          <h3>✈️ Corporate Airlines Accounts</h3>
+          <div class="airlines-list" id="airlinesList">
+            <!-- Dynamic rows added here -->
+          </div>
+          <button type="button" class="btn-add-pic" id="addAirlineBtn">+ Add Airline Account</button>
+        </div>
+
+        <div style="display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px;">
+          <button type="button" class="btn btn-primary" id="saveAirlinesBtn">Save Airlines</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Sales Comparison -->
+    <div id="tab-sales" class="tab-content">
+      <!-- Filter Controls -->
+      <div class="corporate-form-section">
+        <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+          <div class="form-group" style="margin: 0;">
+            <label>Year to Compare</label>
+            <select id="salesCompareYear" class="form-control">
+              <option value="2026">2026</option>
+              <option value="2025">2025</option>
+              <option value="2024">2024</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label>Filter Corporate</label>
+            <select id="salesFilterCorp" class="form-control">
+              <option value="">All Corporates</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" id="refreshSalesBtn" style="margin-top: 20px;">🔄 Refresh</button>
+        </div>
+      </div>
+
+      <!-- Sales Comparison Table -->
+      <div class="corporate-form-section">
+        <h3>📊 Sales & Profit Comparison by Month</h3>
+        <div class="table-responsive" style="max-height: 600px; overflow: auto;">
+          <table class="sales-comparison-table" id="salesComparisonTable">
+            <thead>
+              <tr>
+                <th rowspan="2">Corporate</th>
+                <th colspan="2">Jan</th>
+                <th colspan="2">Feb</th>
+                <th colspan="2">Mar</th>
+                <th colspan="2">Apr</th>
+                <th colspan="2">May</th>
+                <th colspan="2">Jun</th>
+                <th colspan="2">Jul</th>
+                <th colspan="2">Aug</th>
+                <th colspan="2">Sep</th>
+                <th colspan="2">Oct</th>
+                <th colspan="2">Nov</th>
+                <th colspan="2">Dec</th>
+                <th colspan="2">YTD Total</th>
+                <th>Growth</th>
+              </tr>
+              <tr>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>Sales</th><th>Profit</th>
+                <th>%</th>
+              </tr>
+            </thead>
+            <tbody id="salesComparisonBody">
+              <tr><td colspan="28" class="text-center">No data available</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Growth Chart -->
+      <div class="chart-container">
+        <h3>📈 Year-over-Year Growth by Corporate</h3>
+        <canvas id="growthChart" height="300"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal for adding/editing corporate -->
+<div id="corporateModal" class="modal">
+  <div class="modal-overlay"></div>
+  <div class="modal-container" style="max-width: 600px;">
+    <div class="modal-header">
+      <h2 id="corporateModalTitle">Add Corporate Account</h2>
+      <button class="modal-close" id="closeCorporateModal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="quickCorporateForm">
+        <div class="form-group">
+          <label>Account Code *</label>
+          <input type="text" name="account_code" required>
+        </div>
+        <div class="form-group">
+          <label>Corporate Name *</label>
+          <input type="text" name="corporate_name" required>
+        </div>
+        <div class="form-group">
+          <label>Address</label>
+          <textarea name="address" rows="2"></textarea>
+        </div>
+        <div class="form-group">
+          <label>Office Email</label>
+          <input type="email" name="office_email">
+        </div>
+        <div class="form-group">
+          <label>Credit Limit</label>
+          <input type="number" name="credit_limit" value="0">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" id="cancelCorporateModal">Cancel</button>
+      <button class="btn btn-primary" id="saveCorporateModal">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/error-recovery.js"></script>
+<script src="/js/activity-feed.js"></script>
+<script src="/js/auth-common.js"></script>
+<script src="/js/sidebar-groups.js"></script>
+<script src="/js/loading-utils.js"></script>
+<script src="/js/toast.js"></script>
+<script type="module" src="/js/corporate-dashboard.js"></script>
+</body>
+</html>
