@@ -368,19 +368,25 @@ async function loadRegions() {
 }
 
 async function loadUsers() {
+  const current = getCurrentUser();
+  
+  // Basic users can't access /api/users - skip the call entirely
+  if (current?.type === 'basic') {
+    state.users = [{ name: current.name || current.username, username: current.username, type: current.type }];
+    updateStaffSelects();
+    return;
+  }
+  
   try {
     state.users = await fetchJson('/api/users');
     updateStaffSelects();
   } catch (err) {
-    console.error('Error loading users:', err);
-    // Fallback: for basic users (403 on /api/users), populate with current user only
-    try {
-      const current = getCurrentUser();
-      if (current?.name) {
-        state.users = [{ name: current.name, username: current.username, type: current.type }];
-        updateStaffSelects();
-      }
-    } catch {}
+    console.warn('Could not load users list:', err.message);
+    // Fallback to current user
+    if (current?.name) {
+      state.users = [{ name: current.name, username: current.username, type: current.type }];
+      updateStaffSelects();
+    }
   }
 }
 

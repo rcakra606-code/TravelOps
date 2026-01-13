@@ -44,15 +44,18 @@ el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 
 async function loadStaff() {
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    staffList = [{ name: user.name || user.username }];
+    return;
+  }
+  
   try {
     const users = await fetchJson('/api/users');
     staffList = users || [];
   } catch (err) {
-    console.error('Failed to load staff:', err);
-    // If user is basic and can't access /api/users, use their own name
-    if (user.type === 'basic') {
-      staffList = [{ name: user.name || user.username }];
-    }
+    console.warn('Could not load staff:', err.message);
+    staffList = [{ name: user.name || user.username }];
   }
 }
 

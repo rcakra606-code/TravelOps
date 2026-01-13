@@ -208,16 +208,20 @@ function applyDocumentsFilters(formData) {
 }
 
 async function populateFilterDropdowns() {
+  const user = window.getUser();
+  
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    usersData = [{ name: user.name || user.username }];
+    return;
+  }
+  
   try {
     const users = await window.fetchJson('/api/users');
     usersData = users || [];
   } catch (err) {
-    console.error('Error loading filter data:', err);
-    // If user is basic and can't access /api/users, use their own name
-    const user = window.getUser();
-    if (user.type === 'basic') {
-      usersData = [{ name: user.name || user.username }];
-    }
+    console.warn('Could not load users:', err.message);
+    usersData = [{ name: user.name || user.username }];
   }
 }
 

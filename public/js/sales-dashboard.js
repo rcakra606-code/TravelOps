@@ -188,16 +188,17 @@ function applySalesFilters(formData) {
 async function populateFilterDropdowns() {
   const user = window.getUser();
   
-  // Load users independently
-  try {
-    const users = await window.fetchJson('/api/users');
-    usersData = users || [];
-  } catch (err) {
-    console.error('Error loading users:', err);
-    if (user.type === 'basic') {
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    usersData = [{ name: user.name || user.username }];
+  } else {
+    // Load users for admin/semi-admin
+    try {
+      const users = await window.fetchJson('/api/users');
+      usersData = users || [];
+    } catch (err) {
+      console.warn('Could not load users:', err.message);
       usersData = [{ name: user.name || user.username }];
-    } else {
-      usersData = [];
     }
   }
   
@@ -206,7 +207,7 @@ async function populateFilterDropdowns() {
     const regions = await window.fetchJson('/api/regions');
     regionsData = regions || [];
   } catch (err) {
-    console.error('Error loading regions:', err);
+    console.warn('Could not load regions:', err.message);
     regionsData = [];
   }
 }

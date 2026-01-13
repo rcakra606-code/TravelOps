@@ -35,14 +35,18 @@ el('userName').textContent = user.name || user.username || '—';
 el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 
 async function loadStaff() {
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    staffList = [{ name: user.name || user.username, username: user.username, type: user.type }];
+    return;
+  }
+  
   try {
     const users = await fetchJson('/api/users');
     staffList = users || [];
   } catch (err) {
-    // For basic users (403 on /api/users), fallback to current user only
-    if (user?.name) {
-      staffList = [{ name: user.name, username: user.username, type: user.type }];
-    }
+    console.warn('Could not load staff:', err.message);
+    staffList = [{ name: user.name || user.username, username: user.username, type: user.type }];
   }
 }
 

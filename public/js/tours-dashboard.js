@@ -228,17 +228,17 @@ function applyToursFilters(formData) {
 async function populateFilterDropdowns() {
   const user = window.getUser();
   
-  // Load users
-  try {
-    const users = await window.fetchJson('/api/users');
-    usersData = users || [];
-    console.log('✅ Users loaded:', usersData.length);
-  } catch (err) {
-    console.error('Error loading users:', err);
-    // If user is basic and can't access /api/users, use their own name
-    if (user.type === 'basic') {
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    usersData = [{ name: user.name || user.username }];
+  } else {
+    // Load users for admin/semi-admin
+    try {
+      const users = await window.fetchJson('/api/users');
+      usersData = users || [];
+    } catch (err) {
+      console.warn('Could not load users:', err.message);
       usersData = [{ name: user.name || user.username }];
-      console.log('✅ Using fallback user:', usersData);
     }
   }
   
@@ -246,7 +246,6 @@ async function populateFilterDropdowns() {
   try {
     const regions = await window.fetchJson('/api/regions');
     regionsData = regions || [];
-    console.log('✅ Regions loaded:', regionsData.length);
   } catch (err) {
     console.error('Error loading regions:', err);
     regionsData = [];

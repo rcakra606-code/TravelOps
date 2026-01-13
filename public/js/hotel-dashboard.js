@@ -46,14 +46,17 @@ async function loadRegions() {
 }
 
 async function loadUsers() {
+  // Basic users can't access /api/users - skip the call entirely
+  if (user.type === 'basic') {
+    usersData = [{ name: user.name || user.username }];
+    return;
+  }
+  
   try {
     usersData = await fetchJson('/api/users') || [];
   } catch (err) {
-    console.error('Failed to load users:', err);
-    // If user is basic and can't access /api/users, use their own name
-    if (user.type === 'basic') {
-      usersData = [{ name: user.name || user.username }];
-    }
+    console.warn('Could not load users:', err.message);
+    usersData = [{ name: user.name || user.username }];
   }
 }
 

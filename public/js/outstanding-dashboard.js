@@ -516,13 +516,17 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
   });
   
-  // Load users for staff dropdown
-  try {
-    usersData = await window.fetchJson('/api/users') || [];
-  } catch (err) {
-    console.error('Failed to load users:', err);
-    const user = window.getUser();
+  // Load users for staff dropdown (skip for basic users)
+  const user = window.getUser();
+  if (user.type === 'basic') {
     usersData = [{ name: user.name || user.username }];
+  } else {
+    try {
+      usersData = await window.fetchJson('/api/users') || [];
+    } catch (err) {
+      console.warn('Could not load users:', err.message);
+      usersData = [{ name: user.name || user.username }];
+    }
   }
   
   // Load data
