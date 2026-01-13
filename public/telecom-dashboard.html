@@ -138,9 +138,41 @@
         </div>
       </div>
 
-      <!-- Export Button -->
-      <div style="text-align: right; margin-top: 20px;">
-        <button id="exportTelecomBtn" class="btn">⬇️ Export Telecom Data</button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search name, phone, product type..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="filterYear" style="min-width: 120px;">
+          <option value="">All Years</option>
+        </select>
+        <select id="filterMonth" style="min-width: 130px;">
+          <option value="">All Months</option>
+          <option value="01">January</option>
+          <option value="02">February</option>
+          <option value="03">March</option>
+          <option value="04">April</option>
+          <option value="05">May</option>
+          <option value="06">June</option>
+          <option value="07">July</option>
+          <option value="08">August</option>
+          <option value="09">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="filterDeposit" style="min-width: 140px;">
+          <option value="">All Deposit Status</option>
+          <option value="deposited">✅ Deposited</option>
+          <option value="not-deposited">⏳ Not Deposited</option>
+        </select>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
       </div>
     </div>
 
@@ -149,8 +181,8 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>📋 Telecom Records</h3>
         <div style="display: flex; gap: 10px;">
-          <input type="text" id="searchTelecom" placeholder="🔍 Search expenses..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
-          <button id="addTelecomBtn" class="btn btn-primary">+ Add Expense</button>
+          <button id="exportTelecomBtn" class="btn btn-outline">📊 Export</button>
+          <button id="addTelecomBtn" class="btn btn-primary">+ Add Record</button>
         </div>
       </div>
       

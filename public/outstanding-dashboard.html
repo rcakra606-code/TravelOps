@@ -103,6 +103,45 @@
       </div>
     </div>
 
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchOutstanding" 
+          placeholder="🔍 Search invoice no, staff name..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="filterYear" style="min-width: 120px;">
+          <option value="">All Years</option>
+        </select>
+        <select id="filterMonth" style="min-width: 130px;">
+          <option value="">All Months</option>
+          <option value="01">January</option>
+          <option value="02">February</option>
+          <option value="03">March</option>
+          <option value="04">April</option>
+          <option value="05">May</option>
+          <option value="06">June</option>
+          <option value="07">July</option>
+          <option value="08">August</option>
+          <option value="09">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="filterStaff" style="min-width: 140px;">
+          <option value="">All Staff</option>
+        </select>
+        <select id="filterStatus" style="min-width: 140px;">
+          <option value="">All Status</option>
+          <option value="outstanding">Has Outstanding</option>
+          <option value="paid">Fully Paid</option>
+        </select>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
+      </div>
+    </div>
+
     <!-- Summary Cards -->
     <div class="dashboard-metrics" style="margin-bottom: 24px;">
       <div class="metric-card">
@@ -132,11 +171,9 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;">
         <h3>📋 Outstanding Records</h3>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <input type="text" id="searchOutstanding" placeholder="🔍 Search records..." class="form-control" style="min-width: 200px;">
-          <button id="outstandingFilterBtn" class="btn">🔍 Filter</button>
-          <button id="downloadOutstandingTemplateBtn" class="btn" title="Download CSV Template">📥 Template</button>
-          <button id="importOutstandingBtn" class="btn" title="Import from CSV">📤 Import</button>
-          <button id="exportOutstandingBtn" class="btn" title="Export to CSV">💾 Export</button>
+          <button id="downloadOutstandingTemplateBtn" class="btn btn-outline" title="Download CSV Template">📥 Template</button>
+          <button id="importOutstandingBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+          <button id="exportOutstandingBtn" class="btn btn-outline" title="Export to CSV">📊 Export</button>
           <button id="addOutstandingBtn" class="btn btn-primary">+ Add Record</button>
           <input type="file" id="importOutstandingFileInput" accept=".csv" style="display:none;">
         </div>

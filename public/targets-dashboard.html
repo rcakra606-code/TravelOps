@@ -138,9 +138,36 @@
         </div>
       </div>
 
-      <!-- Export Button -->
-      <div style="text-align: right; margin-top: 20px;">
-        <button id="exportTargetsBtn" class="btn">⬇️ Export Targets Data</button>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search staff name..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="filterYear" style="min-width: 120px;">
+          <option value="">All Years</option>
+        </select>
+        <select id="filterMonth" style="min-width: 130px;">
+          <option value="">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
       </div>
     </div>
 
@@ -149,10 +176,9 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>📋 Targets Records</h3>
         <div style="display: flex; gap: 10px;">
-          <input type="text" id="searchTargets" placeholder="🔍 Search targets..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
-          <button id="downloadTemplateBtn" class="btn btn-secondary" title="Download CSV Template">📥 Template</button>
-          <button id="importTargetsBtn" class="btn btn-secondary" title="Import from CSV">📤 Import</button>
-          <button id="exportTargetsBtn" class="btn btn-secondary" title="Export to CSV">💾 Export</button>
+          <button id="downloadTemplateBtn" class="btn btn-outline" title="Download CSV Template">📥 Template</button>
+          <button id="importTargetsBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+          <button id="exportTargetsBtn" class="btn btn-outline" title="Export to CSV">📊 Export</button>
           <button id="addTargetBtn" class="btn btn-primary">+ Add Target</button>
           <input type="file" id="importFileInput" accept=".csv" style="display:none;">
         </div>

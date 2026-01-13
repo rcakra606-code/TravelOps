@@ -142,7 +142,38 @@
       <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
         <button id="importHotelBtn" class="btn btn-secondary" title="Import from CSV">⬆️ Import</button>
         <button id="exportHotelBtn" class="btn">⬇️ Export Hotel Data</button>
-        <input type="file" id="importHotelFileInput" accept=".csv" style="display:none;">
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search hotel, guest, confirmation #..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="filterYear" style="min-width: 120px;">
+          <option value="">All Years</option>
+        </select>
+        <select id="filterMonth" style="min-width: 130px;">
+          <option value="">All Months</option>
+          <option value="01">January</option>
+          <option value="02">February</option>
+          <option value="03">March</option>
+          <option value="04">April</option>
+          <option value="05">May</option>
+          <option value="06">June</option>
+          <option value="07">July</option>
+          <option value="08">August</option>
+          <option value="09">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <input type="date" id="startDateFilter" title="Check-in From" style="min-width: 140px;" />
+        <input type="date" id="endDateFilter" title="Check-in To" style="min-width: 140px;" />
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
       </div>
     </div>
 
@@ -151,8 +182,10 @@
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>📋 Hotel Records</h3>
         <div style="display: flex; gap: 10px;">
-          <input type="text" id="searchHotel" placeholder="🔍 Search bookings..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <button id="importHotelBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+          <button id="exportHotelBtn" class="btn btn-outline">📊 Export</button>
           <button id="addHotelBtn" class="btn btn-primary">+ Add Booking</button>
+          <input type="file" id="importHotelFileInput" accept=".csv" style="display:none;">
         </div>
       </div>
       
