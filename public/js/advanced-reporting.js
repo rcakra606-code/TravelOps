@@ -177,10 +177,21 @@ class AdvancedReporting {
   }
 
   async renderPerformanceReport(dateRange) {
-    const [tours, sales, users] = await Promise.all([
+    let users = [];
+    try {
+      users = await window.fetchJson?.('/api/users') || [];
+    } catch (err) {
+      console.error('Failed to load users for report:', err);
+      // Fallback for basic users
+      const currentUser = window.getUser?.();
+      if (currentUser?.name) {
+        users = [{ username: currentUser.name, name: currentUser.name, role: currentUser.type }];
+      }
+    }
+    
+    const [tours, sales] = await Promise.all([
       window.fetchJson?.('/api/tours') || [],
-      window.fetchJson?.('/api/sales') || [],
-      window.fetchJson?.('/api/users') || []
+      window.fetchJson?.('/api/sales') || []
     ]);
 
     // Calculate staff metrics

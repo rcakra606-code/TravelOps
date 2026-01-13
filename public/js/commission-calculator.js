@@ -255,6 +255,13 @@ class CommissionCalculator {
       });
     } catch (err) {
       console.error('Failed to load staff:', err);
+      // Fallback for basic users who can't access /api/users
+      const currentUser = window.getUser?.();
+      if (currentUser?.type === 'basic') {
+        const select = document.getElementById('commissionStaff');
+        select.innerHTML = '<option value="">Select Staff Member</option>';
+        select.innerHTML += `<option value="${currentUser.id || currentUser.username}" data-role="staff">${currentUser.name || currentUser.username}</option>`;
+      }
     }
   }
 

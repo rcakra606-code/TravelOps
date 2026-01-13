@@ -111,8 +111,19 @@ class StaffManagement {
     const container = document.getElementById('staffSummary');
     
     try {
-      const [users, tours, sales] = await Promise.all([
-        window.fetchJson?.('/api/users') || [],
+      // Load users with fallback for basic users
+      let users = [];
+      try {
+        users = await window.fetchJson?.('/api/users') || [];
+      } catch (userErr) {
+        console.warn('Could not load users list:', userErr);
+        const currentUser = window.getUser?.();
+        if (currentUser?.name) {
+          users = [{ username: currentUser.name, name: currentUser.name, type: currentUser.type }];
+        }
+      }
+      
+      const [tours, sales] = await Promise.all([
         window.fetchJson?.('/api/tours') || [],
         window.fetchJson?.('/api/sales') || []
       ]);
@@ -196,8 +207,19 @@ class StaffManagement {
     const container = document.getElementById('workloadContent');
     
     try {
-      const [users, tours, sales] = await Promise.all([
-        window.fetchJson?.('/api/users') || [],
+      // Load users with fallback for basic users
+      let users = [];
+      try {
+        users = await window.fetchJson?.('/api/users') || [];
+      } catch (userErr) {
+        console.warn('Could not load users list:', userErr);
+        const currentUser = window.getUser?.();
+        if (currentUser?.name) {
+          users = [{ username: currentUser.name, name: currentUser.name, type: currentUser.type }];
+        }
+      }
+      
+      const [tours, sales] = await Promise.all([
         window.fetchJson?.('/api/tours') || [],
         window.fetchJson?.('/api/sales') || []
       ]);
@@ -278,10 +300,19 @@ class StaffManagement {
     const container = document.getElementById('scheduleContent');
     
     try {
-      const [tours, users] = await Promise.all([
-        window.fetchJson?.('/api/tours') || [],
-        window.fetchJson?.('/api/users') || []
-      ]);
+      // Load users with fallback for basic users
+      let users = [];
+      try {
+        users = await window.fetchJson?.('/api/users') || [];
+      } catch (userErr) {
+        console.warn('Could not load users list:', userErr);
+        const currentUser = window.getUser?.();
+        if (currentUser?.name) {
+          users = [{ username: currentUser.name, name: currentUser.name, type: currentUser.type }];
+        }
+      }
+      
+      const tours = await window.fetchJson?.('/api/tours') || [];
 
       const today = new Date();
       const nextWeek = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
@@ -341,8 +372,19 @@ class StaffManagement {
     const container = document.getElementById('targetsContent');
     
     try {
-      const [users, tours, sales, targets] = await Promise.all([
-        window.fetchJson?.('/api/users') || [],
+      // Load users with fallback for basic users
+      let users = [];
+      try {
+        users = await window.fetchJson?.('/api/users') || [];
+      } catch (userErr) {
+        console.warn('Could not load users list:', userErr);
+        const currentUser = window.getUser?.();
+        if (currentUser?.name) {
+          users = [{ username: currentUser.name, name: currentUser.name, type: currentUser.type }];
+        }
+      }
+      
+      const [tours, sales, targets] = await Promise.all([
         window.fetchJson?.('/api/tours') || [],
         window.fetchJson?.('/api/sales') || [],
         window.fetchJson?.('/api/targets') || []
