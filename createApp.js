@@ -2006,6 +2006,87 @@ export async function createApp() {
     }
   });
 
+  // ==================== APP SETTINGS API ====================
+  // Get all settings
+  app.get('/api/settings', authMiddleware(), async (req, res) => {
+    try {
+      const rows = await db.all('SELECT setting_key, setting_value FROM app_settings');
+      const settings = {};
+      rows.forEach(row => {
+        try {
+          settings[row.setting_key] = JSON.parse(row.setting_value);
+        } catch {
+          settings[row.setting_key] = row.setting_value;
+        }
+      });
+      res.json(settings);
+    } catch (err) {
+      logger.error({ err }, 'Get settings error');
+      res.status(500).json({ error: 'Failed to load settings' });
+    }
+  });
+
+  // Update settings (admin only)
+  app.put('/api/settings', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin' && req.user.type !== 'semi-admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+    try {
+      const settings = req.body;
+      const isPg = db.dialect === 'postgres';
+      
+      for (const [key, value] of Object.entries(settings)) {
+        const valueStr = typeof value === 'object' ? JSON.stringify(value) : String(value);
+        
+        if (isPg) {
+          // Postgres UPSERT
+          await db.run(`
+            INSERT INTO app_settings (setting_key, setting_value, updated_at, updated_by)
+            VALUES (?, ?, NOW(), ?)
+            ON CONFLICT (setting_key) DO UPDATE SET 
+              setting_value = EXCLUDED.setting_value,
+              updated_at = NOW(),
+              updated_by = EXCLUDED.updated_by
+          `, [key, valueStr, req.user.username]);
+        } else {
+          // SQLite UPSERT
+          await db.run(`
+            INSERT INTO app_settings (setting_key, setting_value, updated_at, updated_by)
+            VALUES (?, ?, datetime('now'), ?)
+            ON CONFLICT(setting_key) DO UPDATE SET 
+              setting_value = excluded.setting_value,
+              updated_at = datetime('now'),
+              updated_by = excluded.updated_by
+          `, [key, valueStr, req.user.username]);
+        }
+      }
+      
+      await logActivity(req.user.username, 'UPDATE', 'settings', null, `Updated app settings: ${Object.keys(settings).join(', ')}`);
+      res.json({ ok: true, message: 'Settings saved' });
+    } catch (err) {
+      logger.error({ err }, 'Update settings error');
+      res.status(500).json({ error: 'Failed to save settings' });
+    }
+  });
+
+  // Get specific setting
+  app.get('/api/settings/:key', authMiddleware(), async (req, res) => {
+    try {
+      const row = await db.get('SELECT setting_value FROM app_settings WHERE setting_key = ?', [req.params.key]);
+      if (!row) {
+        return res.json({ value: null });
+      }
+      try {
+        res.json({ value: JSON.parse(row.setting_value) });
+      } catch {
+        res.json({ value: row.setting_value });
+      }
+    } catch (err) {
+      logger.error({ err }, 'Get setting error');
+      res.status(500).json({ error: 'Failed to load setting' });
+    }
+  });
+
   // Bulk Export endpoint
   app.get('/api/export/:entity', authMiddleware(), async (req, res) => {
     try {

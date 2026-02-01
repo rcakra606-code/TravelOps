@@ -1953,10 +1953,24 @@
       { id: 'other', name: 'Other', icon: '📝' }
     ];
 
-    // Load saved settings
-    function loadSettings() {
-      const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+    // Load saved settings from API (with localStorage fallback)
+    async function loadSettings() {
+      let settings = {};
       
+      // Try to load from API first
+      try {
+        settings = await fetchJson('/api/settings') || {};
+        // Cache in localStorage for offline/faster access
+        localStorage.setItem('appSettings', JSON.stringify(settings));
+      } catch (err) {
+        console.warn('Failed to load settings from API, using localStorage:', err);
+        settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+      }
+      
+      applySettingsToUI(settings);
+    }
+    
+    function applySettingsToUI(settings) {
       if (settings.companyName) document.getElementById('companyName').value = settings.companyName;
       if (settings.dateFormat) document.getElementById('dateFormat').value = settings.dateFormat;
       if (settings.currency) document.getElementById('currency').value = settings.currency;
@@ -2041,7 +2055,7 @@
       }
     }
 
-    function saveGeneralSettings() {
+    async function saveGeneralSettings() {
       const marginHigh = parseFloat(document.getElementById('marginHighThreshold')?.value) || 20;
       const marginMedium = parseFloat(document.getElementById('marginMediumThreshold')?.value) || 10;
       
@@ -2089,14 +2103,21 @@
       };
       
       console.log('💾 Saving settings:', settings);
-      console.log('💾 productMargins:', JSON.stringify(productMargins, null, 2));
       
+      // Save to API (database)
+      try {
+        await fetchJson('/api/settings', {
+          method: 'PUT',
+          body: JSON.stringify(settings)
+        });
+        console.log('✅ Settings saved to database');
+      } catch (err) {
+        console.error('❌ Failed to save settings to API:', err);
+        toast.error('Failed to save settings to server. Changes saved locally only.');
+      }
+      
+      // Also save to localStorage for faster loading/offline
       localStorage.setItem('appSettings', JSON.stringify(settings));
-      
-      // Verify save
-      const saved = JSON.parse(localStorage.getItem('appSettings'));
-      console.log('✅ Verified saved settings:', saved);
-      console.log('✅ Saved productMargins:', saved.productMargins);
       
       // Apply dark mode
       if (settings.darkMode) {

@@ -400,6 +400,15 @@ async function createSchema(db) {
     created_at ${ts} ${createdDefault}
   )`);
 
+  // App Settings - stores application configuration including margin thresholds
+  await db.run(`CREATE TABLE IF NOT EXISTS app_settings (
+    id ${idCol},
+    setting_key TEXT UNIQUE NOT NULL,
+    setting_value TEXT,
+    updated_at ${ts} ${createdDefault},
+    updated_by TEXT
+  )`);
+
   // Seed admin if no users
   const count = await db.get('SELECT COUNT(*) AS c FROM users');
   if (!count || count.c === 0 || count.count === 0) {

@@ -76,7 +76,8 @@ function calculateMargin(sales, profit) {
 }
 
 function getMarginThresholds(productType = null) {
-  const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+  // Use cached settings from API, fallback to localStorage
+  const settings = cachedAppSettings || JSON.parse(localStorage.getItem('appSettings') || '{}');
   const defaultHigh = parseFloat(settings.marginHighThreshold) || 20;
   const defaultMedium = parseFloat(settings.marginMediumThreshold) || 10;
   
@@ -1940,8 +1941,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   initKeyboardShortcuts();
   initQuickFilters();
   
-  // Refresh margin settings from localStorage (in case updated by admin)
-  refreshMarginSettings();
+  // Load margin settings from API (database)
+  await refreshMarginSettings();
   
   // Hide import button for basic users (they can only view their own data)
   if (isBasicUser) {
@@ -1960,15 +1961,34 @@ window.addEventListener('DOMContentLoaded', async () => {
   populateQuickFilterStaff();
 });
 
-/* === REFRESH MARGIN SETTINGS === */
-function refreshMarginSettings() {
-  // Force re-read settings from localStorage to ensure latest admin settings are used
-  // This will be picked up by getMarginThresholds() when rendering
-  const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
-  console.log('Margin settings loaded:', {
-    high: settings.marginHighThreshold || 20,
-    medium: settings.marginMediumThreshold || 10,
-    productMargins: settings.productMargins || {}
+/* === MARGIN SETTINGS (cached from API) === */
+let cachedAppSettings = null;
+
+async function refreshMarginSettings() {
+  // Load settings from API (database) with localStorage fallback
+  try {
+    const apiSettings = await window.fetchJson('/api/settings');
+    if (apiSettings && Object.keys(apiSettings).length > 0) {
+      cachedAppSettings = apiSettings;
+      // Update localStorage cache
+      localStorage.setItem('appSettings', JSON.stringify(apiSettings));
+      console.log('✅ Margin settings loaded from database:', {
+        high: apiSettings.marginHighThreshold || 20,
+        medium: apiSettings.marginMediumThreshold || 10,
+        productMargins: apiSettings.productMargins || {}
+      });
+      return;
+    }
+  } catch (err) {
+    console.warn('⚠️ Failed to load settings from API:', err);
+  }
+  
+  // Fallback to localStorage
+  cachedAppSettings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+  console.log('📦 Margin settings loaded from localStorage:', {
+    high: cachedAppSettings.marginHighThreshold || 20,
+    medium: cachedAppSettings.marginMediumThreshold || 10,
+    productMargins: cachedAppSettings.productMargins || {}
   });
 }
 
