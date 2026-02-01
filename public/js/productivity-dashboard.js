@@ -1938,6 +1938,10 @@ window.addEventListener('DOMContentLoaded', async () => {
   initComparisonControls();
   initPrintButton();
   initKeyboardShortcuts();
+  initQuickFilters();
+  
+  // Refresh margin settings from localStorage (in case updated by admin)
+  refreshMarginSettings();
   
   // Hide import button for basic users (they can only view their own data)
   if (isBasicUser) {
@@ -1951,7 +1955,110 @@ window.addEventListener('DOMContentLoaded', async () => {
   showLoading('Loading productivity data...');
   await loadData();
   hideLoading();
+  
+  // Update quick filters with staff data after load
+  populateQuickFilterStaff();
 });
+
+/* === REFRESH MARGIN SETTINGS === */
+function refreshMarginSettings() {
+  // Force re-read settings from localStorage to ensure latest admin settings are used
+  // This will be picked up by getMarginThresholds() when rendering
+  const settings = JSON.parse(localStorage.getItem('appSettings') || '{}');
+  console.log('Margin settings loaded:', {
+    high: settings.marginHighThreshold || 20,
+    medium: settings.marginMediumThreshold || 10,
+    productMargins: settings.productMargins || {}
+  });
+}
+
+/* === QUICK FILTERS === */
+function initQuickFilters() {
+  const yearSelect = el('quickFilterYear');
+  const monthSelect = el('quickFilterMonth');
+  const staffSelect = el('quickFilterStaff');
+  
+  // Populate year dropdown
+  if (yearSelect) {
+    const currentYear = new Date().getFullYear();
+    yearSelect.innerHTML = '<option value="">All Years</option>' +
+      [...Array(10)].map((_, i) => {
+        const year = currentYear - i;
+        return `<option value="${year}" ${year === currentFilters.year ? 'selected' : ''}>${year}</option>`;
+      }).join('');
+    
+    yearSelect.addEventListener('change', () => applyQuickFilters());
+  }
+  
+  // Month select already has options in HTML, just add listener
+  if (monthSelect) {
+    monthSelect.value = currentFilters.month || '';
+    monthSelect.addEventListener('change', () => applyQuickFilters());
+  }
+  
+  // Show staff filter for admin/semi-admin users
+  if (staffSelect && !isBasicUser) {
+    staffSelect.style.display = '';
+    staffSelect.addEventListener('change', () => applyQuickFilters());
+  }
+}
+
+function populateQuickFilterStaff() {
+  const staffSelect = el('quickFilterStaff');
+  if (!staffSelect || isBasicUser) return;
+  
+  staffSelect.innerHTML = '<option value="all">All Staff</option>' +
+    usersData.map(u => `<option value="${u.name}">${u.name}</option>`).join('');
+  
+  staffSelect.value = currentFilters.staff || 'all';
+}
+
+function applyQuickFilters() {
+  const yearSelect = el('quickFilterYear');
+  const monthSelect = el('quickFilterMonth');
+  const staffSelect = el('quickFilterStaff');
+  
+  currentFilters = {
+    year: yearSelect?.value ? parseInt(yearSelect.value) : '',
+    month: monthSelect?.value || '',
+    staff: staffSelect?.value || 'all',
+    product: currentFilters.product || 'all'
+  };
+  
+  // Filter data
+  let filteredData = [...productivityData];
+  
+  if (currentFilters.year) {
+    filteredData = filteredData.filter(d => d.year === currentFilters.year);
+  }
+  if (currentFilters.month) {
+    filteredData = filteredData.filter(d => d.month === parseInt(currentFilters.month));
+  }
+  if (currentFilters.staff !== 'all') {
+    filteredData = filteredData.filter(d => d.staff_name === currentFilters.staff);
+  }
+  if (currentFilters.product !== 'all') {
+    filteredData = filteredData.filter(d => d.product_type === currentFilters.product);
+  }
+  
+  // Store for export
+  window.filteredProductivityData = filteredData;
+  
+  // Temporarily swap for rendering
+  const originalData = productivityData;
+  productivityData = filteredData;
+  
+  renderOverview();
+  
+  // Re-render current product tab if active
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab && activeTab.dataset.tab !== 'overview' && activeTab.dataset.tab !== 'comparison') {
+    renderProductTable(activeTab.dataset.tab);
+  }
+  
+  // Restore original data
+  productivityData = originalData;
+}
 
 /* =========================================================
    COMPARISON FEATURE - Month, Quarter, Semester, YTD Analysis

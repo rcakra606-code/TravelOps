@@ -116,12 +116,38 @@
     .setting-control input[type="text"],
     .setting-control input[type="number"],
     .setting-control input[type="email"],
+    .setting-control input[type="password"],
     .setting-control select {
       padding: 8px 12px;
       border: 1px solid var(--border-light, #e5e7eb);
       border-radius: 6px;
       font-size: 14px;
       min-width: 200px;
+      background: var(--card, #fff);
+      color: var(--text-primary, #1f2937);
+    }
+    
+    /* Table inputs - smaller for table cells */
+    table input[type="number"] {
+      padding: 6px 10px;
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 6px;
+      font-size: 13px;
+      background: var(--card, #fff);
+      color: var(--text-primary, #1f2937);
+      transition: all 0.2s;
+    }
+    
+    table input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary, #3b82f6);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    table input[type="number"]:disabled {
+      background: var(--bg-alt, #f3f4f6);
+      color: var(--text-secondary, #6b7280);
+      cursor: not-allowed;
     }
     
     .setting-control input:focus,
@@ -437,6 +463,59 @@
       width: 16px;
       height: 16px;
     }
+    
+    /* Settings table styling */
+    .settings-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    
+    .settings-table th {
+      padding: 12px 14px;
+      text-align: left;
+      background: var(--bg-alt, #f8fafc);
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary, #1f2937);
+      border-bottom: 2px solid var(--border-light, #e5e7eb);
+    }
+    
+    .settings-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+      vertical-align: middle;
+    }
+    
+    .settings-table tr:hover {
+      background: var(--bg-alt, #f8fafc);
+    }
+    
+    /* Fix inputs in settings rows */
+    .setting-control input[type="number"][style*="width: 80px"] {
+      min-width: 80px;
+      max-width: 100px;
+    }
+    
+    /* Responsive fixes */
+    @media (max-width: 768px) {
+      .setting-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+      }
+      
+      .setting-control {
+        margin-left: 0;
+        width: 100%;
+      }
+      
+      .setting-control input,
+      .setting-control select {
+        width: 100%;
+        min-width: unset;
+      }
+    }
   </style>
 </head>
 <body>
@@ -679,14 +758,14 @@
           
           <!-- Per-Product Thresholds -->
           <h4 style="margin: 0 0 12px 0; font-size: 14px; color: var(--text-primary);">📦 Per-Product Thresholds</h4>
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <div style="overflow-x: auto; background: var(--card, #fff); border-radius: 8px; border: 1px solid var(--border-light, #e5e7eb);">
+            <table class="settings-table">
               <thead>
-                <tr style="background: var(--bg-alt); text-align: left;">
-                  <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-light);">Product</th>
-                  <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-light); text-align: center;">High Margin (%)</th>
-                  <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-light); text-align: center;">Medium Margin (%)</th>
-                  <th style="padding: 10px 12px; border-bottom: 2px solid var(--border-light); text-align: center;">Use Default</th>
+                <tr>
+                  <th style="min-width: 150px;">Product</th>
+                  <th style="text-align: center; min-width: 120px;">High Margin (%)</th>
+                  <th style="text-align: center; min-width: 120px;">Medium Margin (%)</th>
+                  <th style="text-align: center; min-width: 100px;">Use Default</th>
                 </tr>
               </thead>
               <tbody id="productMarginTable">
@@ -1918,19 +1997,22 @@
         
         return `
           <tr>
-            <td style="padding: 10px 12px; border-bottom: 1px solid var(--border-light);">
-              ${p.icon} <strong>${p.name}</strong>
+            <td>
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 16px;">${p.icon}</span>
+                <strong>${p.name}</strong>
+              </span>
             </td>
-            <td style="padding: 10px 12px; border-bottom: 1px solid var(--border-light); text-align: center;">
+            <td style="text-align: center;">
               <input type="number" id="pm_high_${p.id}" min="0" max="100" step="0.1" value="${high}" 
-                     style="width: 70px; text-align: center;" ${useDefault ? 'disabled' : ''}>
+                     style="width: 80px; text-align: center;" ${useDefault ? 'disabled' : ''}>
             </td>
-            <td style="padding: 10px 12px; border-bottom: 1px solid var(--border-light); text-align: center;">
+            <td style="text-align: center;">
               <input type="number" id="pm_medium_${p.id}" min="0" max="100" step="0.1" value="${medium}" 
-                     style="width: 70px; text-align: center;" ${useDefault ? 'disabled' : ''}>
+                     style="width: 80px; text-align: center;" ${useDefault ? 'disabled' : ''}>
             </td>
-            <td style="padding: 10px 12px; border-bottom: 1px solid var(--border-light); text-align: center;">
-              <label class="toggle-switch" style="margin: 0;">
+            <td style="text-align: center;">
+              <label class="toggle-switch" style="margin: 0 auto; display: block; width: 48px;">
                 <input type="checkbox" id="pm_default_${p.id}" ${useDefault ? 'checked' : ''} 
                        onchange="toggleProductMargin('${p.id}', this.checked)">
                 <span class="toggle-slider"></span>

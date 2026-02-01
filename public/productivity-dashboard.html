@@ -491,8 +491,31 @@
         <h2>Productivity Dashboard</h2>
         <div class="small">Track sales performance by product category</div>
       </div>
-      <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-        <button id="filterBtn" class="btn">🔍 Filter</button>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <!-- Quick Filters -->
+        <select id="quickFilterYear" class="quick-filter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--card); font-size: 13px; min-width: 90px;">
+          <!-- Populated by JS -->
+        </select>
+        <select id="quickFilterMonth" class="quick-filter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--card); font-size: 13px; min-width: 120px;">
+          <option value="">All Months</option>
+          <option value="1">January</option>
+          <option value="2">February</option>
+          <option value="3">March</option>
+          <option value="4">April</option>
+          <option value="5">May</option>
+          <option value="6">June</option>
+          <option value="7">July</option>
+          <option value="8">August</option>
+          <option value="9">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="quickFilterStaff" class="quick-filter" style="padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border-light); background: var(--card); font-size: 13px; min-width: 140px; display: none;">
+          <option value="all">All Staff</option>
+          <!-- Populated by JS -->
+        </select>
+        <button id="filterBtn" class="btn">🔍 More Filters</button>
         <button id="importBtn" class="btn" style="background: #10b981; color: white;">⬆️ Import</button>
         <div class="export-dropdown" style="position: relative;">
           <button id="exportBtn" class="btn" style="display: flex; align-items: center; gap: 4px;">⬇️ Export <span style="font-size: 10px;">▼</span></button>
