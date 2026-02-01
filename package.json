@@ -4,6 +4,9 @@
   "description": "TravelOps - Sistem Manajemen Industri Pariwisata (JWT Secure Edition)",
   "main": "server.js",
   "type": "module",
+  "overrides": {
+    "tar": "^7.5.7"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
