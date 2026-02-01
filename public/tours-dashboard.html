@@ -105,56 +105,6 @@
       </div>
     </div>
 
-    <!-- Search and Filter Bar -->
-    <div class="card" style="margin-bottom: 16px;">
-      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="🔍 Search tour code, destination, lead pax..." 
-          style="flex: 1; min-width: 250px;"
-        />
-        <select id="filterYear" style="min-width: 120px;">
-          <option value="">All Years</option>
-        </select>
-        <select id="filterMonth" style="min-width: 130px;">
-          <option value="">All Months</option>
-          <option value="01">January</option>
-          <option value="02">February</option>
-          <option value="03">March</option>
-          <option value="04">April</option>
-          <option value="05">May</option>
-          <option value="06">June</option>
-          <option value="07">July</option>
-          <option value="08">August</option>
-          <option value="09">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
-        </select>
-        <select id="filterRegion" style="min-width: 140px;">
-          <option value="">All Regions</option>
-          <option value="Domestik">Domestik</option>
-          <option value="China">China</option>
-          <option value="APJ">APJ</option>
-          <option value="EAMEA">EAMEA</option>
-        </select>
-        <select id="filterStatus" style="min-width: 140px;">
-          <option value="">All Status</option>
-          <option value="pending">Pending</option>
-          <option value="confirmed">Confirmed</option>
-          <option value="invoiced">Invoiced</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-        <select id="filterStaff" style="min-width: 140px;">
-          <option value="">All Staff</option>
-        </select>
-        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
-        <button id="exportToursCSV" class="btn btn-outline">📊 Export</button>
-      </div>
-    </div>
-
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>Tours Analytics</h3>
@@ -274,8 +224,58 @@
       </div>
     </div>
 
+    <!-- Search and Filter Bar -->
+    <div class="card" style="margin-top: 20px; margin-bottom: 16px;">
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search tour code, destination, lead pax..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="filterYear" style="min-width: 120px;">
+          <option value="">All Years</option>
+        </select>
+        <select id="filterMonth" style="min-width: 130px;">
+          <option value="">All Months</option>
+          <option value="01">January</option>
+          <option value="02">February</option>
+          <option value="03">March</option>
+          <option value="04">April</option>
+          <option value="05">May</option>
+          <option value="06">June</option>
+          <option value="07">July</option>
+          <option value="08">August</option>
+          <option value="09">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select id="filterRegion" style="min-width: 140px;">
+          <option value="">All Regions</option>
+          <option value="Domestik">Domestik</option>
+          <option value="China">China</option>
+          <option value="APJ">APJ</option>
+          <option value="EAMEA">EAMEA</option>
+        </select>
+        <select id="filterStatus" style="min-width: 140px;">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="invoiced">Invoiced</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="filterStaff" style="min-width: 140px;">
+          <option value="">All Staff</option>
+        </select>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
+        <button id="exportToursCSV" class="btn btn-outline">📊 Export</button>
+      </div>
+    </div>
+
     <!-- Tours Data Table with CRUD -->
-    <div class="card" style="margin-top: 20px;">
+    <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>📋 Tours Records</h3>
         <div style="display: flex; gap: 10px; align-items: center;">

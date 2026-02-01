@@ -105,27 +105,6 @@
       <button id="addCruiseBtn" class="btn btn-primary">+ Add Cruise</button>
     </div>
 
-    <!-- Search and Filter Bar -->
-    <div class="card" style="margin-bottom: 16px;">
-      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="🔍 Search by cruise brand, ship, PIC..." 
-          style="flex: 1; min-width: 250px;"
-        />
-        <select id="brandFilter" style="min-width: 150px;">
-          <option value="all">All Brands</option>
-        </select>
-        <input type="date" id="startDateFilter" placeholder="Sailing From" style="min-width: 150px;" />
-        <input type="date" id="endDateFilter" placeholder="Sailing To" style="min-width: 150px;" />
-        <button id="clearFilters" class="btn btn-secondary">Clear Filters</button>
-        <button id="importBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
-        <button id="exportBtn" class="btn btn-outline">📊 Export CSV</button>
-        <input type="file" id="importFileInput" accept=".csv" style="display:none;">
-      </div>
-    </div>
-
     <div class="card">
       <div class="dashboard-metrics">
         <div class="metric-card">
@@ -150,7 +129,26 @@
         </div>
       </div>
 
-      <div style="overflow-x:auto; margin-top: 24px;">
+      <!-- Search and Filter Bar -->
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 24px; margin-bottom: 16px; padding: 16px; background: var(--bg-alt); border-radius: 12px;">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="🔍 Search by cruise brand, ship, PIC..." 
+          style="flex: 1; min-width: 250px;"
+        />
+        <select id="brandFilter" style="min-width: 150px;">
+          <option value="all">All Brands</option>
+        </select>
+        <input type="date" id="startDateFilter" placeholder="Sailing From" style="min-width: 150px;" />
+        <input type="date" id="endDateFilter" placeholder="Sailing To" style="min-width: 150px;" />
+        <button id="clearFilters" class="btn btn-secondary">Clear Filters</button>
+        <button id="importBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+        <button id="exportBtn" class="btn btn-outline">📊 Export CSV</button>
+        <input type="file" id="importFileInput" accept=".csv" style="display:none;">
+      </div>
+
+      <div style="overflow-x:auto;">
         <table class="dashboard-table" id="cruiseTable">
           <thead>
             <tr>

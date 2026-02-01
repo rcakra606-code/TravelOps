@@ -1144,6 +1144,12 @@ export async function createApp() {
         if (!r) return res.status(400).json({ error: 'Invalid region_id' });
       }
       
+      // Sanitize empty date strings to null for PostgreSQL compatibility
+      const dateFields = ['registration_date', 'departure_date', 'return_date'];
+      dateFields.forEach(field => {
+        if (tour[field] === '') tour[field] = null;
+      });
+      
       // Insert tour
       const tourKeys = Object.keys(tour);
       const tourValues = Object.values(tour);
@@ -1216,9 +1222,15 @@ export async function createApp() {
       
       // Build clean tour object with only allowed fields
       const cleanTour = {};
+      const dateFields = ['registration_date', 'departure_date', 'return_date', 'updated_at'];
       allowedFields.forEach(field => {
         if (field in tour) {
-          cleanTour[field] = tour[field];
+          // Convert empty strings to null for date/timestamp fields (PostgreSQL compatibility)
+          if (dateFields.includes(field) && tour[field] === '') {
+            cleanTour[field] = null;
+          } else {
+            cleanTour[field] = tour[field];
+          }
         }
       });
       

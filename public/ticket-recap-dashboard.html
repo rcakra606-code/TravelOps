@@ -369,9 +369,38 @@
       <button id="addTicketBtn" class="btn btn-primary">+ Add Ticket</button>
     </div>
 
-    <!-- Search and Filter Bar -->
-    <div class="card" style="margin-bottom: 16px;">
-      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+    <div class="card">
+      <!-- Metrics -->
+      <div class="dashboard-metrics">
+        <div class="metric-card">
+          <div class="metric-title">Total Tickets</div>
+          <div class="metric-value" id="totalTickets">0</div>
+          <div class="metric-subtitle">All bookings</div>
+        </div>
+        <div class="metric-card" style="border-left: 3px solid var(--warning, #f59e0b);">
+          <div class="metric-title">🎫 Open Tickets</div>
+          <div class="metric-value" id="openTickets">0</div>
+          <div class="metric-subtitle">Pending dates</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Departing Today</div>
+          <div class="metric-value" id="departingToday">0</div>
+          <div class="metric-subtitle">Flights</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Upcoming 7 Days</div>
+          <div class="metric-value" id="upcoming7Days">0</div>
+          <div class="metric-subtitle">Departures</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-title">Arriving Today</div>
+          <div class="metric-value" id="arrivingToday">0</div>
+          <div class="metric-subtitle">Flights</div>
+        </div>
+      </div>
+
+      <!-- Search and Filter Bar -->
+      <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 24px; margin-bottom: 16px; padding: 16px; background: var(--bg-alt); border-radius: 12px;">
         <input 
           type="text" 
           id="searchInput" 
@@ -406,40 +435,9 @@
         <button id="clearFilters" class="btn btn-secondary">Clear</button>
         <button id="exportBtn" class="btn btn-outline">📊 Export</button>
       </div>
-    </div>
-
-    <div class="card">
-      <!-- Metrics -->
-      <div class="dashboard-metrics">
-        <div class="metric-card">
-          <div class="metric-title">Total Tickets</div>
-          <div class="metric-value" id="totalTickets">0</div>
-          <div class="metric-subtitle">All bookings</div>
-        </div>
-        <div class="metric-card" style="border-left: 3px solid var(--warning, #f59e0b);">
-          <div class="metric-title">🎫 Open Tickets</div>
-          <div class="metric-value" id="openTickets">0</div>
-          <div class="metric-subtitle">Pending dates</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Departing Today</div>
-          <div class="metric-value" id="departingToday">0</div>
-          <div class="metric-subtitle">Flights</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Upcoming 7 Days</div>
-          <div class="metric-value" id="upcoming7Days">0</div>
-          <div class="metric-subtitle">Departures</div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-title">Arriving Today</div>
-          <div class="metric-value" id="arrivingToday">0</div>
-          <div class="metric-subtitle">Flights</div>
-        </div>
-      </div>
 
       <!-- Data Table -->
-      <div style="overflow-x:auto; margin-top: 24px;">
+      <div style="overflow-x:auto;">
         <table class="dashboard-table" id="ticketTable">
           <thead>
             <tr>
