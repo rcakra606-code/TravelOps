@@ -28,7 +28,7 @@ let currentUser = null;
 let isBasicUser = false;
 let currentFilters = {
   year: new Date().getFullYear(),
-  month: '',
+  month: String(new Date().getMonth() + 1), // Default to current month
   staff: 'all',
   product: 'all'
 };
@@ -1959,6 +1959,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Update quick filters with staff data after load
   populateQuickFilterStaff();
+  
+  // Apply initial filters (current year + current month by default)
+  applyQuickFilters();
 });
 
 /* === MARGIN SETTINGS (cached from API) === */
@@ -1998,21 +2001,23 @@ function initQuickFilters() {
   const monthSelect = el('quickFilterMonth');
   const staffSelect = el('quickFilterStaff');
   
-  // Populate year dropdown
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  
+  // Populate year dropdown - default to current year
   if (yearSelect) {
-    const currentYear = new Date().getFullYear();
     yearSelect.innerHTML = '<option value="">All Years</option>' +
       [...Array(10)].map((_, i) => {
         const year = currentYear - i;
-        return `<option value="${year}" ${year === currentFilters.year ? 'selected' : ''}>${year}</option>`;
+        return `<option value="${year}" ${year === currentYear ? 'selected' : ''}>${year}</option>`;
       }).join('');
     
     yearSelect.addEventListener('change', () => applyQuickFilters());
   }
   
-  // Month select already has options in HTML, just add listener
+  // Set month dropdown to current month
   if (monthSelect) {
-    monthSelect.value = currentFilters.month || '';
+    monthSelect.value = String(currentMonth);
     monthSelect.addEventListener('change', () => applyQuickFilters());
   }
   
