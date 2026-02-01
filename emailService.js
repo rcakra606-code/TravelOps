@@ -1185,6 +1185,14 @@ function getOpenTicketEmailTemplate(ticket) {
   `;
 }
 
+/**
+ * Check if email service is configured
+ * @returns {boolean} True if email is configured
+ */
+function checkEmailConfigured() {
+  return isEmailConfigured && transporter !== null;
+}
+
 export {
   sendDepartureReminder,
   sendCruiseReminder,
@@ -1192,5 +1200,6 @@ export {
   sendTestEmail,
   sendTicketDepartureReminder,
   sendTicketArrivalReminder,
-  sendOpenTicketReminder
+  sendOpenTicketReminder,
+  checkEmailConfigured
 };

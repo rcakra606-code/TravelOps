@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile - TravelOps</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/dark-mode.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/filters.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/dashboard-customization.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-modal.css">
+  <link rel="stylesheet" href="/css/ui-enhancements.css">
+  <link rel="stylesheet" href="/css/sidebar-groups.css">
+  <link rel="stylesheet" href="/css/dashboard-shared.css">
+  <script src="/js/theme-toggle.js"></script>
+  <style>
+    .profile-page {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    .profile-page .card {
+      background: var(--card, #fff);
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md, 0 4px 6px -1px rgba(0, 0, 0, 0.1));
+      border: 1px solid var(--border-light, #e2e8f0);
+    }
+    
+    .profile-page .card h3 {
+      margin: 0 0 20px 0;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .profile-header {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .profile-avatar {
+      flex-shrink: 0;
+    }
+    
+    .avatar-circle {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary-500, #3b82f6) 0%, var(--primary-600, #2563eb) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 36px;
+      font-weight: 700;
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    
+    .profile-info {
+      flex: 1;
+    }
+    
+    .profile-info h2 {
+      margin: 0 0 8px 0;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .profile-role {
+      display: inline-block;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    
+    .profile-username {
+      color: var(--text-secondary, #6b7280);
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .detail-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+    }
+    
+    .detail-item {
+      background: var(--bg-secondary, #f9fafb);
+      padding: 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-light, #e2e8f0);
+    }
+    
+    .detail-item label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary, #6b7280);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    
+    .detail-item div {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+    
+    .stat-item {
+      background: linear-gradient(135deg, var(--primary-50, #eff6ff) 0%, var(--primary-100, #dbeafe) 100%);
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      border: 1px solid var(--primary-200, #bfdbfe);
+    }
+    
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--primary-600, #2563eb);
+      margin-bottom: 4px;
+    }
+    
+    .stat-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--primary-700, #1d4ed8);
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .form-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--border-light, #e2e8f0);
+      border-radius: 10px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      background: var(--card, #fff);
+      color: var(--text-primary);
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: var(--primary-400, #60a5fa);
+      box-shadow: 0 0 0 4px var(--primary-100, #dbeafe);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-500, #3b82f6) 0%, var(--primary-600, #2563eb) 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(59, 130, 246, 0.3);
+    }
+    
+    .small {
+      font-size: 13px;
+    }
+    
+    /* Email Testing Panel Styles */
+    .email-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    
+    .email-card {
+      padding: 20px;
+      border-radius: 12px;
+    }
+    
+    .email-card h4 {
+      margin-top: 0;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .email-card p {
+      font-size: 0.9rem;
+      margin-bottom: 16px;
+    }
+    
+    .email-card .btn {
+      width: 100%;
+    }
+    
+    .email-card-test {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+    }
+    
+    .email-card-test h4 { color: #1f2937; }
+    .email-card-test p { color: #6b7280; }
+    
+    .email-card-trigger {
+      background: #fef3c7;
+      border: 1px solid #fbbf24;
+    }
+    
+    .email-card-trigger h4 { color: #92400e; }
+    .email-card-trigger p { color: #78350f; }
+    
+    .email-card-stats {
+      background: #ecfdf5;
+      border: 1px solid #10b981;
+    }
+    
+    .email-card-stats h4 { color: #065f46; }
+    .email-card-stats p { color: #047857; }
+    
+    #emailTestResults {
+      margin-top: 20px;
+    }
+    
+    #emailStatsTable {
+      margin-top: 20px;
+    }
+    
+    #emailStatsTable h4 {
+      color: #1f2937;
+      margin-bottom: 12px;
+    }
+    
+    .loading-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 9999;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .loading-overlay.active {
+      display: flex;
+    }
+    
+    .loading-spinner {
+      background: white;
+      padding: 30px 40px;
+      border-radius: 12px;
+      text-align: center;
+    }
+    
+    .loading-text {
+      margin-top: 12px;
+      color: #374151;
+      font-weight: 500;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #e5e7eb;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">
+    <div class="spinner"></div>
+    <div class="loading-text">Loading...</div>
+  </div>
+</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <!-- Main Dashboard -->
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      
+      <!-- Product Input Group -->
+      <div class="nav-group" id="groupProductInput">
+        <button class="nav-group-header" data-group="product-input">
+          <span class="group-icon">📦</span>
+          <span class="group-title">Product Input</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/my-tours.html">📋 My Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+        </div>
+      </div>
+      
+      <!-- Productivity Group -->
+      <div class="nav-group" id="groupProductivity">
+        <button class="nav-group-header" data-group="productivity">
+          <span class="group-icon">📊</span>
+          <span class="group-title">Productivity</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/sales-dashboard.html">💰 Sales</a>
+          <a href="/targets-dashboard.html">🎯 Targets</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/reports-dashboard.html">📊 Reports</a>
+        </div>
+      </div>
+      
+      <!-- Administration Group -->
+      <div class="nav-group" id="groupAdmin">
+        <button class="nav-group-header" data-group="administration">
+          <span class="group-icon">⚙️</span>
+          <span class="group-title">Administration</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+        </div>
+      </div>
+      
+      <hr class="nav-divider">
+      <a href="/profile.html" class="active">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <div>
+        <h1>👤 My Profile</h1>
+        <p>Manage your account settings and preferences</p>
+      </div>
+    </div>
+
+    <div class="profile-page">
+      <!-- Profile Header Card -->
+      <div class="card profile-header-card">
+        <div class="profile-header">
+          <div class="profile-avatar">
+            <div class="avatar-circle">
+              <span id="profileInitials">?</span>
+            </div>
+          </div>
+          <div class="profile-info">
+            <h2 id="profileName">Loading...</h2>
+            <p class="profile-role" id="profileRole">-</p>
+            <p class="profile-username" id="profileUsername">@username</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Profile Details Card -->
+      <div class="card">
+        <h3>📋 Account Information</h3>
+        <div class="detail-grid">
+          <div class="detail-item">
+            <label>Username</label>
+            <div id="detailUsername">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Full Name</label>
+            <div id="detailName">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Email</label>
+            <div id="detailEmail">-</div>
+          </div>
+          <div class="detail-item">
+            <label>Account Type</label>
+            <div id="detailType">-</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Change Password Card -->
+      <div class="card">
+        <h3>🔒 Change Password</h3>
+        <p class="small" style="margin-bottom: 16px; color: var(--text-secondary, #6b7280);">
+          Password must be at least 8 characters and contain uppercase, lowercase letters, and numbers.
+        </p>
+        <form id="pwForm">
+          <div class="form-group">
+            <label>Current Password</label>
+            <input type="password" name="current_password" required placeholder="Enter current password">
+          </div>
+          <div class="form-group">
+            <label>New Password</label>
+            <input type="password" name="password" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}" placeholder="Min 8: upper, lower & number">
+          </div>
+          <div class="form-group">
+            <label>Confirm New Password</label>
+            <input type="password" name="password_confirm" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}" placeholder="Re-type new password">
+          </div>
+          <button class="btn-primary" type="submit">
+            <span>🔒</span> Change Password
+          </button>
+        </form>
+      </div>
+
+      <!-- Activity Summary -->
+      <div class="card" id="profileStats">
+        <h3>📊 Activity Statistics</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="statSales">0</div>
+            <div class="stat-label">Total Sales</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statTours">0</div>
+            <div class="stat-label">Total Tours</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statDocs">0</div>
+            <div class="stat-label">Total Documents</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="statTargets">0</div>
+            <div class="stat-label">Total Targets</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Email Notification Testing (Admin Only) -->
+      <div class="card" id="emailTestingPanel" style="display: none;">
+        <h3>📧 Email Notification System</h3>
+        
+        <div id="emailConfigStatus" style="padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 12px;">
+          <span id="emailStatusIcon" style="font-size: 24px;"></span>
+          <div>
+            <strong id="emailStatusTitle">Checking configuration...</strong>
+            <p id="emailStatusMessage" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem;"></p>
+          </div>
+        </div>
+
+        <div class="email-panel-grid">
+          <!-- Test Email Card -->
+          <div class="email-card email-card-test">
+            <h4><span>✉️</span> Test Email</h4>
+            <p>Send a test email to verify SMTP configuration</p>
+            <div style="margin-bottom: 12px;">
+              <input 
+                type="email" 
+                id="testEmailInput" 
+                placeholder="recipient@example.com"
+                style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 0.95rem;"
+              />
+            </div>
+            <button id="sendTestEmailBtn" class="btn-primary" style="width: 100%;">
+              Send Test Email
+            </button>
+          </div>
+
+          <!-- Manual Trigger Card -->
+          <div class="email-card email-card-trigger">
+            <h4><span>⚡</span> Trigger Reminders</h4>
+            <p>Manually check and send departure reminders now</p>
+            <button id="triggerRemindersBtn" class="btn-primary" style="width: 100%; background: #f59e0b;">
+              Trigger Now
+            </button>
+            <p style="margin-top: 12px; font-size: 0.85rem; color: #78350f;">
+              <strong>Note:</strong> Automated schedule runs daily at 9:00 AM
+            </p>
+          </div>
+
+          <!-- Reminder Stats Card -->
+          <div class="email-card email-card-stats">
+            <h4><span>📊</span> Statistics</h4>
+            <p>View sent reminder statistics</p>
+            <button id="viewStatsBtn" class="btn-primary" style="width: 100%; background: #10b981;">
+              View Stats
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Display -->
+        <div id="emailTestResults" style="display: none;"></div>
+
+        <!-- Stats Table -->
+        <div id="emailStatsTable" style="display: none;">
+          <h4>Recent Reminder Activity</h4>
+          <div style="overflow-x: auto;">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Days Before</th>
+                  <th>Count</th>
+                  <th>Date Sent</th>
+                </tr>
+              </thead>
+              <tbody id="statsTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Scripts -->
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/sidebar-groups.js"></script>
+
+<script>
+// Profile page logic
+(function() {
+  'use strict';
+  
+  // Utility functions
+  function el(id) { return document.getElementById(id); }
+  
+  function getToken() {
+    return localStorage.getItem('token');
+  }
+  
+  function getUser() {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch (e) {
+      return {};
+    }
+  }
+  
+  async function fetchJson(url, options = {}) {
+    const token = getToken();
+    const headers = { 
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+    
+    const res = await fetch(url, {
+      ...options,
+      headers: { ...headers, ...options.headers },
+      body: options.body ? JSON.stringify(options.body) : undefined
+    });
+    
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ error: res.statusText }));
+      throw new Error(error.error || res.statusText);
+    }
+    
+    return res.json();
+  }
+  
+  function showLoading(msg = 'Loading...') {
+    const overlay = el('loadingOverlay');
+    if (overlay) {
+      const textEl = overlay.querySelector('.loading-text');
+      if (textEl) textEl.textContent = msg;
+      overlay.classList.add('active');
+    }
+  }
+  
+  function hideLoading() {
+    const overlay = el('loadingOverlay');
+    if (overlay) overlay.classList.remove('active');
+  }
+  
+  // Initialize profile
+  function initProfile() {
+    const user = getUser();
+    
+    if (!user.username) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    // Get initials
+    const initials = user.name 
+      ? user.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+      : user.username ? user.username[0].toUpperCase() : '?';
+    
+    // Update profile header
+    if (el('profileInitials')) el('profileInitials').textContent = initials;
+    if (el('profileName')) el('profileName').textContent = user.name || user.username || 'User';
+    if (el('profileRole')) {
+      const roleText = user.type === 'admin' ? 'Administrator' : 
+                       user.type === 'semi-admin' ? 'Semi Admin' : 'Basic User';
+      el('profileRole').textContent = roleText;
+      el('profileRole').style.background = 
+        user.type === 'admin' ? '#dbeafe' : 
+        user.type === 'semi-admin' ? '#fef3c7' : '#e0e7ff';
+      el('profileRole').style.color = 
+        user.type === 'admin' ? '#1e40af' : 
+        user.type === 'semi-admin' ? '#92400e' : '#4338ca';
+    }
+    if (el('profileUsername')) el('profileUsername').textContent = '@' + (user.username || 'unknown');
+    
+    // Update profile details
+    if (el('detailUsername')) el('detailUsername').textContent = user.username || '-';
+    if (el('detailName')) el('detailName').textContent = user.name || '-';
+    if (el('detailEmail')) el('detailEmail').textContent = user.email || '-';
+    if (el('detailType')) {
+      const typeText = user.type === 'admin' ? 'Administrator' : 
+                       user.type === 'semi-admin' ? 'Semi Admin' : 'Basic User';
+      el('detailType').textContent = typeText;
+    }
+    
+    // Update sidebar user box
+    if (el('userName')) el('userName').textContent = user.name || user.username || '—';
+    if (el('userRole')) {
+      el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+    }
+    
+    // Show admin link if admin
+    if (user.type === 'admin' || user.type === 'semi-admin') {
+      const adminLink = el('adminSettingsLink');
+      if (adminLink) adminLink.style.display = 'block';
+    }
+    
+    // Load statistics
+    loadProfileStats();
+    
+    // Show email testing panel for admins
+    if (user.type === 'admin') {
+      const emailPanel = el('emailTestingPanel');
+      if (emailPanel) {
+        emailPanel.style.display = 'block';
+        initEmailTesting();
+      }
+    }
+  }
+  
+  async function loadProfileStats() {
+    const user = getUser();
+    const statsCard = el('profileStats');
+    
+    if (!statsCard) return;
+    
+    try {
+      showLoading('Loading statistics...');
+      
+      // Get user's data
+      const sales = await fetchJson('/api/sales');
+      const tours = await fetchJson('/api/tours');
+      const documents = await fetchJson('/api/documents');
+      const targets = await fetchJson('/api/targets');
+      
+      // Filter by user if not admin
+      const userSales = user.type === 'admin' ? sales : sales.filter(s => s.staff_name === user.name);
+      const userTours = user.type === 'admin' ? tours : tours.filter(t => t.staff_name === user.name);
+      const userDocs = user.type === 'admin' ? documents : documents.filter(d => d.staff_name === user.name);
+      const userTargets = user.type === 'admin' ? targets : targets.filter(t => t.staff_name === user.name);
+      
+      // Update stats
+      if (el('statSales')) el('statSales').textContent = userSales.length;
+      if (el('statTours')) el('statTours').textContent = userTours.length;
+      if (el('statDocs')) el('statDocs').textContent = userDocs.length;
+      if (el('statTargets')) el('statTargets').textContent = userTargets.length;
+      
+      hideLoading();
+    } catch (err) {
+      console.error('Error loading profile stats:', err);
+      hideLoading();
+    }
+  }
+  
+  // Password change handler
+  function initPasswordForm() {
+    const pwForm = el('pwForm');
+    if (!pwForm) return;
+    
+    pwForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const currentPassword = formData.get('current_password');
+      const password = formData.get('password');
+      const passwordConfirm = formData.get('password_confirm');
+      
+      // Validate password length
+      if (password.length < 8) {
+        if (window.toast) {
+          toast.error('Password must be at least 8 characters');
+        } else {
+          alert('Password must be at least 8 characters');
+        }
+        return;
+      }
+      
+      // Validate password match
+      if (password !== passwordConfirm) {
+        if (window.toast) {
+          toast.error('Passwords do not match');
+        } else {
+          alert('Passwords do not match');
+        }
+        return;
+      }
+      
+      // Validate password pattern
+      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      if (!passwordPattern.test(password)) {
+        if (window.toast) {
+          toast.error('Password must contain uppercase, lowercase letters, and numbers');
+        } else {
+          alert('Password must contain uppercase, lowercase letters, and numbers');
+        }
+        return;
+      }
+      
+      try {
+        showLoading('Changing password...');
+        
+        const user = getUser();
+        await fetchJson('/api/users/reset-password', {
+          method: 'POST',
+          body: { 
+            username: user.username, 
+            password,
+            currentPassword 
+          }
+        });
+        
+        hideLoading();
+        
+        if (window.toast) {
+          toast.success('Password changed successfully');
+        } else {
+          alert('Password changed successfully');
+        }
+        e.target.reset();
+      } catch (err) {
+        hideLoading();
+        if (window.toast) {
+          toast.error('Failed to change password: ' + err.message);
+        } else {
+          alert('Failed to change password: ' + err.message);
+        }
+      }
+    });
+  }
+  
+  // Email testing (admin only)
+  function initEmailTesting() {
+    // Check email configuration status
+    checkEmailConfig();
+    
+    // Test email button
+    const sendTestBtn = el('sendTestEmailBtn');
+    if (sendTestBtn) {
+      sendTestBtn.addEventListener('click', sendTestEmail);
+    }
+    
+    // Trigger reminders button
+    const triggerBtn = el('triggerRemindersBtn');
+    if (triggerBtn) {
+      triggerBtn.addEventListener('click', triggerReminders);
+    }
+    
+    // View stats button
+    const statsBtn = el('viewStatsBtn');
+    if (statsBtn) {
+      statsBtn.addEventListener('click', viewStats);
+    }
+  }
+  
+  async function checkEmailConfig() {
+    const statusDiv = el('emailConfigStatus');
+    const statusIcon = el('emailStatusIcon');
+    const statusTitle = el('emailStatusTitle');
+    const statusMsg = el('emailStatusMessage');
+    
+    if (!statusDiv) return;
+    
+    try {
+      const response = await fetchJson('/api/email/status');
+      
+      if (response.configured) {
+        statusDiv.style.background = '#ecfdf5';
+        statusDiv.style.border = '1px solid #10b981';
+        statusIcon.textContent = '✅';
+        statusTitle.textContent = 'Email Configured';
+        statusMsg.textContent = 'SMTP is properly configured and ready to send emails.';
+      } else {
+        statusDiv.style.background = '#fef2f2';
+        statusDiv.style.border = '1px solid #ef4444';
+        statusIcon.textContent = '❌';
+        statusTitle.textContent = 'Email Not Configured';
+        statusMsg.textContent = 'Set SMTP_USER and SMTP_PASSWORD environment variables.';
+      }
+    } catch (err) {
+      statusDiv.style.background = '#fef3c7';
+      statusDiv.style.border = '1px solid #f59e0b';
+      statusIcon.textContent = '⚠️';
+      statusTitle.textContent = 'Unable to check status';
+      statusMsg.textContent = err.message;
+    }
+  }
+  
+  async function sendTestEmail() {
+    const emailInput = el('testEmailInput');
+    const resultsDiv = el('emailTestResults');
+    
+    if (!emailInput || !emailInput.value) {
+      if (window.toast) {
+        toast.error('Please enter an email address');
+      }
+      return;
+    }
+    
+    try {
+      showLoading('Sending test email...');
+      
+      const response = await fetchJson('/api/email/test', {
+        method: 'POST',
+        body: { email: emailInput.value }
+      });
+      
+      hideLoading();
+      
+      if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+          <div style="padding: 16px; background: #ecfdf5; border-radius: 8px; border: 1px solid #10b981;">
+            <strong style="color: #065f46;">✅ Test email sent successfully!</strong>
+            <p style="margin: 8px 0 0 0; color: #047857; font-size: 0.9rem;">
+              Check ${emailInput.value} for the test message.
+            </p>
+          </div>
+        `;
+      }
+      
+      if (window.toast) {
+        toast.success('Test email sent!');
+      }
+    } catch (err) {
+      hideLoading();
+      
+      if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+          <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #ef4444;">
+            <strong style="color: #991b1b;">❌ Failed to send test email</strong>
+            <p style="margin: 8px 0 0 0; color: #b91c1c; font-size: 0.9rem;">
+              ${err.message}
+            </p>
+          </div>
+        `;
+      }
+      
+      if (window.toast) {
+        toast.error('Failed to send: ' + err.message);
+      }
+    }
+  }
+  
+  async function triggerReminders() {
+    const resultsDiv = el('emailTestResults');
+    
+    try {
+      showLoading('Triggering reminders...');
+      
+      const response = await fetchJson('/api/email/trigger-reminders', {
+        method: 'POST'
+      });
+      
+      hideLoading();
+      
+      if (resultsDiv) {
+        resultsDiv.style.display = 'block';
+        resultsDiv.innerHTML = `
+          <div style="padding: 16px; background: #fef3c7; border-radius: 8px; border: 1px solid #f59e0b;">
+            <strong style="color: #92400e;">⚡ Reminders triggered</strong>
+            <p style="margin: 8px 0 0 0; color: #78350f; font-size: 0.9rem;">
+              ${response.message || 'Check logs for details.'}
+            </p>
+          </div>
+        `;
+      }
+      
+      if (window.toast) {
+        toast.success('Reminders triggered!');
+      }
+    } catch (err) {
+      hideLoading();
+      
+      if (window.toast) {
+        toast.error('Failed: ' + err.message);
+      }
+    }
+  }
+  
+  async function viewStats() {
+    const statsTableDiv = el('emailStatsTable');
+    const statsBody = el('statsTableBody');
+    
+    if (!statsTableDiv || !statsBody) return;
+    
+    try {
+      showLoading('Loading stats...');
+      
+      const response = await fetchJson('/api/email/reminder-stats');
+      
+      hideLoading();
+      
+      statsTableDiv.style.display = 'block';
+      
+      if (response.stats && response.stats.length > 0) {
+        statsBody.innerHTML = response.stats.map(stat => `
+          <tr>
+            <td>${stat.days_before} days</td>
+            <td>${stat.count}</td>
+            <td>${new Date(stat.sent_at).toLocaleDateString()}</td>
+          </tr>
+        `).join('');
+      } else {
+        statsBody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #6b7280;">No reminder stats available</td></tr>';
+      }
+    } catch (err) {
+      hideLoading();
+      
+      if (window.toast) {
+        toast.error('Failed to load stats: ' + err.message);
+      }
+    }
+  }
+  
+  // Initialize on DOM ready
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check authentication
+    const token = getToken();
+    if (!token) {
+      window.location.href = '/login.html';
+      return;
+    }
+    
+    initProfile();
+    initPasswordForm();
+  });
+})();
+</script>
+
+<!-- Service Worker Registration -->
+<script src="/js/sw-register.js"></script>
+</body>
+</html>

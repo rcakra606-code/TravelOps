@@ -38,7 +38,8 @@ let comparisonState = {
   period: 'month',
   year: new Date().getFullYear(),
   staff: 'all',
-  product: 'all'
+  product: 'all',
+  compareMonth: new Date().getMonth() + 1 // For month-yoy comparison
 };
 
 /* === DISPLAY USER INFO === */
@@ -2115,6 +2116,8 @@ function getPeriodLabel(period, value, year) {
   switch (period) {
     case 'month':
       return `${getMonthName(value)} ${year}`;
+    case 'month-yoy':
+      return `${getMonthName(value)} ${year}`;
     case 'quarter':
       return `Q${value} ${year}`;
     case 'semester':
@@ -2133,6 +2136,8 @@ function getCurrentPeriodValue(period) {
   switch (period) {
     case 'month':
       return currentMonth;
+    case 'month-yoy':
+      return comparisonState.compareMonth;
     case 'quarter':
       return getQuarter(currentMonth);
     case 'semester':
@@ -2151,6 +2156,9 @@ function getPreviousPeriod(period, value, year) {
         return { value: 12, year: year - 1 };
       }
       return { value: value - 1, year };
+    case 'month-yoy':
+      // For month vs month YoY, previous is same month last year
+      return { value: value, year: year - 1 };
     case 'quarter':
       if (value === 1) {
         return { value: 4, year: year - 1 };
@@ -2172,6 +2180,8 @@ function getMonthsForPeriod(period, value) {
   switch (period) {
     case 'month':
       return [value];
+    case 'month-yoy':
+      return [value];
     case 'quarter':
       return getQuarterMonths(value);
     case 'semester':
@@ -2187,11 +2197,19 @@ function getMonthsForPeriod(period, value) {
 function initComparisonControls() {
   // Period selector buttons
   const periodBtns = document.querySelectorAll('.period-btn');
+  const monthSelect = el('comparisonMonth');
+  
   periodBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       periodBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       comparisonState.period = btn.dataset.period;
+      
+      // Show/hide month selector for month-yoy comparison
+      if (monthSelect) {
+        monthSelect.style.display = btn.dataset.period === 'month-yoy' ? 'block' : 'none';
+      }
+      
       renderComparison();
     });
   });
@@ -2233,6 +2251,16 @@ function initComparisonControls() {
     });
     productSelect.addEventListener('change', (e) => {
       comparisonState.product = e.target.value;
+      renderComparison();
+    });
+  }
+  
+  // Month selector for month-yoy comparison
+  if (monthSelect) {
+    // Set default to current month
+    monthSelect.value = comparisonState.compareMonth;
+    monthSelect.addEventListener('change', (e) => {
+      comparisonState.compareMonth = parseInt(e.target.value);
       renderComparison();
     });
   }
@@ -2356,10 +2384,17 @@ function renderComparisonSummary(currentTotals, previousTotals, salesChange, pro
   const summaryGrid = el('summaryGrid');
   if (!summaryGrid) return;
   
+  // Create descriptive label for month-yoy
+  let periodLabel = getPeriodLabel(period, currentPeriodValue, year);
+  let comparedToLabel = 'vs Previous Period';
+  if (period === 'month-yoy') {
+    comparedToLabel = `vs ${getMonthName(currentPeriodValue)} ${prev.year}`;
+  }
+  
   summaryGrid.innerHTML = `
     <div class="summary-item">
       <div class="label">Period</div>
-      <div class="value">${getPeriodLabel(period, currentPeriodValue, year)}</div>
+      <div class="value">${periodLabel}</div>
     </div>
     <div class="summary-item">
       <div class="label">Total Sales</div>
@@ -2371,6 +2406,7 @@ function renderComparisonSummary(currentTotals, previousTotals, salesChange, pro
         <span class="change-indicator ${getChangeClass(salesChange)}">
           ${getChangeIcon(salesChange)} ${Math.abs(salesChange).toFixed(1)}%
         </span>
+        <div style="font-size: 10px; color: var(--text-secondary);">${comparedToLabel}</div>
       </div>
     </div>
     <div class="summary-item">
@@ -2383,6 +2419,7 @@ function renderComparisonSummary(currentTotals, previousTotals, salesChange, pro
         <span class="change-indicator ${getChangeClass(profitChange)}">
           ${getChangeIcon(profitChange)} ${Math.abs(profitChange).toFixed(1)}%
         </span>
+        <div style="font-size: 10px; color: var(--text-secondary);">${comparedToLabel}</div>
       </div>
     </div>
     <div class="summary-item">
@@ -2491,10 +2528,23 @@ function renderComparisonCharts(period, year, staff, product) {
   
   // Get data points based on period
   let periods = [];
+  let yearsToCompare = [];
+  
   switch (period) {
     case 'month':
       periods = Array.from({ length: 12 }, (_, i) => i + 1);
       labels.push(...periods.map(m => getMonthName(m)));
+      break;
+    case 'month-yoy':
+      // For month vs month YoY, show selected month across multiple years
+      const selectedMonth = comparisonState.compareMonth;
+      yearsToCompare = [];
+      for (let y = year; y >= year - 4; y--) {
+        yearsToCompare.push(y);
+      }
+      yearsToCompare.reverse(); // Oldest to newest
+      labels.push(...yearsToCompare.map(y => `${getMonthName(selectedMonth)} ${y}`));
+      periods = yearsToCompare.map(() => selectedMonth);
       break;
     case 'quarter':
       periods = [1, 2, 3, 4];
@@ -2512,7 +2562,92 @@ function renderComparisonCharts(period, year, staff, product) {
       break;
   }
   
-  // Current year data
+  // For month-yoy, use different chart structure
+  if (period === 'month-yoy') {
+    // Collect data for the same month across different years
+    yearsToCompare.forEach(y => {
+      const months = [comparisonState.compareMonth];
+      const data = getDataForPeriod(y, months, staff, product);
+      const totals = calculatePeriodTotals(data);
+      salesData.push(totals.totalSales);
+      profitData.push(totals.totalProfit);
+      marginData.push(totals.margin);
+    });
+    
+    // Sales Comparison Chart for month-yoy
+    const ctxComparison = el('chartComparison')?.getContext('2d');
+    if (ctxComparison) {
+      charts.comparison = new Chart(ctxComparison, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: `${getMonthName(comparisonState.compareMonth)} Sales by Year`,
+              data: salesData,
+              backgroundColor: yearsToCompare.map((y, i) => 
+                y === year ? 'rgba(59, 130, 246, 0.8)' : `rgba(156, 163, 175, ${0.3 + (i * 0.15)})`
+              ),
+              borderRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+      });
+    }
+    
+    // Margin Trend Chart for month-yoy
+    const ctxMargin = el('chartMarginTrend')?.getContext('2d');
+    if (ctxMargin) {
+      charts.marginTrend = new Chart(ctxMargin, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: `${getMonthName(comparisonState.compareMonth)} Margin by Year`,
+              data: marginData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointBackgroundColor: yearsToCompare.map(y => y === year ? '#10b981' : '#9ca3af'),
+              pointRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'top' }
+          },
+          scales: {
+            y: { 
+              beginAtZero: true,
+              max: 100,
+              title: {
+                display: true,
+                text: 'Margin %'
+              }
+            }
+          }
+        }
+      });
+    }
+    return; // Exit early for month-yoy
+  }
+  
+  // Current year data (for non month-yoy periods)
   periods.forEach(p => {
     const months = period === 'ytd' 
       ? [p] // For YTD, use individual months
@@ -2629,7 +2764,66 @@ function renderComparisonTable(period, year, staff, product) {
   const tbody = el('comparisonTableBody');
   if (!thead || !tbody) return;
   
-  // Build header
+  // Special handling for month-yoy
+  if (period === 'month-yoy') {
+    thead.innerHTML = `
+      <tr>
+        <th>Year</th>
+        <th class="text-right">Retail Sales</th>
+        <th class="text-right">Corp Sales</th>
+        <th class="text-right">Total Sales</th>
+        <th class="text-right">Total Profit</th>
+        <th class="text-right">Margin</th>
+        <th class="text-right">YoY Change</th>
+      </tr>
+    `;
+    
+    const selectedMonth = comparisonState.compareMonth;
+    const monthName = getMonthName(selectedMonth);
+    
+    // Get 5 years of data for the selected month
+    const yearsToShow = [];
+    for (let y = year; y >= year - 4; y--) {
+      yearsToShow.push(y);
+    }
+    
+    tbody.innerHTML = yearsToShow.map((y, idx) => {
+      const months = [selectedMonth];
+      const currentData = getDataForPeriod(y, months, staff, product);
+      const currentTotals = calculatePeriodTotals(currentData);
+      
+      // Calculate YoY change
+      let yoyChange = 0;
+      if (idx < yearsToShow.length - 1) {
+        const prevYearData = getDataForPeriod(y - 1, months, staff, product);
+        const prevYearTotals = calculatePeriodTotals(prevYearData);
+        yoyChange = calculateChange(currentTotals.totalSales, prevYearTotals.totalSales);
+      }
+      
+      return `
+        <tr${y === year ? ' style="background: rgba(59, 130, 246, 0.08);"' : ''}>
+          <td><strong>${monthName} ${y}</strong>${y === year ? ' <span style="color: #3b82f6; font-size: 11px;">(Current)</span>' : ''}</td>
+          <td class="text-right">${formatCurrency(currentTotals.retailSales)}</td>
+          <td class="text-right">${formatCurrency(currentTotals.corporateSales)}</td>
+          <td class="text-right"><strong>${formatCurrency(currentTotals.totalSales)}</strong></td>
+          <td class="text-right">${formatCurrency(currentTotals.totalProfit)}</td>
+          <td class="text-right">
+            <span class="profit-margin ${getMarginClass(currentTotals.margin, comparisonState.product !== 'all' ? comparisonState.product : null)}">${formatPercent(currentTotals.margin)}</span>
+          </td>
+          <td class="text-right">
+            ${idx < yearsToShow.length - 1 ? `
+              <span class="change-indicator ${getChangeClass(yoyChange)}">
+                ${getChangeIcon(yoyChange)} ${Math.abs(yoyChange).toFixed(1)}%
+              </span>
+            ` : '<span style="color: var(--text-secondary);">—</span>'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+    return;
+  }
+  
+  // Build header for other periods
   thead.innerHTML = `
     <tr>
       <th>Period</th>

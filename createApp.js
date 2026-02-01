@@ -13,7 +13,7 @@ import rateLimit from 'express-rate-limit';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { initDb } from './database.js';
 import { logger, requestLogger } from './logger.js';
-import { sendDepartureReminder, sendTestEmail } from './emailService.js';
+import { sendDepartureReminder, sendTestEmail, checkEmailConfigured } from './emailService.js';
 import { initScheduler, manualTrigger, getReminderStats } from './notificationScheduler.js';
 
 dotenv.config();
@@ -2470,6 +2470,21 @@ export async function createApp() {
   });
 
   // Email Notification Endpoints (Admin only)
+  
+  // Get email configuration status
+  app.get('/api/email/status', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    res.json({ 
+      configured: checkEmailConfigured(),
+      message: checkEmailConfigured() 
+        ? 'Email service is configured and ready' 
+        : 'Email service not configured - set SMTP_USER and SMTP_PASSWORD'
+    });
+  });
+  
   app.post('/api/email/test', authMiddleware(), async (req, res) => {
     if (req.user.type !== 'admin') {
       return res.status(403).json({ error: 'Admin access required' });
