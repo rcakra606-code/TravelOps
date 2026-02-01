@@ -72,7 +72,7 @@
   }
   .comparison-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
     gap: 24px;
     margin-bottom: 28px;
   }
@@ -96,7 +96,7 @@
   .comparison-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+    gap: 10px;
     margin-bottom: 14px;
   }
   .comparison-row:last-child {
@@ -104,10 +104,12 @@
   }
   .comparison-item {
     text-align: center;
-    padding: 14px;
+    padding: 12px 8px;
     background: var(--bg-alt, #f8fafc);
     border-radius: 12px;
     transition: all 0.3s ease;
+    min-width: 0;
+    overflow: hidden;
   }
   .comparison-item:hover {
     transform: translateY(-2px);
@@ -128,11 +130,14 @@
     letter-spacing: 0.5px;
     margin-bottom: 6px;
     font-weight: 600;
+    white-space: nowrap;
   }
   .comparison-item .value {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 800;
     color: var(--text-primary, #1e293b);
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
   .comparison-item .value.positive { color: #059669; }
   .comparison-item .value.negative { color: #dc2626; }
@@ -195,29 +200,32 @@
   }
   .summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 16px;
     position: relative;
   }
   .summary-grid .summary-item {
     text-align: center;
-    padding: 16px;
+    padding: 14px 10px;
     background: rgba(255,255,255,0.6);
     border-radius: 12px;
     backdrop-filter: blur(8px);
+    min-width: 0;
   }
   .summary-grid .summary-item .label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--primary-600, #2563eb);
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.3px;
     font-weight: 600;
     margin-bottom: 8px;
+    white-space: nowrap;
   }
   .summary-grid .summary-item .value {
-    font-size: 28px;
+    font-size: 22px;
     font-weight: 800;
     color: var(--primary-800, #1e40af);
+    word-break: break-word;
   }
   
   /* Comparison Charts */
