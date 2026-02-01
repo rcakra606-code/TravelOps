@@ -517,7 +517,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   
   // Load users for staff dropdown (skip for basic users)
-  const user = window.getUser();
+  // Note: 'user' is already declared at the top of the DOMContentLoaded listener
   if (user.type === 'basic') {
     usersData = [{ name: user.name || user.username }];
   } else {

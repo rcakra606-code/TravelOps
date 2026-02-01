@@ -263,7 +263,9 @@ export async function createApp() {
   }
   
   function clearSession(userId) {
+    const hadSession = activeSessions.has(userId);
     activeSessions.delete(userId);
+    return hadSession;
   }
   
   function validateSession(userId, sessionId) {

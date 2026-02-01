@@ -480,9 +480,12 @@
     <!-- Search and Filter -->
     <div class="search-bar">
       <input type="text" class="search-input" id="searchInput" placeholder="🔍 Search by tour code, passenger name, booking code...">
-      <select class="filter-select" id="filterStaff" style="display:none;">
-        <option value="">All Staff</option>
-      </select>
+      <div class="filter-group staff-filter-group" id="staffFilterGroup" style="display:none;">
+        <label style="font-size: 12px; color: var(--text-secondary); margin-right: 4px;">👤 User:</label>
+        <select class="filter-select" id="filterStaff">
+          <option value="">All Users</option>
+        </select>
+      </div>
       <select class="filter-select" id="filterYear">
         <option value="">All Years</option>
       </select>
@@ -604,9 +607,10 @@
       const adminLink = el('adminSettingsLink');
       if (adminLink) adminLink.style.display = 'block';
       
-      // Show staff filter and column for admin users
+      // Show staff/user filter and column for admin users
       isAdminView = true;
-      el('filterStaff').style.display = 'block';
+      const staffFilterGroup = el('staffFilterGroup');
+      if (staffFilterGroup) staffFilterGroup.style.display = 'flex';
       document.querySelectorAll('.staff-column').forEach(col => col.style.display = 'table-cell');
     }
     
@@ -629,10 +633,10 @@
       if (currentUser.type === 'admin' || currentUser.type === 'semi-admin') {
         allTours = allToursData;
         
-        // Populate staff filter dropdown
+        // Populate user filter dropdown
         const uniqueStaff = [...new Set(allToursData.map(t => t.staff_name).filter(Boolean))].sort();
         const staffSelect = el('filterStaff');
-        staffSelect.innerHTML = '<option value="">All Staff</option>' + 
+        staffSelect.innerHTML = '<option value="">All Users</option>' + 
           uniqueStaff.map(s => `<option value="${s}">${s}</option>`).join('');
       } else {
         // Filter to current user's tours only

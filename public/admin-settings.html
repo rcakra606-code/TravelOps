@@ -1406,10 +1406,11 @@
           console.warn('Could not load activity logs for last login times');
         }
         
-        // Enrich users with last_login from activity logs
+        // Enrich users with last_login from activity logs and computed locked status
         allUsersData = users.map(u => ({
           ...u,
-          last_login: loginTimes[u.username] || null
+          last_login: loginTimes[u.username] || null,
+          locked: u.locked_until && new Date(u.locked_until) > new Date()
         }));
         
         renderUsersTable();

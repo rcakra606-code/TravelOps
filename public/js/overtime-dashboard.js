@@ -527,6 +527,12 @@ sortUtils.addSortableHeaders('overtimeTable',
 await loadStaff();
 await loadOvertime();
 
+// Hide actions column header for basic users
+if (user.type === 'basic') {
+  const actionsHeader = el('actionsHeader');
+  if (actionsHeader) actionsHeader.style.display = 'none';
+}
+
 // Phase 2 & 3: Initialize Enhanced Features
 // 1. Make table sticky headers
 const table = document.querySelector('.table');

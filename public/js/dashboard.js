@@ -217,6 +217,7 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
     currentModalSubmitHandler = (e) => {
       e.preventDefault();
       e.stopPropagation();
+      e._handled = true; // Mark as handled to prevent static handler from also running
       
       const formData = new FormData(modalForm);
       const data = Object.fromEntries(formData.entries());
@@ -448,10 +449,20 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// Handle form submission
-if (modalForm) {
+// Handle form submission (fallback for modals not using CRUDModal)
+// NOTE: CRUDModal uses e.stopImmediatePropagation() so this won't run for CRUD modals
+// Store flag to prevent double execution
+let staticSubmitHandlerAttached = false;
+
+if (modalForm && !staticSubmitHandlerAttached) {
+  staticSubmitHandlerAttached = true;
   modalForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+    
+    // Skip if already handled by openModal's dynamic handler or CRUDModal
+    // Check if event was already stopped
+    if (e._handled) return;
+    e._handled = true;
     
     try {
       if (modal) modal.classList.add('loading');

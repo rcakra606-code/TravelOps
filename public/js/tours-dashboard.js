@@ -1057,8 +1057,10 @@ if (el('addTourBtn')) {
   });
 }
 
-if (el('searchTours')) {
-  el('searchTours').addEventListener('input', (e) => {
+// Search functionality - use searchInput from HTML (fallback to searchTours for backwards compatibility)
+const toursSearchInput = el('searchInput') || el('searchTours');
+if (toursSearchInput) {
+  toursSearchInput.addEventListener('input', (e) => {
     toursFilters.search = e.target.value;
     toursPagination.currentPage = 1; // Reset to first page on search
     renderToursTable();

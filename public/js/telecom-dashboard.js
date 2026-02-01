@@ -263,7 +263,11 @@ el('addTelecomBtn').addEventListener('click', () => {
   });
 });
 
-el('searchTelecom').addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+// Search functionality - use searchInput from HTML
+const searchTelecomInput = el('searchInput');
+if (searchTelecomInput) {
+  searchTelecomInput.addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+}
 
 // Quick View functionality
 document.addEventListener('click', (e) => {

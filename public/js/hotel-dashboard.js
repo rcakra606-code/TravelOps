@@ -242,7 +242,11 @@ el('addHotelBtn').addEventListener('click', () => {
   });
 });
 
-el('searchHotel').addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+// Search functionality - use searchInput from HTML
+const searchHotelInput = el('searchInput');
+if (searchHotelInput) {
+  searchHotelInput.addEventListener('input', (e) => { filters.search = e.target.value; applyFiltersAndRender(); });
+}
 
 // Quick View functionality
 document.addEventListener('click', (e) => {

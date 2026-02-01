@@ -862,8 +862,10 @@ if (el('addDocumentBtn')) {
   });
 }
 
-if (el('searchDocuments')) {
-  el('searchDocuments').addEventListener('input', (e) => {
+// Handle both searchDocuments and searchInput IDs
+const documentsSearchEl = el('searchDocuments') || el('searchInput');
+if (documentsSearchEl) {
+  documentsSearchEl.addEventListener('input', (e) => {
     documentsFilters.search = e.target.value;
     renderDocumentsTable();
   });

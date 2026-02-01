@@ -365,11 +365,14 @@ el('addTargetBtn').addEventListener('click', () => {
   });
 });
 
-// Search functionality
-el('searchTargets').addEventListener('input', (e) => {
-  filters.search = e.target.value;
-  applyFiltersAndRender();
-});
+// Search functionality - use searchInput from HTML
+const searchTargetsInput = el('searchInput');
+if (searchTargetsInput) {
+  searchTargetsInput.addEventListener('input', (e) => {
+    filters.search = e.target.value;
+    applyFiltersAndRender();
+  });
+}
 
 // Export functionality
 el('exportTargetsBtn').addEventListener('click', () => {

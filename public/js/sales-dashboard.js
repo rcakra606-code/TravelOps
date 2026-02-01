@@ -963,8 +963,9 @@ if (el('addSaleBtn')) {
   });
 }
 
-if (el('searchSales')) {
-  el('searchSales').addEventListener('input', (e) => {
+if (el('searchInput') || el('searchSales')) {
+  const searchEl = el('searchInput') || el('searchSales');
+  searchEl.addEventListener('input', (e) => {
     salesFilters.search = e.target.value;
     renderSalesTable();
   });
