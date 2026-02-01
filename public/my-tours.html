@@ -585,6 +585,7 @@
   let regions = [];
   let filteredTours = [];
   let currentUser = null;
+  let allStaffUsers = []; // All users for admin staff selection
   
   // Format currency
   function formatCurrency(amount) {
@@ -632,6 +633,14 @@
       // Admin/Semi-admin can see all tours, basic users see only their own
       if (currentUser.type === 'admin' || currentUser.type === 'semi-admin') {
         allTours = allToursData;
+        
+        // Load all users for staff selection in edit
+        try {
+          allStaffUsers = await fetchJson('/api/users') || [];
+        } catch (e) {
+          console.warn('Could not load users list');
+          allStaffUsers = [];
+        }
         
         // Populate user filter dropdown
         const uniqueStaff = [...new Set(allToursData.map(t => t.staff_name).filter(Boolean))].sort();
@@ -989,6 +998,14 @@
             <option value="tidak jalan" ${tour.status === 'tidak jalan' ? 'selected' : ''}>❌ Tidak Jalan</option>
           </select>
         </div>
+        ${isAdminView ? `
+        <div class="form-group">
+          <label>Staff / Sales</label>
+          <select name="staff_name" ${disabled}>
+            ${allStaffUsers.map(u => `<option value="${u.name || u.username}" ${(u.name || u.username) === tour.staff_name ? 'selected' : ''}>${u.name || u.username}</option>`).join('')}
+          </select>
+        </div>
+        ` : ''}
         <div class="form-group">
           <label>Lead Passenger *</label>
           <input type="text" name="lead_passenger" value="${tour.lead_passenger || ''}" required ${disabled}>
@@ -1070,8 +1087,10 @@
     const id = parseInt(data.id);
     delete data.id;
     
-    // Keep staff_name as current user
-    data.staff_name = currentUser.name || currentUser.username;
+    // For basic users, keep staff_name as current user; admins can select from dropdown
+    if (!isAdminView || !data.staff_name) {
+      data.staff_name = currentUser.name || currentUser.username;
+    }
     
     // Convert numeric fields - handle Indonesian currency format
     ['tour_price', 'sales_amount', 'discount_amount', 'total_nominal_sales', 'profit_amount'].forEach(field => {
