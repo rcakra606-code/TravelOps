@@ -1123,11 +1123,12 @@ function openResetUserModal(username) {
     bodyHtml: `
       <div class="form-group">
         <label>Password Baru *</label>
-        <input type="password" name="password" required minlength="6" placeholder="Minimal 6 karakter">
+        <input type="password" name="password" required minlength="8" placeholder="Min 8 karakter, huruf besar, kecil, angka, simbol">
+        <small class="form-hint">Minimal 8 karakter dengan huruf besar, huruf kecil, angka, dan karakter khusus (!@#$%^&*)</small>
       </div>
       <div class="form-group">
         <label>Konfirmasi Password *</label>
-        <input type="password" name="password_confirm" required minlength="6" placeholder="Ulangi password">
+        <input type="password" name="password_confirm" required minlength="8" placeholder="Ulangi password">
       </div>
     `,
     context: { entity: 'users', action: 'reset', username }
@@ -1654,15 +1655,28 @@ async function handleModalSubmit(formData, context) {
   try {
     // Handle reset password
     if (entity === 'users' && action === 'reset') {
-      if (!formData.password || formData.password.length < 6) {
-        throw new Error('Password minimal 6 karakter');
+      const password = formData.password;
+      if (!password || password.length < 8) {
+        throw new Error('Password minimal 8 karakter');
       }
-      if (formData.password !== formData.password_confirm) {
+      if (!/[A-Z]/.test(password)) {
+        throw new Error('Password harus mengandung huruf besar');
+      }
+      if (!/[a-z]/.test(password)) {
+        throw new Error('Password harus mengandung huruf kecil');
+      }
+      if (!/\d/.test(password)) {
+        throw new Error('Password harus mengandung angka');
+      }
+      if (!/[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'`~]/.test(password)) {
+        throw new Error('Password harus mengandung karakter khusus (!@#$%^&*)');
+      }
+      if (password !== formData.password_confirm) {
         throw new Error('Password konfirmasi tidak sama');
       }
       await fetchJson(`/api/users/${context.username}/reset`, {
         method: 'POST',
-        body: { password: formData.password }
+        body: { password: password }
       });
       toast.success('Password berhasil direset');
       return true;

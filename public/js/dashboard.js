@@ -1164,9 +1164,25 @@ if (el('pwForm')) {
     const password = formData.get('password');
     const passwordConfirm = formData.get('password_confirm');
     
-    // Validate password
-    if (password.length < 6) {
-      toast.error('Password minimal 6 karakter');
+    // Validate password - must match backend requirements
+    if (password.length < 8) {
+      toast.error('Password minimal 8 karakter');
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      toast.error('Password harus mengandung huruf besar');
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      toast.error('Password harus mengandung huruf kecil');
+      return;
+    }
+    if (!/\d/.test(password)) {
+      toast.error('Password harus mengandung angka');
+      return;
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'`~]/.test(password)) {
+      toast.error('Password harus mengandung karakter khusus (!@#$%^&*)');
       return;
     }
     

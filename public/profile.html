@@ -771,13 +771,13 @@
         return;
       }
       
-      // Validate password pattern
-      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+      // Validate password pattern - must match backend requirements
+      const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>\-_=+\[\]\\;'`~]).{8,}$/;
       if (!passwordPattern.test(password)) {
         if (window.toast) {
-          toast.error('Password must contain uppercase, lowercase letters, and numbers');
+          toast.error('Password must be at least 8 characters with uppercase, lowercase, number, and special character (!@#$%^&*)');
         } else {
-          alert('Password must contain uppercase, lowercase letters, and numbers');
+          alert('Password must be at least 8 characters with uppercase, lowercase, number, and special character (!@#$%^&*)');
         }
         return;
       }
