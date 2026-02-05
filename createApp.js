@@ -996,7 +996,6 @@ export async function createApp() {
         
         // Hash password if updating users table with a password field
         if (t === 'users' && req.body.password) {
-          const bcrypt = require('bcryptjs');
           const password = req.body.password;
           // Validate password strength
           const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
