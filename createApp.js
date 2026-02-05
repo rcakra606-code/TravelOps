@@ -993,6 +993,21 @@ export async function createApp() {
       try {
         if (t === 'targets') console.log('📊 Targets PUT request:', req.params.id, req.body);
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+        
+        // Hash password if updating users table with a password field
+        if (t === 'users' && req.body.password) {
+          const bcrypt = require('bcryptjs');
+          const password = req.body.password;
+          // Validate password strength
+          const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+          if (!passwordRegex.test(password)) {
+            return res.status(400).json({ 
+              error: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character' 
+            });
+          }
+          req.body.password = await bcrypt.hash(password, 10);
+          console.log('🔐 Password hashed for user update via generic PUT endpoint');
+        }
         // Overtime edit is admin-only
         if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
         if (req.user.type === 'basic') {
