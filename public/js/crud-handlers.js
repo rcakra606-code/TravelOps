@@ -2213,6 +2213,33 @@ async function init() {
       // Wire up search inputs for all entities
       wireSearchHandlers();
       
+      // Listen for modalSubmit events from openModal's dynamic handler
+      document.addEventListener('modalSubmit', async (e) => {
+        const { data, context } = e.detail;
+        console.log('📥 modalSubmit received in crud-handlers:', { data, context });
+        
+        // Handle the submit through handleModalSubmit
+        if (context && context.entity) {
+          e.preventDefault(); // Prevent default close behavior
+          try {
+            const result = await handleModalSubmit(data, context);
+            if (result !== false) {
+              // Close modal on success
+              if (window.closeModal) window.closeModal(true);
+              // Refresh table
+              await loadData(context.entity);
+              renderTable(context.entity);
+            }
+          } catch (err) {
+            console.error('Modal submit error:', err);
+            toast.error(err.message || 'Gagal menyimpan data');
+          } finally {
+            // Reset submission flag
+            isSubmitting = false;
+          }
+        }
+      });
+      
   } catch (err) {
     console.error('❌ Error initializing CRUD handlers:', err);
   }

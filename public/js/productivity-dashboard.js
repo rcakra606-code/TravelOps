@@ -587,6 +587,13 @@ async function loadData() {
         console.error('Error loading users:', err);
         usersData = [];
       }
+      
+      // Fallback: Extract unique staff names from productivity data if usersData is empty
+      if (usersData.length === 0 && productivityData.length > 0) {
+        const uniqueStaffNames = [...new Set(productivityData.map(d => d.staff_name).filter(Boolean))];
+        usersData = uniqueStaffNames.map(name => ({ name }));
+        console.log('📋 Staff list extracted from productivity data:', uniqueStaffNames);
+      }
     } else {
       // Basic users don't need the dropdown
       usersData = [];
