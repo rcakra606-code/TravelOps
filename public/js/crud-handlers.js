@@ -2106,6 +2106,40 @@ async function init() {
   // Globals are already available (dashboard.js loads first as a plain script)
   console.log('✅ Dashboard globals assumed ready');
   
+  // IMPORTANT: Attach modalSubmit listener FIRST, before any data loading
+  // This ensures password reset and other modal actions work even if data loading fails
+  document.addEventListener('modalSubmit', (e) => {
+    const { data, context } = e.detail;
+    console.log('📥 modalSubmit received in crud-handlers:', { data, context });
+    
+    // Handle the submit through handleModalSubmit
+    if (context && context.entity) {
+      // IMPORTANT: preventDefault must be called synchronously before any async work
+      e.preventDefault();
+      
+      // Now do the async work
+      (async () => {
+        try {
+          const result = await handleModalSubmit(data, context);
+          if (result !== false) {
+            // Close modal on success
+            if (window.closeModal) window.closeModal(true);
+            // Refresh table
+            await loadData(context.entity);
+            renderTable(context.entity);
+          }
+        } catch (err) {
+          console.error('Modal submit error:', err);
+          toast.error(err.message || 'Gagal menyimpan data');
+        } finally {
+          // Reset submission flag
+          isSubmitting = false;
+        }
+      })();
+    }
+  });
+  console.log('✅ modalSubmit event listener attached');
+  
   try {
     await Promise.all([
       loadRegions(),
@@ -2221,38 +2255,6 @@ async function init() {
       
       // Wire up search inputs for all entities
       wireSearchHandlers();
-      
-      // Listen for modalSubmit events from openModal's dynamic handler
-      document.addEventListener('modalSubmit', (e) => {
-        const { data, context } = e.detail;
-        console.log('📥 modalSubmit received in crud-handlers:', { data, context });
-        
-        // Handle the submit through handleModalSubmit
-        if (context && context.entity) {
-          // IMPORTANT: preventDefault must be called synchronously before any async work
-          e.preventDefault();
-          
-          // Now do the async work
-          (async () => {
-            try {
-              const result = await handleModalSubmit(data, context);
-              if (result !== false) {
-                // Close modal on success
-                if (window.closeModal) window.closeModal(true);
-                // Refresh table
-                await loadData(context.entity);
-                renderTable(context.entity);
-              }
-            } catch (err) {
-              console.error('Modal submit error:', err);
-              toast.error(err.message || 'Gagal menyimpan data');
-            } finally {
-              // Reset submission flag
-              isSubmitting = false;
-            }
-          })();
-        }
-      });
       
   } catch (err) {
     console.error('❌ Error initializing CRUD handlers:', err);
