@@ -453,6 +453,52 @@ export async function createApp() {
     next();
   }
 
+  // ===================================================================
+  // EMERGENCY ADMIN PASSWORD RESET (No auth required, uses secret key)
+  // Set EMERGENCY_RESET_KEY env var on your server to enable this
+  // Usage: POST /api/emergency-reset { key: "your-secret-key" }
+  // ===================================================================
+  app.post('/api/emergency-reset', async (req, res) => {
+    const emergencyKey = process.env.EMERGENCY_RESET_KEY;
+    if (!emergencyKey) {
+      return res.status(404).json({ error: 'Not found' });
+    }
+    
+    const { key } = req.body;
+    if (!key || key !== emergencyKey) {
+      logger.warn({ ip: req.ip }, 'Invalid emergency reset attempt');
+      return res.status(401).json({ error: 'Invalid key' });
+    }
+    
+    try {
+      const defaultPassword = process.env.ADMIN_PASSWORD || 'Admin1234!';
+      const hashed = await bcrypt.hash(defaultPassword, 10);
+      
+      // Reset all admin passwords to default
+      const result = await db.run(
+        "UPDATE users SET password=?, failed_attempts=0, locked_until=NULL WHERE type='admin'",
+        [hashed]
+      );
+      
+      // If no admins exist, create one
+      if (result.changes === 0) {
+        const username = process.env.ADMIN_USERNAME || 'admin';
+        await db.run(
+          'INSERT INTO users (username, password, name, email, type) VALUES (?, ?, ?, ?, ?)',
+          [username, hashed, 'Administrator', 'admin@example.com', 'admin']
+        );
+        logger.info({ username }, 'Emergency reset: Created admin user');
+        return res.json({ ok: true, message: `Created admin user: ${username}`, password: defaultPassword });
+      }
+      
+      logger.info({ changes: result.changes }, 'Emergency reset: Reset admin passwords');
+      res.json({ ok: true, message: `Reset ${result.changes} admin account(s)`, password: defaultPassword });
+    } catch (err) {
+      logger.error({ err }, 'Emergency reset failed');
+      res.status(500).json({ error: 'Reset failed' });
+    }
+  });
+
   app.post('/api/login', async (req,res) => {
     try {
       if (!app.locals.loginLimiter) {
@@ -1766,9 +1812,34 @@ export async function createApp() {
   });
 
   app.post('/api/users/reset-password', authMiddleware(), async (req,res)=>{
-    const { username, password } = req.body; if (req.user.username !== username && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, username]); res.json({ ok:true });
+    const { username, password } = req.body; 
+    if (req.user.username !== username && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); 
+    if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); 
+    
+    // Check if user exists
+    const user = await db.get('SELECT id FROM users WHERE username=?', [username]);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    
+    const hashed = await bcrypt.hash(password,10); 
+    const result = await db.run('UPDATE users SET password=? WHERE username=?',[hashed, username]); 
+    logger.info({ username, changes: result.changes }, 'Password reset via reset-password endpoint');
+    res.json({ ok:true, updated: result.changes });
   });
-  app.post('/api/users/:username/reset', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const { password } = req.body; if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); const hashed = await bcrypt.hash(password,10); await db.run('UPDATE users SET password=? WHERE username=?',[hashed, req.params.username]); res.json({ ok:true }); });
+  
+  app.post('/api/users/:username/reset', authMiddleware(), async (req,res)=>{ 
+    if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); 
+    const { password } = req.body; 
+    if (!isStrongPassword(password)) return res.status(400).json({ error:'Password must be at least 8 characters with uppercase, lowercase, number, and special character' }); 
+    
+    // Check if user exists
+    const targetUser = await db.get('SELECT id FROM users WHERE username=?', [req.params.username]);
+    if (!targetUser) return res.status(404).json({ error: 'User not found' });
+    
+    const hashed = await bcrypt.hash(password,10); 
+    const result = await db.run('UPDATE users SET password=? WHERE username=?',[hashed, req.params.username]); 
+    logger.info({ username: req.params.username, changes: result.changes, adminUser: req.user.username }, 'Password reset via admin endpoint');
+    res.json({ ok:true, updated: result.changes }); 
+  });
 
   // ===================================================================
   // ACTIVE SESSIONS MANAGEMENT (Admin only)

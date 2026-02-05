@@ -487,7 +487,7 @@
         <div class="input-group">
           <label for="username">Username</label>
           <div class="input-wrapper">
-            <input type="text" id="username" placeholder="Enter your username" required autofocus />
+            <input type="text" id="username" placeholder="Enter your username" required autofocus autocomplete="username" />
             <span class="input-icon">👤</span>
           </div>
         </div>
@@ -495,7 +495,7 @@
         <div class="input-group">
           <label for="password">Password</label>
           <div class="input-wrapper">
-            <input type="password" id="password" placeholder="Enter your password" required />
+            <input type="password" id="password" placeholder="Enter your password" required autocomplete="current-password" />
             <span class="input-icon">🔒</span>
             <button type="button" class="password-toggle" onclick="togglePassword()" aria-label="Toggle password visibility">
               <span id="toggleIcon">👁️</span>

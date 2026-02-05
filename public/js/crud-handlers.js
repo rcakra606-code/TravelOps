@@ -1674,11 +1674,20 @@ async function handleModalSubmit(formData, context) {
       if (password !== formData.password_confirm) {
         throw new Error('Password konfirmasi tidak sama');
       }
-      await fetchJson(`/api/users/${context.username}/reset`, {
+      
+      console.log('🔐 Calling password reset API for:', context.username);
+      const result = await fetchJson(`/api/users/${context.username}/reset`, {
         method: 'POST',
         body: { password: password }
       });
-      toast.success('Password berhasil direset');
+      console.log('🔐 Password reset API response:', result);
+      
+      if (result && result.updated > 0) {
+        toast.success('Password berhasil direset');
+      } else {
+        console.warn('⚠️ Password reset returned but no rows updated:', result);
+        toast.warning('Password mungkin tidak terupdate, silakan coba lagi');
+      }
       return true;
     }
 
