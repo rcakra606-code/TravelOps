@@ -2434,7 +2434,7 @@ function runCustomMonthComparison() {
   }
   
   el('customComparisonResults').style.display = 'block';
-  toast.success(`Comparing ${period1Label} vs ${period2Label}`);
+  window.toast?.success(`Comparing ${period1Label} vs ${period2Label}`);
 }
 
 /* === INITIALIZE COMPARISON TAB === */

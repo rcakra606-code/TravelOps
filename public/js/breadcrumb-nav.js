@@ -1,33 +1,15 @@
 /**
  * Breadcrumb Navigation Component
- * Automatically generates breadcrumbs based on page navigation
+ * DISABLED - Causing layout issues with existing UI
+ * This file intentionally does nothing to prevent conflicts
  */
 
 (function() {
   'use strict';
-
-  // Page hierarchy configuration
-  const pageHierarchy = {
-    'single-dashboard.html': { title: 'Dashboard', icon: '🏠', parent: null },
-    'sales-dashboard.html': { title: 'Sales', icon: '💰', parent: 'single-dashboard.html' },
-    'tours-dashboard.html': { title: 'Tours', icon: '✈️', parent: 'single-dashboard.html' },
-    'my-tours.html': { title: 'My Tours', icon: '📋', parent: 'tours-dashboard.html' },
-    'documents-dashboard.html': { title: 'Documents', icon: '📄', parent: 'single-dashboard.html' },
-    'reports-dashboard.html': { title: 'Reports', icon: '📊', parent: 'single-dashboard.html' },
-    'productivity-dashboard.html': { title: 'Productivity', icon: '📈', parent: 'single-dashboard.html' },
-    'targets-dashboard.html': { title: 'Targets', icon: '🎯', parent: 'single-dashboard.html' },
-    'tracking-dashboard.html': { title: 'Tracking', icon: '🔍', parent: 'single-dashboard.html' },
-    'telecom-dashboard.html': { title: 'Telecom', icon: '📞', parent: 'single-dashboard.html' },
-    'hotel-dashboard.html': { title: 'Hotels', icon: '🏨', parent: 'single-dashboard.html' },
-    'cruise-dashboard.html': { title: 'Cruise', icon: '🚢', parent: 'single-dashboard.html' },
-    'corporate-dashboard.html': { title: 'Corporate', icon: '🏢', parent: 'single-dashboard.html' },
-    'cashout-dashboard.html': { title: 'Cashout', icon: '💵', parent: 'single-dashboard.html' },
-    'overtime-dashboard.html': { title: 'Overtime', icon: '⏰', parent: 'single-dashboard.html' },
-    'outstanding-dashboard.html': { title: 'Outstanding', icon: '⚠️', parent: 'single-dashboard.html' },
-    'ticket-recap-dashboard.html': { title: 'Ticket Recap', icon: '🎫', parent: 'single-dashboard.html' },
-    'profile.html': { title: 'Profile', icon: '👤', parent: 'single-dashboard.html' },
-    'admin-settings.html': { title: 'Settings', icon: '⚙️', parent: 'single-dashboard.html' }
-  };
+  // Breadcrumb navigation disabled to avoid layout conflicts
+  // The sidebar already provides clear navigation
+  console.debug('[breadcrumb-nav] Disabled - using sidebar navigation');
+})();
 
   class BreadcrumbNav {
     constructor() {
