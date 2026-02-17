@@ -195,14 +195,12 @@ function resetDocumentsFilters() {
 }
 
 function applyDocumentsFilters(formData) {
-  console.log('Applying filters with data:', formData);
   filterState.staff = formData.staff || 'all';
   filterState.processType = formData.processType || 'all';
   filterState.period = formData.period || 'all';
   filterState.month = formData.month || '';
   filterState.year = formData.year || '';
   
-  console.log('Updated filterState:', filterState);
   if (window.closeModal) window.closeModal();
   renderDashboard();
 }
@@ -253,21 +251,16 @@ async function renderDashboard() {
     if (year) params.year = year;
     if (staff) params.staff = staff;
     
-    console.log('Rendering documents dashboard with params:', params);
     const q = new URLSearchParams(params).toString();
-    console.log('Query string:', q);
     
     // Fetch documents data
     let docsData = await window.fetchJson('/api/documents' + (q ? '?' + q : ''));
-    
-    console.log('Received docsData count (before processType filter):', docsData?.length || 0);
     
     if (!docsData) return;
     
     // Apply process type filter on client side
     if (filterState.processType !== 'all') {
       docsData = docsData.filter(d => d.process_type === filterState.processType);
-      console.log('Filtered docsData count (after processType filter):', docsData.length);
     }
     
     // Destroy existing charts properly and clear canvas references

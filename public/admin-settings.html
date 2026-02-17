@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Settings | TravelOps</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/dark-mode.css">
   <link rel="stylesheet" href="/css/app-v2.css">
@@ -24,6 +27,9 @@
   <link rel="stylesheet" href="/css/ui-enhancements.css">
   <link rel="stylesheet" href="/css/sidebar-groups.css">
 <link rel="stylesheet" href="/css/dashboard-shared.css">
+  <link rel="stylesheet" href="/css/accessibility.css">
+<link rel="stylesheet" href="/css/professional-polish.css">
+<link rel="stylesheet" href="/css/micro-interactions.css">
   <script src="/js/theme-toggle.js"></script>
   <style>
     .settings-tabs {
@@ -1148,31 +1154,9 @@
 
           <h3>Available Backups</h3>
           <div class="backup-list" id="backupList">
-            <div class="backup-item">
-              <div class="backup-info">
-                <span class="backup-icon">📦</span>
-                <div>
-                  <div class="backup-name">backup_2024-01-15_auto.json</div>
-                  <div class="backup-date">Jan 15, 2024 at 3:00 AM • 2.4 MB</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="btn-download">Download</button>
-                <button class="btn-delete-backup">Delete</button>
-              </div>
-            </div>
-            <div class="backup-item">
-              <div class="backup-info">
-                <span class="backup-icon">📦</span>
-                <div>
-                  <div class="backup-name">backup_2024-01-14_auto.json</div>
-                  <div class="backup-date">Jan 14, 2024 at 3:00 AM • 2.3 MB</div>
-                </div>
-              </div>
-              <div class="backup-actions">
-                <button class="btn-download">Download</button>
-                <button class="btn-delete-backup">Delete</button>
-              </div>
+            <div style="text-align:center;padding:40px;color:var(--text-secondary);">
+              <div style="font-size:48px;margin-bottom:12px;">📦</div>
+              <div>Click on this tab to load backups</div>
             </div>
           </div>
         </div>
@@ -1182,7 +1166,7 @@
           <div class="dropzone" id="restoreDropzone">
             <div class="dropzone-icon">📤</div>
             <div class="dropzone-text">Drop backup file here or click to browse</div>
-            <input type="file" id="restoreFile" accept=".json" style="display:none">
+            <input type="file" id="restoreFile" accept=".json,.db" style="display:none">
           </div>
         </div>
       </div>
@@ -1409,6 +1393,8 @@
   </main>
 </div><!-- End app -->
 
+  <script src="/js/security-utils.js"></script>
+  <script src="/js/ui-extras.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/mobile-menu.js"></script>
   <script src="/js/auth-common.js?v=20251215"></script>
@@ -1461,6 +1447,7 @@
         if (tab.dataset.tab === 'system') loadSystemStats();
         if (tab.dataset.tab === 'users') loadUsers();
         if (tab.dataset.tab === 'regions') loadRegions();
+        if (tab.dataset.tab === 'backup') loadBackups();
       });
     });
     
@@ -2239,6 +2226,7 @@
         const response = await fetchJson('/api/backup', { method: 'POST' });
         if (response.ok) {
           toast.success('Server backup created: ' + (response.file || 'backup.db'));
+          loadBackups(); // Refresh the backup list
         } else {
           throw new Error(response.error);
         }
@@ -2275,6 +2263,95 @@
         } catch (exportErr) {
           toast.error('Backup failed: ' + exportErr.message);
         }
+      }
+    }
+
+    // Load and display available backups
+    async function loadBackups() {
+      const backupList = document.getElementById('backupList');
+      if (!backupList) return;
+      
+      backupList.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-secondary);">Loading backups...</div>';
+      
+      try {
+        const response = await fetchJson('/api/backups');
+        const backups = response.backups || [];
+        
+        if (backups.length === 0) {
+          backupList.innerHTML = `
+            <div style="text-align:center;padding:40px;color:var(--text-secondary);">
+              <div style="font-size:48px;margin-bottom:12px;">📦</div>
+              <div>No backups found</div>
+              <div style="font-size:13px;margin-top:8px;">Click "Create Backup Now" to create your first backup</div>
+            </div>
+          `;
+          return;
+        }
+        
+        backupList.innerHTML = backups.map(backup => `
+          <div class="backup-item">
+            <div class="backup-info">
+              <span class="backup-icon">${backup.filename.endsWith('.json') ? '📄' : '💾'}</span>
+              <div>
+                <div class="backup-name">${backup.filename}</div>
+                <div class="backup-date">${backup.createdFormatted} • ${backup.sizeFormatted}</div>
+              </div>
+            </div>
+            <div class="backup-actions">
+              <button class="btn-download" onclick="downloadBackup('${backup.filename}')">⬇️ Download</button>
+              <button class="btn-delete-backup" onclick="deleteBackup('${backup.filename}')">🗑️ Delete</button>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        backupList.innerHTML = `
+          <div style="text-align:center;padding:40px;color:var(--danger);">
+            <div style="font-size:48px;margin-bottom:12px;">⚠️</div>
+            <div>Failed to load backups</div>
+            <div style="font-size:13px;margin-top:8px;">${err.message || 'Check server connection'}</div>
+          </div>
+        `;
+      }
+    }
+
+    // Download a backup file
+    async function downloadBackup(filename) {
+      toast.info('Downloading backup...');
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`/api/backups/${encodeURIComponent(filename)}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Download failed');
+        }
+        
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+        
+        toast.success('Backup downloaded!');
+      } catch (err) {
+        toast.error('Download failed: ' + err.message);
+      }
+    }
+
+    // Delete a backup file
+    async function deleteBackup(filename) {
+      if (!confirm(`Delete backup "${filename}"? This cannot be undone.`)) return;
+      
+      toast.info('Deleting backup...');
+      try {
+        await fetchJson(`/api/backups/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+        toast.success('Backup deleted');
+        loadBackups(); // Refresh the list
+      } catch (err) {
+        toast.error('Delete failed: ' + err.message);
       }
     }
 

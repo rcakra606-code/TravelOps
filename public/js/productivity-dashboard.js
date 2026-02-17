@@ -64,6 +64,14 @@ function formatCurrency(value) {
   return 'Rp ' + num.toLocaleString('id-ID');
 }
 
+function formatCompactCurrency(value) {
+  const num = parseFloat(value) || 0;
+  if (Math.abs(num) >= 1000000000) return 'Rp ' + (num / 1000000000).toFixed(1) + 'B';
+  if (Math.abs(num) >= 1000000) return 'Rp ' + (num / 1000000).toFixed(1) + 'M';
+  if (Math.abs(num) >= 1000) return 'Rp ' + (num / 1000).toFixed(1) + 'K';
+  return 'Rp ' + num.toLocaleString('id-ID');
+}
+
 function formatPercent(value) {
   const num = parseFloat(value) || 0;
   return num.toFixed(1) + '%';
@@ -2205,6 +2213,7 @@ function initComparisonControls() {
   // Period selector buttons
   const periodBtns = document.querySelectorAll('.period-btn');
   const monthSelect = el('comparisonMonth');
+  const customMonthSection = el('customMonthSection');
   
   periodBtns.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -2217,9 +2226,45 @@ function initComparisonControls() {
         monthSelect.style.display = btn.dataset.period === 'month-yoy' ? 'block' : 'none';
       }
       
-      renderComparison();
+      // Show/hide custom month section
+      if (customMonthSection) {
+        customMonthSection.style.display = btn.dataset.period === 'custom' ? 'block' : 'none';
+        el('customComparisonResults').style.display = 'none'; // Hide results when switching
+      }
+      
+      // Hide regular comparison elements when custom is selected
+      if (btn.dataset.period === 'custom') {
+        el('comparisonSummary').style.display = 'none';
+        el('comparisonCards').style.display = 'none';
+        document.querySelector('.comparison-chart-container').style.display = 'none';
+        document.querySelector('.comparison-table-container').style.display = 'none';
+      } else {
+        el('comparisonSummary').style.display = 'block';
+        el('comparisonCards').style.display = 'grid';
+        document.querySelector('.comparison-chart-container').style.display = 'grid';
+        document.querySelector('.comparison-table-container').style.display = 'block';
+        renderComparison();
+      }
     });
   });
+  
+  // Custom compare button
+  const customCompareBtn = el('customCompareBtn');
+  if (customCompareBtn) {
+    customCompareBtn.addEventListener('click', runCustomMonthComparison);
+  }
+  
+  // Set default values for custom month selectors
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  const prevMonth = currentMonth === 1 ? 12 : currentMonth - 1;
+  const prevYear = currentMonth === 1 ? currentYear - 1 : currentYear;
+  
+  if (el('customMonth1')) el('customMonth1').value = currentMonth;
+  if (el('customYear1')) el('customYear1').value = currentYear;
+  if (el('customMonth2')) el('customMonth2').value = prevMonth;
+  if (el('customYear2')) el('customYear2').value = prevYear;
   
   // Year selector
   const yearSelect = el('comparisonYear');
@@ -2271,6 +2316,125 @@ function initComparisonControls() {
       renderComparison();
     });
   }
+}
+
+/* === CUSTOM MONTH VS MONTH COMPARISON === */
+function runCustomMonthComparison() {
+  const month1 = parseInt(el('customMonth1').value);
+  const year1 = parseInt(el('customYear1').value);
+  const month2 = parseInt(el('customMonth2').value);
+  const year2 = parseInt(el('customYear2').value);
+  
+  const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const period1Label = `${monthNames[month1]} ${year1}`;
+  const period2Label = `${monthNames[month2]} ${year2}`;
+  
+  // Update headers
+  el('customPeriod1SalesHeader').textContent = `${period1Label} Sales`;
+  el('customPeriod1ProfitHeader').textContent = `${period1Label} Profit`;
+  el('customPeriod2SalesHeader').textContent = `${period2Label} Sales`;
+  el('customPeriod2ProfitHeader').textContent = `${period2Label} Profit`;
+  
+  // Get data for each period grouped by product type
+  const productStats = {};
+  let grandTotal1Sales = 0, grandTotal1Profit = 0;
+  let grandTotal2Sales = 0, grandTotal2Profit = 0;
+  
+  // Initialize all product types
+  PRODUCT_TYPES.forEach(p => {
+    productStats[p.id] = {
+      name: p.name,
+      icon: p.icon,
+      period1Sales: 0,
+      period1Profit: 0,
+      period2Sales: 0,
+      period2Profit: 0
+    };
+  });
+  
+  // Aggregate data
+  productivityData.forEach(d => {
+    const productType = d.product_type || 'other';
+    if (!productStats[productType]) {
+      productStats[productType] = {
+        name: productType,
+        icon: '📝',
+        period1Sales: 0,
+        period1Profit: 0,
+        period2Sales: 0,
+        period2Profit: 0
+      };
+    }
+    
+    if (d.month === month1 && d.year === year1) {
+      productStats[productType].period1Sales += parseFloat(d.retail_sales) || 0;
+      productStats[productType].period1Sales += parseFloat(d.corporate_sales) || 0;
+      productStats[productType].period1Profit += parseFloat(d.profit) || 0;
+    }
+    if (d.month === month2 && d.year === year2) {
+      productStats[productType].period2Sales += parseFloat(d.retail_sales) || 0;
+      productStats[productType].period2Sales += parseFloat(d.corporate_sales) || 0;
+      productStats[productType].period2Profit += parseFloat(d.profit) || 0;
+    }
+  });
+  
+  // Build table rows
+  const rows = Object.entries(productStats)
+    .filter(([_, stats]) => stats.period1Sales > 0 || stats.period2Sales > 0)
+    .map(([productId, stats]) => {
+      grandTotal1Sales += stats.period1Sales;
+      grandTotal1Profit += stats.period1Profit;
+      grandTotal2Sales += stats.period2Sales;
+      grandTotal2Profit += stats.period2Profit;
+      
+      const salesDiff = stats.period1Sales - stats.period2Sales;
+      const profitDiff = stats.period1Profit - stats.period2Profit;
+      const growth = stats.period2Sales > 0 
+        ? ((stats.period1Sales - stats.period2Sales) / stats.period2Sales * 100) 
+        : (stats.period1Sales > 0 ? 100 : 0);
+      
+      return `
+        <tr>
+          <td>${stats.icon} ${stats.name}</td>
+          <td class="text-right">${formatCompactCurrency(stats.period1Sales)}</td>
+          <td class="text-right">${formatCompactCurrency(stats.period1Profit)}</td>
+          <td class="text-right">${formatCompactCurrency(stats.period2Sales)}</td>
+          <td class="text-right">${formatCompactCurrency(stats.period2Profit)}</td>
+          <td class="text-right ${salesDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${salesDiff >= 0 ? '+' : ''}${formatCompactCurrency(salesDiff)}</td>
+          <td class="text-right ${profitDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${profitDiff >= 0 ? '+' : ''}${formatCompactCurrency(profitDiff)}</td>
+          <td class="text-right ${growth >= 0 ? 'growth-positive' : 'growth-negative'}">${growth >= 0 ? '+' : ''}${growth.toFixed(1)}%</td>
+        </tr>
+      `;
+    });
+  
+  if (rows.length === 0) {
+    el('customComparisonBody').innerHTML = '<tr><td colspan="8" class="text-center">No data available for selected periods</td></tr>';
+    el('customComparisonFooter').innerHTML = '';
+  } else {
+    // Calculate totals
+    const totalSalesDiff = grandTotal1Sales - grandTotal2Sales;
+    const totalProfitDiff = grandTotal1Profit - grandTotal2Profit;
+    const totalGrowth = grandTotal2Sales > 0 
+      ? ((grandTotal1Sales - grandTotal2Sales) / grandTotal2Sales * 100) 
+      : (grandTotal1Sales > 0 ? 100 : 0);
+    
+    el('customComparisonBody').innerHTML = rows.join('');
+    el('customComparisonFooter').innerHTML = `
+      <tr>
+        <td><strong>TOTAL</strong></td>
+        <td class="text-right"><strong>${formatCompactCurrency(grandTotal1Sales)}</strong></td>
+        <td class="text-right"><strong>${formatCompactCurrency(grandTotal1Profit)}</strong></td>
+        <td class="text-right"><strong>${formatCompactCurrency(grandTotal2Sales)}</strong></td>
+        <td class="text-right"><strong>${formatCompactCurrency(grandTotal2Profit)}</strong></td>
+        <td class="text-right ${totalSalesDiff >= 0 ? 'growth-positive' : 'growth-negative'}"><strong>${totalSalesDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalSalesDiff)}</strong></td>
+        <td class="text-right ${totalProfitDiff >= 0 ? 'growth-positive' : 'growth-negative'}"><strong>${totalProfitDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalProfitDiff)}</strong></td>
+        <td class="text-right ${totalGrowth >= 0 ? 'growth-positive' : 'growth-negative'}"><strong>${totalGrowth >= 0 ? '+' : ''}${totalGrowth.toFixed(1)}%</strong></td>
+      </tr>
+    `;
+  }
+  
+  el('customComparisonResults').style.display = 'block';
+  toast.success(`Comparing ${period1Label} vs ${period2Label}`);
 }
 
 /* === INITIALIZE COMPARISON TAB === */

@@ -172,8 +172,6 @@ const modalClose = el('modalClose');
 let currentModalSubmitHandler = null;
 
 function openModal({ title, bodyHtml, context, size = 'medium' }) {
-  console.log('🚪 openModal called - title:', title, '| context:', JSON.stringify(context));
-  
   // Remove previous submit handler if exists
   if (modalForm && currentModalSubmitHandler) {
     modalForm.removeEventListener('submit', currentModalSubmitHandler);
@@ -223,8 +221,6 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
       const data = Object.fromEntries(formData.entries());
       const ctx = JSON.parse(modal.dataset.context || '{}');
       
-      console.log('📤 Dispatching modalSubmit event:', { data, context: ctx });
-      
       const event = new CustomEvent('modalSubmit', {
         detail: { data, context: ctx },
         bubbles: true,
@@ -234,7 +230,6 @@ function openModal({ title, bodyHtml, context, size = 'medium' }) {
       
       // If event was not prevented by listener, close modal
       if (!event.defaultPrevented) {
-        console.log('⚠️ modalSubmit was not handled by any listener');
         closeModal(true);
       }
     };
@@ -1335,7 +1330,6 @@ function populateReportsNav() {
 window.addEventListener('DOMContentLoaded', () => {
   // Skip dashboard-specific initialization if on reports page
   if (isReportsPage) {
-    console.log('📊 Reports page detected - skipping dashboard initialization');
     populateReportsNav();
     return;
   }
@@ -1376,8 +1370,6 @@ window.addEventListener('DOMContentLoaded', () => {
     
     if (hasCrudButtons) {
       if (window.crudHandlers) {
-        console.log('✅ CRUD Handlers loaded successfully');
-        
         // Wire up CRUD button handlers
         el('addSalesBtn')?.addEventListener('click', () => {
           window.crudHandlers.openAddSalesModal();
@@ -1410,8 +1402,6 @@ window.addEventListener('DOMContentLoaded', () => {
       } else {
         console.warn('⚠️ CRUD Handlers not loaded - this is expected for specialized dashboards');
       }
-    } else {
-      console.log('ℹ️ Specialized dashboard detected - using CRUDModal system');
     }
   }, 100);
 });

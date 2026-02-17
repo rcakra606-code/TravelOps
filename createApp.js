@@ -334,6 +334,15 @@ export async function createApp() {
   // Limit request body size to prevent DoS attacks
   app.use(bodyParser.json({ limit: '1mb' }));
   app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
+  
+  // Sanitize all incoming request bodies to prevent XSS attacks
+  app.use((req, res, next) => {
+    if (req.body && typeof req.body === 'object') {
+      req.body = sanitizeObject(req.body);
+    }
+    next();
+  });
+  
   app.use(express.static('public', {
     setHeaders: (res, path) => {
       // Set proper MIME types for static files
@@ -780,8 +789,14 @@ export async function createApp() {
       // Provide region_name join enrichment for sales and tours when region_id exists
       try {
         let rows;
-        const { month, year, staff, region, dateType } = req.query;
+        const { month, year, staff, region, dateType, page, limit, sortBy, sortOrder, search } = req.query;
         const isPg = db.dialect === 'postgres';
+        
+        // Pagination settings
+        const pageNum = parseInt(page) || 0; // 0 means no pagination (return all)
+        const limitNum = parseInt(limit) || 0; // 0 means no limit
+        const usePagination = pageNum > 0 && limitNum > 0;
+        const offset = usePagination ? (pageNum - 1) * limitNum : 0;
         
         // Build WHERE clause for filtering
         let conditions = [];
@@ -915,7 +930,26 @@ export async function createApp() {
         } else {
           rows = await db.all(`SELECT * FROM ${t}`);
         }
-        res.json(rows);
+        
+        // Server-side pagination support
+        if (usePagination) {
+          const total = rows.length;
+          const totalPages = Math.ceil(total / limitNum);
+          const pagedRows = rows.slice(offset, offset + limitNum);
+          res.json({
+            data: pagedRows,
+            pagination: {
+              page: pageNum,
+              limit: limitNum,
+              total,
+              totalPages,
+              hasNext: pageNum < totalPages,
+              hasPrev: pageNum > 1
+            }
+          });
+        } else {
+          res.json(rows);
+        }
       } catch (err) {
         console.error('List fetch error:', t, err);
         res.status(500).json({ error: 'Failed to fetch '+t });
@@ -923,8 +957,6 @@ export async function createApp() {
     });
     app.post(`/api/${t}`, authMiddleware(), async (req,res)=>{
       try {
-        if (t === 'targets') console.log('📊 Targets POST request:', req.body);
-        if (t === 'tours') console.log('🧳 Tours POST request:', req.body);
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
         if (t === 'users' && req.body.password) {
           if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*...)' });
@@ -1003,12 +1035,8 @@ export async function createApp() {
         const values = Object.values(req.body);
         const placeholders = keys.map(()=>'?').join(',');
         const sql = `INSERT INTO ${t} (${keys.join(',')}) VALUES (${placeholders})`;
-        if (t === 'targets') console.log('📊 Targets SQL:', sql, values);
-        if (t === 'tours') console.log('🧳 Tours SQL:', sql, values);
         const result = await db.run(sql, values);
         await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(req.body));
-        if (t === 'targets') console.log('✅ Targets created:', result.lastID);
-        if (t === 'tours') console.log('✅ Tours created:', result.lastID);
         res.json({ id: result.lastID });
       } catch (error) {
         console.error(`POST /api/${t} error:`, error);
@@ -1017,7 +1045,6 @@ export async function createApp() {
     });
     app.put(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
       try {
-        if (t === 'targets') console.log('📊 Targets PUT request:', req.params.id, req.body);
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
         
         // Hash password if updating users table with a password field
@@ -1031,7 +1058,6 @@ export async function createApp() {
             });
           }
           req.body.password = await bcrypt.hash(password, 10);
-          console.log('🔐 Password hashed for user update via generic PUT endpoint');
         }
         // Overtime edit is admin-only
         if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
@@ -1104,10 +1130,8 @@ export async function createApp() {
         const values = Object.values(req.body);
         const set = keys.map(k=>`${k}=?`).join(',');
         const sql = `UPDATE ${t} SET ${set} WHERE id=?`;
-        if (t === 'targets') console.log('📊 Targets UPDATE SQL:', sql, [...values, req.params.id]);
         await db.run(sql, [...values, req.params.id]);
         await logActivity(req.user.username, 'UPDATE', t, req.params.id, JSON.stringify(req.body));
-        if (t === 'targets') console.log('✅ Targets updated:', req.params.id);
         res.json({ updated:true });
       } catch (error) {
         console.error(`PUT /api/${t}/:id error:`, error);
@@ -1122,6 +1146,44 @@ export async function createApp() {
       await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
       await logActivity(req.user.username, 'DELETE', t, id, 'Record deleted');
       res.json({ deleted:true });
+    });
+    
+    // Bulk delete endpoint - deletes multiple records efficiently
+    app.post(`/api/${t}/bulk-delete`, authMiddleware(), async (req, res) => {
+      try {
+        // Admin only for bulk operations
+        if (req.user.type !== 'admin') {
+          return res.status(403).json({ error: 'Only admin can perform bulk delete operations' });
+        }
+        
+        const { ids } = req.body;
+        if (!Array.isArray(ids) || ids.length === 0) {
+          return res.status(400).json({ error: 'No IDs provided for deletion' });
+        }
+        
+        // Limit bulk delete to 100 items at a time for safety
+        if (ids.length > 100) {
+          return res.status(400).json({ error: 'Maximum 100 items can be deleted at once' });
+        }
+        
+        // Validate all IDs are numbers
+        const validIds = ids.filter(id => Number.isInteger(Number(id))).map(Number);
+        if (validIds.length !== ids.length) {
+          return res.status(400).json({ error: 'Invalid IDs provided' });
+        }
+        
+        // Use transaction for atomic deletion
+        const placeholders = validIds.map(() => '?').join(',');
+        await db.run(`DELETE FROM ${t} WHERE id IN (${placeholders})`, validIds);
+        
+        // Log bulk delete activity
+        await logActivity(req.user.username, 'BULK_DELETE', t, null, JSON.stringify({ deleted_ids: validIds, count: validIds.length }));
+        
+        res.json({ deleted: validIds.length, success: true });
+      } catch (error) {
+        console.error(`Bulk delete ${t} error:`, error);
+        res.status(500).json({ error: 'Failed to perform bulk delete' });
+      }
     });
   }
 
@@ -1293,7 +1355,6 @@ export async function createApp() {
       }
       
       await logActivity(req.user.username, 'CREATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
-      console.log('✅ Tour v2 created:', tourId, 'with', passengers.length, 'passengers');
       res.json({ id: tourId });
     } catch (error) {
       console.error('POST /api/tours/v2 error:', error);
@@ -1307,8 +1368,6 @@ export async function createApp() {
       const tourId = req.params.id;
       const { tour, passengers } = req.body;
       
-      console.log('🔄 PUT /api/tours/v2/:id received:', { tourId, hasTour: !!tour, passengersCount: passengers?.length });
-      
       if (!tour || !Array.isArray(passengers) || passengers.length === 0) {
         return res.status(400).json({ error: 'Tour and passengers array required' });
       }
@@ -1316,8 +1375,6 @@ export async function createApp() {
       // Verify tour exists
       const existing = await db.get('SELECT * FROM tours WHERE id=?', [tourId]);
       if (!existing) return res.status(404).json({ error: 'Tour not found' });
-      
-      console.log('📋 Existing tour found:', existing.tour_code, 'staff:', existing.staff_name);
       
       // Check ownership for basic users
       if (req.user.type === 'basic' && existing.staff_name !== req.user.name) {
@@ -1389,13 +1446,10 @@ export async function createApp() {
       const tourValues = Object.values(cleanTour);
       const tourSet = tourKeys.map(k => `${k}=?`).join(',');
       
-      console.log('💾 Updating tour with keys:', tourKeys.join(', '));
       await db.run(`UPDATE tours SET ${tourSet} WHERE id=?`, [...tourValues, tourId]);
-      console.log('✅ Tour table updated');
       
       // Replace passengers
       await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [tourId]);
-      console.log('🗑️ Old passengers deleted');
       
       for (let i = 0; i < passengers.length; i++) {
         const p = passengers[i];
@@ -1415,10 +1469,8 @@ export async function createApp() {
           ]
         );
       }
-      console.log('✅ New passengers inserted:', passengers.length);
       
       await logActivity(req.user.username, 'UPDATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
-      console.log('✅ Tour v2 updated:', tourId, 'with', passengers.length, 'passengers');
       res.json({ updated: true });
     } catch (error) {
       console.error('PUT /api/tours/v2/:id error:', error);
@@ -2142,6 +2194,92 @@ export async function createApp() {
     } catch (err) {
       logger.error({ err }, 'Backup error');
       res.status(500).json({ error: 'Backup failed' });
+    }
+  });
+
+  // List available backups
+  app.get('/api/backups', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const backupDir = path.resolve('backup');
+      if (!fs.existsSync(backupDir)) {
+        return res.json({ backups: [] });
+      }
+      
+      const files = fs.readdirSync(backupDir)
+        .filter(f => f.endsWith('.db') || f.endsWith('.json'))
+        .map(filename => {
+          const filepath = path.join(backupDir, filename);
+          const stats = fs.statSync(filepath);
+          return {
+            filename,
+            size: stats.size,
+            sizeFormatted: stats.size > 1024 * 1024 
+              ? `${(stats.size / 1024 / 1024).toFixed(2)} MB`
+              : `${(stats.size / 1024).toFixed(2)} KB`,
+            created: stats.mtime.toISOString(),
+            createdFormatted: stats.mtime.toLocaleString()
+          };
+        })
+        .sort((a, b) => new Date(b.created) - new Date(a.created));
+      
+      res.json({ backups: files });
+    } catch (err) {
+      logger.error({ err }, 'List backups error');
+      res.status(500).json({ error: 'Failed to list backups' });
+    }
+  });
+
+  // Download a backup file
+  app.get('/api/backups/:filename', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const { filename } = req.params;
+      // Security: prevent path traversal attacks
+      if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
+      
+      const backupDir = path.resolve('backup');
+      const filepath = path.join(backupDir, filename);
+      
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ error: 'Backup not found' });
+      }
+      
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
+      const stream = fs.createReadStream(filepath);
+      stream.pipe(res);
+    } catch (err) {
+      logger.error({ err }, 'Download backup error');
+      res.status(500).json({ error: 'Failed to download backup' });
+    }
+  });
+
+  // Delete a backup file
+  app.delete('/api/backups/:filename', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const { filename } = req.params;
+      // Security: prevent path traversal attacks
+      if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+        return res.status(400).json({ error: 'Invalid filename' });
+      }
+      
+      const backupDir = path.resolve('backup');
+      const filepath = path.join(backupDir, filename);
+      
+      if (!fs.existsSync(filepath)) {
+        return res.status(404).json({ error: 'Backup not found' });
+      }
+      
+      fs.unlinkSync(filepath);
+      await logActivity(req.user.username, 'DELETE_BACKUP', 'system', null, `Deleted backup: ${filename}`);
+      res.json({ ok: true, deleted: filename });
+    } catch (err) {
+      logger.error({ err }, 'Delete backup error');
+      res.status(500).json({ error: 'Failed to delete backup' });
     }
   });
 

@@ -37,8 +37,6 @@ class CRUDModal {
    * Show create modal with FormBuilder
    */
   static create(title, fields, onSubmit, options = {}) {
-    console.log('🔧 CRUDModal.create called with title:', title);
-    console.log('🔧 Fields count:', fields?.length);
     const modal = new CRUDModal();
     
     if (options.multiStep) {
@@ -48,9 +46,6 @@ class CRUDModal {
     const formBuilder = new FormBuilder();
     formBuilder.addFields(fields);
     const formHtml = formBuilder.build();
-    
-    console.log('🔧 FormBuilder.build() returned HTML length:', formHtml?.length);
-    console.log('🔧 FormHTML preview:', formHtml?.substring(0, 200));
 
     window.openModal({
       title: `➕ ${title}`,
@@ -58,8 +53,6 @@ class CRUDModal {
       bodyHtml: formHtml,
       context: { entity: options.entity, action: 'create' }
     });
-    
-    console.log('🔧 openModal called, waiting for DOM...');
 
     CRUDModal.waitForElement('#modalForm').then(form => {
       if (form) {
@@ -120,12 +113,10 @@ class CRUDModal {
               return;
             }
             
-            console.log('🔧 Validation passed, calling handleSubmit');
             await CRUDModal.handleSubmit(form, onSubmit);
           });
         } else {
           form.addEventListener('submit', async (e) => {
-            console.log('🔧 Form submit event triggered (no validation)');
             e.preventDefault();
             e.stopImmediatePropagation(); // Prevent dashboard.js global submit handler from running
             await CRUDModal.handleSubmit(form, onSubmit);

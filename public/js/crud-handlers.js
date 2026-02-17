@@ -484,8 +484,6 @@ function updateStaffSelects() {
 
 /* === SALES CRUD === */
 function openAddSalesModal() {
-  console.log('📝 Opening Add Sales Modal');
-  
   // Check if user is admin
   const user = JSON.parse(localStorage.getItem('user') || '{}');
   if (user.type !== 'admin') {
@@ -1474,13 +1472,11 @@ async function bulkDelete(entity) {
     return;
   }
   
-  // Check admin-only for sales
-  if (entity === 'sales') {
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.type !== 'admin') {
-      toast.error('Access denied: Only admin can delete sales');
-      return;
-    }
+  // Check admin-only - bulk delete requires admin
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  if (user.type !== 'admin') {
+    toast.error('Access denied: Only admin can perform bulk delete');
+    return;
   }
   
   const confirmed = await confirmDialog.custom({
@@ -1494,30 +1490,25 @@ async function bulkDelete(entity) {
   
   if (!confirmed) return;
   
-  let deleted = 0;
-  let failed = 0;
-  
-  for (const id of state.selected[entity]) {
-    try {
-      await fetchJson(`/api/${entity}/${id}`, { method: 'DELETE' });
-      deleted++;
-    } catch (err) {
-      failed++;
-      console.error(`Failed to delete ${entity} #${id}:`, err);
-    }
+  try {
+    // Use bulk delete endpoint for efficiency
+    const ids = Array.from(state.selected[entity]);
+    const result = await fetchJson(`/api/${entity}/bulk-delete`, {
+      method: 'POST',
+      body: JSON.stringify({ ids })
+    });
+    
+    state.selected[entity].clear();
+    toast.success(`Successfully deleted ${result.deleted} item(s)`);
+    
+    await loadData(entity);
+    renderTable(entity);
+    updateBulkActionsUI(entity);
+  } catch (err) {
+    const errorMsg = err.message || err.details?.error || 'Failed to delete items';
+    toast.error(errorMsg);
+    console.error('Bulk delete error:', err);
   }
-  
-  state.selected[entity].clear();
-  
-  if (failed === 0) {
-    toast.success(`Successfully deleted ${deleted} item(s)`);
-  } else {
-    toast.warning(`Deleted ${deleted} item(s), ${failed} failed`);
-  }
-  
-  await loadData(entity);
-  renderTable(entity);
-  updateBulkActionsUI(entity);
 }
 
 /* === DELETE HANDLER === */
@@ -1705,12 +1696,10 @@ async function handleModalSubmit(formData, context) {
         throw new Error('Password konfirmasi tidak sama');
       }
       
-      console.log('🔐 Calling password reset API for:', context.username);
       const result = await fetchJson(`/api/users/${context.username}/reset`, {
         method: 'POST',
         body: { password: password }
       });
-      console.log('🔐 Password reset API response:', result);
       
       if (result && result.updated > 0) {
         toast.success('Password berhasil direset');
@@ -2131,16 +2120,10 @@ function renderHotelBookingsTable() {
 
 /* === INITIALIZE === */
 async function init() {
-  console.log('🔄 Initializing CRUD handlers...');
-  
-  // Globals are already available (dashboard.js loads first as a plain script)
-  console.log('✅ Dashboard globals assumed ready');
-  
   // IMPORTANT: Attach modalSubmit listener FIRST, before any data loading
   // This ensures password reset and other modal actions work even if data loading fails
   document.addEventListener('modalSubmit', (e) => {
     const { data, context } = e.detail;
-    console.log('📥 modalSubmit received in crud-handlers:', { data, context });
     
     // Handle the submit through handleModalSubmit
     if (context && context.entity) {
@@ -2168,7 +2151,6 @@ async function init() {
       })();
     }
   });
-  console.log('✅ modalSubmit event listener attached');
   
   try {
     await Promise.all([
@@ -2182,17 +2164,6 @@ async function init() {
       loadData('hotel_bookings')
     ]);
     
-    console.log('✅ Data loaded:', {
-      regions: state.regions.length,
-      users: state.users.length,
-      sales: state.sales.length,
-      tours: state.tours.length,
-      documents: state.documents.length,
-      targets: state.targets.length,
-      telecom: state.telecom.length,
-      hotel_bookings: state.hotel_bookings.length
-    });
-    
     // Render all tables
     renderSalesTable();
     renderToursTable();
@@ -2202,8 +2173,6 @@ async function init() {
     renderUsersTable();
     renderTelecomTable();
     renderHotelBookingsTable();
-    
-    console.log('✅ All tables rendered');
 
       // Attach sortable header listeners (delegated)
       document.addEventListener('click', (e) => {
@@ -2310,7 +2279,6 @@ async function init() {
           state.pagination[entity].page = 1; // Reset to first page
           renderTable(entity);
         });
-        console.log(`✅ Search handler wired for ${entity}`);
       }
     });
   }
