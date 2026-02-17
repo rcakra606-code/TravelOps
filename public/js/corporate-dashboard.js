@@ -73,7 +73,10 @@ function initTabs() {
       el(`tab-${tabId}`).classList.add('active');
       
       // Load data for specific tabs
-      if (tabId === 'sales') loadSalesComparison();
+      if (tabId === 'sales') {
+        loadSalesComparison();
+        populateMonthCompareDropdown();
+      }
     });
   });
   
@@ -847,6 +850,128 @@ function addSalesData(e) {
   loadDashboardSummary();
 }
 
+/* === MONTH VS MONTH COMPARISON === */
+function compareMonths() {
+  const month1 = parseInt(el('monthCompare1Month').value);
+  const year1 = parseInt(el('monthCompare1Year').value);
+  const month2 = parseInt(el('monthCompare2Month').value);
+  const year2 = parseInt(el('monthCompare2Year').value);
+  const filterCorp = el('monthCompareCorp').value;
+  
+  const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const period1Label = `${monthNames[month1]} ${year1}`;
+  const period2Label = `${monthNames[month2]} ${year2}`;
+  
+  // Update headers
+  el('period1Header').textContent = `${period1Label} Sales`;
+  el('period1ProfitHeader').textContent = `${period1Label} Profit`;
+  el('period2Header').textContent = `${period2Label} Sales`;
+  el('period2ProfitHeader').textContent = `${period2Label} Profit`;
+  
+  let accountsToShow = corporateAccounts;
+  if (filterCorp !== '') {
+    accountsToShow = [corporateAccounts[filterCorp]].filter(Boolean);
+  }
+  
+  if (accountsToShow.length === 0) {
+    el('monthComparisonBody').innerHTML = '<tr><td colspan="8" class="text-center">No data available</td></tr>';
+    el('monthComparisonFooter').innerHTML = '';
+    el('monthComparisonResults').style.display = 'block';
+    return;
+  }
+  
+  let grandTotal1Sales = 0, grandTotal1Profit = 0;
+  let grandTotal2Sales = 0, grandTotal2Profit = 0;
+  
+  const rows = accountsToShow.map(corp => {
+    let period1Sales = 0, period1Profit = 0;
+    let period2Sales = 0, period2Profit = 0;
+    
+    if (corp.sales) {
+      corp.sales.forEach(sale => {
+        const saleMonth = parseInt(sale.month);
+        const saleYear = parseInt(sale.year);
+        
+        if (saleMonth === month1 && saleYear === year1) {
+          period1Sales += parseFloat(sale.amount) || 0;
+          period1Profit += parseFloat(sale.profit) || 0;
+        }
+        if (saleMonth === month2 && saleYear === year2) {
+          period2Sales += parseFloat(sale.amount) || 0;
+          period2Profit += parseFloat(sale.profit) || 0;
+        }
+      });
+    }
+    
+    grandTotal1Sales += period1Sales;
+    grandTotal1Profit += period1Profit;
+    grandTotal2Sales += period2Sales;
+    grandTotal2Profit += period2Profit;
+    
+    const salesDiff = period1Sales - period2Sales;
+    const profitDiff = period1Profit - period2Profit;
+    const growth = period2Sales > 0 ? ((period1Sales - period2Sales) / period2Sales * 100) : (period1Sales > 0 ? 100 : 0);
+    
+    return `
+      <tr>
+        <td>${corp.corporate_name || corp.account_code}</td>
+        <td>${formatCompactCurrency(period1Sales)}</td>
+        <td>${formatCompactCurrency(period1Profit)}</td>
+        <td>${formatCompactCurrency(period2Sales)}</td>
+        <td>${formatCompactCurrency(period2Profit)}</td>
+        <td class="${salesDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${salesDiff >= 0 ? '+' : ''}${formatCompactCurrency(salesDiff)}</td>
+        <td class="${profitDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${profitDiff >= 0 ? '+' : ''}${formatCompactCurrency(profitDiff)}</td>
+        <td class="${growth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(growth)}</td>
+      </tr>
+    `;
+  });
+  
+  // Calculate totals
+  const totalSalesDiff = grandTotal1Sales - grandTotal2Sales;
+  const totalProfitDiff = grandTotal1Profit - grandTotal2Profit;
+  const totalGrowth = grandTotal2Sales > 0 ? ((grandTotal1Sales - grandTotal2Sales) / grandTotal2Sales * 100) : (grandTotal1Sales > 0 ? 100 : 0);
+  
+  el('monthComparisonBody').innerHTML = rows.join('');
+  el('monthComparisonFooter').innerHTML = `
+    <tr>
+      <td>TOTAL</td>
+      <td>${formatCompactCurrency(grandTotal1Sales)}</td>
+      <td>${formatCompactCurrency(grandTotal1Profit)}</td>
+      <td>${formatCompactCurrency(grandTotal2Sales)}</td>
+      <td>${formatCompactCurrency(grandTotal2Profit)}</td>
+      <td class="${totalSalesDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${totalSalesDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalSalesDiff)}</td>
+      <td class="${totalProfitDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${totalProfitDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalProfitDiff)}</td>
+      <td class="${totalGrowth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(totalGrowth)}</td>
+    </tr>
+  `;
+  
+  el('monthComparisonResults').style.display = 'block';
+  toast.success(`Comparing ${period1Label} vs ${period2Label}`);
+}
+
+function populateMonthCompareDropdown() {
+  const select = el('monthCompareCorp');
+  if (!select) return;
+  
+  select.innerHTML = '<option value="">All Corporates</option>';
+  corporateAccounts.forEach((corp, idx) => {
+    const option = document.createElement('option');
+    option.value = idx;
+    option.textContent = corp.corporate_name || corp.account_code;
+    select.appendChild(option);
+  });
+  
+  // Set default values based on current month
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+  
+  if (el('monthCompare1Month')) el('monthCompare1Month').value = currentMonth;
+  if (el('monthCompare1Year')) el('monthCompare1Year').value = currentYear;
+  if (el('monthCompare2Month')) el('monthCompare2Month').value = currentMonth;
+  if (el('monthCompare2Year')) el('monthCompare2Year').value = currentYear - 1;
+}
+
 /* === EVENT LISTENERS === */
 function initEventListeners() {
   // Add Corporate button
@@ -903,6 +1028,9 @@ function initEventListeners() {
   el('refreshSalesBtn')?.addEventListener('click', loadSalesComparison);
   el('salesCompareYear')?.addEventListener('change', loadSalesComparison);
   el('salesFilterCorp')?.addEventListener('change', loadSalesComparison);
+  
+  // Month vs month comparison
+  el('compareMonthsBtn')?.addEventListener('click', compareMonths);
   
   // Add sales form
   el('addSalesForm')?.addEventListener('submit', addSalesData);

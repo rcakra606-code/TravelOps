@@ -827,8 +827,104 @@
         </form>
       </div>
 
+      <!-- Month vs Month Comparison -->
+      <div class="corporate-form-section" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%); border: 2px solid var(--primary); border-radius: 12px;">
+        <h3 style="color: var(--primary); margin-bottom: 16px;">📅 Month vs Month Comparison</h3>
+        <div style="display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap;">
+          <!-- Period 1 -->
+          <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <label style="font-weight: 600; color: #4361ee; margin-bottom: 8px; display: block;">📆 Period 1</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="monthCompare1Month" class="form-control" style="min-width: 120px;">
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select id="monthCompare1Year" class="form-control" style="min-width: 90px;">
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
+          </div>
+          
+          <span style="font-size: 24px; font-weight: bold; color: var(--primary);">VS</span>
+          
+          <!-- Period 2 -->
+          <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <label style="font-weight: 600; color: #6c757d; margin-bottom: 8px; display: block;">📆 Period 2</label>
+            <div style="display: flex; gap: 8px;">
+              <select id="monthCompare2Month" class="form-control" style="min-width: 120px;">
+                <option value="1">January</option>
+                <option value="2">February</option>
+                <option value="3">March</option>
+                <option value="4">April</option>
+                <option value="5">May</option>
+                <option value="6">June</option>
+                <option value="7">July</option>
+                <option value="8">August</option>
+                <option value="9">September</option>
+                <option value="10">October</option>
+                <option value="11">November</option>
+                <option value="12">December</option>
+              </select>
+              <select id="monthCompare2Year" class="form-control" style="min-width: 90px;">
+                <option value="2025" selected>2025</option>
+                <option value="2026">2026</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+              </select>
+            </div>
+          </div>
+          
+          <div class="form-group" style="margin: 0;">
+            <label>Corporate</label>
+            <select id="monthCompareCorp" class="form-control" style="min-width: 150px;">
+              <option value="">All Corporates</option>
+            </select>
+          </div>
+          
+          <button class="btn btn-primary" id="compareMonthsBtn" style="height: 38px;">🔍 Compare</button>
+        </div>
+        
+        <!-- Month Comparison Results -->
+        <div id="monthComparisonResults" style="margin-top: 20px; display: none;">
+          <div style="overflow-x: auto;">
+            <table class="sales-comparison-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>Corporate</th>
+                  <th id="period1Header">Period 1 Sales</th>
+                  <th id="period1ProfitHeader">Period 1 Profit</th>
+                  <th id="period2Header">Period 2 Sales</th>
+                  <th id="period2ProfitHeader">Period 2 Profit</th>
+                  <th>Sales Diff</th>
+                  <th>Profit Diff</th>
+                  <th>Growth %</th>
+                </tr>
+              </thead>
+              <tbody id="monthComparisonBody">
+              </tbody>
+              <tfoot id="monthComparisonFooter" style="font-weight: bold; background: var(--bg-alt);">
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Filter Controls -->
       <div class="corporate-form-section">
+        <h3 style="margin-bottom: 12px;">📊 Full Year Comparison</h3>
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
           <div class="form-group" style="margin: 0;">
             <label>Year to Compare</label>
