@@ -1641,6 +1641,36 @@ async function handleModalSubmit(formData, context) {
     delete formData.username;
   }
   
+  // Validate mandatory fields for tours
+  if (entity === 'tours' && (action === 'create' || action === 'update')) {
+    const mandatoryFields = [
+      { field: 'registration_date', label: 'Registration Date' },
+      { field: 'tour_code', label: 'Tour Code' },
+      { field: 'departure_date', label: 'Departure Date' },
+      { field: 'region_id', label: 'Region' },
+      { field: 'lead_passenger', label: 'Nama Penumpang Utama' },
+      { field: 'jumlah_peserta', label: 'Jumlah Peserta' },
+      { field: 'staff_name', label: 'Staff' }
+    ];
+    
+    const missingFields = mandatoryFields.filter(f => {
+      const value = formData[f.field];
+      return value === undefined || value === null || value === '' || (typeof value === 'string' && value.trim() === '');
+    });
+    
+    if (missingFields.length > 0) {
+      isSubmitting = false;
+      const fieldNames = missingFields.map(f => f.label).join(', ');
+      throw new Error(`Please fill in the mandatory fields: ${fieldNames}`);
+    }
+    
+    // Validate jumlah_peserta is at least 1
+    if (parseInt(formData.jumlah_peserta) < 1) {
+      isSubmitting = false;
+      throw new Error('Jumlah Peserta must be at least 1');
+    }
+  }
+  
   // Validate booking code uniqueness for tours
   if (entity === 'tours' && formData.booking_code) {
     const existingTour = state.tours.find(t => 
