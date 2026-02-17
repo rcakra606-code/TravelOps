@@ -4,11 +4,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginContainer = document.querySelector('.login-container');
   const usernameEl = document.getElementById('username');
   const passwordEl = document.getElementById('password');
+  const rememberMeEl = document.getElementById('rememberMe');
 
   if (!loginForm || !errorMsg || !loginContainer || !usernameEl || !passwordEl) {
     console.error('Login elements not found on the page');
     return;
   }
+
+  // Check for remembered credentials
+  try {
+    const remembered = JSON.parse(localStorage.getItem('remembered_user') || '{}');
+    if (remembered.username && remembered.expires > Date.now()) {
+      usernameEl.value = remembered.username;
+      if (rememberMeEl) rememberMeEl.checked = true;
+    } else {
+      localStorage.removeItem('remembered_user');
+    }
+  } catch {}
 
   // Already logged in redirect
   try {
@@ -25,6 +37,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loginContainer.classList.add('loading');
     const username = usernameEl.value.trim();
     const password = passwordEl.value.trim();
+    const rememberMe = rememberMeEl?.checked || false;
+    
     try {
       console.debug('Submitting /api/login');
       const res = await fetch('/api/login', {
@@ -39,6 +53,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const user = await res.json();
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('token', user.token);
+      
+      // Handle Remember Me
+      if (rememberMe) {
+        const remembered = {
+          username: username,
+          expires: Date.now() + (30 * 24 * 60 * 60 * 1000) // 30 days
+        };
+        localStorage.setItem('remembered_user', JSON.stringify(remembered));
+      } else {
+        localStorage.removeItem('remembered_user');
+      }
       
       // Show success toast
       if (window.toast) {

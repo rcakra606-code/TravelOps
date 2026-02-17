@@ -1,5 +1,5 @@
-// TravelOps Service Worker - Enhanced PWA v8
-const CACHE_NAME = 'travelops-v8';
+// TravelOps Service Worker - Enhanced PWA v9
+const CACHE_NAME = 'travelops-v9';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',
@@ -29,6 +29,9 @@ const STATIC_ASSETS = [
   '/css/animations.css',
   '/css/crud-enhancements.css',
   '/css/ui-enhancements.css',
+  '/css/professional-polish.css',
+  '/css/micro-interactions.css',
+  '/css/accessibility.css',
   '/js/auth-common.js',
   '/js/dashboard.js',
   '/js/toast.js',
@@ -54,6 +57,12 @@ const STATIC_ASSETS = [
   '/js/advanced-reporting.js',
   '/js/staff-management.js',
   '/js/dashboard-analytics.js',
+  '/js/error-monitoring.js',
+  '/js/api-cache.js',
+  '/js/breadcrumb-nav.js',
+  '/js/lazy-loader.js',
+  '/js/security-utils.js',
+  '/js/ui-extras.js',
   '/manifest.json'
 ];
 

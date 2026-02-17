@@ -436,6 +436,60 @@
       letter-spacing: 0.5px;
     }
 
+    /* Remember Me Checkbox */
+    .remember-me {
+      margin: 20px 0;
+    }
+    
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      color: #475569;
+    }
+    
+    .checkbox-container input[type="checkbox"] {
+      position: absolute;
+      opacity: 0;
+      cursor: pointer;
+    }
+    
+    .checkmark {
+      width: 22px;
+      height: 22px;
+      background: rgba(248, 250, 252, 0.8);
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+    
+    .checkbox-container:hover .checkmark {
+      border-color: #667eea;
+      background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .checkbox-container input:checked ~ .checkmark {
+      background: #667eea;
+      border-color: #667eea;
+    }
+    
+    .checkbox-container input:checked ~ .checkmark::after {
+      content: '✓';
+      color: white;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    
+    .remember-text {
+      font-weight: 500;
+    }
+
     @media (max-width: 480px) {
       .login-container {
         padding: 36px 28px;
@@ -501,6 +555,14 @@
               <span id="toggleIcon">👁️</span>
             </button>
           </div>
+        </div>
+        
+        <div class="remember-me">
+          <label class="checkbox-container">
+            <input type="checkbox" id="rememberMe" />
+            <span class="checkmark"></span>
+            <span class="remember-text">Remember me for 30 days</span>
+          </label>
         </div>
         
         <button type="submit" class="btn">
