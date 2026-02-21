@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sales Report Dashboard - TravelOps</title>
+  <title>Sales & Target Dashboard - TravelOps</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -215,7 +215,7 @@
           <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html" class="active">💰 Sales Report</a>
+          <a href="/sales-targets-dashboard.html" class="active">💰 Sales & Target</a>
           <a href="/overtime-dashboard.html">⏰ Overtime</a>
           <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
@@ -287,7 +287,47 @@
         <option value="2024">2024</option>
       </select>
       <button id="loadDataBtn" class="btn btn-primary">🔄 Load Data</button>
-      <button id="addRecordBtn" class="add-btn" style="display: none;">➕ Add Record</button>
+    </div>
+
+    <!-- Quick Sales Input Section (Admin/Semi-Admin Only) -->
+    <div id="salesInputSection" class="card" style="display: none; margin-bottom: 24px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">📝 Quick Sales Input</h3>
+        <button id="toggleInputBtn" onclick="toggleInputForm()" class="btn btn-secondary" style="font-size: 12px;">
+          <span id="toggleText">▼ Expand</span>
+        </button>
+      </div>
+      <div id="salesInputForm" style="display: none;">
+        <form id="quickInputForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; align-items: end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quickStaffName" style="font-size: 13px;">Staff Name</label>
+            <select id="quickStaffName" required style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
+              <option value="">Select Staff...</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quickTargetSales" style="font-size: 13px;">Target Sales</label>
+            <input type="number" id="quickTargetSales" required min="0" placeholder="1,000,000,000" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quickTargetProfit" style="font-size: 13px;">Target Profit</label>
+            <input type="number" id="quickTargetProfit" required min="0" placeholder="50,000,000" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quickAchievementSales" style="font-size: 13px;">Achievement Sales</label>
+            <input type="number" id="quickAchievementSales" required min="0" placeholder="530,923,000" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label for="quickAchievementProfit" style="font-size: 13px;">Achievement Profit</label>
+            <input type="number" id="quickAchievementProfit" required min="0" placeholder="26,614,382" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button type="submit" class="add-btn" style="flex: 1;">➕ Add</button>
+            <button type="button" id="quickClearBtn" onclick="clearQuickForm()" class="btn btn-secondary" style="padding: 10px 16px;">Clear</button>
+          </div>
+        </form>
+        <input type="hidden" id="quickEditId" value="">
+      </div>
     </div>
 
     <!-- Data Table -->
@@ -449,7 +489,7 @@
       
       // Show admin controls
       if (isAdmin || isSemiAdmin) {
-        el('addRecordBtn').style.display = 'flex';
+        el('salesInputSection').style.display = 'block';
         el('actionsHeader').style.display = '';
         
         if (isAdmin) {
@@ -483,9 +523,11 @@
   function populateStaffDropdowns() {
     const staffSelect = el('staffName');
     const staffFilter = el('staffFilter');
+    const quickStaffSelect = el('quickStaffName');
     
     staffSelect.innerHTML = '<option value="">Select Staff...</option>';
     staffFilter.innerHTML = '<option value="">All Staff</option>';
+    quickStaffSelect.innerHTML = '<option value="">Select Staff...</option>';
     
     usersData.forEach(user => {
       const opt1 = document.createElement('option');
@@ -497,6 +539,11 @@
       opt2.value = user.name;
       opt2.textContent = user.name;
       staffFilter.appendChild(opt2);
+      
+      const opt3 = document.createElement('option');
+      opt3.value = user.name;
+      opt3.textContent = user.name;
+      quickStaffSelect.appendChild(opt3);
     });
     
     // For basic users, auto-select their name
@@ -576,7 +623,7 @@
       const actionsCell = (isAdmin || isSemiAdmin) ? `
         <td style="text-align: center; background: #fff9c4;">
           <div class="action-btns">
-            <button class="edit-btn" onclick="editRecord(${d.id})">✏️</button>
+            <button class="edit-btn" onclick="quickEditRecord(${d.id})">✏️</button>
             <button class="delete-btn" onclick="deleteRecord(${d.id})">🗑️</button>
           </div>
         </td>
@@ -835,6 +882,105 @@
     }
   };
   
+  // Toggle quick input form
+  window.toggleInputForm = function() {
+    const form = el('salesInputForm');
+    const text = el('toggleText');
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+      text.textContent = '▲ Collapse';
+    } else {
+      form.style.display = 'none';
+      text.textContent = '▼ Expand';
+    }
+  };
+  
+  // Clear quick form
+  window.clearQuickForm = function() {
+    el('quickStaffName').value = '';
+    el('quickTargetSales').value = '';
+    el('quickTargetProfit').value = '';
+    el('quickAchievementSales').value = '';
+    el('quickAchievementProfit').value = '';
+    el('quickEditId').value = '';
+    // Reset submit button text
+    const submitBtn = el('quickInputForm').querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '➕ Add';
+  };
+  
+  // Quick edit - populate quick form with record data
+  window.quickEditRecord = function(id) {
+    const record = salesData.find(d => d.id === id);
+    if (!record) return;
+    
+    // Expand the input form if collapsed
+    const form = el('salesInputForm');
+    if (form.style.display === 'none') {
+      toggleInputForm();
+    }
+    
+    el('quickStaffName').value = record.staff_name;
+    el('quickTargetSales').value = record.target_sales;
+    el('quickTargetProfit').value = record.target_profit;
+    el('quickAchievementSales').value = record.achievement_sales;
+    el('quickAchievementProfit').value = record.achievement_profit;
+    el('quickEditId').value = record.id;
+    
+    // Update submit button text
+    const submitBtn = el('quickInputForm').querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '💾 Update';
+    
+    // Scroll to form
+    el('salesInputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    window.toast?.info('Editing record for ' + record.staff_name);
+  };
+  
+  // Quick save (add/update)
+  async function quickSaveRecord(e) {
+    e.preventDefault();
+    
+    const id = el('quickEditId').value;
+    const month = parseInt(el('periodMonth').value);
+    const year = parseInt(el('periodYear').value);
+    
+    const data = {
+      staff_name: el('quickStaffName').value,
+      target_sales: parseFloat(el('quickTargetSales').value),
+      target_profit: parseFloat(el('quickTargetProfit').value),
+      achievement_sales: parseFloat(el('quickAchievementSales').value),
+      achievement_profit: parseFloat(el('quickAchievementProfit').value),
+      month: month,
+      year: year
+    };
+    
+    try {
+      const token = localStorage.getItem('token');
+      const url = id ? `/api/sales-targets/${id}` : '/api/sales-targets';
+      const method = id ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        window.toast?.success(id ? 'Record updated successfully' : 'Record added successfully');
+        clearQuickForm();
+        loadSalesData();
+      } else {
+        const err = await res.json();
+        window.toast?.error(err.error || 'Failed to save record');
+      }
+    } catch (e) {
+      console.error('Quick save error:', e);
+      window.toast?.error('Failed to save record');
+    }
+  }
+  
   // Save record
   async function saveRecord(e) {
     e.preventDefault();
@@ -893,7 +1039,7 @@
     
     // Event listeners
     el('loadDataBtn').addEventListener('click', loadSalesData);
-    el('addRecordBtn').addEventListener('click', () => openModal());
+    el('quickInputForm').addEventListener('submit', quickSaveRecord);
     el('modalClose').addEventListener('click', closeModal);
     el('modalCancel').addEventListener('click', closeModal);
     el('modalForm').addEventListener('submit', saveRecord);
