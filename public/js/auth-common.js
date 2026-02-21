@@ -54,6 +54,11 @@ async function checkAuthOnLoad() {
     }
     
     authCheckPassed = true;
+    
+    // Start token refresh and expiry monitoring after successful auth
+    startTokenRefresh();
+    console.log('✅ Auth check passed, token expiry monitor started');
+    
     return true;
   } catch (err) {
     console.error('Invalid session data:', err);
@@ -312,12 +317,18 @@ function showTokenExpiryWarning() {
  * Start token expiry monitoring
  */
 function startTokenExpiryMonitor() {
+  console.log('🔔 Token expiry monitor started');
+  
   // Check token expiry every 30 seconds
   if (tokenExpiryCheckInterval) clearInterval(tokenExpiryCheckInterval);
   tokenExpiryCheckInterval = setInterval(checkTokenExpiry, 30 * 1000);
   
-  // Also check immediately
-  setTimeout(checkTokenExpiry, 5000);
+  // Also check immediately with a small delay
+  setTimeout(() => {
+    const remaining = getTokenRemainingMinutes();
+    console.log(`[auth] Initial token check: ~${remaining}m remaining, warning threshold: ${TOKEN_EXPIRY_WARNING_MINUTES}m`);
+    checkTokenExpiry();
+  }, 3000);
   
   // Track user interactions for activity status
   ['click', 'keydown', 'mousemove', 'scroll', 'touchstart', 'touchmove'].forEach(event => {
@@ -734,11 +745,4 @@ window.startTokenExpiryMonitor = startTokenExpiryMonitor;
 window.getTokenRemainingMinutes = getTokenRemainingMinutes;
 window.getTokenRemainingSeconds = getTokenRemainingSeconds;
 
-// Auto-start token refresh when module loads (after auth check)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    if (authCheckPassed) startTokenRefresh();
-  });
-} else {
-  if (authCheckPassed) startTokenRefresh();
-}
+// Token refresh and expiry monitoring is now started in checkAuthOnLoad() after successful auth
