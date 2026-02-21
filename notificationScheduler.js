@@ -254,78 +254,186 @@ function delay(ms) {
 }
 
 /**
- * Manually trigger reminder check (for testing)
- * This will send reminders for tours departing within the next 7 days
- * regardless of whether they match the standard reminder days
+ * Manually trigger ALL reminder checks (tours, cruise, return, tickets, open tickets)
+ * This will send reminders for items within the reminder window
  */
 async function manualTrigger() {
-  logger.info('=== MANUAL TRIGGER: Starting reminder check ===');
+  logger.info('=== MANUAL TRIGGER: Starting ALL reminder checks ===');
+  
+  const results = {
+    tours: { sent: [], errors: [], skipped: [] },
+    cruise: { sent: [], errors: [], skipped: [] },
+    return: { sent: [], errors: [], skipped: [] },
+    tickets: { sent: [], errors: [], skipped: [] },
+    openTickets: { sent: [], errors: [], skipped: [] }
+  };
   
   try {
     // Use Jakarta timezone for consistent date calculations
     const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
     today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
     
-    // Get all upcoming tours
+    // 1. TOUR DEPARTURE REMINDERS
+    logger.info('--- Checking Tour Departure Reminders ---');
     const tours = await getUpcomingTours();
-    
-    if (tours.length === 0) {
-      logger.info('No upcoming tours found with staff email configured');
-      return { sent: [], errors: [], message: 'No upcoming tours with staff email. Check user email settings.' };
-    }
-    
     logger.info(`Found ${tours.length} upcoming tours with email`);
-    
-    const remindersSent = [];
-    const errors = [];
-    const skipped = [];
     
     for (const tour of tours) {
       const departureDate = new Date(tour.departure_date);
       departureDate.setHours(0, 0, 0, 0);
-      
       const daysUntil = Math.ceil((departureDate - today) / (1000 * 60 * 60 * 24));
       
-      // For manual trigger, send for any tour departing within 7 days
       if (daysUntil <= 7 && daysUntil >= 0) {
-        // Check if reminder was already sent for this day
         const alreadySent = await checkReminderSent(tour.id, daysUntil);
-        
         if (!alreadySent) {
-          logger.info(`Sending ${daysUntil}-day reminder for tour ${tour.tour_code} to ${tour.staff_email}`);
-          
+          logger.info(`Sending tour reminder: ${tour.tour_code} (${daysUntil} days) to ${tour.staff_email}`);
           const result = await sendDepartureReminder(tour, daysUntil);
-          
           if (result.success) {
             await recordReminderSent(tour.id, daysUntil);
-            remindersSent.push({ tour: tour.tour_code, days: daysUntil, email: tour.staff_email });
+            results.tours.sent.push({ code: tour.tour_code, days: daysUntil, email: tour.staff_email });
           } else {
-            errors.push({ tour: tour.tour_code, days: daysUntil, error: result.error });
+            results.tours.errors.push({ code: tour.tour_code, days: daysUntil, error: result.error });
           }
-          
-          // Add delay between emails to avoid rate limiting
           await delay(1000);
         } else {
-          skipped.push({ tour: tour.tour_code, days: daysUntil, reason: 'already sent' });
-          logger.info(`Skipped: Reminder already sent for tour ${tour.tour_code} (${daysUntil} days)`);
+          results.tours.skipped.push({ code: tour.tour_code, days: daysUntil, reason: 'already sent' });
         }
-      } else {
-        skipped.push({ tour: tour.tour_code, days: daysUntil, reason: `too far (${daysUntil} days)` });
       }
     }
     
+    // 2. CRUISE SAILING REMINDERS
+    logger.info('--- Checking Cruise Sailing Reminders ---');
+    const cruises = await getUpcomingCruises();
+    logger.info(`Found ${cruises.length} upcoming cruises with email`);
+    
+    for (const cruise of cruises) {
+      const sailingDate = new Date(cruise.sailing_start);
+      sailingDate.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((sailingDate - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntil <= 30 && daysUntil >= 0) {
+        const alreadySent = await checkCruiseReminderSent(cruise.id, daysUntil);
+        if (!alreadySent) {
+          logger.info(`Sending cruise reminder: ${cruise.ship_name} (${daysUntil} days) to ${cruise.staff_email}`);
+          const result = await sendCruiseReminder(cruise, daysUntil);
+          if (result.success) {
+            await recordCruiseReminderSent(cruise.id, daysUntil);
+            results.cruise.sent.push({ ship: cruise.ship_name, days: daysUntil, email: cruise.staff_email });
+          } else {
+            results.cruise.errors.push({ ship: cruise.ship_name, days: daysUntil, error: result.error });
+          }
+          await delay(1000);
+        } else {
+          results.cruise.skipped.push({ ship: cruise.ship_name, days: daysUntil, reason: 'already sent' });
+        }
+      }
+    }
+    
+    // 3. RETURN ARRIVAL REMINDERS
+    logger.info('--- Checking Return Arrival Reminders ---');
+    const returnTours = await getToursWithUpcomingReturn();
+    logger.info(`Found ${returnTours.length} tours with upcoming return dates`);
+    
+    for (const tour of returnTours) {
+      const returnDate = new Date(tour.return_date);
+      returnDate.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((returnDate - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntil <= 3 && daysUntil >= 0) {
+        const alreadySent = await checkReturnReminderSent(tour.id, daysUntil);
+        if (!alreadySent) {
+          logger.info(`Sending return reminder: ${tour.tour_code} (${daysUntil} days) to ${tour.staff_email}`);
+          const result = await sendReturnArrivalReminder(tour, daysUntil);
+          if (result.success) {
+            await recordReturnReminderSent(tour.id, daysUntil);
+            results.return.sent.push({ code: tour.tour_code, days: daysUntil, email: tour.staff_email });
+          } else {
+            results.return.errors.push({ code: tour.tour_code, days: daysUntil, error: result.error });
+          }
+          await delay(1000);
+        } else {
+          results.return.skipped.push({ code: tour.tour_code, days: daysUntil, reason: 'already sent' });
+        }
+      }
+    }
+    
+    // 4. TICKET DEPARTURE REMINDERS
+    logger.info('--- Checking Ticket Flight Reminders ---');
+    const tickets = await getUpcomingTickets();
+    logger.info(`Found ${tickets.length} upcoming ticket departures`);
+    
+    for (const ticket of tickets) {
+      if (!ticket.segments || ticket.segments.length === 0) continue;
+      
+      const firstSegment = ticket.segments[0];
+      const departureDate = new Date(firstSegment.departure_date);
+      departureDate.setHours(0, 0, 0, 0);
+      const daysUntil = Math.ceil((departureDate - today) / (1000 * 60 * 60 * 24));
+      
+      if (daysUntil <= 7 && daysUntil >= 0) {
+        const alreadySent = await checkTicketReminderSent(ticket.id, daysUntil, 'departure');
+        if (!alreadySent) {
+          logger.info(`Sending ticket reminder: ${ticket.passenger_name} (${daysUntil} days) to ${ticket.staff_email}`);
+          const result = await sendTicketDepartureReminder(ticket, daysUntil);
+          if (result.success) {
+            await recordTicketReminderSent(ticket.id, daysUntil, 'departure');
+            results.tickets.sent.push({ passenger: ticket.passenger_name, days: daysUntil, email: ticket.staff_email });
+          } else {
+            results.tickets.errors.push({ passenger: ticket.passenger_name, days: daysUntil, error: result.error });
+          }
+          await delay(1000);
+        } else {
+          results.tickets.skipped.push({ passenger: ticket.passenger_name, days: daysUntil, reason: 'already sent' });
+        }
+      }
+    }
+    
+    // 5. OPEN TICKET REMINDERS
+    logger.info('--- Checking Open Ticket Reminders ---');
+    const openTickets = await getActiveOpenTickets(todayStr);
+    logger.info(`Found ${openTickets.length} active open tickets`);
+    
+    for (const ticket of openTickets) {
+      logger.info(`Sending open ticket reminder: ${ticket.passenger_name} to ${ticket.staff_email}`);
+      const result = await sendOpenTicketReminder(ticket);
+      if (result.success) {
+        await updateOpenTicketReminderDate(ticket.id, todayStr);
+        results.openTickets.sent.push({ passenger: ticket.passenger_name, email: ticket.staff_email });
+      } else {
+        results.openTickets.errors.push({ passenger: ticket.passenger_name, error: result.error });
+      }
+      await delay(1000);
+    }
+    
     // Log summary
+    const totalSent = results.tours.sent.length + results.cruise.sent.length + 
+                      results.return.sent.length + results.tickets.sent.length + 
+                      results.openTickets.sent.length;
+    const totalErrors = results.tours.errors.length + results.cruise.errors.length + 
+                        results.return.errors.length + results.tickets.errors.length + 
+                        results.openTickets.errors.length;
+    
     logger.info(`=== MANUAL TRIGGER SUMMARY ===`);
-    logger.info(`Sent: ${remindersSent.length}, Errors: ${errors.length}, Skipped: ${skipped.length}`);
+    logger.info(`Tours: ${results.tours.sent.length} sent, ${results.tours.errors.length} errors, ${results.tours.skipped.length} skipped`);
+    logger.info(`Cruise: ${results.cruise.sent.length} sent, ${results.cruise.errors.length} errors, ${results.cruise.skipped.length} skipped`);
+    logger.info(`Return: ${results.return.sent.length} sent, ${results.return.errors.length} errors, ${results.return.skipped.length} skipped`);
+    logger.info(`Tickets: ${results.tickets.sent.length} sent, ${results.tickets.errors.length} errors, ${results.tickets.skipped.length} skipped`);
+    logger.info(`Open Tickets: ${results.openTickets.sent.length} sent, ${results.openTickets.errors.length} errors`);
+    logger.info(`TOTAL: ${totalSent} sent, ${totalErrors} errors`);
     
-    if (remindersSent.length > 0) {
-      logger.info(`Successfully sent reminders: ${remindersSent.map(r => r.tour).join(', ')}`);
-    }
-    if (errors.length > 0) {
-      logger.error(`Failed reminders: ${JSON.stringify(errors)}`);
-    }
-    
-    return { sent: remindersSent, errors, skipped };
+    return {
+      sent: [...results.tours.sent, ...results.cruise.sent, ...results.return.sent, 
+             ...results.tickets.sent, ...results.openTickets.sent],
+      errors: [...results.tours.errors, ...results.cruise.errors, ...results.return.errors,
+               ...results.tickets.errors, ...results.openTickets.errors],
+      skipped: [...results.tours.skipped, ...results.cruise.skipped, ...results.return.skipped,
+                ...results.tickets.skipped],
+      breakdown: results,
+      message: totalSent === 0 && totalErrors === 0 
+        ? 'No reminders to send. Check: (1) upcoming items within reminder window, (2) staff email configured in Users'
+        : null
+    };
   } catch (error) {
     logger.error('Error in manualTrigger:', error);
     throw error;
