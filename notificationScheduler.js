@@ -159,24 +159,46 @@ async function getUpcomingTours() {
   try {
     const today = new Date().toISOString().split('T')[0];
     
+    // First, let's log total upcoming tours for debugging
+    const totalSql = `
+      SELECT COUNT(*) as total
+      FROM tours t
+      WHERE t.departure_date >= ?
+        AND t.status != 'tidak jalan'
+    `;
+    const totalRow = await db.get(totalSql, [today]);
+    logger.info(`Total upcoming tours (departure >= ${today}): ${totalRow?.total || 0}`);
+    
     const sql = `
       SELECT 
         t.*,
         r.region_name,
         u.username as staff_username,
-        u.email as staff_email
+        u.email as staff_email,
+        u.name as user_name
       FROM tours t
       LEFT JOIN regions r ON t.region_id = r.id
       LEFT JOIN users u ON t.staff_name = u.name
       WHERE t.departure_date >= ?
         AND t.status != 'tidak jalan'
-        AND u.email IS NOT NULL
-        AND u.email != ''
       ORDER BY t.departure_date ASC
     `;
 
     const rows = await db.all(sql, [today]);
-    return rows || [];
+    
+    // Log diagnostic info
+    const withEmail = rows.filter(r => r.staff_email && r.staff_email.trim() !== '');
+    const withoutEmail = rows.filter(r => !r.staff_email || r.staff_email.trim() === '');
+    
+    logger.info(`Tours with staff email: ${withEmail.length}, without email: ${withoutEmail.length}`);
+    
+    if (withoutEmail.length > 0) {
+      const staffNames = [...new Set(withoutEmail.map(r => r.staff_name).filter(Boolean))];
+      logger.warn(`Staff without email configured: ${staffNames.join(', ')}`);
+    }
+    
+    // Return only tours with email configured
+    return withEmail;
   } catch (err) {
     logger.error('Error getting upcoming tours:', err);
     return [];
@@ -233,10 +255,81 @@ function delay(ms) {
 
 /**
  * Manually trigger reminder check (for testing)
+ * This will send reminders for tours departing within the next 7 days
+ * regardless of whether they match the standard reminder days
  */
 async function manualTrigger() {
-  logger.info('Manual trigger: Checking for reminders...');
-  return await checkAndSendReminders();
+  logger.info('=== MANUAL TRIGGER: Starting reminder check ===');
+  
+  try {
+    // Use Jakarta timezone for consistent date calculations
+    const today = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta' }));
+    today.setHours(0, 0, 0, 0);
+    
+    // Get all upcoming tours
+    const tours = await getUpcomingTours();
+    
+    if (tours.length === 0) {
+      logger.info('No upcoming tours found with staff email configured');
+      return { sent: [], errors: [], message: 'No upcoming tours with staff email. Check user email settings.' };
+    }
+    
+    logger.info(`Found ${tours.length} upcoming tours with email`);
+    
+    const remindersSent = [];
+    const errors = [];
+    const skipped = [];
+    
+    for (const tour of tours) {
+      const departureDate = new Date(tour.departure_date);
+      departureDate.setHours(0, 0, 0, 0);
+      
+      const daysUntil = Math.ceil((departureDate - today) / (1000 * 60 * 60 * 24));
+      
+      // For manual trigger, send for any tour departing within 7 days
+      if (daysUntil <= 7 && daysUntil >= 0) {
+        // Check if reminder was already sent for this day
+        const alreadySent = await checkReminderSent(tour.id, daysUntil);
+        
+        if (!alreadySent) {
+          logger.info(`Sending ${daysUntil}-day reminder for tour ${tour.tour_code} to ${tour.staff_email}`);
+          
+          const result = await sendDepartureReminder(tour, daysUntil);
+          
+          if (result.success) {
+            await recordReminderSent(tour.id, daysUntil);
+            remindersSent.push({ tour: tour.tour_code, days: daysUntil, email: tour.staff_email });
+          } else {
+            errors.push({ tour: tour.tour_code, days: daysUntil, error: result.error });
+          }
+          
+          // Add delay between emails to avoid rate limiting
+          await delay(1000);
+        } else {
+          skipped.push({ tour: tour.tour_code, days: daysUntil, reason: 'already sent' });
+          logger.info(`Skipped: Reminder already sent for tour ${tour.tour_code} (${daysUntil} days)`);
+        }
+      } else {
+        skipped.push({ tour: tour.tour_code, days: daysUntil, reason: `too far (${daysUntil} days)` });
+      }
+    }
+    
+    // Log summary
+    logger.info(`=== MANUAL TRIGGER SUMMARY ===`);
+    logger.info(`Sent: ${remindersSent.length}, Errors: ${errors.length}, Skipped: ${skipped.length}`);
+    
+    if (remindersSent.length > 0) {
+      logger.info(`Successfully sent reminders: ${remindersSent.map(r => r.tour).join(', ')}`);
+    }
+    if (errors.length > 0) {
+      logger.error(`Failed reminders: ${JSON.stringify(errors)}`);
+    }
+    
+    return { sent: remindersSent, errors, skipped };
+  } catch (error) {
+    logger.error('Error in manualTrigger:', error);
+    throw error;
+  }
 }
 
 /**

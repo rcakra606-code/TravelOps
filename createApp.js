@@ -2958,12 +2958,15 @@ export async function createApp() {
     
     try {
       const result = await manualTrigger();
-      await logActivity(req.user.username, 'TRIGGER_REMINDERS', 'email', null, `Manual trigger: ${result.sent.length} sent, ${result.errors.length} errors`);
+      const message = result.message || null;
+      await logActivity(req.user.username, 'TRIGGER_REMINDERS', 'email', null, `Manual trigger: ${result.sent?.length || 0} sent, ${result.errors?.length || 0} errors`);
       
       res.json({
         success: true,
-        remindersSent: result.sent.length,
-        errors: result.errors.length,
+        remindersSent: result.sent?.length || 0,
+        errors: result.errors?.length || 0,
+        skipped: result.skipped?.length || 0,
+        message: message,
         details: result
       });
     } catch (err) {
