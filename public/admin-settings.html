@@ -955,119 +955,37 @@
 
       <!-- Email Settings Panel -->
       <div class="settings-panel" id="panel-email">
-        <div class="settings-section">
-          <h3>Email Configuration</h3>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Email Notifications</div>
-              <div class="setting-description">Enable email notifications</div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input type="checkbox" id="emailEnabled">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">SMTP Server</div>
-              <div class="setting-description">Mail server hostname</div>
-            </div>
-            <div class="setting-control">
-              <input type="text" id="smtpServer" placeholder="smtp.gmail.com">
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">SMTP Port</div>
-              <div class="setting-description">Port number (587 for TLS)</div>
-            </div>
-            <div class="setting-control">
-              <input type="number" id="smtpPort" value="587">
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Email Username</div>
-              <div class="setting-description">SMTP authentication username</div>
-            </div>
-            <div class="setting-control">
-              <input type="email" id="emailUser" placeholder="your@email.com">
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Email Password</div>
-              <div class="setting-description">SMTP authentication password</div>
-            </div>
-            <div class="setting-control">
-              <input type="password" id="emailPassword" placeholder="••••••••">
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">From Name</div>
-              <div class="setting-description">Sender display name</div>
-            </div>
-            <div class="setting-control">
-              <input type="text" id="fromName" placeholder="TravelOps Notifications">
-            </div>
+        <!-- Email Configuration Status -->
+        <div id="emailConfigStatus" style="padding: 20px; border-radius: 12px; margin-bottom: 24px; display: flex; align-items: center; gap: 16px;">
+          <span id="emailStatusIcon" style="font-size: 32px;">⏳</span>
+          <div>
+            <strong id="emailStatusTitle" style="font-size: 16px;">Checking email configuration...</strong>
+            <p id="emailStatusMessage" style="margin: 4px 0 0 0; color: #6b7280; font-size: 0.9rem;"></p>
           </div>
         </div>
 
         <div class="settings-section">
-          <h3>Notification Preferences</h3>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Tour Departure Reminders</div>
-              <div class="setting-description">Send reminders before tour departure (7, 3, 2, 1, 0 days)</div>
-            </div>
-            <div class="setting-control">
-              <select id="tourReminder">
-                <option value="0">Disabled</option>
-                <option value="7" selected>7 days before (Recommended)</option>
-                <option value="3">3 days before</option>
-                <option value="2">2 days before</option>
-                <option value="1">1 day before</option>
-              </select>
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Document Expiry Alerts</div>
-              <div class="setting-description">Alert when documents are expiring</div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input type="checkbox" id="docExpiryAlert" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Target Achievement Alerts</div>
-              <div class="setting-description">Notify when targets are met or missed</div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input type="checkbox" id="targetAlert" checked>
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
+          <h3>📧 Email Configuration</h3>
+          <div style="background: var(--bg-alt); padding: 16px; border-radius: 8px; margin-bottom: 16px;">
+            <p style="margin: 0 0 12px 0; color: var(--text-secondary);">
+              <strong>Note:</strong> Email configuration is set via environment variables on the server (Render).
+            </p>
+            <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">
+              Required variables: <code>SMTP_USER</code>, <code>SMTP_PASSWORD</code><br>
+              Optional: <code>SMTP_HOST</code> (default: smtp.gmail.com), <code>SMTP_PORT</code> (default: 587)
+            </p>
           </div>
         </div>
 
         <div class="settings-section">
-          <h3>Email Actions</h3>
+          <h3>🔧 Email Actions</h3>
           <div class="setting-row">
             <div class="setting-info">
               <div class="setting-label">Test Email</div>
               <div class="setting-description">Send a test email to verify SMTP configuration</div>
             </div>
-            <div class="setting-control">
-              <input type="email" id="testEmailAddress" placeholder="test@email.com" style="margin-right: 10px;">
+            <div class="setting-control" style="display: flex; gap: 10px;">
+              <input type="email" id="testEmailAddress" placeholder="test@email.com">
               <button class="btn-reset" onclick="testEmail()">📧 Send Test</button>
             </div>
           </div>
@@ -1096,9 +1014,7 @@
           <div id="reminderStatsContent">Loading...</div>
         </div>
 
-        <div class="settings-actions">
-          <button class="btn-save" onclick="saveEmailSettings()">💾 Save Settings</button>
-        </div>
+        <div id="testEmailResult" style="display:none; margin-top: 16px;"></div>
       </div>
 
       <!-- Backup Panel -->
@@ -1448,8 +1364,49 @@
         if (tab.dataset.tab === 'users') loadUsers();
         if (tab.dataset.tab === 'regions') loadRegions();
         if (tab.dataset.tab === 'backup') loadBackups();
+        if (tab.dataset.tab === 'email') checkEmailConfig();
       });
     });
+
+    // ============ EMAIL CONFIGURATION STATUS ============
+    async function checkEmailConfig() {
+      const statusDiv = document.getElementById('emailConfigStatus');
+      const statusIcon = document.getElementById('emailStatusIcon');
+      const statusTitle = document.getElementById('emailStatusTitle');
+      const statusMsg = document.getElementById('emailStatusMessage');
+      
+      if (!statusDiv) return;
+      
+      statusIcon.textContent = '⏳';
+      statusTitle.textContent = 'Checking email configuration...';
+      statusMsg.textContent = '';
+      statusDiv.style.background = 'var(--bg-alt)';
+      statusDiv.style.border = '1px solid var(--border-light)';
+      
+      try {
+        const response = await fetchJson('/api/email/status');
+        
+        if (response.configured) {
+          statusDiv.style.background = '#ecfdf5';
+          statusDiv.style.border = '1px solid #10b981';
+          statusIcon.textContent = '✅';
+          statusTitle.textContent = 'Email Service Configured';
+          statusMsg.textContent = 'SMTP is properly configured and ready to send emails.';
+        } else {
+          statusDiv.style.background = '#fef2f2';
+          statusDiv.style.border = '1px solid #ef4444';
+          statusIcon.textContent = '❌';
+          statusTitle.textContent = 'Email Not Configured';
+          statusMsg.textContent = 'Set SMTP_USER and SMTP_PASSWORD environment variables on Render.';
+        }
+      } catch (err) {
+        statusDiv.style.background = '#fef3c7';
+        statusDiv.style.border = '1px solid #f59e0b';
+        statusIcon.textContent = '⚠️';
+        statusTitle.textContent = 'Unable to check status';
+        statusMsg.textContent = err.message || 'Could not connect to email status API';
+      }
+    }
     
     // ============ USER MANAGEMENT ============
     let allUsersData = [];
@@ -2124,25 +2081,10 @@
       }
     }
 
-    function saveEmailSettings() {
-      const emailSettings = {
-        enabled: document.getElementById('emailEnabled').checked,
-        smtpServer: document.getElementById('smtpServer').value,
-        smtpPort: document.getElementById('smtpPort').value,
-        user: document.getElementById('emailUser').value,
-        password: document.getElementById('emailPassword').value,
-        fromName: document.getElementById('fromName').value,
-        tourReminder: document.getElementById('tourReminder').value,
-        docExpiryAlert: document.getElementById('docExpiryAlert').checked,
-        targetAlert: document.getElementById('targetAlert').checked
-      };
-      
-      localStorage.setItem('emailSettings', JSON.stringify(emailSettings));
-      toast.success('Email settings saved!');
-    }
-
     async function testEmail() {
       const email = document.getElementById('testEmailAddress').value;
+      const resultDiv = document.getElementById('testEmailResult');
+      
       if (!email) {
         toast.warning('Please enter an email address');
         return;
@@ -2152,16 +2094,49 @@
       try {
         const response = await fetchJson('/api/email/test', {
           method: 'POST',
-          body: JSON.stringify({ email })
+          body: { email }
         });
         
         if (response.success) {
           toast.success('Test email sent! Check your inbox.');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+              <div style="padding: 16px; background: #ecfdf5; border-radius: 8px; border: 1px solid #10b981;">
+                <strong style="color: #065f46;">✅ Test email sent successfully!</strong>
+                <p style="margin: 8px 0 0 0; color: #047857; font-size: 0.9rem;">
+                  Check ${email} for the test message.
+                </p>
+              </div>
+            `;
+          }
         } else {
           toast.error(response.error || 'Failed to send test email');
+          if (resultDiv) {
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+              <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #ef4444;">
+                <strong style="color: #991b1b;">❌ Failed to send test email</strong>
+                <p style="margin: 8px 0 0 0; color: #b91c1c; font-size: 0.9rem;">
+                  ${response.error || 'Unknown error'}
+                </p>
+              </div>
+            `;
+          }
         }
       } catch (err) {
         toast.error('Failed to send test email: ' + (err.message || 'Server error'));
+        if (resultDiv) {
+          resultDiv.style.display = 'block';
+          resultDiv.innerHTML = `
+            <div style="padding: 16px; background: #fef2f2; border-radius: 8px; border: 1px solid #ef4444;">
+              <strong style="color: #991b1b;">❌ Failed to send test email</strong>
+              <p style="margin: 8px 0 0 0; color: #b91c1c; font-size: 0.9rem;">
+                ${err.message || 'Server error'}
+              </p>
+            </div>
+          `;
+        }
       }
     }
 
