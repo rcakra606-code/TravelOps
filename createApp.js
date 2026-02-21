@@ -1188,6 +1188,170 @@ export async function createApp() {
   }
 
   // ===============================================
+  // Sales Targets API (merged Sales & Targets)
+  // ===============================================
+  
+  // Get sales targets for a specific month/year
+  app.get('/api/sales-targets', authMiddleware(), async (req, res) => {
+    try {
+      const { month, year } = req.query;
+      const isPg = db.dialect === 'postgres';
+      
+      let sql = 'SELECT * FROM sales_targets';
+      let params = [];
+      let conditions = [];
+      
+      if (month) {
+        conditions.push(isPg ? `month=$${conditions.length + 1}` : 'month=?');
+        params.push(parseInt(month));
+      }
+      if (year) {
+        conditions.push(isPg ? `year=$${conditions.length + 1}` : 'year=?');
+        params.push(parseInt(year));
+      }
+      
+      // For basic users, only show their own data
+      if (req.user.type === 'basic') {
+        conditions.push(isPg ? `staff_name=$${conditions.length + 1}` : 'staff_name=?');
+        params.push(req.user.name);
+      }
+      
+      if (conditions.length > 0) {
+        sql += ' WHERE ' + conditions.join(' AND ');
+      }
+      
+      sql += ' ORDER BY staff_name ASC';
+      
+      const rows = await db.all(sql, params);
+      res.json(rows);
+    } catch (error) {
+      console.error('GET /api/sales-targets error:', error);
+      res.status(500).json({ error: 'Failed to fetch sales targets' });
+    }
+  });
+  
+  // Get yearly sales targets data (for charts)
+  app.get('/api/sales-targets/yearly', authMiddleware(), async (req, res) => {
+    try {
+      const { year } = req.query;
+      const isPg = db.dialect === 'postgres';
+      
+      let sql = 'SELECT * FROM sales_targets';
+      let params = [];
+      
+      if (year) {
+        sql += isPg ? ' WHERE year=$1' : ' WHERE year=?';
+        params.push(parseInt(year));
+      }
+      
+      // For basic users, only show their own data
+      if (req.user.type === 'basic') {
+        sql += params.length > 0 ? ' AND ' : ' WHERE ';
+        sql += isPg ? `staff_name=$${params.length + 1}` : 'staff_name=?';
+        params.push(req.user.name);
+      }
+      
+      sql += ' ORDER BY month ASC, staff_name ASC';
+      
+      const rows = await db.all(sql, params);
+      res.json(rows);
+    } catch (error) {
+      console.error('GET /api/sales-targets/yearly error:', error);
+      res.status(500).json({ error: 'Failed to fetch yearly sales targets' });
+    }
+  });
+  
+  // Create sales target record
+  app.post('/api/sales-targets', authMiddleware(), async (req, res) => {
+    try {
+      // Only admin and semi-admin can add
+      if (req.user.type === 'basic') {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const { staff_name, month, year, target_sales, target_profit, achievement_sales, achievement_profit } = req.body;
+      
+      if (!staff_name || !month || !year) {
+        return res.status(400).json({ error: 'Staff name, month, and year are required' });
+      }
+      
+      // Check for duplicate entry
+      const isPg = db.dialect === 'postgres';
+      const existing = await db.get(
+        isPg 
+          ? 'SELECT id FROM sales_targets WHERE staff_name=$1 AND month=$2 AND year=$3'
+          : 'SELECT id FROM sales_targets WHERE staff_name=? AND month=? AND year=?',
+        [staff_name, month, year]
+      );
+      
+      if (existing) {
+        return res.status(400).json({ error: 'A record for this staff/month/year already exists' });
+      }
+      
+      const result = await db.run(
+        isPg
+          ? 'INSERT INTO sales_targets (staff_name, month, year, target_sales, target_profit, achievement_sales, achievement_profit) VALUES ($1, $2, $3, $4, $5, $6, $7)'
+          : 'INSERT INTO sales_targets (staff_name, month, year, target_sales, target_profit, achievement_sales, achievement_profit) VALUES (?, ?, ?, ?, ?, ?, ?)',
+        [staff_name, month, year, target_sales || 0, target_profit || 0, achievement_sales || 0, achievement_profit || 0]
+      );
+      
+      await logActivity(req.user.username, 'CREATE', 'sales_targets', result.lastID, JSON.stringify(req.body));
+      res.json({ id: result.lastID, created: true });
+    } catch (error) {
+      console.error('POST /api/sales-targets error:', error);
+      res.status(500).json({ error: 'Failed to create sales target' });
+    }
+  });
+  
+  // Update sales target record
+  app.put('/api/sales-targets/:id', authMiddleware(), async (req, res) => {
+    try {
+      // Only admin and semi-admin can update
+      if (req.user.type === 'basic') {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const { id } = req.params;
+      const { staff_name, target_sales, target_profit, achievement_sales, achievement_profit } = req.body;
+      
+      const isPg = db.dialect === 'postgres';
+      const now = new Date().toISOString();
+      
+      await db.run(
+        isPg
+          ? 'UPDATE sales_targets SET staff_name=$1, target_sales=$2, target_profit=$3, achievement_sales=$4, achievement_profit=$5, updated_at=$6 WHERE id=$7'
+          : 'UPDATE sales_targets SET staff_name=?, target_sales=?, target_profit=?, achievement_sales=?, achievement_profit=?, updated_at=? WHERE id=?',
+        [staff_name, target_sales || 0, target_profit || 0, achievement_sales || 0, achievement_profit || 0, now, id]
+      );
+      
+      await logActivity(req.user.username, 'UPDATE', 'sales_targets', id, JSON.stringify(req.body));
+      res.json({ updated: true });
+    } catch (error) {
+      console.error('PUT /api/sales-targets/:id error:', error);
+      res.status(500).json({ error: 'Failed to update sales target' });
+    }
+  });
+  
+  // Delete sales target record
+  app.delete('/api/sales-targets/:id', authMiddleware(), async (req, res) => {
+    try {
+      // Only admin and semi-admin can delete
+      if (req.user.type === 'basic') {
+        return res.status(403).json({ error: 'Unauthorized' });
+      }
+      
+      const { id } = req.params;
+      await db.run('DELETE FROM sales_targets WHERE id=?', [id]);
+      
+      await logActivity(req.user.username, 'DELETE', 'sales_targets', id, 'Record deleted');
+      res.json({ deleted: true });
+    } catch (error) {
+      console.error('DELETE /api/sales-targets/:id error:', error);
+      res.status(500).json({ error: 'Failed to delete sales target' });
+    }
+  });
+
+  // ===============================================
   // Tour Passengers API (for data_version 2 tours)
   // ===============================================
   

@@ -409,6 +409,20 @@ async function createSchema(db) {
     updated_by TEXT
   )`);
 
+  // Sales Targets - combined target and achievement tracking per staff per month
+  await db.run(`CREATE TABLE IF NOT EXISTS sales_targets (
+    id ${idCol},
+    staff_name TEXT NOT NULL,
+    month INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    target_sales ${num()} DEFAULT 0,
+    target_profit ${num()} DEFAULT 0,
+    achievement_sales ${num()} DEFAULT 0,
+    achievement_profit ${num()} DEFAULT 0,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts} ${createdDefault}
+  )`);
+
   // Seed admin if no users
   const count = await db.get('SELECT COUNT(*) AS c FROM users');
   if (!count || count.c === 0 || count.count === 0) {

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sales Report Dashboard - TravelOps</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/dark-mode.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/filters.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/dashboard-customization.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/form-enhancements.css">
+  <link rel="stylesheet" href="/css/crud-enhancements.css">
+  <link rel="stylesheet" href="/css/filter-modal.css">
+  <link rel="stylesheet" href="/css/ui-enhancements.css">
+  <link rel="stylesheet" href="/css/sidebar-groups.css">
+  <link rel="stylesheet" href="/css/dashboard-shared.css">
+  <link rel="stylesheet" href="/css/accessibility.css">
+  <link rel="stylesheet" href="/css/professional-polish.css">
+  <link rel="stylesheet" href="/css/micro-interactions.css">
+  <script src="/js/theme-toggle.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    .report-header {
+      background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
+      padding: 24px;
+      border-radius: 12px;
+      color: white;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+    .report-header h1 {
+      margin: 0;
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .report-header p {
+      margin: 8px 0 0;
+      opacity: 0.9;
+    }
+    .period-selector {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      background: var(--bg-alt);
+      border-radius: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .period-selector label {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .period-selector select {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 2px solid var(--border-light);
+      font-size: 14px;
+      font-weight: 500;
+      min-width: 140px;
+      background: var(--card);
+      color: var(--text-primary);
+    }
+    .sales-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    .sales-table thead {
+      background: #ffeb3b;
+    }
+    .sales-table th {
+      padding: 12px 8px;
+      text-align: center;
+      font-weight: 700;
+      color: #000;
+      border: 1px solid #ccc;
+      white-space: nowrap;
+    }
+    .sales-table td {
+      padding: 10px 8px;
+      text-align: right;
+      border: 1px solid #ddd;
+      background: #fffde7;
+    }
+    .sales-table td:first-child {
+      text-align: left;
+      font-weight: 600;
+      background: #fff9c4;
+    }
+    .sales-table tr:last-child td {
+      background: #ffeb3b;
+      font-weight: 700;
+    }
+    .percentage-cell {
+      font-weight: 600;
+    }
+    .percentage-low { background: #ef5350 !important; color: white; }
+    .percentage-medium { background: #ffca28 !important; color: #000; }
+    .percentage-high { background: #66bb6a !important; color: white; }
+    .margin-cell {
+      font-weight: 600;
+    }
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 24px;
+    }
+    @media (max-width: 1024px) {
+      .charts-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .chart-card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .chart-card h3 {
+      margin: 0 0 16px;
+      font-size: 16px;
+      color: var(--text-primary);
+    }
+    .staff-filter {
+      margin-bottom: 16px;
+    }
+    .add-btn {
+      background: linear-gradient(135deg, #4caf50, #45a049);
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .add-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+    }
+    .action-btns {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+    }
+    .action-btns button {
+      padding: 6px 10px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .edit-btn { background: #2196f3; color: white; }
+    .delete-btn { background: #f44336; color: white; }
+    .total-row td {
+      background: #ffeb3b !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+    }
+  </style>
+</head>
+<body>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<div class="mobile-overlay" id="mobileOverlay"></div>
+<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <!-- Main Dashboard -->
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      
+      <!-- Product Input Group -->
+      <div class="nav-group" id="groupProductInput">
+        <button class="nav-group-header" data-group="product-input">
+          <span class="group-icon">📦</span>
+          <span class="group-title">Product Input</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/my-tours.html">📋 My Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+        </div>
+      </div>
+      
+      <!-- Productivity Group -->
+      <div class="nav-group" id="groupProductivity">
+        <button class="nav-group-header" data-group="productivity">
+          <span class="group-icon">📊</span>
+          <span class="group-title">Productivity</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/sales-targets-dashboard.html" class="active">💰 Sales Report</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
+        </div>
+      </div>
+      
+      <!-- Corporate Group -->
+      <div class="nav-group" id="groupCorporate">
+        <button class="nav-group-header" data-group="corporate">
+          <span class="group-icon">🏢</span>
+          <span class="group-title">Corporate</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+        </div>
+      </div>
+      
+      <!-- Administration Group -->
+      <div class="nav-group" id="groupAdmin">
+        <button class="nav-group-header" data-group="administration">
+          <span class="group-icon">⚙️</span>
+          <span class="group-title">Administration</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+        </div>
+      </div>
+      
+      <hr class="nav-divider">
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- Report Header -->
+    <div class="report-header">
+      <h1>📊 REPORT SALES CABANG <span id="branchName">KELAPA GADING</span></h1>
+      <p>Sales Performance & Target Achievement Report</p>
+    </div>
+
+    <!-- Period Selector -->
+    <div class="period-selector">
+      <label>📅 PERIODE:</label>
+      <select id="periodMonth">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="periodYear">
+        <option value="2026">2026</option>
+        <option value="2025">2025</option>
+        <option value="2024">2024</option>
+      </select>
+      <button id="loadDataBtn" class="btn btn-primary">🔄 Load Data</button>
+      <button id="addRecordBtn" class="add-btn" style="display: none;">➕ Add Record</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="card">
+      <div style="overflow-x: auto;">
+        <table class="sales-table">
+          <thead>
+            <tr>
+              <th>NAMA TC</th>
+              <th>TARGET SALES</th>
+              <th>TARGET PROFIT</th>
+              <th>JUMLAH SALES (BULANAN)</th>
+              <th>JUMLAH PROFIT (BULANAN)</th>
+              <th>PERSENTASE SALES</th>
+              <th>PERSENTASE PROFIT</th>
+              <th>MARGIN</th>
+              <th id="actionsHeader" style="display: none;">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="salesTableBody">
+            <tr><td colspan="9" style="text-align: center; padding: 40px;">Loading data...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="charts-grid">
+      <!-- Branch Monthly Achievement Chart -->
+      <div class="chart-card">
+        <h3>📈 Monthly Achievement - Branch Total</h3>
+        <canvas id="branchChart"></canvas>
+      </div>
+
+      <!-- Staff Achievement Chart -->
+      <div class="chart-card">
+        <h3>👤 Monthly Achievement - Per Staff</h3>
+        <div class="staff-filter">
+          <select id="staffFilter" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">
+            <option value="">Select Staff...</option>
+          </select>
+        </div>
+        <canvas id="staffChart"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Modal for Add/Edit -->
+<div id="modal" class="modal">
+  <div class="modal-card" style="max-width: 600px;">
+    <div class="modal-header">
+      <div id="modalTitle" class="modal-title">Add Sales Record</div>
+      <button type="button" class="modal-close" id="modalClose">&times;</button>
+    </div>
+    <form id="modalForm" class="modal-form">
+      <div id="modalBody" class="modal-body">
+        <div class="form-group">
+          <label for="staffName">Staff Name (Nama TC) *</label>
+          <select id="staffName" name="staff_name" required>
+            <option value="">Select Staff...</option>
+          </select>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label for="targetSales">Target Sales *</label>
+            <input type="number" id="targetSales" name="target_sales" required min="0" step="1" placeholder="e.g., 1000000000">
+          </div>
+          <div class="form-group">
+            <label for="targetProfit">Target Profit *</label>
+            <input type="number" id="targetProfit" name="target_profit" required min="0" step="1" placeholder="e.g., 50000000">
+          </div>
+        </div>
+        <div class="form-row" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+          <div class="form-group">
+            <label for="achievementSales">Achievement Sales *</label>
+            <input type="number" id="achievementSales" name="achievement_sales" required min="0" step="1" placeholder="e.g., 530923000">
+          </div>
+          <div class="form-group">
+            <label for="achievementProfit">Achievement Profit *</label>
+            <input type="number" id="achievementProfit" name="achievement_profit" required min="0" step="1" placeholder="e.g., 26614382">
+          </div>
+        </div>
+        <input type="hidden" id="recordId" name="id">
+        <input type="hidden" id="recordMonth" name="month">
+        <input type="hidden" id="recordYear" name="year">
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="modalCancel" class="btn btn-secondary">Cancel</button>
+        <button type="submit" id="modalSave" class="btn btn-primary">Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/confirm-dialog.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+<script src="/js/sidebar-groups.js"></script>
+
+<script>
+/* =========================================================
+   SALES TARGETS DASHBOARD
+   ========================================================= */
+(function() {
+  'use strict';
+  
+  // State
+  let salesData = [];
+  let usersData = [];
+  let currentUser = null;
+  let isAdmin = false;
+  let isSemiAdmin = false;
+  let branchChart = null;
+  let staffChart = null;
+  
+  // Elements
+  const el = id => document.getElementById(id);
+  
+  // Format currency
+  function formatCurrency(value) {
+    return new Intl.NumberFormat('id-ID').format(value || 0);
+  }
+  
+  // Get percentage class based on value
+  function getPercentageClass(value) {
+    if (value >= 80) return 'percentage-high';
+    if (value >= 50) return 'percentage-medium';
+    return 'percentage-low';
+  }
+  
+  // Get margin class
+  function getMarginClass(value) {
+    if (value >= 4) return 'percentage-high';
+    if (value >= 3) return 'percentage-medium';
+    return 'percentage-low';
+  }
+  
+  // Initialize user info
+  async function initUserInfo() {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        window.location.href = '/login.html';
+        return;
+      }
+      
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      currentUser = payload;
+      isAdmin = payload.type === 'admin';
+      isSemiAdmin = payload.type === 'semi-admin';
+      
+      el('userName').textContent = payload.name || payload.username;
+      el('userRole').textContent = payload.type || 'user';
+      
+      // Show admin controls
+      if (isAdmin || isSemiAdmin) {
+        el('addRecordBtn').style.display = 'flex';
+        el('actionsHeader').style.display = '';
+        
+        if (isAdmin) {
+          const adminLink = el('adminSettingsLink');
+          if (adminLink) adminLink.style.display = 'block';
+        }
+      }
+    } catch (e) {
+      console.error('Auth error:', e);
+      window.location.href = '/login.html';
+    }
+  }
+  
+  // Load users for dropdown
+  async function loadUsers() {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch('/api/users', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        usersData = await res.json();
+        populateStaffDropdowns();
+      }
+    } catch (e) {
+      console.error('Failed to load users:', e);
+    }
+  }
+  
+  // Populate staff dropdowns
+  function populateStaffDropdowns() {
+    const staffSelect = el('staffName');
+    const staffFilter = el('staffFilter');
+    
+    staffSelect.innerHTML = '<option value="">Select Staff...</option>';
+    staffFilter.innerHTML = '<option value="">All Staff</option>';
+    
+    usersData.forEach(user => {
+      const opt1 = document.createElement('option');
+      opt1.value = user.name;
+      opt1.textContent = user.name;
+      staffSelect.appendChild(opt1);
+      
+      const opt2 = document.createElement('option');
+      opt2.value = user.name;
+      opt2.textContent = user.name;
+      staffFilter.appendChild(opt2);
+    });
+    
+    // For basic users, auto-select their name
+    if (!isAdmin && !isSemiAdmin && currentUser) {
+      staffFilter.value = currentUser.name;
+      staffFilter.disabled = true;
+    }
+  }
+  
+  // Load sales data
+  async function loadSalesData() {
+    const month = parseInt(el('periodMonth').value);
+    const year = parseInt(el('periodYear').value);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/sales-targets?month=${month}&year=${year}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        salesData = await res.json();
+        renderTable();
+        loadChartData();
+      } else {
+        // If API doesn't exist yet, use empty data
+        salesData = [];
+        renderTable();
+      }
+    } catch (e) {
+      console.error('Failed to load sales data:', e);
+      salesData = [];
+      renderTable();
+    }
+  }
+  
+  // Render table
+  function renderTable() {
+    const tbody = el('salesTableBody');
+    const month = parseInt(el('periodMonth').value);
+    const year = parseInt(el('periodYear').value);
+    
+    if (salesData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; padding: 40px; color: #666;">
+        No data for this period. ${isAdmin || isSemiAdmin ? 'Click "Add Record" to add data.' : ''}
+      </td></tr>`;
+      return;
+    }
+    
+    // Filter data for basic users
+    let displayData = salesData;
+    if (!isAdmin && !isSemiAdmin && currentUser) {
+      displayData = salesData.filter(d => d.staff_name === currentUser.name);
+    }
+    
+    // Calculate totals
+    let totalTargetSales = 0;
+    let totalTargetProfit = 0;
+    let totalAchievementSales = 0;
+    let totalAchievementProfit = 0;
+    
+    const rows = displayData.map(d => {
+      const targetSales = parseFloat(d.target_sales) || 0;
+      const targetProfit = parseFloat(d.target_profit) || 0;
+      const achievementSales = parseFloat(d.achievement_sales) || 0;
+      const achievementProfit = parseFloat(d.achievement_profit) || 0;
+      
+      const percentSales = targetSales > 0 ? (achievementSales / targetSales * 100) : 0;
+      const percentProfit = targetProfit > 0 ? (achievementProfit / targetProfit * 100) : 0;
+      const margin = achievementSales > 0 ? (achievementProfit / achievementSales * 100) : 0;
+      
+      totalTargetSales += targetSales;
+      totalTargetProfit += targetProfit;
+      totalAchievementSales += achievementSales;
+      totalAchievementProfit += achievementProfit;
+      
+      const actionsCell = (isAdmin || isSemiAdmin) ? `
+        <td style="text-align: center; background: #fff9c4;">
+          <div class="action-btns">
+            <button class="edit-btn" onclick="editRecord(${d.id})">✏️</button>
+            <button class="delete-btn" onclick="deleteRecord(${d.id})">🗑️</button>
+          </div>
+        </td>
+      ` : '';
+      
+      return `
+        <tr>
+          <td>${d.staff_name}</td>
+          <td>${formatCurrency(targetSales)}</td>
+          <td>${formatCurrency(targetProfit)}</td>
+          <td>${formatCurrency(achievementSales)}</td>
+          <td>${formatCurrency(achievementProfit)}</td>
+          <td class="percentage-cell ${getPercentageClass(percentSales)}">${percentSales.toFixed(2)}%</td>
+          <td class="percentage-cell ${getPercentageClass(percentProfit)}">${percentProfit.toFixed(2)}%</td>
+          <td class="margin-cell ${getMarginClass(margin)}">${margin.toFixed(2)}%</td>
+          ${actionsCell}
+        </tr>
+      `;
+    });
+    
+    // Add total row
+    const totalPercentSales = totalTargetSales > 0 ? (totalAchievementSales / totalTargetSales * 100) : 0;
+    const totalPercentProfit = totalTargetProfit > 0 ? (totalAchievementProfit / totalTargetProfit * 100) : 0;
+    const totalMargin = totalAchievementSales > 0 ? (totalAchievementProfit / totalAchievementSales * 100) : 0;
+    
+    const totalActionsCell = (isAdmin || isSemiAdmin) ? '<td style="background: #ffeb3b;"></td>' : '';
+    
+    rows.push(`
+      <tr class="total-row">
+        <td>TOTAL</td>
+        <td>${formatCurrency(totalTargetSales)}</td>
+        <td>${formatCurrency(totalTargetProfit)}</td>
+        <td>${formatCurrency(totalAchievementSales)}</td>
+        <td>${formatCurrency(totalAchievementProfit)}</td>
+        <td class="percentage-cell ${getPercentageClass(totalPercentSales)}">${totalPercentSales.toFixed(2)}%</td>
+        <td class="percentage-cell ${getPercentageClass(totalPercentProfit)}">${totalPercentProfit.toFixed(2)}%</td>
+        <td class="margin-cell ${getMarginClass(totalMargin)}">${totalMargin.toFixed(2)}%</td>
+        ${totalActionsCell}
+      </tr>
+    `);
+    
+    tbody.innerHTML = rows.join('');
+  }
+  
+  // Load chart data
+  async function loadChartData() {
+    const year = parseInt(el('periodYear').value);
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/sales-targets/yearly?year=${year}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const yearlyData = await res.json();
+        renderBranchChart(yearlyData);
+        renderStaffChart(yearlyData);
+      } else {
+        // Use current data for charts
+        renderBranchChart([]);
+        renderStaffChart([]);
+      }
+    } catch (e) {
+      console.error('Failed to load chart data:', e);
+      renderBranchChart([]);
+      renderStaffChart([]);
+    }
+  }
+  
+  // Render branch chart
+  function renderBranchChart(data) {
+    const ctx = el('branchChart').getContext('2d');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Aggregate by month
+    const monthlyData = {};
+    months.forEach((m, i) => {
+      monthlyData[i + 1] = { targetSales: 0, achievementSales: 0 };
+    });
+    
+    data.forEach(d => {
+      const month = d.month;
+      if (monthlyData[month]) {
+        monthlyData[month].targetSales += parseFloat(d.target_sales) || 0;
+        monthlyData[month].achievementSales += parseFloat(d.achievement_sales) || 0;
+      }
+    });
+    
+    const achievementPercent = months.map((_, i) => {
+      const target = monthlyData[i + 1].targetSales;
+      const achievement = monthlyData[i + 1].achievementSales;
+      return target > 0 ? (achievement / target * 100) : 0;
+    });
+    
+    if (branchChart) branchChart.destroy();
+    
+    branchChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [{
+          label: 'Achievement %',
+          data: achievementPercent,
+          backgroundColor: achievementPercent.map(v => v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350'),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => `Achievement: ${ctx.raw.toFixed(1)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 150,
+            ticks: {
+              callback: v => v + '%'
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Render staff chart
+  function renderStaffChart(data) {
+    const ctx = el('staffChart').getContext('2d');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const selectedStaff = el('staffFilter').value;
+    
+    // Filter by staff if selected
+    let filteredData = data;
+    if (selectedStaff) {
+      filteredData = data.filter(d => d.staff_name === selectedStaff);
+    }
+    
+    // Aggregate by month for selected staff
+    const monthlyData = {};
+    months.forEach((m, i) => {
+      monthlyData[i + 1] = { targetSales: 0, achievementSales: 0 };
+    });
+    
+    filteredData.forEach(d => {
+      const month = d.month;
+      if (monthlyData[month]) {
+        monthlyData[month].targetSales += parseFloat(d.target_sales) || 0;
+        monthlyData[month].achievementSales += parseFloat(d.achievement_sales) || 0;
+      }
+    });
+    
+    const achievementPercent = months.map((_, i) => {
+      const target = monthlyData[i + 1].targetSales;
+      const achievement = monthlyData[i + 1].achievementSales;
+      return target > 0 ? (achievement / target * 100) : 0;
+    });
+    
+    if (staffChart) staffChart.destroy();
+    
+    staffChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [{
+          label: selectedStaff || 'All Staff',
+          data: achievementPercent,
+          borderColor: '#2196f3',
+          backgroundColor: 'rgba(33, 150, 243, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointRadius: 6,
+          pointBackgroundColor: achievementPercent.map(v => v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350')
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true },
+          tooltip: {
+            callbacks: {
+              label: ctx => `Achievement: ${ctx.raw.toFixed(1)}%`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            max: 150,
+            ticks: {
+              callback: v => v + '%'
+            }
+          }
+        }
+      }
+    });
+  }
+  
+  // Modal functions
+  function openModal(title = 'Add Sales Record') {
+    el('modalTitle').textContent = title;
+    el('modal').classList.add('open');
+    
+    const month = parseInt(el('periodMonth').value);
+    const year = parseInt(el('periodYear').value);
+    el('recordMonth').value = month;
+    el('recordYear').value = year;
+  }
+  
+  function closeModal() {
+    el('modal').classList.remove('open');
+    el('modalForm').reset();
+    el('recordId').value = '';
+  }
+  
+  // Edit record
+  window.editRecord = function(id) {
+    const record = salesData.find(d => d.id === id);
+    if (!record) return;
+    
+    el('staffName').value = record.staff_name;
+    el('targetSales').value = record.target_sales;
+    el('targetProfit').value = record.target_profit;
+    el('achievementSales').value = record.achievement_sales;
+    el('achievementProfit').value = record.achievement_profit;
+    el('recordId').value = record.id;
+    
+    openModal('Edit Sales Record');
+  };
+  
+  // Delete record
+  window.deleteRecord = async function(id) {
+    if (!confirm('Are you sure you want to delete this record?')) return;
+    
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`/api/sales-targets/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        window.toast?.success('Record deleted successfully');
+        loadSalesData();
+      } else {
+        window.toast?.error('Failed to delete record');
+      }
+    } catch (e) {
+      console.error('Delete error:', e);
+      window.toast?.error('Failed to delete record');
+    }
+  };
+  
+  // Save record
+  async function saveRecord(e) {
+    e.preventDefault();
+    
+    const id = el('recordId').value;
+    const data = {
+      staff_name: el('staffName').value,
+      target_sales: parseFloat(el('targetSales').value),
+      target_profit: parseFloat(el('targetProfit').value),
+      achievement_sales: parseFloat(el('achievementSales').value),
+      achievement_profit: parseFloat(el('achievementProfit').value),
+      month: parseInt(el('recordMonth').value),
+      year: parseInt(el('recordYear').value)
+    };
+    
+    try {
+      const token = localStorage.getItem('token');
+      const url = id ? `/api/sales-targets/${id}` : '/api/sales-targets';
+      const method = id ? 'PUT' : 'POST';
+      
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+      
+      if (res.ok) {
+        window.toast?.success(id ? 'Record updated successfully' : 'Record added successfully');
+        closeModal();
+        loadSalesData();
+      } else {
+        const err = await res.json();
+        window.toast?.error(err.error || 'Failed to save record');
+      }
+    } catch (e) {
+      console.error('Save error:', e);
+      window.toast?.error('Failed to save record');
+    }
+  }
+  
+  // Initialize
+  document.addEventListener('DOMContentLoaded', async () => {
+    await initUserInfo();
+    await loadUsers();
+    
+    // Set current month/year
+    const now = new Date();
+    el('periodMonth').value = now.getMonth() + 1;
+    el('periodYear').value = now.getFullYear();
+    
+    // Load initial data
+    loadSalesData();
+    
+    // Event listeners
+    el('loadDataBtn').addEventListener('click', loadSalesData);
+    el('addRecordBtn').addEventListener('click', () => openModal());
+    el('modalClose').addEventListener('click', closeModal);
+    el('modalCancel').addEventListener('click', closeModal);
+    el('modalForm').addEventListener('submit', saveRecord);
+    el('staffFilter').addEventListener('change', loadChartData);
+    
+    // Close modal on overlay click
+    el('modal').addEventListener('click', (e) => {
+      if (e.target === el('modal')) closeModal();
+    });
+  });
+})();
+</script>
+
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/ui-enhancements.js"></script>
+<script src="/js/keyboard-help.js"></script>
+<script src="/js/error-monitoring.js"></script>
+</body>
+</html>
