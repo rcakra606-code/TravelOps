@@ -361,21 +361,44 @@
 
     <!-- Charts Section -->
     <div class="charts-grid">
-      <!-- Branch Monthly Achievement Chart -->
+      <!-- Sales Achievement vs Target Chart -->
       <div class="chart-card">
-        <h3>📈 Monthly Achievement - Branch Total</h3>
-        <canvas id="branchChart"></canvas>
+        <h3>📈 Sales Achievement vs Target (Monthly)</h3>
+        <canvas id="salesChart"></canvas>
       </div>
 
-      <!-- Staff Achievement Chart -->
+      <!-- Profit Achievement vs Target Chart -->
       <div class="chart-card">
-        <h3>👤 Monthly Achievement - Per Staff</h3>
+        <h3>💰 Profit Achievement vs Target (Monthly)</h3>
+        <canvas id="profitChart"></canvas>
+      </div>
+
+      <!-- Margin Chart -->
+      <div class="chart-card">
+        <h3>📊 Margin % (Monthly)</h3>
+        <canvas id="marginChart"></canvas>
+      </div>
+
+      <!-- Best Staff of the Month -->
+      <div class="chart-card">
+        <h3>🏆 Best Staff of the Month</h3>
         <div class="staff-filter">
-          <select id="staffFilter" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">
-            <option value="">Select Staff...</option>
+          <select id="bestStaffMonth" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">
+            <option value="1">January</option>
+            <option value="2">February</option>
+            <option value="3">March</option>
+            <option value="4">April</option>
+            <option value="5">May</option>
+            <option value="6">June</option>
+            <option value="7">July</option>
+            <option value="8">August</option>
+            <option value="9">September</option>
+            <option value="10">October</option>
+            <option value="11">November</option>
+            <option value="12">December</option>
           </select>
         </div>
-        <canvas id="staffChart"></canvas>
+        <canvas id="bestStaffChart"></canvas>
       </div>
     </div>
   </main>
@@ -450,8 +473,10 @@
   let currentUser = null;
   let isAdmin = false;
   let isSemiAdmin = false;
-  let branchChart = null;
-  let staffChart = null;
+  let salesChart = null;
+  let profitChart = null;
+  let marginChart = null;
+  let bestStaffChart = null;
   
   // Elements
   const el = id => document.getElementById(id);
@@ -544,11 +569,9 @@
   // Populate staff dropdowns
   function populateStaffDropdowns() {
     const staffSelect = el('staffName');
-    const staffFilter = el('staffFilter');
     const quickStaffSelect = el('quickStaffName');
     
     staffSelect.innerHTML = '<option value="">Select Staff...</option>';
-    staffFilter.innerHTML = '<option value="">All Staff</option>';
     quickStaffSelect.innerHTML = '<option value="">Select Staff...</option>';
     
     usersData.forEach(user => {
@@ -557,22 +580,11 @@
       opt1.textContent = user.name;
       staffSelect.appendChild(opt1);
       
-      const opt2 = document.createElement('option');
-      opt2.value = user.name;
-      opt2.textContent = user.name;
-      staffFilter.appendChild(opt2);
-      
       const opt3 = document.createElement('option');
       opt3.value = user.name;
       opt3.textContent = user.name;
       quickStaffSelect.appendChild(opt3);
     });
-    
-    // For basic users, auto-select their name
-    if (!isAdmin && !isSemiAdmin && currentUser) {
-      staffFilter.value = currentUser.name;
-      staffFilter.disabled = true;
-    }
   }
   
   // Load sales data
@@ -705,23 +717,32 @@
       
       if (res.ok) {
         const yearlyData = await res.json();
-        renderBranchChart(yearlyData);
-        renderStaffChart(yearlyData);
+        renderSalesChart(yearlyData);
+        renderProfitChart(yearlyData);
+        renderMarginChart(yearlyData);
+        renderBestStaffChart(yearlyData);
       } else {
-        // Use current data for charts
-        renderBranchChart([]);
-        renderStaffChart([]);
+        renderSalesChart([]);
+        renderProfitChart([]);
+        renderMarginChart([]);
+        renderBestStaffChart([]);
       }
     } catch (e) {
       console.error('Failed to load chart data:', e);
-      renderBranchChart([]);
-      renderStaffChart([]);
+      renderSalesChart([]);
+      renderProfitChart([]);
+      renderMarginChart([]);
+      renderBestStaffChart([]);
     }
   }
   
-  // Render branch chart
-  function renderBranchChart(data) {
-    const ctx = el('branchChart').getContext('2d');
+  // Store yearly data for best staff chart updates
+  let cachedYearlyData = [];
+  
+  // Render Sales Achievement vs Target chart
+  function renderSalesChart(data) {
+    cachedYearlyData = data; // Cache for best staff updates
+    const ctx = el('salesChart').getContext('2d');
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     
     // Aggregate by month
@@ -738,23 +759,163 @@
       }
     });
     
-    const achievementPercent = months.map((_, i) => {
-      const target = monthlyData[i + 1].targetSales;
-      const achievement = monthlyData[i + 1].achievementSales;
-      return target > 0 ? (achievement / target * 100) : 0;
-    });
+    const targets = months.map((_, i) => monthlyData[i + 1].targetSales / 1000000000); // In billions
+    const achievements = months.map((_, i) => monthlyData[i + 1].achievementSales / 1000000000);
     
-    if (branchChart) branchChart.destroy();
+    if (salesChart) salesChart.destroy();
     
-    branchChart = new Chart(ctx, {
+    salesChart = new Chart(ctx, {
       type: 'bar',
       data: {
         labels: months,
+        datasets: [
+          {
+            label: 'Target (B)',
+            data: targets,
+            backgroundColor: 'rgba(33, 150, 243, 0.7)',
+            borderColor: '#2196f3',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Achievement (B)',
+            data: achievements,
+            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(102, 187, 106, 0.8)' : 'rgba(239, 83, 80, 0.8)'),
+            borderColor: achievements.map((a, i) => a >= targets[i] ? '#66bb6a' : '#ef5350'),
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${(ctx.raw * 1000).toLocaleString('id-ID')} M`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Amount (Billion)' }
+          }
+        }
+      }
+    });
+  }
+  
+  // Render Profit Achievement vs Target chart
+  function renderProfitChart(data) {
+    const ctx = el('profitChart').getContext('2d');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Aggregate by month
+    const monthlyData = {};
+    months.forEach((m, i) => {
+      monthlyData[i + 1] = { targetProfit: 0, achievementProfit: 0 };
+    });
+    
+    data.forEach(d => {
+      const month = d.month;
+      if (monthlyData[month]) {
+        monthlyData[month].targetProfit += parseFloat(d.target_profit) || 0;
+        monthlyData[month].achievementProfit += parseFloat(d.achievement_profit) || 0;
+      }
+    });
+    
+    const targets = months.map((_, i) => monthlyData[i + 1].targetProfit / 1000000); // In millions
+    const achievements = months.map((_, i) => monthlyData[i + 1].achievementProfit / 1000000);
+    
+    if (profitChart) profitChart.destroy();
+    
+    profitChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          {
+            label: 'Target (M)',
+            data: targets,
+            backgroundColor: 'rgba(156, 39, 176, 0.7)',
+            borderColor: '#9c27b0',
+            borderWidth: 1,
+            borderRadius: 4
+          },
+          {
+            label: 'Achievement (M)',
+            data: achievements,
+            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(102, 187, 106, 0.8)' : 'rgba(255, 152, 0, 0.8)'),
+            borderColor: achievements.map((a, i) => a >= targets[i] ? '#66bb6a' : '#ff9800'),
+            borderWidth: 1,
+            borderRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: true, position: 'top' },
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label}: ${ctx.raw.toLocaleString('id-ID')} M`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Amount (Million)' }
+          }
+        }
+      }
+    });
+  }
+  
+  // Render Margin chart (monthly)
+  function renderMarginChart(data) {
+    const ctx = el('marginChart').getContext('2d');
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Aggregate by month
+    const monthlyData = {};
+    months.forEach((m, i) => {
+      monthlyData[i + 1] = { achievementSales: 0, achievementProfit: 0 };
+    });
+    
+    data.forEach(d => {
+      const month = d.month;
+      if (monthlyData[month]) {
+        monthlyData[month].achievementSales += parseFloat(d.achievement_sales) || 0;
+        monthlyData[month].achievementProfit += parseFloat(d.achievement_profit) || 0;
+      }
+    });
+    
+    const margins = months.map((_, i) => {
+      const sales = monthlyData[i + 1].achievementSales;
+      const profit = monthlyData[i + 1].achievementProfit;
+      return sales > 0 ? (profit / sales * 100) : 0;
+    });
+    
+    if (marginChart) marginChart.destroy();
+    
+    marginChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: months,
         datasets: [{
-          label: 'Achievement %',
-          data: achievementPercent,
-          backgroundColor: achievementPercent.map(v => v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350'),
-          borderRadius: 4
+          label: 'Margin %',
+          data: margins,
+          borderColor: '#00bcd4',
+          backgroundColor: 'rgba(0, 188, 212, 0.15)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 6,
+          pointBackgroundColor: margins.map(v => v >= 4 ? '#66bb6a' : v >= 3 ? '#ffca28' : '#ef5350'),
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
         }]
       },
       options: {
@@ -763,89 +924,115 @@
           legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => `Achievement: ${ctx.raw.toFixed(1)}%`
+              label: ctx => `Margin: ${ctx.raw.toFixed(2)}%`
             }
           }
         },
         scales: {
           y: {
             beginAtZero: true,
-            max: 150,
+            max: 10,
             ticks: {
               callback: v => v + '%'
-            }
+            },
+            title: { display: true, text: 'Margin %' }
           }
         }
       }
     });
   }
   
-  // Render staff chart
-  function renderStaffChart(data) {
-    const ctx = el('staffChart').getContext('2d');
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const selectedStaff = el('staffFilter').value;
+  // Render Best Staff of the Month chart
+  function renderBestStaffChart(data) {
+    if (!data) data = cachedYearlyData;
+    const ctx = el('bestStaffChart').getContext('2d');
+    const selectedMonth = parseInt(el('bestStaffMonth').value);
     
-    // Filter by staff if selected
-    let filteredData = data;
-    if (selectedStaff) {
-      filteredData = data.filter(d => d.staff_name === selectedStaff);
+    // Filter data for selected month
+    const monthData = data.filter(d => d.month === selectedMonth);
+    
+    // Calculate achievement percentage for each staff
+    const staffPerformance = {};
+    monthData.forEach(d => {
+      const name = d.staff_name;
+      const targetSales = parseFloat(d.target_sales) || 0;
+      const achievementSales = parseFloat(d.achievement_sales) || 0;
+      const achievementPercent = targetSales > 0 ? (achievementSales / targetSales * 100) : 0;
+      
+      staffPerformance[name] = {
+        name: name,
+        achievementPercent: achievementPercent,
+        achievementSales: achievementSales
+      };
+    });
+    
+    // Sort by achievement percentage (descending)
+    const sortedStaff = Object.values(staffPerformance)
+      .sort((a, b) => b.achievementPercent - a.achievementPercent);
+    
+    const staffNames = sortedStaff.map(s => s.name);
+    const percentages = sortedStaff.map(s => s.achievementPercent);
+    
+    if (bestStaffChart) bestStaffChart.destroy();
+    
+    if (sortedStaff.length === 0) {
+      bestStaffChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['No data'],
+          datasets: [{ label: 'Achievement %', data: [0] }]
+        },
+        options: { responsive: true }
+      });
+      return;
     }
     
-    // Aggregate by month for selected staff
-    const monthlyData = {};
-    months.forEach((m, i) => {
-      monthlyData[i + 1] = { targetSales: 0, achievementSales: 0 };
-    });
-    
-    filteredData.forEach(d => {
-      const month = d.month;
-      if (monthlyData[month]) {
-        monthlyData[month].targetSales += parseFloat(d.target_sales) || 0;
-        monthlyData[month].achievementSales += parseFloat(d.achievement_sales) || 0;
-      }
-    });
-    
-    const achievementPercent = months.map((_, i) => {
-      const target = monthlyData[i + 1].targetSales;
-      const achievement = monthlyData[i + 1].achievementSales;
-      return target > 0 ? (achievement / target * 100) : 0;
-    });
-    
-    if (staffChart) staffChart.destroy();
-    
-    staffChart = new Chart(ctx, {
-      type: 'line',
+    bestStaffChart = new Chart(ctx, {
+      type: 'bar',
       data: {
-        labels: months,
+        labels: staffNames,
         datasets: [{
-          label: selectedStaff || 'All Staff',
-          data: achievementPercent,
-          borderColor: '#2196f3',
-          backgroundColor: 'rgba(33, 150, 243, 0.1)',
-          fill: true,
-          tension: 0.3,
-          pointRadius: 6,
-          pointBackgroundColor: achievementPercent.map(v => v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350')
+          label: 'Achievement %',
+          data: percentages,
+          backgroundColor: percentages.map((v, i) => {
+            if (i === 0) return 'rgba(255, 193, 7, 0.9)'; // Gold for #1
+            if (i === 1) return 'rgba(189, 189, 189, 0.9)'; // Silver for #2
+            if (i === 2) return 'rgba(205, 127, 50, 0.9)'; // Bronze for #3
+            return v >= 80 ? 'rgba(102, 187, 106, 0.7)' : v >= 50 ? 'rgba(255, 202, 40, 0.7)' : 'rgba(239, 83, 80, 0.7)';
+          }),
+          borderColor: percentages.map((v, i) => {
+            if (i === 0) return '#ffc107';
+            if (i === 1) return '#9e9e9e';
+            if (i === 2) return '#cd7f32';
+            return v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350';
+          }),
+          borderWidth: 2,
+          borderRadius: 6
         }]
       },
       options: {
+        indexAxis: 'y',
         responsive: true,
         plugins: {
-          legend: { display: true },
+          legend: { display: false },
           tooltip: {
             callbacks: {
-              label: ctx => `Achievement: ${ctx.raw.toFixed(1)}%`
+              label: ctx => `Achievement: ${ctx.raw.toFixed(1)}%`,
+              afterLabel: (ctx) => {
+                const staff = sortedStaff[ctx.dataIndex];
+                return `Sales: ${formatCurrency(staff.achievementSales)}`;
+              }
             }
           }
         },
         scales: {
-          y: {
+          x: {
             beginAtZero: true,
             max: 150,
             ticks: {
               callback: v => v + '%'
-            }
+            },
+            title: { display: true, text: 'Achievement %' }
           }
         }
       }
@@ -1068,7 +1255,10 @@
     el('modalClose').addEventListener('click', closeModal);
     el('modalCancel').addEventListener('click', closeModal);
     el('modalForm').addEventListener('submit', saveRecord);
-    el('staffFilter').addEventListener('change', loadChartData);
+    el('bestStaffMonth').addEventListener('change', () => renderBestStaffChart());
+    
+    // Set best staff month selector to current period
+    el('bestStaffMonth').value = el('periodMonth').value;
     
     // Update badge when period selectors change
     el('periodMonth').addEventListener('change', updatePeriodBadge);
