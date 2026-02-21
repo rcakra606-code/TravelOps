@@ -77,12 +77,21 @@ async function archive() {
     console.log('✅ Archive table ready\n');
   }
   
+  const isPg = db.dialect === 'postgres';
+  
   // Find all 2025 documents based on receive_date
-  const docs2025 = await db.all(`
-    SELECT * FROM documents 
-    WHERE receive_date LIKE '2025-%'
-    ORDER BY receive_date ASC
-  `);
+  // Use different query syntax for PostgreSQL vs SQLite
+  const docs2025 = isPg 
+    ? await db.all(`
+        SELECT * FROM documents 
+        WHERE receive_date >= '2025-01-01' AND receive_date < '2026-01-01'
+        ORDER BY receive_date ASC
+      `)
+    : await db.all(`
+        SELECT * FROM documents 
+        WHERE receive_date LIKE '2025-%'
+        ORDER BY receive_date ASC
+      `);
   
   console.log(`📋 Found ${docs2025.length} documents from 2025 to archive\n`);
   
