@@ -289,10 +289,12 @@ async function renderDashboard() {
     
     // Calculate metrics
     const totalDocs = docsData.length;
-    const normalDocs = docsData.filter(d => d.process_type === 'Normal').length;
-    const kilatDocs = docsData.filter(d => d.process_type === 'Kilat').length;
-    const normalPercent = totalDocs > 0 ? ((normalDocs / totalDocs) * 100).toFixed(1) : 0;
-    const kilatPercent = totalDocs > 0 ? ((kilatDocs / totalDocs) * 100).toFixed(1) : 0;
+    
+    // Documents in Process = no send_date (not sent yet)
+    const inProcessDocs = docsData.filter(d => !d.send_date || d.send_date.toString().trim() === '').length;
+    
+    // Sending Confirmation = has send_date (already sent)
+    const sentDocs = docsData.filter(d => d.send_date && d.send_date.toString().trim() !== '').length;
     
     // Calculate average processing time
     let totalDays = 0;
@@ -312,10 +314,10 @@ async function renderDashboard() {
     
     // Update metrics
     el('totalDocuments').textContent = totalDocs;
-    el('normalDocs').textContent = normalDocs;
-    el('kilatDocs').textContent = kilatDocs;
-    el('normalPercent').textContent = `${normalPercent}% dari total`;
-    el('kilatPercent').textContent = `${kilatPercent}% dari total`;
+    el('normalDocs').textContent = inProcessDocs;
+    el('kilatDocs').textContent = sentDocs;
+    el('normalPercent').textContent = 'Not sent yet';
+    el('kilatPercent').textContent = 'Already sent';
     el('avgProcessingDays').textContent = avgDays;
     
     // Chart options

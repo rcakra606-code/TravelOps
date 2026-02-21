@@ -74,23 +74,30 @@ async function loadHotel() {
 
 function updateMetrics() {
   const now = new Date();
-  const active = hotelData.filter(h => {
-    if (!h.check_out) return false;
-    return new Date(h.check_out) >= now;
+  now.setHours(0, 0, 0, 0); // Start of today for comparison
+  
+  // Active bookings = check-in date has not passed yet (>= today)
+  const activeBookings = hotelData.filter(h => {
+    if (!h.check_in) return false;
+    const checkIn = new Date(h.check_in);
+    checkIn.setHours(0, 0, 0, 0);
+    return checkIn >= now;
+  });
+  
+  // Without Confirmation = active bookings missing confirmation number
+  const withoutConfirmation = activeBookings.filter(h => {
+    return !h.confirmation_number || h.confirmation_number.toString().trim() === '';
   }).length;
   
-  const totalNights = hotelData.reduce((sum, h) => {
-    if (!h.check_in || !h.check_out) return sum;
-    const nights = Math.ceil((new Date(h.check_out) - new Date(h.check_in)) / (1000 * 60 * 60 * 24));
-    return sum + (nights > 0 ? nights : 0);
-  }, 0);
-  
-  const avgNights = hotelData.length > 0 ? (totalNights / hotelData.length).toFixed(1) : 0;
+  // With Confirmation = active bookings that have confirmation number
+  const withConfirmation = activeBookings.filter(h => {
+    return h.confirmation_number && h.confirmation_number.toString().trim() !== '';
+  }).length;
   
   el('totalBookings').textContent = hotelData.length;
-  el('activeBookings').textContent = active;
-  el('totalNights').textContent = totalNights;
-  el('totalCost').textContent = avgNights + ' nights/booking';
+  el('activeBookings').textContent = activeBookings.length;
+  el('totalNights').textContent = withoutConfirmation;
+  el('totalCost').textContent = withConfirmation;
 }
 
 function applyFiltersAndRender() {

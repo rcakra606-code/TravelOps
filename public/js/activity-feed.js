@@ -241,7 +241,7 @@ class ActivityFeed {
       /* Activity Feed Button */
       .activity-feed-btn {
         position: fixed;
-        bottom: 88px;
+        bottom: 140px;
         right: 24px;
         width: 48px;
         height: 48px;
