@@ -77,8 +77,6 @@ async function archive() {
     console.log('✅ Archive table ready\n');
   }
   
-  const isPg = db.dialect === 'postgres';
-  
   // Find all 2025 documents based on receive_date
   // Use different query syntax for PostgreSQL vs SQLite
   const docs2025 = isPg 
