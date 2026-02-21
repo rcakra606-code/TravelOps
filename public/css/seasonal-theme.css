@@ -1,0 +1,206 @@
+/* =========================================================
+   SEASONAL THEMES - TravelOps
+   Changes theme colors based on current month
+   ========================================================= */
+
+/* === WINTER THEME (December - February) === */
+/* Cool blues and icy tones */
+:root[data-season="winter"] {
+  --season-primary: #1e88e5;
+  --season-secondary: #64b5f6;
+  --season-accent: #e3f2fd;
+  --season-gradient: linear-gradient(135deg, #1e88e5 0%, #0d47a1 50%, #4fc3f7 100%);
+  --season-header-gradient: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+  --season-card-border: #90caf9;
+  --season-highlight: #bbdefb;
+  --season-text-accent: #1976d2;
+}
+
+/* === SAKURA THEME (March - May) === */
+/* Soft pinks and cherry blossom colors */
+:root[data-season="sakura"] {
+  --season-primary: #ec407a;
+  --season-secondary: #f48fb1;
+  --season-accent: #fce4ec;
+  --season-gradient: linear-gradient(135deg, #f06292 0%, #ec407a 50%, #ffb6c1 100%);
+  --season-header-gradient: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+  --season-card-border: #f8bbd9;
+  --season-highlight: #f8bbd9;
+  --season-text-accent: #d81b60;
+}
+
+/* === SUMMER THEME (June - August) === */
+/* Bright blues and sunny yellows */
+:root[data-season="summer"] {
+  --season-primary: #00bcd4;
+  --season-secondary: #ffca28;
+  --season-accent: #e0f7fa;
+  --season-gradient: linear-gradient(135deg, #00bcd4 0%, #0097a7 50%, #ffd54f 100%);
+  --season-header-gradient: linear-gradient(135deg, #00acc1 0%, #ff8f00 100%);
+  --season-card-border: #80deea;
+  --season-highlight: #fff8e1;
+  --season-text-accent: #00838f;
+}
+
+/* === AUTUMN THEME (September - November) === */
+/* Warm oranges, reds, and golden browns */
+:root[data-season="autumn"] {
+  --season-primary: #ef6c00;
+  --season-secondary: #ff8a65;
+  --season-accent: #fff3e0;
+  --season-gradient: linear-gradient(135deg, #e65100 0%, #bf360c 50%, #d84315 100%);
+  --season-header-gradient: linear-gradient(135deg, #e65100 0%, #8d6e63 100%);
+  --season-card-border: #ffcc80;
+  --season-highlight: #ffe0b2;
+  --season-text-accent: #e65100;
+}
+
+/* =========================================================
+   APPLY SEASONAL STYLES TO COMPONENTS
+   ========================================================= */
+
+/* Report Header */
+.report-header,
+[data-season] .report-header {
+  background: var(--season-header-gradient, linear-gradient(135deg, #667eea 0%, #764ba2 100%)) !important;
+}
+
+/* Welcome Banner on Main Dashboard */
+[data-season] .welcome-banner,
+[data-season] [style*="linear-gradient(135deg, #667eea"] {
+  background: var(--season-gradient) !important;
+}
+
+/* Brand in Sidebar */
+[data-season] .brand {
+  background: var(--season-header-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Primary Buttons */
+[data-season] .btn-primary,
+[data-season] .add-btn {
+  background: var(--season-header-gradient) !important;
+  border-color: var(--season-primary) !important;
+}
+
+[data-season] .btn-primary:hover,
+[data-season] .add-btn:hover {
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Nav Active States */
+[data-season] .nav-main-item.active,
+[data-season] .nav-group-items a.active {
+  background: var(--season-accent) !important;
+  color: var(--season-text-accent) !important;
+  border-left-color: var(--season-primary) !important;
+}
+
+/* Cards Hover Effect */
+[data-season] .card:hover {
+  border-color: var(--season-card-border);
+}
+
+/* Quick Nav Cards on Dashboard */
+[data-season] .quick-nav-card:hover,
+[data-season] [style*="onmouseover"][style*="borderColor"] {
+  border-color: var(--season-primary) !important;
+}
+
+/* Period Badge */
+[data-season] #inputPeriodBadge {
+  background: var(--season-header-gradient) !important;
+}
+
+/* Chart Card Headers */
+[data-season] .chart-card h3 {
+  color: var(--season-text-accent);
+}
+
+/* Table Header - Sales Table */
+[data-season="winter"] .sales-table thead {
+  background: #bbdefb !important;
+}
+[data-season="sakura"] .sales-table thead {
+  background: #f8bbd9 !important;
+}
+[data-season="summer"] .sales-table thead {
+  background: #fff59d !important;
+}
+[data-season="autumn"] .sales-table thead {
+  background: #ffcc80 !important;
+}
+
+/* Toggle/Switch Accent */
+[data-season] input[type="checkbox"]:checked + .slider {
+  background: var(--season-primary);
+}
+
+/* Link Hover Colors */
+[data-season] a:hover {
+  color: var(--season-text-accent);
+}
+
+/* Scrollbar Accent (Webkit) */
+[data-season]::-webkit-scrollbar-thumb {
+  background: var(--season-primary);
+}
+
+/* Season Indicator Badge */
+.season-badge {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  z-index: 1000;
+  opacity: 0.9;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.season-badge.winter {
+  background: linear-gradient(135deg, #1e88e5, #0d47a1);
+}
+.season-badge.sakura {
+  background: linear-gradient(135deg, #ec407a, #c2185b);
+}
+.season-badge.summer {
+  background: linear-gradient(135deg, #00bcd4, #ff8f00);
+}
+.season-badge.autumn {
+  background: linear-gradient(135deg, #ef6c00, #8d6e63);
+}
+
+/* Seasonal snowflakes/petals/sun animation container */
+.seasonal-effects {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+  overflow: hidden;
+}
+
+/* Dark mode adjustments */
+.dark-mode[data-season] {
+  --season-accent: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode[data-season] .sales-table thead {
+  background: var(--season-primary) !important;
+  color: white !important;
+}
+
+.dark-mode[data-season] .sales-table th {
+  color: white !important;
+}
