@@ -63,7 +63,7 @@ class KeyboardShortcutsHelp {
             break;
           case 's':
             e.preventDefault();
-            window.location.href = '/sales-dashboard.html';
+            window.location.href = '/sales-targets-dashboard.html';
             break;
           case 't':
             e.preventDefault();

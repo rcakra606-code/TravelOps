@@ -107,7 +107,7 @@ class SidebarManager {
       <button class="quick-action-btn" onclick="window.location.href='/tours-dashboard.html'" title="Tours">
         🧳
       </button>
-      <button class="quick-action-btn" onclick="window.location.href='/sales-dashboard.html'" title="Sales">
+      <button class="quick-action-btn" onclick="window.location.href='/sales-targets-dashboard.html'" title="Sales">
         💰
       </button>
       <button class="quick-action-btn" onclick="window.location.href='/single-dashboard.html'" title="Dashboard">

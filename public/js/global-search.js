@@ -460,7 +460,7 @@ class GlobalSearch {
           icon: '💰',
           title: s.invoice_no || 'Sale',
           subtitle: `${s.staff_name || 'N/A'} • Rp ${(s.sales_amount || 0).toLocaleString()}`,
-          url: `/sales-dashboard.html?highlight=${s.id}`,
+          url: `/sales-targets-dashboard.html?highlight=${s.id}`,
           data: s
         });
       });
