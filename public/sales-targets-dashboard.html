@@ -292,7 +292,10 @@
     <!-- Quick Sales Input Section (Admin/Semi-Admin Only) -->
     <div id="salesInputSection" class="card" style="display: none; margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-        <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">📝 Quick Sales Input</h3>
+        <div style="display: flex; align-items: center; gap: 16px;">
+          <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">📝 Quick Sales Input</h3>
+          <span id="inputPeriodBadge" style="background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📅 February 2026</span>
+        </div>
         <button id="toggleInputBtn" onclick="toggleInputForm()" class="btn btn-secondary" style="font-size: 12px;">
           <span id="toggleText">▼ Expand</span>
         </button>
@@ -456,6 +459,23 @@
     return new Intl.NumberFormat('id-ID').format(value || 0);
   }
   
+  // Get month name
+  function getMonthName(month) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 
+                    'July', 'August', 'September', 'October', 'November', 'December'];
+    return months[month - 1] || '';
+  }
+  
+  // Update period badge to show which month/year data will be saved for
+  function updatePeriodBadge() {
+    const month = parseInt(el('periodMonth').value);
+    const year = parseInt(el('periodYear').value);
+    const badge = el('inputPeriodBadge');
+    if (badge) {
+      badge.textContent = `📅 ${getMonthName(month)} ${year}`;
+    }
+  }
+  
   // Get percentage class based on value
   function getPercentageClass(value) {
     if (value >= 80) return 'percentage-high';
@@ -557,6 +577,9 @@
   async function loadSalesData() {
     const month = parseInt(el('periodMonth').value);
     const year = parseInt(el('periodYear').value);
+    
+    // Update period badge to show current selection
+    updatePeriodBadge();
     
     try {
       const token = localStorage.getItem('token');
@@ -1044,6 +1067,10 @@
     el('modalCancel').addEventListener('click', closeModal);
     el('modalForm').addEventListener('submit', saveRecord);
     el('staffFilter').addEventListener('change', loadChartData);
+    
+    // Update badge when period selectors change
+    el('periodMonth').addEventListener('change', updatePeriodBadge);
+    el('periodYear').addEventListener('change', updatePeriodBadge);
     
     // Close modal on overlay click
     el('modal').addEventListener('click', (e) => {
