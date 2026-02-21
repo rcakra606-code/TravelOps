@@ -37,6 +37,7 @@ let currentFilters = {
 let comparisonState = {
   period: 'month',
   year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1, // For regular month comparison
   staff: 'all',
   product: 'all',
   compareMonth: new Date().getMonth() + 1 // For month-yoy comparison
@@ -2097,6 +2098,28 @@ function applyQuickFilters() {
     renderProductTable(activeTab.dataset.tab);
   }
   
+  // If comparison tab is active, sync filters and re-render
+  if (activeTab && activeTab.dataset.tab === 'comparison') {
+    // Sync quick filters to comparison state
+    if (currentFilters.year) {
+      comparisonState.year = currentFilters.year;
+      const yearSelect = el('comparisonYear');
+      if (yearSelect) yearSelect.value = currentFilters.year;
+    }
+    if (currentFilters.month) {
+      comparisonState.month = parseInt(currentFilters.month);
+      comparisonState.compareMonth = parseInt(currentFilters.month);
+      const monthSelect = el('comparisonMonth');
+      if (monthSelect) monthSelect.value = currentFilters.month;
+    }
+    if (currentFilters.staff !== 'all') {
+      comparisonState.staff = currentFilters.staff;
+      const staffSelect = el('comparisonStaff');
+      if (staffSelect) staffSelect.value = currentFilters.staff;
+    }
+    renderComparison();
+  }
+  
   // Restore original data
   productivityData = originalData;
 }
@@ -2150,7 +2173,7 @@ function getCurrentPeriodValue(period) {
   
   switch (period) {
     case 'month':
-      return currentMonth;
+      return comparisonState.month || currentMonth;
     case 'month-yoy':
       return comparisonState.compareMonth;
     case 'quarter':
@@ -2439,17 +2462,40 @@ function runCustomMonthComparison() {
 
 /* === INITIALIZE COMPARISON TAB === */
 function initComparisonTab() {
+  // Sync quick filters to comparison state when opening the tab
+  const yearSelect = el('quickFilterYear');
+  const monthSelect = el('quickFilterMonth');
+  const staffSelect = el('quickFilterStaff');
+  
+  if (yearSelect && yearSelect.value) {
+    comparisonState.year = parseInt(yearSelect.value);
+  }
+  if (monthSelect && monthSelect.value) {
+    comparisonState.month = parseInt(monthSelect.value);
+    comparisonState.compareMonth = parseInt(monthSelect.value);
+  }
+  if (staffSelect && staffSelect.value !== 'all') {
+    comparisonState.staff = staffSelect.value;
+  }
+  
+  // Update comparison dropdowns to match
+  const compYearSelect = el('comparisonYear');
+  if (compYearSelect) compYearSelect.value = comparisonState.year;
+  const compMonthSelect = el('comparisonMonth');
+  if (compMonthSelect) compMonthSelect.value = comparisonState.compareMonth;
+  const compStaffSelect = el('comparisonStaff');
+  
   // Update staff dropdown with users data
-  const staffSelect = el('comparisonStaff');
-  if (staffSelect && usersData.length > 0) {
+  if (compStaffSelect && usersData.length > 0) {
     // Keep the "All Staff" option
-    staffSelect.innerHTML = '<option value="all">All Staff</option>';
+    compStaffSelect.innerHTML = '<option value="all">All Staff</option>';
     usersData.forEach(u => {
       const opt = document.createElement('option');
       opt.value = u.name;
       opt.textContent = u.name;
-      staffSelect.appendChild(opt);
+      compStaffSelect.appendChild(opt);
     });
+    compStaffSelect.value = comparisonState.staff;
   }
   
   renderComparison();
