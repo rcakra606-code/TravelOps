@@ -74,11 +74,10 @@ Scripts added to:
 - single-dashboard.html
 - documents-dashboard.html
 - tracking-dashboard.html
-- targets-dashboard.html
+- sales-targets-dashboard.html
 - telecom-dashboard.html
 - cruise-dashboard.html
 - outstanding-dashboard.html
-- reports-dashboard.html
 - my-tours.html
 
 ---

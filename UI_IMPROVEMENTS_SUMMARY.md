@@ -228,7 +228,6 @@ All dashboards now include:
 4. `sales-dashboard.html` ✅
 5. `documents-dashboard.html` ✅
 6. `single-dashboard.html` ✅
-7. `reports-dashboard.html` ✅
 
 ---
 

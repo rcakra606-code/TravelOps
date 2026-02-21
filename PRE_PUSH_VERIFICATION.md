@@ -11,10 +11,8 @@ All 10 dashboard HTML files verified:
 - documents-dashboard.html ✅
 - hotel-dashboard.html ✅
 - overtime-dashboard.html ✅
-- reports-dashboard.html ✅
-- sales-dashboard.html ✅
+- sales-targets-dashboard.html ✅
 - single-dashboard.html ✅
-- targets-dashboard.html ✅
 - telecom-dashboard.html ✅
 - tours-dashboard.html ✅
 

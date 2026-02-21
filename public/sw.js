@@ -9,7 +9,6 @@ const STATIC_ASSETS = [
   '/my-tours.html',
   '/documents-dashboard.html',
   '/tracking-dashboard.html',
-  '/reports-dashboard.html',
   '/sales-targets-dashboard.html',
   '/telecom-dashboard.html',
   '/hotel-dashboard.html',
