@@ -8,8 +8,14 @@ const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes of inactivity = auto lo
 const INACTIVITY_WARNING = 28 * 60 * 1000; // Show warning at 28 minutes (2 mins before logout)
 const TOKEN_REFRESH_INTERVAL = 5 * 60 * 1000; // Refresh token every 5 minutes if active
 const TOKEN_REFRESH_THRESHOLD = 10 * 60 * 1000; // Refresh if token is older than 10 minutes
+const TOKEN_EXPIRY_WARNING_MINUTES = 2; // Show token expiry warning 2 minutes before expiration
+const TOKEN_EXTEND_DURATION = 15; // Extend session by 15 minutes
 
 let sessionWarningShown = false; // Track if warning has been shown
+let tokenExpiryWarningShown = false; // Track if token expiry warning has been shown
+let tokenExpiryCheckInterval = null; // Interval for checking token expiry
+let userActivityStatus = 'active'; // Track if user is 'active' or 'idle'
+let lastUserInteraction = Date.now(); // Track last user interaction for activity status
 
 /* === AUTHENTICATION CHECK (on DOM ready, not immediately) === */
 let authCheckPassed = false;
@@ -101,6 +107,225 @@ function getTokenRemainingMinutes() {
   const nowSec = Date.now()/1000;
   const remaining = payload.exp - nowSec;
   return Math.max(0, Math.round(remaining/60));
+}
+
+/**
+ * Get token remaining seconds (more precise for countdown)
+ */
+function getTokenRemainingSeconds() {
+  const token = localStorage.getItem('token');
+  if (!token) return null;
+  const payload = decodeTokenRaw(token);
+  if (!payload || !payload.exp) return null;
+  const nowSec = Date.now()/1000;
+  const remaining = payload.exp - nowSec;
+  return Math.max(0, Math.round(remaining));
+}
+
+/**
+ * Update user activity status based on recent interactions
+ */
+function updateActivityStatus() {
+  const idleTime = Date.now() - lastUserInteraction;
+  const fiveMinutes = 5 * 60 * 1000;
+  userActivityStatus = idleTime < fiveMinutes ? 'active' : 'idle';
+  return userActivityStatus;
+}
+
+/**
+ * Check if token is near expiration and show warning
+ */
+function checkTokenExpiry() {
+  const remainingMinutes = getTokenRemainingMinutes();
+  
+  // Skip if no token or warning already shown
+  if (remainingMinutes === null || tokenExpiryWarningShown) return;
+  
+  // Show warning if token expires within warning threshold
+  if (remainingMinutes <= TOKEN_EXPIRY_WARNING_MINUTES && remainingMinutes > 0) {
+    tokenExpiryWarningShown = true;
+    showTokenExpiryWarning();
+  }
+  
+  // If token already expired, handle it
+  if (remainingMinutes === 0) {
+    handleSessionExpired('Your login session has expired. Please login again.');
+  }
+}
+
+/**
+ * Show token expiration warning modal with extend option
+ */
+function showTokenExpiryWarning() {
+  // Remove any existing warning
+  const existing = document.getElementById('tokenExpiryWarningOverlay');
+  if (existing) existing.remove();
+  
+  // Check user activity status
+  const activityStatus = updateActivityStatus();
+  const isActive = activityStatus === 'active';
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'tokenExpiryWarningOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: fadeIn 0.3s ease;
+  `;
+  
+  let remainingSecs = getTokenRemainingSeconds() || 120;
+  
+  overlay.innerHTML = `
+    <style>
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+      .token-warning-card { animation: slideUp 0.4s ease; }
+      @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      .activity-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+      .activity-active { background: #dcfce7; color: #166534; }
+      .activity-idle { background: #fef3c7; color: #92400e; }
+      .extend-btn { transition: all 0.2s; }
+      .extend-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); }
+      .timer-ring { position: relative; width: 100px; height: 100px; }
+      .timer-ring svg { transform: rotate(-90deg); }
+      .timer-ring circle { fill: none; stroke-width: 8; }
+      .timer-ring .bg { stroke: #e5e7eb; }
+      .timer-ring .progress { stroke: #ef4444; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+      .timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 700; color: #dc2626; }
+    </style>
+    <div class="token-warning-card" style="background: white; padding: 32px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+      <div style="margin-bottom: 20px;">
+        <span style="font-size: 48px;">🔐</span>
+      </div>
+      
+      <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 22px; font-weight: 700;">Session Expiring Soon</h3>
+      
+      <div style="margin: 12px 0;">
+        <span class="activity-badge ${isActive ? 'activity-active' : 'activity-idle'}">
+          <span style="font-size: 10px;">${isActive ? '🟢' : '🟡'}</span>
+          Status: ${isActive ? 'Active' : 'Idle'}
+        </span>
+      </div>
+      
+      <p style="margin: 16px 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+        Your login session will expire in:
+      </p>
+      
+      <div class="timer-ring" style="margin: 20px auto;">
+        <svg width="100" height="100">
+          <circle class="bg" cx="50" cy="50" r="42"></circle>
+          <circle class="progress" id="tokenTimerProgress" cx="50" cy="50" r="42" 
+            stroke-dasharray="264" stroke-dashoffset="0"></circle>
+        </svg>
+        <div class="timer-text" id="tokenExpiryCountdown">${remainingSecs}s</div>
+      </div>
+      
+      <p style="margin: 16px 0 24px 0; color: #374151; font-size: 13px;">
+        Click below to extend your session by <strong>${TOKEN_EXTEND_DURATION} minutes</strong>
+      </p>
+      
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="tokenExtendBtn" class="extend-btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 600; flex: 1;">
+          ⏱️ Extend ${TOKEN_EXTEND_DURATION} Minutes
+        </button>
+        <button id="tokenLogoutBtn" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 14px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 500;">
+          Logout
+        </button>
+      </div>
+      
+      <p style="margin: 20px 0 0 0; color: #9ca3af; font-size: 11px;">
+        💡 Tip: ${isActive ? 'Your session auto-refreshes while you\'re active.' : 'Move your mouse or click to stay active.'}
+      </p>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  // Get initial values for animation
+  const initialSecs = remainingSecs;
+  const circumference = 264; // 2 * PI * 42
+  
+  // Countdown timer with visual ring
+  const countdownEl = document.getElementById('tokenExpiryCountdown');
+  const progressEl = document.getElementById('tokenTimerProgress');
+  
+  const countdownInterval = setInterval(() => {
+    remainingSecs--;
+    if (countdownEl) {
+      countdownEl.textContent = `${remainingSecs}s`;
+    }
+    if (progressEl) {
+      const offset = circumference * (1 - remainingSecs / initialSecs);
+      progressEl.style.strokeDashoffset = offset;
+    }
+    if (remainingSecs <= 0) {
+      clearInterval(countdownInterval);
+      overlay.remove();
+      handleSessionExpired('Your session has expired due to timeout.');
+    }
+  }, 1000);
+  
+  // Extend session button
+  document.getElementById('tokenExtendBtn').addEventListener('click', async () => {
+    clearInterval(countdownInterval);
+    const btn = document.getElementById('tokenExtendBtn');
+    btn.innerHTML = '⏳ Extending...';
+    btn.disabled = true;
+    
+    try {
+      const success = await refreshTokenIfNeeded(true);
+      if (success) {
+        tokenExpiryWarningShown = false; // Reset so warning can show again if needed
+        lastActivityTime = Date.now();
+        lastUserInteraction = Date.now();
+        overlay.remove();
+        toast.success(`Session extended by ${TOKEN_EXTEND_DURATION} minutes. You are still logged in.`);
+      } else {
+        throw new Error('Token refresh failed');
+      }
+    } catch (err) {
+      console.error('Failed to extend session:', err);
+      overlay.remove();
+      handleSessionExpired('Failed to extend session. Please login again.');
+    }
+  });
+  
+  // Logout button
+  document.getElementById('tokenLogoutBtn').addEventListener('click', () => {
+    clearInterval(countdownInterval);
+    overlay.remove();
+    localStorage.clear();
+    sessionStorage.clear();
+    window.location.href = '/logout.html';
+  });
+}
+
+/**
+ * Start token expiry monitoring
+ */
+function startTokenExpiryMonitor() {
+  // Check token expiry every 30 seconds
+  if (tokenExpiryCheckInterval) clearInterval(tokenExpiryCheckInterval);
+  tokenExpiryCheckInterval = setInterval(checkTokenExpiry, 30 * 1000);
+  
+  // Also check immediately
+  setTimeout(checkTokenExpiry, 5000);
+  
+  // Track user interactions for activity status
+  ['click', 'keydown', 'mousemove', 'scroll', 'touchstart', 'touchmove'].forEach(event => {
+    document.addEventListener(event, () => {
+      lastUserInteraction = Date.now();
+      userActivityStatus = 'active';
+    }, { passive: true });
+  });
 }
 
 // Periodic diagnostic log (every 5 minutes) to help detect premature expirations
@@ -432,6 +657,9 @@ function startTokenRefresh() {
   inactivityCheckInterval = setInterval(() => {
     checkInactivity();
   }, 60 * 1000); // Check every minute
+  
+  // Start token expiry monitoring
+  startTokenExpiryMonitor();
 }
 
 /**
@@ -501,6 +729,10 @@ window.refreshTokenIfNeeded = refreshTokenIfNeeded;
 window.startTokenRefresh = startTokenRefresh;
 window.checkInactivity = checkInactivity;
 window.handleSessionExpired = handleSessionExpired;
+window.checkTokenExpiry = checkTokenExpiry;
+window.startTokenExpiryMonitor = startTokenExpiryMonitor;
+window.getTokenRemainingMinutes = getTokenRemainingMinutes;
+window.getTokenRemainingSeconds = getTokenRemainingSeconds;
 
 // Auto-start token refresh when module loads (after auth check)
 if (document.readyState === 'loading') {
