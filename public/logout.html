@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logout | TravelOps</title>
   <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/seasonal-theme.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="/js/seasonal-theme.js"></script>
   <style>
     :root {
       --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -24,7 +26,7 @@
       margin: 0;
       min-height: 100vh;
       font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+      background: var(--season-bg-dark, linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -44,7 +46,7 @@
     .bg-orb-1 {
       width: 500px;
       height: 500px;
-      background: var(--gradient);
+      background: var(--season-orb-1, var(--gradient));
       top: -150px;
       right: -150px;
       animation-delay: 0s;
@@ -53,7 +55,7 @@
     .bg-orb-2 {
       width: 400px;
       height: 400px;
-      background: var(--gradient-alt);
+      background: var(--season-orb-2, var(--gradient-alt));
       bottom: -100px;
       left: -100px;
       animation-delay: 5s;
@@ -62,7 +64,7 @@
     .bg-orb-3 {
       width: 300px;
       height: 300px;
-      background: var(--gradient-warm);
+      background: var(--season-orb-3, var(--gradient-warm));
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
@@ -169,7 +171,7 @@
     .icon-container {
       width: 120px;
       height: 120px;
-      background: var(--gradient);
+      background: var(--season-gradient, var(--gradient));
       border-radius: 32px;
       display: inline-flex;
       align-items: center;
@@ -188,7 +190,7 @@
       position: absolute;
       inset: -4px;
       border-radius: 36px;
-      background: var(--gradient);
+      background: var(--season-gradient, var(--gradient));
       opacity: 0.3;
       z-index: -1;
       animation: glow 2s ease-in-out infinite;
@@ -357,14 +359,14 @@
       <p class="message">Thank you for using TravelOps.<br>You have been logged out successfully.</p>
       <div class="timer-container">
         <div class="spinner"></div>
-        <span>Redirecting to login in <span class="countdown" id="countdown">3</span> seconds...</span>
+        <span id="redirectMessage">Redirecting to login page in <span class="countdown" id="countdown">5</span> seconds...</span>
       </div>
       <a href="/login.html" class="login-link">Or click here to <span>login now</span></a>
     </div>
   </div>
 
   <div class="footer">
-    © 2025 TravelOps - Travel Management System
+    © 2026 TravelOps - Travel Management System
   </div>
 
   <script>
@@ -374,13 +376,26 @@
     localStorage.removeItem('refreshToken');
     sessionStorage.clear();
 
-    // Countdown timer
-    let seconds = 3;
+    // Countdown timer with messages
+    let seconds = 5;
     const countdownEl = document.getElementById('countdown');
+    const messageEl = document.getElementById('redirectMessage');
+    
+    const messages = [
+      'Redirecting to login page in <span class="countdown">5</span> seconds...',
+      'Redirecting to login page in <span class="countdown">4</span> seconds...',
+      'Redirecting to login page in <span class="countdown">3</span> seconds...',
+      'Almost there... <span class="countdown">2</span>',
+      'Redirecting now... <span class="countdown">1</span>',
+      '🚀 Taking you to login...'
+    ];
     
     const timer = setInterval(() => {
       seconds--;
-      countdownEl.textContent = seconds;
+      
+      if (seconds >= 0) {
+        messageEl.innerHTML = messages[5 - seconds];
+      }
       
       if (seconds <= 0) {
         clearInterval(timer);
