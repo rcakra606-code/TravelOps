@@ -627,11 +627,8 @@
       return;
     }
     
-    // Filter data for basic users
+    // All staff can see all data
     let displayData = salesData;
-    if (!isAdmin && !isSemiAdmin && currentUser) {
-      displayData = salesData.filter(d => d.staff_name === currentUser.name);
-    }
     
     // Calculate totals
     let totalTargetSales = 0;

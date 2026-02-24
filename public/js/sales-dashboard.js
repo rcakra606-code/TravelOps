@@ -13,7 +13,7 @@ let refreshInterval = null;
 (() => {
   const user = window.getUser();
   el('userName').textContent = user.name || user.username || '—';
-  el('userRole').textContent = { admin: 'Administrator', semiadmin: 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+  el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
 })();
 
 /* === CHARTS STORAGE === */
@@ -35,6 +35,7 @@ let usersData = [];
 function openSalesFilterModal() {
   const user = window.getUser();
   const isAdmin = user.type === 'admin';
+  const canEdit = user.type === 'admin' || user.type === 'semi-admin';
   
   // Generate month options for quick select
   const now = new Date();
@@ -42,8 +43,8 @@ function openSalesFilterModal() {
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthStr = `${lastMonth.getFullYear()}-${String(lastMonth.getMonth() + 1).padStart(2, '0')}`;
   
-  // Only show staff filter for admin users
-  const staffDropdown = isAdmin ? `
+  // Show staff filter for all users (all can view all data)
+  const staffDropdown = `
     <div class="filter-group">
       <label><span class="icon">👤</span> Staff</label>
       <select name="staff">
@@ -51,7 +52,7 @@ function openSalesFilterModal() {
         ${usersData.map(u => `<option value="${u.name}" ${filterState.staff === u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
       </select>
     </div>
-  ` : '';
+  `;
   
   window.openModal({
     title: '🔍 Filter Sales Data',
@@ -188,18 +189,13 @@ function applySalesFilters(formData) {
 async function populateFilterDropdowns() {
   const user = window.getUser();
   
-  // Basic users can't access /api/users - skip the call entirely
-  if (user.type === 'basic') {
+  // Load users for staff filter dropdown (all users can see all data)
+  try {
+    const users = await window.fetchJson('/api/users');
+    usersData = users || [];
+  } catch (err) {
+    console.warn('Could not load users:', err.message);
     usersData = [{ name: user.name || user.username }];
-  } else {
-    // Load users for admin/semi-admin
-    try {
-      const users = await window.fetchJson('/api/users');
-      usersData = users || [];
-    } catch (err) {
-      console.warn('Could not load users:', err.message);
-      usersData = [{ name: user.name || user.username }];
-    }
   }
   
   // Load regions independently
@@ -875,8 +871,8 @@ function renderSalesTable() {
       <td class="text-right">Rp ${(item.profit_amount || 0).toLocaleString('id-ID')}</td>
       <td class="actions">
         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
-        ${window.getUser().type === 'admin' ? `<button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>` : ''}
-        ${window.getUser().type === 'admin' ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
+        ${['admin','semi-admin'].includes(window.getUser().type) ? `<button class="btn btn-sm btn-edit" data-id="${item.id}">✏️ Edit</button>` : ''}
+        ${['admin','semi-admin'].includes(window.getUser().type) ? `<button class="btn btn-sm btn-danger btn-delete" data-id="${item.id}">🗑️</button>` : ''}
       </td>
     </tr>
   `).join('');
@@ -933,10 +929,10 @@ window.deleteSale = async function(id) {
 
 if (el('addSaleBtn')) {
   el('addSaleBtn').addEventListener('click', () => {
-    // Check admin-only access
+    // Check admin/semi-admin access
     const user = JSON.parse(localStorage.getItem('user') || '{}');
-    if (user.type !== 'admin') {
-      window.toast.error('Akses ditolak: Hanya admin yang dapat menambah sales');
+    if (user.type !== 'admin' && user.type !== 'semi-admin') {
+      window.toast.error('Akses ditolak: Hanya admin dan semi-admin yang dapat menambah sales');
       return;
     }
     

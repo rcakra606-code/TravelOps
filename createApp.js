@@ -785,7 +785,15 @@ export async function createApp() {
 
   for (const t of tables) {
     app.get(`/api/${t}`, authMiddleware(), async (req,res)=>{
-      if (t === 'users' && req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
+      if (t === 'users' && req.user.type === 'basic') {
+        // Basic users can read user names for filters, but not sensitive data
+        try {
+          const rows = await db.all('SELECT id, name, username, type FROM users');
+          return res.json(rows);
+        } catch (err) {
+          return res.status(500).json({ error: 'Failed to fetch users' });
+        }
+      }
       // Provide region_name join enrichment for sales and tours when region_id exists
       try {
         let rows;
@@ -958,6 +966,8 @@ export async function createApp() {
     app.post(`/api/${t}`, authMiddleware(), async (req,res)=>{
       try {
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+        // Sales and targets: only admin and semi-admin can create
+        if ((t === 'sales' || t === 'targets') && req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
         if (t === 'users' && req.body.password) {
           if (!isStrongPassword(req.body.password)) return res.status(400).json({ error:'Password must be at least 8 characters and contain uppercase, lowercase, number, and special character (!@#$%^&*...)' });
           req.body.password = await bcrypt.hash(req.body.password, 10);
@@ -1046,6 +1056,8 @@ export async function createApp() {
     app.put(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
       try {
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
+        // Sales and targets: only admin and semi-admin can edit
+        if ((t === 'sales' || t === 'targets') && req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
         
         // Hash password if updating users table with a password field
         if (t === 'users' && req.body.password) {
@@ -1210,12 +1222,6 @@ export async function createApp() {
         params.push(parseInt(year));
       }
       
-      // For basic users, only show their own data
-      if (req.user.type === 'basic') {
-        conditions.push(isPg ? `staff_name=$${conditions.length + 1}` : 'staff_name=?');
-        params.push(req.user.name);
-      }
-      
       if (conditions.length > 0) {
         sql += ' WHERE ' + conditions.join(' AND ');
       }
@@ -1242,13 +1248,6 @@ export async function createApp() {
       if (year) {
         sql += isPg ? ' WHERE year=$1' : ' WHERE year=?';
         params.push(parseInt(year));
-      }
-      
-      // For basic users, only show their own data
-      if (req.user.type === 'basic') {
-        sql += params.length > 0 ? ' AND ' : ' WHERE ';
-        sql += isPg ? `staff_name=$${params.length + 1}` : 'staff_name=?';
-        params.push(req.user.name);
       }
       
       sql += ' ORDER BY month ASC, staff_name ASC';
