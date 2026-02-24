@@ -602,6 +602,9 @@ async function createSchema(db) {
   
   // Tours indexes
   await ensureIndex('tours', 'idx_tours_departure', 'departure_date');
+  await ensureIndex('tours', 'idx_tours_return', 'return_date');
+  await ensureIndex('tours', 'idx_tours_booking', 'booking_code');
+  await ensureIndex('tours', 'idx_tours_tour_code', 'tour_code');
   await ensureIndex('tours', 'idx_tours_staff', 'staff_name');
   await ensureIndex('tours', 'idx_tours_region', 'region_id');
   await ensureIndex('tours', 'idx_tours_status', 'status');

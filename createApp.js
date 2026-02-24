@@ -1498,24 +1498,37 @@ export async function createApp() {
       const tourResult = await db.run(tourSql, tourValues);
       const tourId = tourResult.lastID;
       
-      // Insert passengers
-      for (let i = 0; i < passengers.length; i++) {
-        const p = passengers[i];
-        await db.run(
-          `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            tourId,
-            i + 1,
-            p.name || '',
-            p.phone_number || null,
-            p.email || null,
-            parseFloat(p.base_price) || 0,
-            parseFloat(p.discount) || 0,
-            parseFloat(p.profit) || 0,
-            i === 0 ? 1 : 0
-          ]
-        );
+      // Batch insert passengers for better performance
+      if (passengers.length > 0) {
+        const isPg = db.dialect === 'postgres';
+        const passengerValues = passengers.map((p, i) => [
+          tourId,
+          i + 1,
+          p.name || '',
+          p.phone_number || null,
+          p.email || null,
+          parseFloat(p.base_price) || 0,
+          parseFloat(p.discount) || 0,
+          parseFloat(p.profit) || 0,
+          i === 0 ? 1 : 0
+        ]);
+        
+        const placeholders = passengerValues.map((_, idx) => {
+          const offset = idx * 9;
+          if (isPg) {
+            return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9})`;
+          }
+          return '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        }).join(', ');
+        
+        const flatValues = passengerValues.flat();
+        const batchSql = `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger) VALUES ${placeholders}`;
+        
+        if (isPg) {
+          await db._pool.query(batchSql, flatValues);
+        } else {
+          await db.run(batchSql, flatValues);
+        }
       }
       
       await logActivity(req.user.username, 'CREATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));
@@ -1551,7 +1564,7 @@ export async function createApp() {
         'region_id', 'status', 'jumlah_peserta', 'staff_name', 'lead_passenger',
         'phone_number', 'email', 'all_passengers', 'tour_price', 'sales_amount',
         'discount_amount', 'discount_remarks', 'total_nominal_sales', 'profit_amount',
-        'remarks_request', 'invoice_number', 'link_pelunasan_tour', 'data_version',
+        'remarks', 'remarks_request', 'invoice_number', 'link_pelunasan_tour', 'data_version',
         'updated_by', 'updated_at'
       ];
       
@@ -1612,26 +1625,42 @@ export async function createApp() {
       
       await db.run(`UPDATE tours SET ${tourSet} WHERE id=?`, [...tourValues, tourId]);
       
-      // Replace passengers
+      // Replace passengers - use batch insert for better performance
       await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [tourId]);
       
-      for (let i = 0; i < passengers.length; i++) {
-        const p = passengers[i];
-        await db.run(
-          `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [
-            tourId,
-            i + 1,
-            p.name || '',
-            p.phone_number || null,
-            p.email || null,
-            parseFloat(p.base_price) || 0,
-            parseFloat(p.discount) || 0,
-            parseFloat(p.profit) || 0,
-            i === 0 ? 1 : 0
-          ]
-        );
+      // Batch insert passengers (much faster than individual inserts)
+      if (passengers.length > 0) {
+        const isPg = db.dialect === 'postgres';
+        const passengerValues = passengers.map((p, i) => [
+          tourId,
+          i + 1,
+          p.name || '',
+          p.phone_number || null,
+          p.email || null,
+          parseFloat(p.base_price) || 0,
+          parseFloat(p.discount) || 0,
+          parseFloat(p.profit) || 0,
+          i === 0 ? 1 : 0
+        ]);
+        
+        // For small batches, use multi-value INSERT
+        const placeholders = passengerValues.map((_, idx) => {
+          const offset = idx * 9;
+          if (isPg) {
+            return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9})`;
+          }
+          return '(?, ?, ?, ?, ?, ?, ?, ?, ?)';
+        }).join(', ');
+        
+        const flatValues = passengerValues.flat();
+        const batchSql = `INSERT INTO tour_passengers (tour_id, passenger_number, name, phone_number, email, base_price, discount, profit, is_lead_passenger) VALUES ${placeholders}`;
+        
+        if (isPg) {
+          // For Postgres, we need to use $1, $2, etc. directly
+          await db._pool.query(batchSql, flatValues);
+        } else {
+          await db.run(batchSql, flatValues);
+        }
       }
       
       await logActivity(req.user.username, 'UPDATE', 'tours', tourId, JSON.stringify({ data_version: 2, passengers: passengers.length }));

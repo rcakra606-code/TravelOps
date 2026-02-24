@@ -589,7 +589,7 @@ window.TourWizard = (function() {
     // Tour data fields
     if (['registration_date', 'tour_code', 'booking_code', 'departure_date', 'return_date', 
          'region_id', 'status', 'jumlah_peserta', 'staff_name', 'discount_remarks', 
-         'remarks_request', 'invoice_number', 'link_pelunasan_tour'].includes(name)) {
+         'remarks', 'remarks_request', 'invoice_number', 'link_pelunasan_tour'].includes(name)) {
       wizardState.tourData[name] = value;
       
       // If participant count changed on step 1, we need to refresh step 2
@@ -673,7 +673,7 @@ window.TourWizard = (function() {
       // Tour data
       if (['registration_date', 'tour_code', 'booking_code', 'departure_date', 'return_date', 
            'region_id', 'status', 'jumlah_peserta', 'staff_name', 'discount_remarks', 
-           'remarks_request', 'invoice_number', 'link_pelunasan_tour'].includes(name)) {
+           'remarks', 'remarks_request', 'invoice_number', 'link_pelunasan_tour'].includes(name)) {
         wizardState.tourData[name] = value;
       }
       
