@@ -40,7 +40,7 @@ describe('Token refresh with grace window', () => {
   });
 
   test('Refresh fails beyond grace window', async () => {
-    const login = await request(app).post('/api/login').send({ username: 'admin', password: 'Admin1234!' });
+    const login = await request(app).post('/api/login').send({ username: 'admin', password: 'Admin1234!', forceLogin: true });
     expect(login.statusCode).toBe(200);
     const token = login.body.token;
     const decoded = jwt.decode(token);

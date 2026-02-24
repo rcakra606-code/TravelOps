@@ -19,8 +19,13 @@ const getHeaders = (json = true) => {
   const token = localStorage.getItem('token');
   if (token) h['Authorization'] = 'Bearer ' + token;
   if (json) h['Content-Type'] = 'application/json';
+  // Include CSRF token on all requests
+  const csrfToken = sessionStorage.getItem('csrfToken');
+  if (csrfToken) h['X-CSRF-Token'] = csrfToken;
   return h;
 };
+// XSS helper — use from auth-common.js global or define local fallback
+const esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 
 // Token refresh & fetchJson now provided by auth-common.js
 // Keep local formatting helpers only
@@ -1027,7 +1032,7 @@ async function loadDashboardSummary() {
           return `
             <tr>
               <td><div class="leaderboard-rank ${rankClass}">${rank}</div></td>
-              <td><strong>${staff.staff_name}</strong></td>
+              <td><strong>${esc(staff.staff_name)}</strong></td>
               <td style="text-align: right;">${formatCurrency(staff.total_sales)}</td>
               <td style="text-align: right;">${formatCurrency(staff.total_profit)}</td>
               <td style="text-align: center;">${staff.transaction_count}</td>
@@ -1056,12 +1061,12 @@ async function loadActivity() {
     }
     const rows = data.map(r => `
       <tr>
-        <td>${r.created_at}</td>
-        <td>${r.username}</td>
-        <td>${r.action}</td>
-        <td>${r.entity}</td>
-        <td>${r.record_id ?? '-'}</td>
-        <td>${r.description ? r.description.slice(0,80) : '-'}</td>
+        <td>${esc(r.created_at)}</td>
+        <td>${esc(r.username)}</td>
+        <td>${esc(r.action)}</td>
+        <td>${esc(r.entity)}</td>
+        <td>${esc(r.record_id) ?? '-'}</td>
+        <td>${r.description ? esc(r.description.slice(0,80)) : '-'}</td>
       </tr>`).join('');
     tblActivity.innerHTML = rows;
   } catch (err) {
@@ -1761,11 +1766,11 @@ function renderActivityLogs(logs) {
     return `
       <tr>
         <td style="white-space: nowrap; font-size: 13px;">${time}</td>
-        <td><strong>${log.username || '-'}</strong></td>
+        <td><strong>${esc(log.username) || '-'}</strong></td>
         <td>${actionBadge}</td>
-        <td>${log.entity || '-'}</td>
-        <td>${log.record_id || '-'}</td>
-        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${log.description || ''}">${log.description || '-'}</td>
+        <td>${esc(log.entity) || '-'}</td>
+        <td>${esc(log.record_id) || '-'}</td>
+        <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="${esc(log.description) || ''}">${esc(log.description) || '-'}</td>
       </tr>
     `;
   }).join('');
@@ -1783,7 +1788,7 @@ function getActionBadge(action) {
     'LOGIN_FAIL': '<span class="badge badge-danger">LOGIN_FAIL</span>',
     'LOCKED': '<span class="badge badge-danger">LOCKED</span>'
   };
-  return badges[action] || `<span class="badge">${action || '-'}</span>`;
+  return badges[action] || `<span class="badge">${esc(action) || '-'}</span>`;
 }
 
 function filterActivityLogs() {

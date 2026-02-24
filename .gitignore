@@ -1,0 +1,5 @@
+node_modules/
+data/travelops.db
+data/logs/
+*.log
+.env

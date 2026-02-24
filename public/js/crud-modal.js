@@ -476,15 +476,16 @@ class CRUDModal {
    * Show view/details modal
    */
   static view(title, data, fields) {
+    const _esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const content = `
       <div class="view-details">
         ${fields.map(field => {
-          const value = data[field.name] || '—';
-          const displayValue = field.formatter ? field.formatter(value, data) : value;
+          const value = data[field.name] || '\u2014';
+          const displayValue = field.formatter ? field.formatter(value, data) : _esc(value);
           
           return `
             <div class="detail-row">
-              <div class="detail-label">${field.label}</div>
+              <div class="detail-label">${_esc(field.label)}</div>
               <div class="detail-value">${displayValue}</div>
             </div>
           `;
@@ -504,10 +505,11 @@ class CRUDModal {
    * Show loading modal
    */
   static loading(message = 'Processing...') {
+    const _esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const content = `
       <div class="loading-modal">
         <div class="loading-spinner"></div>
-        <div class="loading-message">${message}</div>
+        <div class="loading-message">${_esc(message)}</div>
       </div>
     `;
 

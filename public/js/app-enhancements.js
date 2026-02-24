@@ -210,10 +210,11 @@ class NotificationManager {
       return;
     }
     
+    const _esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     list.innerHTML = this.notifications.map(n => `
-      <div class="notification-item ${n.priority}" data-entity="${n.entity || ''}" data-id="${n.entityId || ''}">
-        <div class="notification-title">${n.title}</div>
-        <div class="notification-message">${n.message}${n.date ? ` • ${n.date}` : ''}</div>
+      <div class="notification-item ${_esc(n.priority)}" data-entity="${_esc(n.entity) || ''}" data-id="${_esc(n.entityId) || ''}">
+        <div class="notification-title">${_esc(n.title)}</div>
+        <div class="notification-message">${_esc(n.message)}${n.date ? ` • ${_esc(n.date)}` : ''}</div>
       </div>
     `).join('');
     

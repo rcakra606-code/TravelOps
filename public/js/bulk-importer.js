@@ -516,6 +516,7 @@ class BulkImporter {
       </tr>
     `;
     
+    const _esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     const showRows = validation.results.slice(0, 10);
     table.querySelector('tbody').innerHTML = showRows.map(r => {
       const status = r.errors.length > 0 ? 'error' : r.warnings.length > 0 ? 'warning' : 'valid';
@@ -524,9 +525,9 @@ class BulkImporter {
       return `
         <tr class="row-${status}">
           <td>${r.row}</td>
-          <td><span class="status-badge ${status}">${status === 'valid' ? '✓' : status === 'error' ? '✗' : '!'}</span></td>
-          ${headers.map(h => `<td>${r.data[h.key] || '-'}</td>`).join('')}
-          <td class="issues-cell">${issues.join(', ') || '-'}</td>
+          <td><span class="status-badge ${status}">${status === 'valid' ? '\u2713' : status === 'error' ? '\u2717' : '!'}</span></td>
+          ${headers.map(h => `<td>${_esc(r.data[h.key]) || '-'}</td>`).join('')}
+          <td class="issues-cell">${issues.map(i => _esc(i)).join(', ') || '-'}</td>
         </tr>
       `;
     }).join('');

@@ -61,6 +61,8 @@ async function checkAuthOnLoad() {
     
     // Start token refresh and expiry monitoring after successful auth
     startTokenRefresh();
+    // Fetch CSRF token for state-changing requests
+    await fetchCsrfToken();
     console.log('✅ Auth check passed, token expiry monitor started');
     
     return true;
@@ -86,13 +88,54 @@ if (document.readyState === 'loading') {
 /* === GLOBAL HELPERS === */
 const api = p => p.startsWith('/') ? p : '/' + p;
 
+/**
+ * Escape HTML special characters to prevent XSS when rendering user data.
+ * Use this on ALL user-supplied values before inserting into innerHTML.
+ */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/** Escape for use inside HTML attribute values */
+function escapeAttr(str) {
+  return escapeHtml(str);
+}
+
 const getHeaders = (json = true) => {
   const h = {};
   const token = localStorage.getItem('token');
   if (token) h['Authorization'] = 'Bearer ' + token;
   if (json) h['Content-Type'] = 'application/json';
+  // Include CSRF token on all requests
+  const csrfToken = sessionStorage.getItem('csrfToken');
+  if (csrfToken) h['X-CSRF-Token'] = csrfToken;
   return h;
 };
+
+// Fetch and store CSRF token from the server
+async function fetchCsrfToken() {
+  try {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const res = await fetch('/api/csrf-token', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.csrfToken) {
+        sessionStorage.setItem('csrfToken', data.csrfToken);
+      }
+    }
+  } catch (err) {
+    console.warn('Failed to fetch CSRF token:', err.message);
+  }
+}
 
 // Track token refresh timing
 let lastTokenRefreshTime = Date.now();
@@ -378,6 +421,8 @@ async function refreshTokenIfNeeded(force = false) {
           const remaining = getTokenRemainingMinutes();
           console.log(force ? '🔄 Token force refreshed' : '🔄 Token proactively refreshed');
           if (remaining != null) console.log(`[auth] New token remaining ~${remaining}m`);
+          // Refresh CSRF token with the new auth token
+          await fetchCsrfToken();
           return true;
         }
       } else if (response.status === 401 || response.status === 403) {
@@ -801,6 +846,9 @@ function getUser() {
 window.api = api;
 window.getHeaders = getHeaders;
 window.fetchJson = fetchJson;
+window.fetchCsrfToken = fetchCsrfToken;
+window.escapeHtml = escapeHtml;
+window.escapeAttr = escapeAttr;
 window.formatCurrency = formatCurrency;
 window.formatNumberWithCommas = formatNumberWithCommas;
 window.parseFormattedNumber = parseFormattedNumber;

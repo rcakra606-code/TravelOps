@@ -681,6 +681,17 @@
             localStorage.setItem('sessionId', data.sessionId);
           }
           
+          // Fetch CSRF token before navigating
+          try {
+            const csrfRes = await fetch('/api/csrf-token', {
+              headers: { 'Authorization': 'Bearer ' + data.token }
+            });
+            if (csrfRes.ok) {
+              const csrfData = await csrfRes.json();
+              if (csrfData.csrfToken) sessionStorage.setItem('csrfToken', csrfData.csrfToken);
+            }
+          } catch (e) { /* non-fatal */ }
+          
           window.location.href = '/single-dashboard.html';
           return;
         }

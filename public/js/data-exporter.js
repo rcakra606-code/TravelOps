@@ -419,16 +419,17 @@ class DataExporter {
   renderPreview(data, headers) {
     if (!data || data.length === 0) return '<div class="preview-empty">No data</div>';
     
+    const _esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     headers = headers || Object.keys(data[0]).slice(0, 5);
     
     return `
       <table class="preview-table-content">
         <thead>
-          <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+          <tr>${headers.map(h => `<th>${_esc(h)}</th>`).join('')}</tr>
         </thead>
         <tbody>
           ${data.map(row => `
-            <tr>${headers.map(h => `<td>${row[h] || '-'}</td>`).join('')}</tr>
+            <tr>${headers.map(h => `<td>${_esc(row[h]) || '-'}</td>`).join('')}</tr>
           `).join('')}
         </tbody>
       </table>

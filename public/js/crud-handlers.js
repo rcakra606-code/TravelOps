@@ -8,6 +8,8 @@
 
 // Submission protection flags
 let isSubmitting = false;
+// XSS helper — uses global escapeHtml from auth-common.js with local fallback
+const esc = (v) => window.escapeHtml ? window.escapeHtml(v) : String(v ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 let lastSubmitTime = 0;
 const SUBMIT_COOLDOWN = 2000; // 2 seconds cooldown between submissions
 
@@ -217,14 +219,14 @@ function openFilterModal(entity) {
           <label>Region</label>
           <select name="region_id">
             <option value="">Semua Region</option>
-            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${esc(r.region_name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Staff</label>
           <select name="staff_name">
             <option value="">Semua Staff</option>
-            ${state.users.map(u => `<option value="${u.name}" ${filters.staff_name == u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+            ${state.users.map(u => `<option value="${esc(u.name)}" ${filters.staff_name == u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}
           </select>
         </div>
       `;
@@ -243,7 +245,7 @@ function openFilterModal(entity) {
           <label>Region</label>
           <select name="region_id">
             <option value="">Semua Region</option>
-            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${esc(r.region_name)}</option>`).join('')}
           </select>
         </div>
       `;
@@ -254,7 +256,7 @@ function openFilterModal(entity) {
           <label>Region</label>
           <select name="region_id">
             <option value="">Semua Region</option>
-            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${esc(r.region_name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
@@ -269,7 +271,7 @@ function openFilterModal(entity) {
           <label>Staff</label>
           <select name="staff_name">
             <option value="">Semua Staff</option>
-            ${state.users.map(u => `<option value="${u.name}" ${filters.staff_name == u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+            ${state.users.map(u => `<option value="${esc(u.name)}" ${filters.staff_name == u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}
           </select>
         </div>
       `;
@@ -280,14 +282,14 @@ function openFilterModal(entity) {
           <label>Region</label>
           <select name="region_id">
             <option value="">Semua Region</option>
-            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${r.region_name}</option>`).join('')}
+            ${state.regions.map(r => `<option value="${r.id}" ${filters.region_id == r.id ? 'selected' : ''}>${esc(r.region_name)}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>Staff</label>
           <select name="staff_name">
             <option value="">Semua Staff</option>
-            ${state.users.map(u => `<option value="${u.name}" ${filters.staff_name == u.name ? 'selected' : ''}>${u.name}</option>`).join('')}
+            ${state.users.map(u => `<option value="${esc(u.name)}" ${filters.staff_name == u.name ? 'selected' : ''}>${esc(u.name)}</option>`).join('')}
           </select>
         </div>
       `;
@@ -314,7 +316,7 @@ function openFilterModal(entity) {
       <div class="form-grid">
         <div class="form-group">
           <label>Search</label>
-          <input type="text" name="search" value="${filters.search || ''}" placeholder="Cari...">
+          <input type="text" name="search" value="${esc(filters.search) || ''}" placeholder="Cari...">
         </div>
         <div class="form-group">
           <label>Date From</label>
@@ -681,11 +683,11 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group">
           <label>Tour Code *</label>
-          <input type="text" name="tour_code" value="${item.tour_code || ''}" required>
+          <input type="text" name="tour_code" value="${esc(item.tour_code) || ''}" required>
         </div>
         <div class="form-group">
           <label>Booking Code</label>
-          <input type="text" name="booking_code" value="${item.booking_code || ''}">
+          <input type="text" name="booking_code" value="${esc(item.booking_code) || ''}">
         </div>
         <div class="form-group">
           <label>Departure Date *</label>
@@ -705,7 +707,7 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group">
           <label>Nama Penumpang Utama *</label>
-          <input type="text" name="lead_passenger" value="${item.lead_passenger || ''}" required>
+          <input type="text" name="lead_passenger" value="${esc(item.lead_passenger) || ''}" required>
         </div>
         <div class="form-group">
           <label>Jumlah Peserta *</label>
@@ -713,15 +715,15 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" name="phone_number" value="${item.phone_number || ''}">
+          <input type="tel" name="phone_number" value="${esc(item.phone_number) || ''}">
         </div>
         <div class="form-group">
           <label>Email</label>
-          <input type="email" name="email" value="${item.email || ''}">
+          <input type="email" name="email" value="${esc(item.email) || ''}">
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Semua Penumpang</label>
-          <textarea name="all_passengers" rows="2">${item.all_passengers || ''}</textarea>
+          <textarea name="all_passengers" rows="2">${esc(item.all_passengers) || ''}</textarea>
         </div>
         <div class="form-group">
           <label>Staff *</label>
@@ -729,7 +731,7 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group">
           <label>Remarks</label>
-          <textarea name="remarks" rows="3" placeholder="Additional notes or remarks">${item.remarks || ''}</textarea>
+          <textarea name="remarks" rows="3" placeholder="Additional notes or remarks">${esc(item.remarks) || ''}</textarea>
         </div>
         
         <!-- Financial Section -->
@@ -760,15 +762,15 @@ function openEditTourModal(id) {
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Discount Remarks</label>
-          <textarea name="discount_remarks" rows="3" placeholder="Keterangan diskon (detail lengkap)">${item.discount_remarks || ''}</textarea>
+          <textarea name="discount_remarks" rows="3" placeholder="Keterangan diskon (detail lengkap)">${esc(item.discount_remarks) || ''}</textarea>
         </div>
         <div class="form-group">
           <label>Invoice Number</label>
-          <input type="text" name="invoice_number" value="${item.invoice_number || ''}" placeholder="Nomor invoice">
+          <input type="text" name="invoice_number" value="${esc(item.invoice_number) || ''}" placeholder="Nomor invoice">
         </div>
         <div class="form-group" style="grid-column: 1 / -1;">
           <label>Link Pelunasan Tour & Bukti Discount</label>
-          <input type="url" name="link_pelunasan_tour" value="${item.link_pelunasan_tour || ''}" placeholder="Upload to Google Drive or Lark">
+          <input type="url" name="link_pelunasan_tour" value="${esc(item.link_pelunasan_tour) || ''}" placeholder="Upload to Google Drive or Lark">
           <small style="color: var(--text-secondary); font-size: 0.85rem; display: block; margin-top: 4px;">📁 Please upload payment & discount proof to Drive or Lark</small>
         </div>
       </div>
@@ -871,7 +873,7 @@ function openEditDocModal(id) {
         </div>
         <div class="form-group">
           <label>Guest Name *</label>
-          <input type="text" name="guest_name" value="${item.guest_name || ''}" required>
+          <input type="text" name="guest_name" value="${esc(item.guest_name) || ''}" required>
         </div>
         <div class="form-group">
           <label>Passport / Visa Country</label>
@@ -888,15 +890,15 @@ function openEditDocModal(id) {
         </div>
         <div class="form-group">
           <label>Booking Code</label>
-          <input type="text" name="booking_code" value="${item.booking_code || ''}">
+          <input type="text" name="booking_code" value="${esc(item.booking_code) || ''}">
         </div>
         <div class="form-group">
           <label>Invoice Number</label>
-          <input type="text" name="invoice_number" value="${item.invoice_number || ''}">
+          <input type="text" name="invoice_number" value="${esc(item.invoice_number) || ''}">
         </div>
         <div class="form-group">
           <label>Phone Number</label>
-          <input type="tel" name="phone_number" value="${item.phone_number || ''}">
+          <input type="tel" name="phone_number" value="${esc(item.phone_number) || ''}">
         </div>
         <div class="form-group">
           <label>Estimated Done</label>
@@ -908,11 +910,11 @@ function openEditDocModal(id) {
         </div>
         <div class="form-group">
           <label>Tour Code</label>
-          <input type="text" name="tour_code" value="${item.tour_code || ''}">
+          <input type="text" name="tour_code" value="${esc(item.tour_code) || ''}">
         </div>
         <div class="form-group">
           <label>Notes</label>
-          <textarea name="notes" rows="3">${item.notes || ''}</textarea>
+          <textarea name="notes" rows="3">${esc(item.notes) || ''}</textarea>
         </div>
       </div>
     `,
@@ -1036,7 +1038,7 @@ function openEditRegionModal(id) {
     bodyHtml: `
       <div class="form-group">
         <label>Nama Region *</label>
-        <input type="text" name="region_name" value="${item.region_name || ''}" required>
+        <input type="text" name="region_name" value="${esc(item.region_name) || ''}" required>
       </div>
     `,
     context: { entity: 'regions', action: 'update', id }
@@ -1086,15 +1088,15 @@ function openEditUserModal(id) {
     bodyHtml: `
       <div class="form-group">
         <label>Username *</label>
-        <input type="text" name="username" value="${item.username || ''}" required readonly>
+        <input type="text" name="username" value="${esc(item.username) || ''}" required readonly>
       </div>
       <div class="form-group">
         <label>Name *</label>
-        <input type="text" name="name" value="${item.name || ''}" required>
+        <input type="text" name="name" value="${esc(item.name) || ''}" required>
       </div>
       <div class="form-group">
         <label>Email</label>
-        <input type="email" name="email" value="${item.email || ''}">
+        <input type="email" name="email" value="${esc(item.email) || ''}">
       </div>
       <div class="form-group">
         <label>Type *</label>
@@ -1116,7 +1118,7 @@ function openEditUserModal(id) {
 /* === USERS: RESET PASSWORD === */
 function openResetUserModal(username) {
   openModal({
-    title: `Reset Password — ${username}`,
+    title: `Reset Password — ${esc(username)}`,
     size: 'small',
     bodyHtml: `
       <div class="form-group">
@@ -1223,15 +1225,15 @@ function openEditTelecomModal(id) {
       <div class="form-grid">
         <div class="form-group">
           <label>Nama *</label>
-          <input type="text" name="nama" value="${item.nama || ''}" required>
+          <input type="text" name="nama" value="${esc(item.nama) || ''}" required>
         </div>
         <div class="form-group">
           <label>No Telephone *</label>
-          <input type="tel" name="no_telephone" value="${item.no_telephone || ''}" required>
+          <input type="tel" name="no_telephone" value="${esc(item.no_telephone) || ''}" required>
         </div>
         <div class="form-group">
           <label>Type Product</label>
-          <input type="text" name="type_product" value="${item.type_product || ''}" placeholder="Jenis Produk">
+          <input type="text" name="type_product" value="${esc(item.type_product) || ''}" placeholder="Jenis Produk">
         </div>
         <div class="form-group">
           <label>Negara *</label>
@@ -1247,15 +1249,15 @@ function openEditTelecomModal(id) {
         </div>
         <div class="form-group">
           <label>No Rekening</label>
-          <input type="text" name="no_rekening" value="${item.no_rekening || ''}">
+          <input type="text" name="no_rekening" value="${esc(item.no_rekening) || ''}">
         </div>
         <div class="form-group">
           <label>Bank</label>
-          <input type="text" name="bank" value="${item.bank || ''}">
+          <input type="text" name="bank" value="${esc(item.bank) || ''}">
         </div>
         <div class="form-group">
           <label>Nama Rekening</label>
-          <input type="text" name="nama_rekening" value="${item.nama_rekening || ''}">
+          <input type="text" name="nama_rekening" value="${esc(item.nama_rekening) || ''}">
         </div>
         <div class="form-group">
           <label>Estimasi Pengambilan</label>
@@ -1366,7 +1368,7 @@ function openEditHotelBookingModal(id) {
         </div>
         <div class="form-group">
           <label>Nama Hotel *</label>
-          <input type="text" name="hotel_name" value="${item.hotel_name || ''}" required>
+          <input type="text" name="hotel_name" value="${esc(item.hotel_name) || ''}" required>
         </div>
         <div class="form-group">
           <label>Region *</label>
@@ -1374,19 +1376,19 @@ function openEditHotelBookingModal(id) {
         </div>
         <div class="form-group">
           <label>Confirmation Number</label>
-          <input type="text" name="confirmation_number" value="${item.confirmation_number || ''}">
+          <input type="text" name="confirmation_number" value="${esc(item.confirmation_number) || ''}">
         </div>
         <div class="form-group">
           <label>Guest List</label>
-          <textarea name="guest_list" rows="3">${item.guest_list || ''}</textarea>
+          <textarea name="guest_list" rows="3">${esc(item.guest_list) || ''}</textarea>
         </div>
         <div class="form-group">
           <label>Supplier Code</label>
-          <input type="text" name="supplier_code" value="${item.supplier_code || ''}">
+          <input type="text" name="supplier_code" value="${esc(item.supplier_code) || ''}">
         </div>
         <div class="form-group">
           <label>Supplier Name</label>
-          <input type="text" name="supplier_name" value="${item.supplier_name || ''}">
+          <input type="text" name="supplier_name" value="${esc(item.supplier_name) || ''}">
         </div>
         <div class="form-group">
           <label>Staff *</label>
@@ -1815,9 +1817,9 @@ function renderSalesTable() {
     }
     return `
     <tr>
-      <td>${item.transaction_date || '-'}</td>
-      <td>${item.invoice_no || '-'}</td>
-      <td>${item.staff_name || '-'}</td>
+      <td>${esc(item.transaction_date) || '-'}</td>
+      <td>${esc(item.invoice_no) || '-'}</td>
+      <td>${esc(item.staff_name) || '-'}</td>
       <td>${formatCurrency(item.sales_amount)}</td>
       <td>${formatCurrency(item.profit_amount)}</td>
       <td>${actions}</td>
@@ -1870,16 +1872,16 @@ function renderToursTable() {
     
     return `
       <tr>
-        <td>${item.registration_date || '-'}</td>
-        <td>${item.tour_code || '-'}</td>
-        <td>${item.booking_code || '-'}</td>
+        <td>${esc(item.registration_date) || '-'}</td>
+        <td>${esc(item.tour_code) || '-'}</td>
+        <td>${esc(item.booking_code) || '-'}</td>
         <td>${item.jumlah_peserta || 0}</td>
-        <td>${item.departure_date || '-'}</td>
-        <td>${region ? region.region_name : '-'}</td>
-        <td title="${item.status || '-'}">${statusDisplay}</td>
-        <td title="${item.lead_passenger || '-'}">${leadName}</td>
+        <td>${esc(item.departure_date) || '-'}</td>
+        <td>${region ? esc(region.region_name) : '-'}</td>
+        <td title="${esc(item.status) || '-'}">${statusDisplay}</td>
+        <td title="${esc(item.lead_passenger) || '-'}">${esc(leadName)}</td>
         <td>${item.total_nominal_sales ? formatCurrency(item.total_nominal_sales) : '-'}</td>
-        <td>${item.staff_name || '-'}</td>
+        <td>${esc(item.staff_name) || '-'}</td>
         <td style=\"white-space: nowrap;\">${actions}</td>
       </tr>
     `;
@@ -1905,12 +1907,12 @@ function renderDocsTable() {
   
   tbody.innerHTML = paginated.map(item => `
     <tr>
-      <td>${item.receive_date || '-'}</td>
-      <td>${item.guest_name || '-'}</td>
+      <td>${esc(item.receive_date) || '-'}</td>
+      <td>${esc(item.guest_name) || '-'}</td>
       <td>${item.process_type ? (item.process_type === 'Kilat' 
-        ? '<span class="badge badge-warning">Kilat</span>' 
-        : '<span class="badge badge-info">Normal</span>') : '-'}</td>
-      <td>${item.staff_name || '-'}</td>
+        ? '<span class=\"badge badge-warning\">Kilat</span>' 
+        : '<span class=\"badge badge-info\">Normal</span>') : '-'}</td>
+      <td>${esc(item.staff_name) || '-'}</td>
       <td>${(() => {
         const owned = item.staff_name && item.staff_name === current.name;
         if (isBasic && !owned) return `<button class=\"btn-action view\" data-action=\"view\" data-entity=\"documents\" data-id=\"${item.id}\">View</button>`;
@@ -1945,7 +1947,7 @@ function renderTargetsTable() {
     <tr>
       <td>${monthNames[item.month] || '-'}</td>
       <td>${item.year || '-'}</td>
-      <td>${item.staff_name || '-'}</td>
+      <td>${esc(item.staff_name) || '-'}</td>
       <td>${formatCurrency(item.target_sales)}</td>
       <td>${formatCurrency(item.target_profit)}</td>
       <td>${(() => {
@@ -1976,7 +1978,7 @@ function renderRegionsTable() {
   tbody.innerHTML = paginated.map(item => `
     <tr>
       <td>${item.id}</td>
-      <td>${item.region_name || '-'}</td>
+      <td>${esc(item.region_name) || '-'}</td>
       <td>
         <button class="btn-action edit" data-action="edit" data-entity="regions" data-id="${item.id}">Edit</button>
         <button class="btn-action delete" data-action="delete" data-entity="regions" data-id="${item.id}">Delete</button>
@@ -2006,8 +2008,8 @@ function renderUsersTable() {
     const locked = item.locked_until && new Date(item.locked_until) > new Date();
     return `
     <tr>
-      <td>${item.username || '-'}${locked ? ' <span class="badge badge-danger" title="Locked until '+item.locked_until+'">Locked</span>' : ''}</td>
-      <td>${item.name || '-'}</td>
+      <td>${esc(item.username) || '-'}${locked ? ' <span class=\"badge badge-danger\" title=\"Locked until '+esc(item.locked_until)+'\">Locked</span>' : ''}</td>
+      <td>${esc(item.name) || '-'}</td>
       <td>${item.type ? (item.type === 'admin'
         ? '<span class="badge badge-primary">Admin</span>'
         : item.type === 'semiadmin'
@@ -2016,9 +2018,9 @@ function renderUsersTable() {
       <td>
         <button class="btn-action edit" data-action="edit" data-entity="users" data-id="${item.id}">Edit</button>
         <button class="btn-action delete" data-action="delete" data-entity="users" data-id="${item.id}">Delete</button>
-        ${isAdmin ? `<button class=\"btn-action reset\" data-action=\"reset-user\" data-username=\"${item.username}\">Reset</button>` : ''}
-        ${isAdmin && locked ? `<button class=\"btn-action unlock\" data-action=\"unlock-user\" data-username=\"${item.username}\">Unlock</button>` : ''}
-        ${isAdmin && !locked && item.type !== 'admin' ? `<button class=\"btn-action lock\" data-action=\"lock-user\" data-username=\"${item.username}\">Lock</button>` : ''}
+        ${isAdmin ? `<button class=\"btn-action reset\" data-action=\"reset-user\" data-username=\"${esc(item.username)}\">Reset</button>` : ''}
+        ${isAdmin && locked ? `<button class=\"btn-action unlock\" data-action=\"unlock-user\" data-username=\"${esc(item.username)}\">Unlock</button>` : ''}
+        ${isAdmin && !locked && item.type !== 'admin' ? `<button class=\"btn-action lock\" data-action=\"lock-user\" data-username=\"${esc(item.username)}\">Lock</button>` : ''}
       </td>
     </tr>
     `;
@@ -2056,13 +2058,13 @@ function renderTelecomTable() {
     }
     return `
       <tr>
-        <td>${item.nama || '-'}</td>
-        <td>${item.no_telephone || '-'}</td>
-        <td>${item.type_product || '-'}</td>
-        <td>${region ? region.region_name : '-'}</td>
-        <td>${item.tanggal_mulai || '-'}</td>
-        <td>${item.tanggal_selesai || '-'}</td>
-        <td>${item.staff_name || '-'}</td>
+        <td>${esc(item.nama) || '-'}</td>
+        <td>${esc(item.no_telephone) || '-'}</td>
+        <td>${esc(item.type_product) || '-'}</td>
+        <td>${region ? esc(region.region_name) : '-'}</td>
+        <td>${esc(item.tanggal_mulai) || '-'}</td>
+        <td>${esc(item.tanggal_selesai) || '-'}</td>
+        <td>${esc(item.staff_name) || '-'}</td>
         <td>${item.deposit ? (item.deposit === 'sudah' 
           ? '<span class="badge badge-success">Sudah</span>' 
           : '<span class="badge badge-warning">Belum</span>') : '-'}</td>
@@ -2103,13 +2105,13 @@ function renderHotelBookingsTable() {
     }
     return `
       <tr>
-        <td>${item.check_in || '-'}</td>
-        <td>${item.check_out || '-'}</td>
-        <td>${item.hotel_name || '-'}</td>
-        <td>${region ? region.region_name : '-'}</td>
-        <td>${item.confirmation_number || '-'}</td>
-        <td>${item.guest_list ? (item.guest_list.length > 50 ? item.guest_list.substring(0, 50) + '...' : item.guest_list) : '-'}</td>
-        <td>${item.staff_name || '-'}</td>
+        <td>${esc(item.check_in) || '-'}</td>
+        <td>${esc(item.check_out) || '-'}</td>
+        <td>${esc(item.hotel_name) || '-'}</td>
+        <td>${region ? esc(region.region_name) : '-'}</td>
+        <td>${esc(item.confirmation_number) || '-'}</td>
+        <td>${item.guest_list ? esc(item.guest_list.length > 50 ? item.guest_list.substring(0, 50) + '...' : item.guest_list) : '-'}</td>
+        <td>${esc(item.staff_name) || '-'}</td>
         <td>${actions}</td>
       </tr>
     `;
@@ -2347,7 +2349,7 @@ function openViewItem(entity, id) {
   if (!item) { toast.error('Data tidak ditemukan'); return; }
   const rows = Object.entries(item)
     .filter(([k]) => !['password'].includes(k))
-    .map(([k,v]) => `<tr><th style=\"text-align:left;padding:6px 10px;background:#f3f4f6;width:160px;font-weight:600;text-transform:capitalize\">${k.replace(/_/g,' ')}</th><td style=\"padding:6px 10px\">${v ?? '-'}</td></tr>`)
+    .map(([k,v]) => `<tr><th style=\"text-align:left;padding:6px 10px;background:#f3f4f6;width:160px;font-weight:600;text-transform:capitalize\">${esc(k.replace(/_/g,' '))}</th><td style=\"padding:6px 10px\">${esc(v) || '-'}</td></tr>`)
     .join('');
   openModal({
     title: `Detail ${entity} #${id}`,

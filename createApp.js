@@ -1,5 +1,5 @@
 import express from 'express';
-import bodyParser from 'body-parser';
+// body-parser removed: using express.json() and express.urlencoded() built-in
 import cors from 'cors';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
@@ -12,7 +12,7 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import { RateLimiterMemory } from 'rate-limiter-flexible';
 import { initDb } from './database.js';
-import { logger, requestLogger } from './logger.js';
+import { logger, requestLogger, logSecurityEvent, logAuditTrail, SecurityEvent, getRecentLogs, getAvailableLogDates } from './logger.js';
 import { sendDepartureReminder, sendTestEmail, checkEmailConfigured } from './emailService.js';
 import { initScheduler, manualTrigger, getReminderStats } from './notificationScheduler.js';
 
@@ -35,6 +35,56 @@ function isStrongPassword(pw='') {
   // Check against common passwords
   if (COMMON_PASSWORDS.includes(pw.toLowerCase())) return false;
   return true;
+}
+
+// ===================================================================
+// TABLE COLUMN WHITELIST - Prevents SQL injection via dynamic column names
+// ===================================================================
+const TABLE_COLUMNS = {
+  users: ['username', 'password', 'name', 'email', 'type', 'failed_attempts', 'locked_until', 'created_at'],
+  sales: ['transaction_date', 'invoice_no', 'staff_name', 'region_id', 'status', 'sales_amount', 'profit_amount', 'notes', 'unique_code', 'month', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  tours: ['registration_date', 'lead_passenger', 'all_passengers', 'tour_code', 'region_id', 'departure_date', 'return_date', 'booking_code', 'tour_price', 'sales_amount', 'total_nominal_sales', 'profit_amount', 'discount_amount', 'discount_remarks', 'staff_name', 'jumlah_peserta', 'phone_number', 'email', 'status', 'link_pelunasan_tour', 'invoice_number', 'data_version', 'remarks', 'remarks_request', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  documents: ['receive_date', 'send_date', 'guest_name', 'passport_country', 'process_type', 'booking_code', 'invoice_number', 'phone_number', 'estimated_done', 'staff_name', 'tour_code', 'notes', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  targets: ['month', 'year', 'staff_name', 'target_sales', 'target_profit', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  regions: ['region_name', 'description'],
+  telecom: ['nama', 'no_telephone', 'type_product', 'region_id', 'tanggal_mulai', 'tanggal_selesai', 'no_rekening', 'bank', 'nama_rekening', 'estimasi_pengambilan', 'staff_name', 'deposit', 'jumlah_deposit', 'tanggal_pengambilan', 'tanggal_pengembalian', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  hotel_bookings: ['check_in', 'check_out', 'hotel_name', 'region_id', 'confirmation_number', 'guest_list', 'supplier_code', 'supplier_name', 'staff_name', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  overtime: ['staff_name', 'event_name', 'event_date', 'hours', 'status', 'remarks', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  cruise: ['cruise_brand', 'ship_name', 'sailing_start', 'sailing_end', 'route', 'pic_name', 'participant_names', 'phone_number', 'email', 'reservation_code', 'staff_name', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  outstanding: ['nomor_invoice', 'nominal_invoice', 'pembayaran_pertama', 'pembayaran_kedua', 'unique_code', 'staff_name', 'created_at'],
+  cashout: ['request_date', 'staff_name', 'amount', 'purpose', 'cust_code', 'jira_request', 'jira_settlement', 'settlement_date', 'status', 'notes', 'created_by', 'created_at', 'updated_at', 'updated_by'],
+  productivity: ['month', 'year', 'product_type', 'retail_sales', 'retail_profit', 'corporate_sales', 'corporate_profit', 'staff_name', 'retail_margin', 'corporate_margin', 'total_sales', 'total_profit', 'total_margin', 'created_at', 'updated_at'],
+  ticket_recaps: ['booking_code', 'airline_code', 'gds_system', 'airline_name', 'passenger_names', 'staff_name', 'status', 'is_open_ticket', 'open_ticket_reminder_sent_date', 'notes', 'reminder_sent_7d', 'reminder_sent_3d', 'reminder_sent_2d', 'reminder_sent_1d', 'reminder_sent_0d', 'arrival_reminder_sent', 'created_by', 'created_at', 'updated_at', 'updated_by'],
+  tracking_deliveries: ['send_date', 'passport_count', 'invoice_no', 'booking_code', 'courier', 'tracking_no', 'recipient', 'address', 'details', 'status', 'tracking_data', 'created_by', 'created_at', 'updated_at'],
+  tracking_receivings: ['receive_date', 'passport_count', 'sender', 'tracking_no', 'details', 'created_by', 'created_at', 'updated_at']
+};
+
+// Validate column names against whitelist to prevent SQL injection
+function filterAllowedColumns(table, body) {
+  const allowed = TABLE_COLUMNS[table];
+  if (!allowed) return body; // fallback for unknown tables
+  const filtered = {};
+  for (const key of Object.keys(body)) {
+    if (allowed.includes(key)) {
+      filtered[key] = body[key];
+    } else {
+      logger.warn({ table, column: key }, 'Blocked disallowed column in request body');
+    }
+  }
+  return filtered;
+}
+
+// Timing-safe string comparison to prevent timing attacks
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Compare against self to maintain constant time
+    crypto.timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return crypto.timingSafeEqual(bufA, bufB);
 }
 
 // Input sanitization helper to prevent XSS
@@ -234,6 +284,9 @@ export async function createApp() {
   const db = await initDb();
   logger.info({ path: path.resolve('data/travelops.db'), dialect: db.dialect }, 'Database config');
   
+  // Store db reference on app for graceful shutdown
+  app.locals.db = db;
+  
   // ===================================================================
   // SINGLE DEVICE SESSION TRACKING
   // ===================================================================
@@ -283,10 +336,10 @@ export async function createApp() {
 
   // CORS - restrict to specific origins in production
   app.use(cors({ 
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : undefined, 
+    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(',') : (process.env.NODE_ENV === 'production' ? false : undefined), 
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
   }));
   
   // Security headers with Helmet
@@ -298,7 +351,7 @@ export async function createApp() {
       useDefaults: true,
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net", "https://cdnjs.cloudflare.com"],
         scriptSrcAttr: ["'unsafe-inline'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com", "https://cdnjs.cloudflare.com"],
         fontSrc: ["'self'", "https://fonts.gstatic.com", "https://fonts.googleapis.com"],
@@ -332,16 +385,8 @@ export async function createApp() {
   });
   app.use(limiter);
   // Limit request body size to prevent DoS attacks
-  app.use(bodyParser.json({ limit: '1mb' }));
-  app.use(bodyParser.urlencoded({ extended: true, limit: '1mb' }));
-  
-  // Sanitize all incoming request bodies to prevent XSS attacks
-  app.use((req, res, next) => {
-    if (req.body && typeof req.body === 'object') {
-      req.body = sanitizeObject(req.body);
-    }
-    next();
-  });
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '1mb' }));
   
   app.use(express.static('public', {
     setHeaders: (res, path) => {
@@ -411,7 +456,13 @@ export async function createApp() {
     };
   }
 
-  function authMiddleware(required = true) {
+  /**
+   * Auth middleware with optional role-based access control.
+   * @param {boolean|string[]} requiredOrRoles - true/false for auth required, or array of allowed role strings
+   */
+  function authMiddleware(requiredOrRoles = true) {
+    const required = Array.isArray(requiredOrRoles) ? true : requiredOrRoles;
+    const allowedRoles = Array.isArray(requiredOrRoles) ? requiredOrRoles : null;
     return async (req, res, next) => {
       const authHeader = req.headers.authorization || '';
       const token = authHeader.replace('Bearer ', '');
@@ -430,6 +481,24 @@ export async function createApp() {
         }
         
         req.user = decoded;
+        
+        // Role-based access control
+        if (allowedRoles && !allowedRoles.includes(decoded.type)) {
+          return res.status(403).json({ error: 'Insufficient permissions' });
+        }
+        
+        // Inline CSRF validation for state-changing requests (skip in test mode)
+        if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && process.env.NODE_ENV !== 'test') {
+          const skipPaths = ['/api/login', '/api/logout', '/api/refresh'];
+          if (!skipPaths.includes(req.path)) {
+            const csrfToken = req.headers['x-csrf-token'];
+            if (!csrfToken || !validateCsrfToken(decoded.id, csrfToken)) {
+              logSecurityEvent(SecurityEvent.CSRF_FAIL, { userId: decoded.id, username: decoded.username, path: req.path, method: req.method, ip: req.ip });
+              return res.status(403).json({ error: 'Invalid or missing CSRF token. Please refresh the page.' });
+            }
+          }
+        }
+        
         next();
       } catch (err) {
         return res.status(403).json({ error: 'Invalid or expired token' });
@@ -453,10 +522,8 @@ export async function createApp() {
     if (req.user) {
       const csrfToken = req.headers['x-csrf-token'];
       if (!csrfToken || !validateCsrfToken(req.user.id, csrfToken)) {
-        // Log but don't block for now - gradual rollout
-        logger.warn({ userId: req.user.id, path: req.path }, 'Missing or invalid CSRF token');
-        // Uncomment below to enforce:
-        // return res.status(403).json({ error: 'Invalid CSRF token' });
+        logSecurityEvent(SecurityEvent.CSRF_FAIL, { userId: req.user.id, username: req.user.username, path: req.path, method: req.method, ip: req.ip });
+        return res.status(403).json({ error: 'Invalid or missing CSRF token. Please refresh the page.' });
       }
     }
     next();
@@ -474,8 +541,9 @@ export async function createApp() {
     }
     
     const { key } = req.body;
-    if (!key || key !== emergencyKey) {
-      logger.warn({ ip: req.ip }, 'Invalid emergency reset attempt');
+    // Use timing-safe comparison to prevent timing attacks
+    if (!key || !timingSafeEqual(key, emergencyKey)) {
+      logSecurityEvent(SecurityEvent.EMERGENCY_RESET, { ip: req.ip, success: false });
       return res.status(401).json({ error: 'Invalid key' });
     }
     
@@ -496,12 +564,12 @@ export async function createApp() {
           'INSERT INTO users (username, password, name, email, type) VALUES (?, ?, ?, ?, ?)',
           [username, hashed, 'Administrator', 'admin@example.com', 'admin']
         );
-        logger.info({ username }, 'Emergency reset: Created admin user');
-        return res.json({ ok: true, message: `Created admin user: ${username}`, password: defaultPassword });
+        logSecurityEvent(SecurityEvent.EMERGENCY_RESET, { ip: req.ip, success: true, action: 'created_admin', username });
+        return res.json({ ok: true, message: 'Admin account reset successfully. Use your configured ADMIN_PASSWORD to login.' });
       }
       
-      logger.info({ changes: result.changes }, 'Emergency reset: Reset admin passwords');
-      res.json({ ok: true, message: `Reset ${result.changes} admin account(s)`, password: defaultPassword });
+      logSecurityEvent(SecurityEvent.EMERGENCY_RESET, { ip: req.ip, success: true, action: 'reset_passwords', changes: result.changes });
+      res.json({ ok: true, message: `Reset ${result.changes} admin account(s). Use your configured ADMIN_PASSWORD to login.` });
     } catch (err) {
       logger.error({ err }, 'Emergency reset failed');
       res.status(500).json({ error: 'Reset failed' });
@@ -519,11 +587,12 @@ export async function createApp() {
       }
       await app.locals.loginLimiter.consume(req.ip);
     } catch {
+      logSecurityEvent(SecurityEvent.RATE_LIMITED, { ip: req.ip, endpoint: '/api/login' });
       return res.status(429).json({ error: 'Too many login attempts. Please try again later.' });
     }
     const { username, password, forceLogin } = req.body;
     const now = Date.now();
-    let user = await db.get('SELECT * FROM users WHERE username=?', [username]);
+    let user = await db.get('SELECT id, username, password, name, email, type, failed_attempts, locked_until FROM users WHERE username=?', [username]);
     
     // SECURITY FIX: Generic error message to prevent user enumeration
     const GENERIC_LOGIN_ERROR = 'Invalid username or password';
@@ -545,28 +614,32 @@ export async function createApp() {
         logger.error({ err: e }, 'Auto-seed admin check failed');
       }
       // Use same generic error as wrong password
+      logSecurityEvent(SecurityEvent.LOGIN_FAIL, { ip: req.ip, username, reason: 'user_not_found' });
       return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
     }
-    if (user.type !== 'admin' && user.locked_until) {
+    if (user.locked_until) {
       const lockedUntilMs = Date.parse(user.locked_until);
       if (!isNaN(lockedUntilMs) && lockedUntilMs > now) {
+        logSecurityEvent(SecurityEvent.LOGIN_FAIL, { ip: req.ip, username, reason: 'account_locked', userId: user.id });
         return res.status(423).json({ error: 'Account locked. Contact administrator to unlock your account.' });
       }
     }
     const valid = await bcrypt.compare(password, user.password);
     if (!valid) {
-      if (user.type !== 'admin') {
-        const attempts = (user.failed_attempts || 0) + 1;
-        let lockedUntil = null;
-        // Lock indefinitely after 3 failed attempts - only admin can unlock
-        if (attempts >= 3) lockedUntil = '9999-12-31T23:59:59.000Z';
-        await db.run('UPDATE users SET failed_attempts=?, locked_until=? WHERE id=?', [attempts, lockedUntil, user.id]);
-        if (lockedUntil) {
-          await logActivity(username, 'LOCKED', 'users', user.id, `Account locked after ${attempts} failed attempts`);
-          return res.status(423).json({ error: 'Account locked due to multiple failed attempts. Contact administrator to unlock.' });
-        }
+      // Track failed attempts for ALL users including admin
+      const attempts = (user.failed_attempts || 0) + 1;
+      let lockedUntil = null;
+      // Lock after 5 failed attempts for admin, 3 for others
+      const maxAttempts = user.type === 'admin' ? 5 : 3;
+      if (attempts >= maxAttempts) lockedUntil = '9999-12-31T23:59:59.000Z';
+      await db.run('UPDATE users SET failed_attempts=?, locked_until=? WHERE id=?', [attempts, lockedUntil, user.id]);
+      if (lockedUntil) {
+        await logActivity(username, 'LOCKED', 'users', user.id, `Account locked after ${attempts} failed attempts`);
+        logSecurityEvent(SecurityEvent.ACCOUNT_LOCKED, { ip: req.ip, username, userId: user.id, attempts });
+        return res.status(423).json({ error: 'Account locked due to multiple failed attempts. Contact administrator to unlock.' });
       }
       await logActivity(username, 'LOGIN_FAIL', 'auth', user.id, 'Bad password');
+      logSecurityEvent(SecurityEvent.LOGIN_FAIL, { ip: req.ip, username, userId: user.id, reason: 'bad_password' });
       // Use generic error message
       return res.status(401).json({ error: GENERIC_LOGIN_ERROR });
     }
@@ -596,7 +669,8 @@ export async function createApp() {
     // Clear any existing session and set new one
     setActiveSession(user.id, sessionId, deviceInfo);
     
-    if (user.type !== 'admin') await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
+    // Reset failed attempts for ALL users on successful login (including admin)
+    await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?', [user.id]);
     
     const safeUser = { 
       id: user.id, 
@@ -609,6 +683,7 @@ export async function createApp() {
     const TOKEN_EXPIRES = process.env.JWT_EXPIRES || '15m';
     const token = jwt.sign(safeUser, JWT_SECRET, { expiresIn: TOKEN_EXPIRES });
     await logActivity(username, 'LOGIN', 'auth', user.id, `Device: ${deviceInfo.ip}`);
+    logSecurityEvent(SecurityEvent.LOGIN_SUCCESS, { ip: req.ip, username, userId: user.id, userType: user.type });
     res.json({ ...safeUser, token, sessionId });
   });
 
@@ -617,6 +692,7 @@ export async function createApp() {
     if (req.user && req.user.id) {
       clearSession(req.user.id);
       await logActivity(req.user.username, 'LOGOUT', 'auth', req.user.id);
+      logSecurityEvent(SecurityEvent.LOGOUT, { ip: req.ip, username: req.user.username, userId: req.user.id });
     }
     res.json({ ok: true });
   });
@@ -796,7 +872,7 @@ export async function createApp() {
       }
       // Provide region_name join enrichment for sales and tours when region_id exists
       try {
-        let rows;
+        let querySql, queryParams;
         const { month, year, staff, region, dateType, page, limit, sortBy, sortOrder, search } = req.query;
         const isPg = db.dialect === 'postgres';
         
@@ -901,51 +977,65 @@ export async function createApp() {
         const whereClause = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
         
         if (t === 'sales') {
-          rows = await db.all(`SELECT s.*, r.region_name FROM sales s LEFT JOIN regions r ON r.id = s.region_id ${whereClause}`, params);
+          querySql = `SELECT s.*, r.region_name FROM sales s LEFT JOIN regions r ON r.id = s.region_id ${whereClause}`;
+          queryParams = [...params];
         } else if (t === 'tours') {
-          rows = await db.all(`SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id ${whereClause}`, params);
+          querySql = `SELECT t.*, r.region_name FROM tours t LEFT JOIN regions r ON r.id = t.region_id ${whereClause}`;
+          queryParams = [...params];
         } else if (t === 'documents') {
-          rows = await db.all(`SELECT * FROM ${t} ${whereClause}`, params);
+          querySql = `SELECT * FROM ${t} ${whereClause}`;
+          queryParams = [...params];
         } else if (t === 'overtime') {
-          // For overtime: basic users see only their own, admin/semi-admin see all
           if (req.user.type === 'basic') {
             const overtimeWhere = whereClause ? `${whereClause} AND staff_name=${isPg ? `$${params.length+1}` : '?'}` : `WHERE staff_name=${isPg ? '$1' : '?'}`;
-            params.push(req.user.name);
-            rows = await db.all(`SELECT * FROM overtime ${overtimeWhere} ORDER BY event_date DESC`, params);
+            queryParams = [...params, req.user.name];
+            querySql = `SELECT * FROM overtime ${overtimeWhere} ORDER BY event_date DESC`;
           } else {
-            rows = await db.all(`SELECT * FROM overtime ${whereClause} ORDER BY event_date DESC`, params);
+            querySql = `SELECT * FROM overtime ${whereClause} ORDER BY event_date DESC`;
+            queryParams = [...params];
           }
         } else if (t === 'cruise') {
-          rows = await db.all(`SELECT * FROM cruise ${whereClause} ORDER BY sailing_start DESC`, params);
+          querySql = `SELECT * FROM cruise ${whereClause} ORDER BY sailing_start DESC`;
+          queryParams = [...params];
         } else if (t === 'cashout') {
-          // For cashout: basic users see only their own, admin/semi-admin see all
           if (req.user.type === 'basic') {
             const cashoutWhere = whereClause ? `${whereClause} AND staff_name=${isPg ? `$${params.length+1}` : '?'}` : `WHERE staff_name=${isPg ? '$1' : '?'}`;
-            params.push(req.user.name);
-            rows = await db.all(`SELECT * FROM cashout ${cashoutWhere} ORDER BY request_date DESC`, params);
+            queryParams = [...params, req.user.name];
+            querySql = `SELECT * FROM cashout ${cashoutWhere} ORDER BY request_date DESC`;
           } else {
-            rows = await db.all(`SELECT * FROM cashout ${whereClause} ORDER BY request_date DESC`, params);
+            querySql = `SELECT * FROM cashout ${whereClause} ORDER BY request_date DESC`;
+            queryParams = [...params];
           }
         } else if (t === 'productivity') {
-          // Productivity: basic users see only their own, admin/semi-admin see all
           if (req.user.type === 'basic') {
             const prodWhere = whereClause ? `${whereClause} AND staff_name=${isPg ? `$${params.length+1}` : '?'}` : `WHERE staff_name=${isPg ? '$1' : '?'}`;
-            params.push(req.user.name);
-            rows = await db.all(`SELECT * FROM productivity ${prodWhere} ORDER BY year DESC, month DESC`, params);
+            queryParams = [...params, req.user.name];
+            querySql = `SELECT * FROM productivity ${prodWhere} ORDER BY year DESC, month DESC`;
           } else {
-            rows = await db.all(`SELECT * FROM productivity ${whereClause} ORDER BY year DESC, month DESC`, params);
+            querySql = `SELECT * FROM productivity ${whereClause} ORDER BY year DESC, month DESC`;
+            queryParams = [...params];
           }
         } else {
-          rows = await db.all(`SELECT * FROM ${t}`);
+          querySql = `SELECT * FROM ${t}`;
+          queryParams = [];
         }
         
-        // Server-side pagination support
+        // SQL-level pagination: COUNT query + LIMIT/OFFSET
         if (usePagination) {
-          const total = rows.length;
+          const countResult = await db.get(`SELECT COUNT(*) as total FROM (${querySql}) AS _c`, queryParams);
+          const total = countResult.total || 0;
           const totalPages = Math.ceil(total / limitNum);
-          const pagedRows = rows.slice(offset, offset + limitNum);
+          
+          if (isPg) {
+            querySql += ` LIMIT $${queryParams.length + 1} OFFSET $${queryParams.length + 2}`;
+          } else {
+            querySql += ` LIMIT ? OFFSET ?`;
+          }
+          queryParams.push(limitNum, offset);
+          const rows = await db.all(querySql, queryParams);
+          
           res.json({
-            data: pagedRows,
+            data: rows,
             pagination: {
               page: pageNum,
               limit: limitNum,
@@ -956,6 +1046,7 @@ export async function createApp() {
             }
           });
         } else {
+          const rows = await db.all(querySql, queryParams);
           res.json(rows);
         }
       } catch (err) {
@@ -1041,20 +1132,27 @@ export async function createApp() {
           req.body.created_by = req.user.username || req.user.name;
         }
         
-        const keys = Object.keys(req.body);
-        const values = Object.values(req.body);
+        // SECURITY: Filter body to only allowed columns (prevents SQL injection via column names)
+        const safeBody = filterAllowedColumns(t, req.body);
+        const keys = Object.keys(safeBody);
+        if (keys.length === 0) return res.status(400).json({ error: 'No valid fields provided' });
+        const values = Object.values(safeBody);
         const placeholders = keys.map(()=>'?').join(',');
         const sql = `INSERT INTO ${t} (${keys.join(',')}) VALUES (${placeholders})`;
         const result = await db.run(sql, values);
-        await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(req.body));
+        await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(safeBody));
+        logger.info({ user: req.user.username, entity: t, recordId: result.lastID, action: 'CREATE' }, 'Record created');
         res.json({ id: result.lastID });
       } catch (error) {
-        console.error(`POST /api/${t} error:`, error);
-        res.status(500).json({ error: error.message || 'Failed to create record' });
+        logger.error({ err: error, entity: t, user: req.user?.username }, 'POST handler error');
+        res.status(500).json({ error: 'Failed to create record' });
       }
     });
     app.put(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
       try {
+        // Validate ID is a positive integer
+        const idParam = parseInt(req.params.id, 10);
+        if (isNaN(idParam) || idParam < 1) return res.status(400).json({ error: 'Invalid ID parameter' });
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' });
         // Sales and targets: only admin and semi-admin can edit
         if ((t === 'sales' || t === 'targets') && req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
@@ -1074,7 +1172,7 @@ export async function createApp() {
         // Overtime edit is admin-only
         if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can edit overtime records' });
         if (req.user.type === 'basic') {
-          const record = await db.get(`SELECT * FROM ${t} WHERE id=?`, [req.params.id]);
+          const record = await db.get(`SELECT * FROM ${t} WHERE id=?`, [idParam]);
           if (!record) return res.status(404).json({ error:'Not found' });
           if ('staff_name' in record && record.staff_name !== req.user.name) return res.status(403).json({ error:'Unauthorized edit (ownership mismatch)' });
           if ('staff_name' in record && 'staff_name' in req.body) req.body.staff_name = record.staff_name;
@@ -1135,29 +1233,43 @@ export async function createApp() {
         const auditTables = ['tours', 'sales', 'documents', 'hotel_bookings', 'cruise', 'telecom', 'overtime', 'targets'];
         if (auditTables.includes(t)) {
           req.body.updated_by = req.user.username || req.user.name;
-          req.body.updated_at = db.dialect === 'postgres' ? new Date().toISOString() : new Date().toISOString();
+          req.body.updated_at = new Date().toISOString();
         }
         
-        const keys = Object.keys(req.body);
-        const values = Object.values(req.body);
+        // SECURITY: Filter body to only allowed columns (prevents SQL injection via column names)
+        const safeBody = filterAllowedColumns(t, req.body);
+        const keys = Object.keys(safeBody);
+        if (keys.length === 0) return res.status(400).json({ error: 'No valid fields provided' });
+        const values = Object.values(safeBody);
         const set = keys.map(k=>`${k}=?`).join(',');
         const sql = `UPDATE ${t} SET ${set} WHERE id=?`;
-        await db.run(sql, [...values, req.params.id]);
-        await logActivity(req.user.username, 'UPDATE', t, req.params.id, JSON.stringify(req.body));
+        await db.run(sql, [...values, idParam]);
+        await logActivity(req.user.username, 'UPDATE', t, idParam, JSON.stringify(safeBody));
+        logger.info({ user: req.user.username, entity: t, recordId: idParam, action: 'UPDATE' }, 'Record updated');
         res.json({ updated:true });
       } catch (error) {
-        console.error(`PUT /api/${t}/:id error:`, error);
-        res.status(500).json({ error: error.message || 'Failed to update record' });
+        logger.error({ err: error, entity: t, user: req.user?.username }, 'PUT handler error');
+        res.status(500).json({ error: 'Failed to update record' });
       }
     });
     app.delete(`/api/${t}/:id`, authMiddleware(), async (req,res)=>{
-      // Overtime delete is admin-only
-      if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete overtime records' });
-      if (req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
-      const id = req.params.id;
-      await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
-      await logActivity(req.user.username, 'DELETE', t, id, 'Record deleted');
-      res.json({ deleted:true });
+      try {
+        // Validate ID is a positive integer
+        const id = parseInt(req.params.id, 10);
+        if (isNaN(id) || id < 1) return res.status(400).json({ error: 'Invalid ID parameter' });
+        // Overtime delete is admin-only
+        if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete overtime records' });
+        // Users table: admin-only for delete
+        if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete user accounts' });
+        if (req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
+        await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
+        await logActivity(req.user.username, 'DELETE', t, id, 'Record deleted');
+        logger.info({ user: req.user.username, entity: t, recordId: id, action: 'DELETE' }, 'Record deleted');
+        res.json({ deleted:true });
+      } catch (error) {
+        logger.error({ err: error, entity: t, user: req.user?.username }, 'DELETE handler error');
+        res.status(500).json({ error: 'Failed to delete record' });
+      }
     });
     
     // Bulk delete endpoint - deletes multiple records efficiently
@@ -1713,13 +1825,32 @@ export async function createApp() {
       query += ' ORDER BY created_at DESC';
       const tickets = await db.all(query, params);
       
-      // Get segments for each ticket
-      for (const ticket of tickets) {
-        const segments = await db.all(
-          'SELECT * FROM ticket_segments WHERE ticket_id=? ORDER BY segment_order ASC',
-          [ticket.id]
-        );
-        ticket.segments = segments;
+      // Batch-fetch all segments to avoid N+1 query
+      if (tickets.length > 0) {
+        const ticketIds = tickets.map(t => t.id);
+        const isPgLocal = db.dialect === 'postgres';
+        let segQuery, segParams;
+        if (isPgLocal) {
+          segQuery = `SELECT * FROM ticket_segments WHERE ticket_id = ANY($1) ORDER BY ticket_id, segment_order ASC`;
+          segParams = [ticketIds];
+        } else {
+          const placeholders = ticketIds.map(() => '?').join(',');
+          segQuery = `SELECT * FROM ticket_segments WHERE ticket_id IN (${placeholders}) ORDER BY ticket_id, segment_order ASC`;
+          segParams = ticketIds;
+        }
+        const allSegments = await db.all(segQuery, segParams);
+        
+        // Group segments by ticket_id
+        const segmentMap = new Map();
+        for (const seg of allSegments) {
+          if (!segmentMap.has(seg.ticket_id)) segmentMap.set(seg.ticket_id, []);
+          segmentMap.get(seg.ticket_id).push(seg);
+        }
+        for (const ticket of tickets) {
+          ticket.segments = segmentMap.get(ticket.id) || [];
+        }
+      } else {
+        // No tickets, nothing to do
       }
       
       res.json(tickets);
@@ -1934,13 +2065,28 @@ export async function createApp() {
         ORDER BY ts.departure_date ASC
       `, [today, sevenDaysFromNow]);
       
-      // Get all segments for these tickets
-      for (const ticket of tickets) {
-        const segments = await db.all(
-          'SELECT * FROM ticket_segments WHERE ticket_id=? ORDER BY segment_order ASC',
-          [ticket.id]
-        );
-        ticket.segments = segments;
+      // Batch-fetch segments to avoid N+1 query
+      if (tickets.length > 0) {
+        const ticketIds = tickets.map(t => t.id);
+        const isPgLocal = db.dialect === 'postgres';
+        let segQuery, segParams;
+        if (isPgLocal) {
+          segQuery = `SELECT * FROM ticket_segments WHERE ticket_id = ANY($1) ORDER BY ticket_id, segment_order ASC`;
+          segParams = [ticketIds];
+        } else {
+          const placeholders = ticketIds.map(() => '?').join(',');
+          segQuery = `SELECT * FROM ticket_segments WHERE ticket_id IN (${placeholders}) ORDER BY ticket_id, segment_order ASC`;
+          segParams = ticketIds;
+        }
+        const allSegments = await db.all(segQuery, segParams);
+        const segmentMap = new Map();
+        for (const seg of allSegments) {
+          if (!segmentMap.has(seg.ticket_id)) segmentMap.set(seg.ticket_id, []);
+          segmentMap.get(seg.ticket_id).push(seg);
+        }
+        for (const ticket of tickets) {
+          ticket.segments = segmentMap.get(ticket.id) || [];
+        }
       }
       
       res.json(tickets);
@@ -2119,7 +2265,7 @@ export async function createApp() {
       res.json({ sales, targets, participants, documents, participants_by_month, participants_by_region });
     } catch (err) {
       console.error('Metrics endpoint error:', err);
-      res.status(500).json({ error: 'Failed to fetch metrics', details: err.message });
+      res.status(500).json({ error: 'Failed to fetch metrics' });
     }
   });
 
@@ -2134,7 +2280,7 @@ export async function createApp() {
     
     const hashed = await bcrypt.hash(password,10); 
     const result = await db.run('UPDATE users SET password=? WHERE username=?',[hashed, username]); 
-    logger.info({ username, changes: result.changes }, 'Password reset via reset-password endpoint');
+    logSecurityEvent(SecurityEvent.PASSWORD_RESET, { username, changedBy: req.user.username, ip: req.ip });
     res.json({ ok:true, updated: result.changes });
   });
   
@@ -2149,7 +2295,7 @@ export async function createApp() {
     
     const hashed = await bcrypt.hash(password,10); 
     const result = await db.run('UPDATE users SET password=? WHERE username=?',[hashed, req.params.username]); 
-    logger.info({ username: req.params.username, changes: result.changes, adminUser: req.user.username }, 'Password reset via admin endpoint');
+    logSecurityEvent(SecurityEvent.PASSWORD_RESET, { username: req.params.username, changedBy: req.user.username, ip: req.ip, adminReset: true });
     res.json({ ok:true, updated: result.changes }); 
   });
 
@@ -2283,12 +2429,13 @@ export async function createApp() {
       });
     } catch (err) {
       logger.error({ err, stack: err.stack }, 'System stats error');
-      res.status(500).json({ error: 'Failed to get system stats', details: err.message });
+      res.status(500).json({ error: 'Failed to get system stats' });
     }
   });
 
-  // Admin Stats for Settings Page (simplified format)
+  // Admin Stats for Settings Page (simplified format) - admin and semi-admin only
   app.get('/api/stats', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const isPg = db.dialect === 'postgres';
       
@@ -2556,8 +2703,46 @@ export async function createApp() {
     }
   });
 
-  // Bulk Export endpoint
+  // ===================================================================
+  // LOG VIEWER ENDPOINTS (Admin only)
+  // ===================================================================
+
+  // Get recent app or security logs
+  app.get('/api/logs/:type', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const { type } = req.params;
+      if (!['app', 'security'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid log type. Use "app" or "security".' });
+      }
+      const lines = Math.min(parseInt(req.query.lines || '100', 10), 500);
+      const date = req.query.date || null;
+      const logs = getRecentLogs(type, lines, date);
+      res.json({ type, count: logs.length, logs });
+    } catch (err) {
+      logger.error({ err }, 'Log retrieval error');
+      res.status(500).json({ error: 'Failed to retrieve logs' });
+    }
+  });
+
+  // Get available log dates
+  app.get('/api/logs/:type/dates', authMiddleware(), async (req, res) => {
+    if (req.user.type !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+    try {
+      const { type } = req.params;
+      if (!['app', 'security'].includes(type)) {
+        return res.status(400).json({ error: 'Invalid log type.' });
+      }
+      const dates = getAvailableLogDates(type);
+      res.json({ type, dates });
+    } catch (err) {
+      res.status(500).json({ error: 'Failed to retrieve log dates' });
+    }
+  });
+
+  // Bulk Export endpoint - admin and semi-admin only
   app.get('/api/export/:entity', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Export requires admin or semi-admin access' });
     try {
       const { entity } = req.params;
       const { format = 'json' } = req.query;
@@ -2567,7 +2752,8 @@ export async function createApp() {
         return res.status(400).json({ error: 'Invalid entity' });
       }
       
-      const data = await db.all(`SELECT * FROM ${entity}`);
+      const MAX_EXPORT_ROWS = parseInt(process.env.EXPORT_ROW_LIMIT || '50000', 10);
+      const data = await db.all(`SELECT * FROM ${entity} LIMIT ?`, [MAX_EXPORT_ROWS]);
       
       if (format === 'csv') {
         if (data.length === 0) {
@@ -2589,12 +2775,13 @@ export async function createApp() {
         });
         res.setHeader('Content-Type', 'text/csv');
         res.setHeader('Content-Disposition', `attachment; filename=${entity}_export.csv`);
+        logSecurityEvent(SecurityEvent.DATA_EXPORT, { username: req.user.username, entity, format: 'csv', records: data.length, ip: req.ip });
         return res.send(csvRows.join('\n'));
       }
       
       res.json(data);
+      logSecurityEvent(SecurityEvent.DATA_EXPORT, { username: req.user.username, entity, format, records: data.length, ip: req.ip });
     } catch (err) {
-      logger.error({ err }, 'Export error');
       res.status(500).json({ error: 'Export failed' });
     }
   });
@@ -2620,8 +2807,11 @@ export async function createApp() {
       
       for (const row of data) {
         try {
-          const columns = Object.keys(row).filter(k => k !== 'id');
-          const values = columns.map(c => row[c]);
+          // SECURITY: Filter to allowed columns only (prevents SQL injection via column names)
+          const safeRow = filterAllowedColumns(entity, row);
+          const columns = Object.keys(safeRow).filter(k => k !== 'id');
+          if (columns.length === 0) { failed++; continue; }
+          const values = columns.map(c => safeRow[c]);
           const placeholders = columns.map((_, i) => db.dialect === 'postgres' ? `$${i+1}` : '?').join(', ');
           await db.run(`INSERT INTO ${entity} (${columns.join(', ')}) VALUES (${placeholders})`, values);
           imported++;
@@ -2631,6 +2821,7 @@ export async function createApp() {
       }
       
       await logActivity(req.user.username, 'IMPORT', entity, null, `Imported ${imported} records, ${failed} failed`);
+      logSecurityEvent(SecurityEvent.DATA_IMPORT, { username: req.user.username, entity, imported, failed, ip: req.ip });
       res.json({ ok: true, imported, failed });
     } catch (err) {
       logger.error({ err }, 'Import error');
@@ -2638,7 +2829,7 @@ export async function createApp() {
     }
   });
 
-  app.post('/api/users/:username/unlock', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]); if (!user) return res.status(404).json({ error:'User not found' }); await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?',[user.id]); await logActivity(req.user.username,'UNLOCK','users',user.id,'Account unlocked by admin'); res.json({ ok:true }); });
+  app.post('/api/users/:username/unlock', authMiddleware(), async (req,res)=>{ if (req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); const user = await db.get('SELECT * FROM users WHERE username=?',[req.params.username]); if (!user) return res.status(404).json({ error:'User not found' }); await db.run('UPDATE users SET failed_attempts=0, locked_until=NULL WHERE id=?',[user.id]); await logActivity(req.user.username,'UNLOCK','users',user.id,'Account unlocked by admin'); logSecurityEvent(SecurityEvent.ACCOUNT_UNLOCKED, { username: req.params.username, unlockedBy: req.user.username, ip: req.ip }); res.json({ ok:true }); });
 
   // Lock user account (Admin only)
   app.post('/api/users/:username/lock', authMiddleware(), async (req,res)=>{
@@ -2651,6 +2842,7 @@ export async function createApp() {
     const lockedUntil = '9999-12-31T23:59:59.000Z';
     await db.run('UPDATE users SET locked_until=? WHERE id=?',[lockedUntil, user.id]);
     await logActivity(req.user.username,'LOCK','users',user.id,'Account locked by admin');
+    logSecurityEvent(SecurityEvent.ACCOUNT_LOCKED, { username: req.params.username, lockedBy: req.user.username, ip: req.ip });
     res.json({ ok:true });
   });
 
@@ -2838,7 +3030,7 @@ export async function createApp() {
       });
     } catch (err) {
       logger.error({ err, stack: err.stack }, 'Dashboard summary error');
-      res.status(500).json({ error: 'Failed to fetch dashboard summary', details: err.message });
+      res.status(500).json({ error: 'Failed to fetch dashboard summary' });
     }
   });
 
@@ -2894,11 +3086,19 @@ export async function createApp() {
       res.json(reportData);
     } catch (err) {
       logger.error({ err, reportType, stack: err.stack }, 'Report generation failed');
-      res.status(500).json({ error: 'Failed to generate report', details: err.message, stack: process.env.NODE_ENV === 'development' ? err.stack : undefined });
+      res.status(500).json({ error: 'Failed to generate report' });
     }
   });
 
-  app.get('/healthz', (req,res)=>{ res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() }); });
+  app.get('/healthz', async (req,res)=>{
+    try {
+      await db.get('SELECT 1');
+      res.json({ status:'ok', uptime_s: process.uptime(), dialect: db.dialect, timestamp: new Date().toISOString() });
+    } catch (err) {
+      logger.error({ err }, 'Health check failed - database unreachable');
+      res.status(503).json({ status:'unhealthy', error: 'Database unreachable', timestamp: new Date().toISOString() });
+    }
+  });
 
   // Debug endpoint to check data counts - RESTRICTED to admin only in production
   app.get('/api/debug/data-counts', authMiddleware(), async (req, res) => {
@@ -2934,7 +3134,7 @@ export async function createApp() {
       });
     } catch (err) {
       logger.error({ err }, 'Failed to get data counts');
-      res.status(500).json({ error: 'Failed to get data counts', details: err.message });
+      res.status(500).json({ error: 'Failed to get data counts' });
     }
   });
 
@@ -3037,8 +3237,7 @@ export async function createApp() {
     });
   }
 
-  // Central error handler
-  app.use((err, req, res, next)=>{ logger.error({ err: err.message, stack: err.stack }, 'Unhandled error'); if (res.headersSent) return next(err); res.status(err.status || 500).json({ error: err.message || 'Internal Server Error' }); });
+  // Central error handler - moved to end of all routes (see below)
 
   // ===================================================================
   // TRACKING & EXPEDITION API ENDPOINTS
@@ -3055,8 +3254,9 @@ export async function createApp() {
     }
   });
 
-  // Create delivery
+  // Create delivery - admin and semi-admin only
   app.post('/api/tracking/deliveries', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { send_date, passport_count, invoice_no, booking_code, courier, tracking_no, recipient, address, details, status } = req.body;
       const isPg = db.dialect === 'postgres';
@@ -3110,13 +3310,15 @@ export async function createApp() {
     }
   });
 
-  // Update delivery
+  // Update delivery - admin and semi-admin only
   app.put('/api/tracking/deliveries/:id', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { id } = req.params;
-      const updates = req.body;
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
+      // SECURITY: Filter to allowed columns only
+      const safeUpdates = filterAllowedColumns('tracking_deliveries', req.body);
+      const keys = Object.keys(safeUpdates);
+      const values = Object.values(safeUpdates);
       const isPg = db.dialect === 'postgres';
       
       if (keys.length === 0) {
@@ -3132,10 +3334,10 @@ export async function createApp() {
       );
       
       // Sync send_date to documents if invoice_no or booking_code is in the record
-      if (updates.send_date || updates.invoice_no || updates.booking_code) {
+      if (safeUpdates.send_date || safeUpdates.invoice_no || safeUpdates.booking_code) {
         const record = await db.get('SELECT * FROM tracking_deliveries WHERE id=?', [id]);
         if (record && (record.invoice_no || record.booking_code)) {
-          const sendDate = updates.send_date || record.send_date;
+          const sendDate = safeUpdates.send_date || record.send_date;
           let syncConditions = [];
           let syncParams = [];
           
@@ -3169,7 +3371,7 @@ export async function createApp() {
         }
       }
       
-      await logActivity(req.user.username, 'UPDATE', 'tracking_deliveries', id, JSON.stringify(updates));
+      await logActivity(req.user.username, 'UPDATE', 'tracking_deliveries', id, JSON.stringify(safeUpdates));
       res.json({ message: 'Delivery updated successfully' });
     } catch (err) {
       logger.error({ err }, 'Failed to update delivery');
@@ -3177,8 +3379,9 @@ export async function createApp() {
     }
   });
 
-  // Delete delivery
+  // Delete delivery - admin and semi-admin only
   app.delete('/api/tracking/deliveries/:id', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { id } = req.params;
       await db.run('DELETE FROM tracking_deliveries WHERE id=?', [id]);
@@ -3201,8 +3404,9 @@ export async function createApp() {
     }
   });
 
-  // Create receiving
+  // Create receiving - admin and semi-admin only
   app.post('/api/tracking/receivings', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { receive_date, passport_count, sender, tracking_no, details } = req.body;
       const isPg = db.dialect === 'postgres';
@@ -3220,13 +3424,15 @@ export async function createApp() {
     }
   });
 
-  // Update receiving
+  // Update receiving - admin and semi-admin only
   app.put('/api/tracking/receivings/:id', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { id } = req.params;
-      const updates = req.body;
-      const keys = Object.keys(updates);
-      const values = Object.values(updates);
+      // SECURITY: Filter to allowed columns only
+      const safeUpdates = filterAllowedColumns('tracking_receivings', req.body);
+      const keys = Object.keys(safeUpdates);
+      const values = Object.values(safeUpdates);
       const isPg = db.dialect === 'postgres';
       
       if (keys.length === 0) {
@@ -3241,7 +3447,7 @@ export async function createApp() {
         values
       );
       
-      await logActivity(req.user.username, 'UPDATE', 'tracking_receivings', id, JSON.stringify(updates));
+      await logActivity(req.user.username, 'UPDATE', 'tracking_receivings', id, JSON.stringify(safeUpdates));
       res.json({ message: 'Receiving updated successfully' });
     } catch (err) {
       logger.error({ err }, 'Failed to update receiving');
@@ -3249,8 +3455,9 @@ export async function createApp() {
     }
   });
 
-  // Delete receiving
+  // Delete receiving - admin and semi-admin only
   app.delete('/api/tracking/receivings/:id', authMiddleware(), async (req, res) => {
+    if (req.user.type === 'basic') return res.status(403).json({ error: 'Unauthorized' });
     try {
       const { id } = req.params;
       await db.run('DELETE FROM tracking_receivings WHERE id=?', [id]);
@@ -3326,6 +3533,13 @@ export async function createApp() {
       logger.error({ err }, 'Failed to check tracking');
       res.status(500).json({ error: 'Failed to check tracking status' });
     }
+  });
+
+  // Central error handler - MUST be after ALL route definitions
+  app.use((err, req, res, next) => {
+    logger.error({ err: err.message, stack: err.stack, path: req.path, method: req.method }, 'Unhandled error');
+    if (res.headersSent) return next(err);
+    res.status(err.status || 500).json({ error: 'Internal Server Error' });
   });
 
   return { app, db };

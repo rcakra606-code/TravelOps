@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Logs | TravelOps</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/modern-normalize/1.1.0/modern-normalize.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+  <link rel="stylesheet" href="/css/modal.css">
+  <link rel="stylesheet" href="/css/filters.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/status-badges.css">
+  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/mobile-responsive.css">
+  <link rel="stylesheet" href="/css/empty-states.css">
+  <link rel="stylesheet" href="/css/ui-enhancements.css">
+  <link rel="stylesheet" href="/css/sidebar-groups.css">
+  <link rel="stylesheet" href="/css/dashboard-shared.css">
+  <link rel="stylesheet" href="/css/accessibility.css">
+  <link rel="stylesheet" href="/css/professional-polish.css">
+  <link rel="stylesheet" href="/css/seasonal-theme.css">
+  <link rel="stylesheet" href="/css/micro-interactions.css">
+  <script src="/js/seasonal-theme.js"></script>
+  <style>
+    .log-controls {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--bg-alt, #f3f4f6);
+      border-radius: 12px;
+      border: 1px solid var(--border-light, #e5e7eb);
+    }
+
+    .log-controls label {
+      font-weight: 600;
+      font-size: 0.85rem;
+      color: var(--text-secondary, #6b7280);
+    }
+
+    .log-controls select,
+    .log-controls input {
+      padding: 8px 12px;
+      border: 1px solid var(--border-light, #e5e7eb);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      background: var(--bg, #fff);
+      color: var(--text, #1f2937);
+    }
+
+    .log-controls button {
+      padding: 8px 20px;
+      background: var(--accent, #3b82f6);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .log-controls button:hover {
+      background: var(--accent-hover, #2563eb);
+    }
+
+    .log-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .log-stat-card {
+      flex: 1;
+      min-width: 140px;
+      padding: 16px;
+      background: var(--bg, #fff);
+      border-radius: 12px;
+      border: 1px solid var(--border-light, #e5e7eb);
+      text-align: center;
+    }
+
+    .log-stat-card .stat-value {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent, #3b82f6);
+    }
+
+    .log-stat-card .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-secondary, #6b7280);
+      margin-top: 4px;
+    }
+
+    .log-stat-card.warn .stat-value { color: #f59e0b; }
+    .log-stat-card.error .stat-value { color: #ef4444; }
+    .log-stat-card.success .stat-value { color: #10b981; }
+    .log-stat-card.info .stat-value { color: #3b82f6; }
+
+    .log-table-wrapper {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-light, #e5e7eb);
+    }
+
+    .log-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .log-table th {
+      background: var(--bg-alt, #f3f4f6);
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-secondary, #6b7280);
+      border-bottom: 2px solid var(--border-light, #e5e7eb);
+      position: sticky;
+      top: 0;
+      white-space: nowrap;
+    }
+
+    .log-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-light, #e5e7eb);
+      vertical-align: top;
+      max-width: 300px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .log-table tr:hover {
+      background: var(--bg-alt, #f9fafb);
+    }
+
+    .log-level {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+    }
+
+    .log-level.error, .log-level.level-50 { background: #fef2f2; color: #dc2626; }
+    .log-level.warn, .log-level.level-40 { background: #fffbeb; color: #d97706; }
+    .log-level.info, .log-level.level-30 { background: #eff6ff; color: #2563eb; }
+    .log-level.debug, .log-level.level-20 { background: #f3f4f6; color: #6b7280; }
+
+    .security-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .security-badge.critical { background: #fef2f2; color: #dc2626; }
+    .security-badge.warning { background: #fffbeb; color: #d97706; }
+    .security-badge.normal { background: #f0fdf4; color: #16a34a; }
+
+    .log-tab-bar {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: var(--bg-alt, #f3f4f6);
+      padding: 6px;
+      border-radius: 10px;
+    }
+
+    .log-tab {
+      padding: 8px 20px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--text-secondary, #6b7280);
+      transition: all 0.2s;
+    }
+
+    .log-tab.active {
+      background: var(--bg, #fff);
+      color: var(--accent, #3b82f6);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-weight: 600;
+    }
+
+    .log-tab:hover:not(.active) {
+      background: rgba(59,130,246,0.05);
+    }
+
+    .log-detail-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .log-detail-modal.show {
+      display: flex;
+    }
+
+    .log-detail-content {
+      background: var(--bg, #fff);
+      border-radius: 16px;
+      max-width: 700px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .log-detail-content pre {
+      background: var(--bg-alt, #f3f4f6);
+      border-radius: 8px;
+      padding: 16px;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      line-height: 1.5;
+    }
+
+    .log-detail-content .close-btn {
+      float: right;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--text-secondary, #6b7280);
+    }
+
+    .log-empty {
+      text-align: center;
+      padding: 48px 16px;
+      color: var(--text-secondary, #6b7280);
+    }
+
+    .log-empty .icon { font-size: 3rem; margin-bottom: 12px; }
+
+    .filter-input {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .log-table-container {
+      max-height: 65vh;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">🚀 TravelOps</div>
+    <div class="nav">
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+
+      <div class="nav-group" id="groupProductInput">
+        <button class="nav-group-header" data-group="product-input">
+          <span class="group-icon">📦</span>
+          <span class="group-title">Product Input</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/my-tours.html">📋 My Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+        </div>
+      </div>
+
+      <div class="nav-group" id="groupProductivity">
+        <button class="nav-group-header" data-group="productivity">
+          <span class="group-icon">📊</span>
+          <span class="group-title">Productivity</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
+        </div>
+      </div>
+
+      <div class="nav-group" id="groupAdmin">
+        <button class="nav-group-header" data-group="administration">
+          <span class="group-icon">⚙️</span>
+          <span class="group-title">Administration</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html">⚙️ Admin Settings</a>
+          <a href="/logs-dashboard.html" class="active">📋 System Logs</a>
+        </div>
+      </div>
+
+      <hr class="nav-divider">
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+    </div>
+    <div class="userbox" style="margin-top:18px">
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="header">
+      <h1>📋 System Logs</h1>
+      <p style="color:var(--text-secondary,#6b7280);margin-top:4px">Monitor application events, security incidents, and audit trail</p>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="log-tab-bar">
+      <button class="log-tab active" data-logtab="app" onclick="switchLogTab('app')">📊 Application Logs</button>
+      <button class="log-tab" data-logtab="security" onclick="switchLogTab('security')">🔒 Security Events</button>
+      <button class="log-tab" data-logtab="audit" onclick="switchLogTab('audit')">📝 Audit Trail</button>
+    </div>
+
+    <!-- Stats -->
+    <div class="log-stats" id="logStats">
+      <div class="log-stat-card info"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Total Events</div></div>
+      <div class="log-stat-card warn"><div class="stat-value" id="statWarnings">0</div><div class="stat-label">Warnings</div></div>
+      <div class="log-stat-card error"><div class="stat-value" id="statErrors">0</div><div class="stat-label">Errors</div></div>
+      <div class="log-stat-card success"><div class="stat-value" id="statSecurity">0</div><div class="stat-label">Security Events</div></div>
+    </div>
+
+    <!-- Controls -->
+    <div class="log-controls">
+      <label>Date:</label>
+      <select id="logDateSelect"><option value="">Today</option></select>
+
+      <label>Lines:</label>
+      <select id="logLinesSelect">
+        <option value="50">50</option>
+        <option value="100" selected>100</option>
+        <option value="200">200</option>
+        <option value="500">500</option>
+      </select>
+
+      <input type="text" id="logFilter" class="filter-input" placeholder="🔍 Filter logs... (type to search)" oninput="applyFilter()">
+
+      <button onclick="loadLogs()">🔄 Refresh</button>
+    </div>
+
+    <!-- Log Table -->
+    <div class="log-table-wrapper">
+      <div class="log-table-container" id="logTableContainer">
+        <table class="log-table">
+          <thead>
+            <tr id="logTableHead"></tr>
+          </thead>
+          <tbody id="logTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="log-empty" id="logEmpty" style="display:none">
+      <div class="icon">📋</div>
+      <h3>No logs found</h3>
+      <p>No log entries found for the selected date and filters.</p>
+    </div>
+  </main>
+</div>
+
+<!-- Detail Modal -->
+<div class="log-detail-modal" id="logDetailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="log-detail-content">
+    <button class="close-btn" onclick="closeDetail()">&times;</button>
+    <h3 style="margin-bottom:12px">Log Entry Details</h3>
+    <pre id="logDetailPre"></pre>
+  </div>
+</div>
+
+<script src="/js/toast.js"></script>
+<script src="/js/utils.js"></script>
+<script src="/js/accessibility.js"></script>
+<script src="/js/mobile-menu.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
+<script src="/js/logout-handler.js"></script>
+
+<script>
+  // State
+  let currentTab = 'app';
+  let allLogs = [];
+  let filteredLogs = [];
+
+  // Log level names from pino numeric levels
+  const LEVEL_MAP = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' };
+
+  function getLevelName(entry) {
+    if (entry.level && LEVEL_MAP[entry.level]) return LEVEL_MAP[entry.level];
+    if (entry.level) return String(entry.level);
+    return 'info';
+  }
+
+  function getLevelClass(entry) {
+    const name = getLevelName(entry);
+    if (name === 'error' || name === 'fatal') return 'error';
+    if (name === 'warn') return 'warn';
+    if (name === 'debug' || name === 'trace') return 'debug';
+    return 'info';
+  }
+
+  function getSecurityBadge(event) {
+    const critical = ['EMERGENCY_RESET', 'ACCOUNT_LOCKED', 'SUSPICIOUS_INPUT', 'BLOCKED_COLUMN'];
+    const warning = ['LOGIN_FAIL', 'AUTH_FAIL', 'CSRF_FAIL', 'PERMISSION_DENIED', 'RATE_LIMITED'];
+    if (critical.includes(event)) return 'critical';
+    if (warning.includes(event)) return 'warning';
+    return 'normal';
+  }
+
+  function formatTime(entry) {
+    const ts = entry.time || entry.timestamp;
+    if (!ts) return '—';
+    try {
+      const d = new Date(ts);
+      return d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    } catch { return String(ts).substring(11, 19); }
+  }
+
+  // Switch tabs
+  function switchLogTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.log-tab').forEach(t => t.classList.toggle('active', t.dataset.logtab === tab));
+    loadLogs();
+  }
+
+  // Load log dates
+  async function loadLogDates(type) {
+    try {
+      const data = await fetchJson(`/api/logs/${type}/dates`);
+      const select = document.getElementById('logDateSelect');
+      select.innerHTML = '<option value="">Today</option>';
+      if (data && data.dates) {
+        data.dates.forEach(d => {
+          const opt = document.createElement('option');
+          opt.value = d;
+          opt.textContent = d;
+          select.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error('Failed to load log dates:', err);
+    }
+  }
+
+  // Main load function
+  async function loadLogs() {
+    const type = currentTab === 'audit' ? 'security' : currentTab;
+    const date = document.getElementById('logDateSelect').value;
+    const lines = document.getElementById('logLinesSelect').value;
+
+    await loadLogDates(type);
+
+    try {
+      let url = `/api/logs/${type}?lines=${lines}`;
+      if (date) url += `&date=${date}`;
+      const data = await fetchJson(url);
+
+      if (!data || !data.logs) {
+        allLogs = [];
+      } else {
+        allLogs = data.logs;
+      }
+
+      // Filter for audit tab
+      if (currentTab === 'audit') {
+        allLogs = allLogs.filter(l => l.audit === true);
+      }
+
+      updateStats();
+      applyFilter();
+    } catch (err) {
+      console.error('Failed to load logs:', err);
+      if (typeof toast !== 'undefined') toast.error('Failed to load logs. Admin access required.');
+      allLogs = [];
+      applyFilter();
+    }
+  }
+
+  function updateStats() {
+    const total = allLogs.length;
+    const warnings = allLogs.filter(l => getLevelName(l) === 'warn').length;
+    const errors = allLogs.filter(l => getLevelName(l) === 'error' || getLevelName(l) === 'fatal').length;
+    const security = allLogs.filter(l => l.securityEvent).length;
+
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statWarnings').textContent = warnings;
+    document.getElementById('statErrors').textContent = errors;
+    document.getElementById('statSecurity').textContent = security;
+  }
+
+  function applyFilter() {
+    const query = (document.getElementById('logFilter').value || '').toLowerCase();
+    filteredLogs = allLogs;
+
+    if (query) {
+      filteredLogs = allLogs.filter(l => {
+        const str = JSON.stringify(l).toLowerCase();
+        return str.includes(query);
+      });
+    }
+
+    renderTable();
+  }
+
+  function renderTable() {
+    const head = document.getElementById('logTableHead');
+    const body = document.getElementById('logTableBody');
+    const empty = document.getElementById('logEmpty');
+
+    if (filteredLogs.length === 0) {
+      head.innerHTML = '';
+      body.innerHTML = '';
+      empty.style.display = 'block';
+      return;
+    }
+    empty.style.display = 'none';
+
+    if (currentTab === 'security') {
+      head.innerHTML = '<th>Time</th><th>Event</th><th>Severity</th><th>Username</th><th>IP</th><th>Details</th><th></th>';
+      body.innerHTML = filteredLogs.map((log, i) => {
+        const badge = getSecurityBadge(log.securityEvent || '');
+        return `<tr>
+          <td>${formatTime(log)}</td>
+          <td><strong>${escapeHtml(log.securityEvent || log.msg || '—')}</strong></td>
+          <td><span class="security-badge ${badge}">${badge}</span></td>
+          <td>${escapeHtml(log.username || '—')}</td>
+          <td>${escapeHtml(log.ip || '—')}</td>
+          <td>${escapeHtml(log.reason || log.action || log.msg || '').substring(0, 60)}</td>
+          <td><button onclick="showDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1rem" title="View details">🔍</button></td>
+        </tr>`;
+      }).join('');
+    } else if (currentTab === 'audit') {
+      head.innerHTML = '<th>Time</th><th>Action</th><th>Entity</th><th>Record</th><th>Username</th><th>Details</th><th></th>';
+      body.innerHTML = filteredLogs.map((log, i) => `<tr>
+        <td>${formatTime(log)}</td>
+        <td><strong>${escapeHtml(log.action || '—')}</strong></td>
+        <td>${escapeHtml(log.entity || '—')}</td>
+        <td>${escapeHtml(String(log.recordId || '—'))}</td>
+        <td>${escapeHtml(log.username || '—')}</td>
+        <td>${escapeHtml(log.msg || '').substring(0, 60)}</td>
+        <td><button onclick="showDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1rem" title="View details">🔍</button></td>
+      </tr>`).join('');
+    } else {
+      head.innerHTML = '<th>Time</th><th>Level</th><th>Method</th><th>URL</th><th>Status</th><th>Duration</th><th>User</th><th></th>';
+      body.innerHTML = filteredLogs.map((log, i) => {
+        const lvl = getLevelName(log);
+        const cls = getLevelClass(log);
+        return `<tr>
+          <td>${formatTime(log)}</td>
+          <td><span class="log-level ${cls}">${lvl}</span></td>
+          <td>${escapeHtml(log.method || '—')}</td>
+          <td title="${escapeHtml(log.url || '')}">${escapeHtml((log.url || log.msg || '—').substring(0, 50))}</td>
+          <td>${log.statusCode || '—'}</td>
+          <td>${log.duration_ms != null ? log.duration_ms + 'ms' : '—'}</td>
+          <td>${escapeHtml(log.username || '—')}</td>
+          <td><button onclick="showDetail(${i})" style="background:none;border:none;cursor:pointer;font-size:1.1rem" title="View details">🔍</button></td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  function showDetail(index) {
+    const log = filteredLogs[index];
+    if (!log) return;
+    document.getElementById('logDetailPre').textContent = JSON.stringify(log, null, 2);
+    document.getElementById('logDetailModal').classList.add('show');
+  }
+
+  function closeDetail() {
+    document.getElementById('logDetailModal').classList.remove('show');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', () => {
+    // Check admin role
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user.type !== 'admin') {
+      document.querySelector('.main').innerHTML = '<div style="padding:48px;text-align:center"><h2>🔒 Access Denied</h2><p>System logs are only accessible to administrators.</p><a href="/single-dashboard.html">Return to Dashboard</a></div>';
+      return;
+    }
+
+    // Set user info
+    document.getElementById('userName').textContent = user.name || user.username || '—';
+    document.getElementById('userRole').textContent = (user.type || '—').toUpperCase();
+
+    // Load initial data
+    loadLogs();
+  });
+
+  // Keyboard shortcut: Escape closes modal
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDetail();
+  });
+</script>
+
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/sidebar-groups.js"></script>
+</body>
+</html>

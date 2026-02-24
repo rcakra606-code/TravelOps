@@ -13,14 +13,21 @@ const __dirname = path.dirname(__filename);
 
 function qmarkToDollar(sql) {
   // Convert '?' placeholders to $1, $2, ... for Postgres
+  // Correctly skips ? inside single-quoted string literals
   let index = 0;
   let out = '';
+  let inString = false;
   for (let i = 0; i < sql.length; i++) {
-    if (sql[i] === '?' && (i === 0 || sql[i - 1] !== '\\')) {
+    const ch = sql[i];
+    if (ch === "'" && (i === 0 || sql[i - 1] !== "'")) {
+      // Toggle string literal state (handles '' escape by toggling twice)
+      inString = !inString;
+      out += ch;
+    } else if (ch === '?' && !inString) {
       index += 1;
       out += `$${index}`;
     } else {
-      out += sql[i];
+      out += ch;
     }
   }
   return out;
@@ -47,10 +54,12 @@ async function initSqlite() {
 async function initPostgres() {
   // Default to SSL enabled for hosted Postgres providers like Neon.
   // If PGSSL is explicitly set, honor it; otherwise enable SSL by default.
+  // Set PGSSL_REJECT_UNAUTHORIZED=true in production for full cert verification.
   const sslEnabled = process.env.PGSSL ? process.env.PGSSL === 'true' : true;
+  const rejectUnauthorized = process.env.PGSSL_REJECT_UNAUTHORIZED === 'true';
   const pool = new Pool({
     connectionString: process.env.DATABASE_URL,
-    ssl: sslEnabled ? { rejectUnauthorized: false } : false
+    ssl: sslEnabled ? { rejectUnauthorized } : false
   });
 
   // Wrapper providing run/get/all similar to sqlite
@@ -641,6 +650,20 @@ async function createSchema(db) {
   await ensureIndex('ticket_recaps', 'idx_ticket_status', 'status');
   await ensureIndex('ticket_segments', 'idx_segment_ticket', 'ticket_id');
   await ensureIndex('ticket_segments', 'idx_segment_departure', 'departure_date');
+
+  // Additional indexes for commonly filtered columns
+  await ensureIndex('cashout', 'idx_cashout_staff', 'staff_name');
+  await ensureIndex('cashout', 'idx_cashout_date', 'request_date');
+  await ensureIndex('cashout', 'idx_cashout_status', 'status');
+  await ensureIndex('outstanding', 'idx_outstanding_staff', 'staff_name');
+  await ensureIndex('cruise', 'idx_cruise_staff', 'staff_name');
+  await ensureIndex('cruise', 'idx_cruise_sailing', 'sailing_start');
+  await ensureIndex('hotel_bookings', 'idx_hotel_staff', 'staff_name');
+  await ensureIndex('hotel_bookings', 'idx_hotel_checkin', 'check_in');
+  await ensureIndex('telecom', 'idx_telecom_staff', 'staff_name');
+  await ensureIndex('overtime', 'idx_overtime_staff', 'staff_name');
+  await ensureIndex('overtime', 'idx_overtime_date', 'event_date');
+  await ensureIndex('productivity', 'idx_productivity_staff', 'staff_name');
 
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
