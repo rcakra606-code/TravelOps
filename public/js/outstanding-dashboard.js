@@ -531,6 +531,4 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Load data
   await loadOutstandingData();
-  
-  // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
 });

@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/dark-mode.css">
   <link rel="stylesheet" href="/css/app-v2.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/modal.css">
@@ -31,7 +30,6 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/micro-interactions.css">
-  <script src="/js/theme-toggle.js"></script>
 <script src="/js/seasonal-theme.js"></script>
   <style>
     .stats-grid {
@@ -121,8 +119,6 @@
 <body>
 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
-<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
-
 <div class="app">
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
@@ -349,8 +345,9 @@
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(amount || 0);
   }
   
-  // Authenticated fetch
-  async function fetchJson(url, options = {}) {
+  // Authenticated fetch - use shared auth-common fetchJson via window.fetchJson
+  // Local override for cashout-specific headers
+  async function cashoutFetch(url, options = {}) {
     const token = localStorage.getItem('token');
     const headers = {
       'Content-Type': 'application/json',
@@ -361,9 +358,14 @@
     const response = await fetch(url, { ...options, headers });
     
     if (response.status === 401 || response.status === 403) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login.html';
+      // Use shared session expired handler from auth-common
+      if (window.handleSessionExpired) {
+        window.handleSessionExpired('Your session has expired. Please login again.');
+      } else {
+        localStorage.clear();
+        sessionStorage.clear();
+        window.location.href = '/logout.html';
+      }
       throw new Error('Session expired');
     }
     

@@ -368,16 +368,6 @@ class SavedFilters {
         background: #fee2e2;
         color: #dc2626;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .saved-filters-menu {
-        background: var(--card, #1e293b);
-        border-color: var(--border-light, #334155);
-      }
-
-      [data-theme="dark"] .saved-filters-header {
-        background: var(--bg-alt, #0f172a);
-      }
     `;
     document.head.appendChild(style);
   }

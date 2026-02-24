@@ -897,38 +897,13 @@
   }
 }
 
-/* === DARK MODE ADJUSTMENTS === */
-[data-theme="dark"] {
-  --glass-bg: rgba(30, 41, 59, 0.7);
-  --glass-border: rgba(71, 85, 105, 0.2);
-}
-
-[data-theme="dark"] .stat-card .value,
-[data-theme="dark"] .metric-card .metric-value,
-[data-theme="dark"] .metric-box .value,
-[data-theme="dark"] .stat-value {
-  background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-[data-theme="dark"] .table thead {
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(99, 102, 241, 0.2) 100%);
-}
-
-[data-theme="dark"] .form-section {
-  background: linear-gradient(135deg, var(--bg-secondary, #1e293b) 0%, var(--card, #0f172a) 100%);
-}
-
 /* === PRINT STYLES === */
 @media print {
   .dashboard-tabs,
   .productivity-tabs,
   .export-dropdown,
   .sidebar,
-  .mobile-menu-btn,
-  .dark-mode-toggle {
+  .mobile-menu-btn {
     display: none !important;
   }
   

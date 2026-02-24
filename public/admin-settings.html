@@ -9,7 +9,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/dark-mode.css">
   <link rel="stylesheet" href="/css/app-v2.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/modal.css">
@@ -31,7 +30,6 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/micro-interactions.css">
-  <script src="/js/theme-toggle.js"></script>
 <script src="/js/seasonal-theme.js"></script>
   <style>
     .settings-tabs {
@@ -529,8 +527,6 @@
 <body>
 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
-<button class="dark-mode-toggle" id="darkModeToggle" aria-label="Toggle dark mode">🌙</button>
-
 <div class="app">
   <aside class="sidebar">
     <div class="brand">🚀 TravelOps</div>
@@ -679,18 +675,6 @@
 
         <div class="settings-section">
           <h3>User Interface</h3>
-          <div class="setting-row">
-            <div class="setting-info">
-              <div class="setting-label">Dark Mode</div>
-              <div class="setting-description">Enable dark theme</div>
-            </div>
-            <div class="setting-control">
-              <label class="toggle-switch">
-                <input type="checkbox" id="darkMode">
-                <span class="toggle-slider"></span>
-              </label>
-            </div>
-          </div>
           <div class="setting-row">
             <div class="setting-info">
               <div class="setting-label">Animations</div>
@@ -1920,7 +1904,6 @@
       if (settings.dateFormat) document.getElementById('dateFormat').value = settings.dateFormat;
       if (settings.currency) document.getElementById('currency').value = settings.currency;
       if (settings.itemsPerPage) document.getElementById('itemsPerPage').value = settings.itemsPerPage;
-      if (settings.darkMode) document.getElementById('darkMode').checked = settings.darkMode;
       if (settings.animations !== undefined) document.getElementById('animations').checked = settings.animations;
       if (settings.autoRefresh) document.getElementById('autoRefresh').value = settings.autoRefresh;
       if (settings.soundNotifications) document.getElementById('soundNotifications').checked = settings.soundNotifications;
@@ -1934,10 +1917,6 @@
       // Render per-product margin table
       renderProductMarginTable(settings);
       
-      // Apply dark mode if enabled
-      if (settings.darkMode) {
-        document.body.classList.add('dark-mode');
-      }
     }
     
     function renderProductMarginTable(settings) {
@@ -2038,7 +2017,6 @@
         dateFormat: document.getElementById('dateFormat').value,
         currency: document.getElementById('currency').value,
         itemsPerPage: document.getElementById('itemsPerPage').value,
-        darkMode: document.getElementById('darkMode').checked,
         animations: document.getElementById('animations').checked,
         autoRefresh: document.getElementById('autoRefresh').value,
         soundNotifications: document.getElementById('soundNotifications').checked,
@@ -2063,13 +2041,6 @@
       
       // Also save to localStorage for faster loading/offline
       localStorage.setItem('appSettings', JSON.stringify(settings));
-      
-      // Apply dark mode
-      if (settings.darkMode) {
-        document.body.classList.add('dark-mode');
-      } else {
-        document.body.classList.remove('dark-mode');
-      }
       
       toast.success('Settings saved successfully!');
     }

@@ -581,11 +581,6 @@ class BulkActions {
       .btn-apply:hover {
         background: #2563eb;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .bulk-edit-content {
-        background: var(--card, #1e293b);
-      }
     `;
     document.head.appendChild(style);
   }

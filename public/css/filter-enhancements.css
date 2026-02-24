@@ -251,11 +251,6 @@
   border-radius: 2px;
 }
 
-[data-theme="dark"] .search-highlight {
-  background: #78350f;
-  color: #fef3c7;
-}
-
 /* Filter summary */
 .filter-summary {
   display: flex;

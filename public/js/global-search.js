@@ -276,27 +276,6 @@ class GlobalSearch {
       .global-search-empty p {
         margin: 12px 0 0 0;
       }
-      
-      /* Dark mode */
-      body.dark-mode .global-search-container {
-        background: #1f2937;
-      }
-      body.dark-mode #globalSearchInput {
-        color: #f9fafb;
-      }
-      body.dark-mode .global-search-input-wrap {
-        background: #374151;
-      }
-      body.dark-mode .global-search-item:hover,
-      body.dark-mode .global-search-item.selected:not(.selected) {
-        background: #374151;
-      }
-      body.dark-mode .global-search-item-icon {
-        background: #374151;
-      }
-      body.dark-mode .global-search-footer {
-        background: #111827;
-      }
     `;
     document.head.appendChild(style);
   }

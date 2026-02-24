@@ -754,8 +754,6 @@ window.addEventListener('DOMContentLoaded', async () => {
       window.closeModal?.();
     }
   });
-
-  // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
 });
 
 /* =========================================================

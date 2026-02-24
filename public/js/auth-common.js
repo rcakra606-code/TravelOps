@@ -20,6 +20,10 @@ let lastUserInteraction = Date.now(); // Track last user interaction for activit
 /* === AUTHENTICATION CHECK (on DOM ready, not immediately) === */
 let authCheckPassed = false;
 
+// Clean up legacy dark mode settings
+localStorage.removeItem('travelops-theme');
+document.documentElement.removeAttribute('data-theme');
+
 async function checkAuthOnLoad() {
   const token = localStorage.getItem('token');
   const user = localStorage.getItem('user');
@@ -390,26 +394,17 @@ async function refreshTokenIfNeeded(force = false) {
 }
 
 /**
- * Handle session expiration
+ * Handle session expiration - show professional overlay with countdown and redirect
  */
 function handleSessionExpired(message = 'Your session has expired. Please login again.') {
-  localStorage.clear();
-  sessionStorage.clear();
-  toast.error(message);
-  setTimeout(() => {
-    window.location.href = '/login.html';
-  }, 1500);
-}
-
-/**
- * Handle session invalidated (logged in from another device)
- */
-function handleSessionInvalidated() {
+  // Prevent multiple overlays
+  if (document.getElementById('sessionExpiredOverlay')) return;
+  
   localStorage.clear();
   sessionStorage.clear();
   
-  // Show prominent notification about another device
   const overlay = document.createElement('div');
+  overlay.id = 'sessionExpiredOverlay';
   overlay.style.cssText = `
     position: fixed;
     top: 0;
@@ -421,26 +416,105 @@ function handleSessionInvalidated() {
     align-items: center;
     justify-content: center;
     z-index: 99999;
+    animation: sessionFadeIn 0.3s ease;
+  `;
+  
+  let countdown = 5;
+  
+  overlay.innerHTML = `
+    <style>
+      @keyframes sessionFadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes sessionSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes sessionSpin { to { transform: rotate(360deg); } }
+    </style>
+    <div style="background: white; padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: sessionSlideUp 0.4s ease;">
+      <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
+      <h3 style="margin: 0 0 12px 0; color: #111827; font-size: 22px; font-weight: 700;">Session Expired</h3>
+      <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">${message}</p>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #f3f4f6; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="width: 20px; height: 20px; border: 3px solid #d1d5db; border-top-color: #2563eb; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
+        <span style="color: #374151; font-size: 14px;">Redirecting to login in <strong id="sessionExpiredCountdown" style="color: #2563eb;">${countdown}</strong> seconds...</span>
+      </div>
+      <a href="/login.html" style="color: #2563eb; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
+    </div>
+  `;
+  
+  document.body.appendChild(overlay);
+  
+  const countdownInterval = setInterval(() => {
+    countdown--;
+    const el = document.getElementById('sessionExpiredCountdown');
+    if (el) el.textContent = countdown;
+    if (countdown <= 0) {
+      clearInterval(countdownInterval);
+      window.location.href = '/login.html';
+    }
+  }, 1000);
+}
+
+/**
+ * Handle session invalidated (logged in from another device)
+ */
+function handleSessionInvalidated() {
+  // Prevent multiple overlays
+  if (document.getElementById('sessionInvalidatedOverlay')) return;
+  
+  localStorage.clear();
+  sessionStorage.clear();
+  
+  let countdown = 5;
+  
+  const overlay = document.createElement('div');
+  overlay.id = 'sessionInvalidatedOverlay';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    animation: sessionFadeIn 0.3s ease;
   `;
   
   overlay.innerHTML = `
-    <div style="background: white; padding: 32px; border-radius: 12px; max-width: 450px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <style>
+      @keyframes sessionFadeIn { from { opacity: 0; } to { opacity: 1; } }
+      @keyframes sessionSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes sessionSpin { to { transform: rotate(360deg); } }
+    </style>
+    <div style="background: white; padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: sessionSlideUp 0.4s ease;">
       <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-      <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 20px;">Session Terminated</h3>
-      <p style="margin: 0 0 16px 0; color: #374151; font-size: 15px; line-height: 1.5;">
+      <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 22px; font-weight: 700;">Session Terminated</h3>
+      <p style="margin: 0 0 8px 0; color: #374151; font-size: 14px; line-height: 1.6;">
         Your account has been logged in from another device.<br>
         For security, this session has been terminated.
       </p>
       <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 13px;">
         If this wasn't you, please change your password immediately.
       </p>
-      <button onclick="window.location.href='/login.html'" style="background: #2563eb; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
-        Go to Login
-      </button>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #fef2f2; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="width: 20px; height: 20px; border: 3px solid #fecaca; border-top-color: #dc2626; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
+        <span style="color: #374151; font-size: 14px;">Redirecting to login in <strong id="sessionInvalidCountdown" style="color: #dc2626;">${countdown}</strong> seconds...</span>
+      </div>
+      <a href="/login.html" style="color: #2563eb; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
     </div>
   `;
   
   document.body.appendChild(overlay);
+  
+  const countdownInterval = setInterval(() => {
+    countdown--;
+    const el = document.getElementById('sessionInvalidCountdown');
+    if (el) el.textContent = countdown;
+    if (countdown <= 0) {
+      clearInterval(countdownInterval);
+      window.location.href = '/login.html';
+    }
+  }, 1000);
 }
 
 /**
@@ -457,12 +531,7 @@ function checkInactivity() {
   
   if (idleTime > INACTIVITY_TIMEOUT) {
     console.warn('User inactive for 30 minutes, logging out...');
-    localStorage.clear();
-    sessionStorage.clear();
-    toast.warning('Anda telah logout otomatis karena tidak aktif selama 30 menit.');
-    setTimeout(() => {
-      window.location.href = '/login.html';
-    }, 1500);
+    handleSessionExpired('You have been logged out automatically due to 30 minutes of inactivity.');
     return true;
   }
   return false;

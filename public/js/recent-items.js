@@ -441,20 +441,6 @@ class RecentItems {
         }
       }
 
-      /* Dark mode */
-      [data-theme="dark"] .recent-items-toggle {
-        background: var(--card, #1e293b);
-        border-color: var(--border-light, #334155);
-      }
-
-      [data-theme="dark"] .recent-items-panel {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .recent-item:hover {
-        background: #334155;
-      }
-
       /* Mobile */
       @media (max-width: 768px) {
         .recent-items-panel {

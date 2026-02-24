@@ -112,15 +112,6 @@
   }
 }
 
-/* Dark mode adjustments */
-[data-theme="dark"] .nav-group-header:hover {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-[data-theme="dark"] .nav-divider {
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
 /* Active state for group when child is active */
 .nav-group.has-active .nav-group-header {
   color: var(--primary);

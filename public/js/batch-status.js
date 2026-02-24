@@ -505,15 +505,6 @@ class BatchStatusUpdater {
         background: var(--bg-alt, #f9fafb);
         border-top: 1px solid var(--border-light, #e5e7eb);
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .batch-status-content {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .batch-instructions {
-        background: var(--bg-alt, #0f172a);
-      }
     `;
     document.head.appendChild(style);
   }

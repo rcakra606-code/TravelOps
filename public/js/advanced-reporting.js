@@ -1152,15 +1152,6 @@ class AdvancedReporting {
         padding: 60px;
         color: var(--text-secondary, #64748b);
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .report-center-content {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .report-sidebar {
-        background: var(--bg-alt, #0f172a);
-      }
     `;
     document.head.appendChild(style);
   }

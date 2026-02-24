@@ -1,6 +1,6 @@
 /* =========================================================
    MODERN FILTER CONTROLS STYLING
-   Clean, professional filter UI with dark mode support
+   Clean, professional filter UI
    ========================================================= */
 
 :root {
@@ -12,17 +12,6 @@
   --filter-hover: #f9fafb;
   --filter-focus: #3b82f6;
   --filter-shadow: rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] {
-  /* Dark mode colors */
-  --filter-bg: #1f2937;
-  --filter-border: #374151;
-  --filter-text: #e5e7eb;
-  --filter-label: #9ca3af;
-  --filter-hover: #374151;
-  --filter-focus: #60a5fa;
-  --filter-shadow: rgba(0, 0, 0, 0.3);
 }
 
 .filter-controls {
@@ -99,31 +88,6 @@
 
 .filter-btn:active {
   transform: translateY(0);
-}
-
-/* Dark mode toggle button */
-.dark-mode-toggle {
-  position: fixed;
-  bottom: 24px;
-  right: 24px;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-  transition: all 0.3s ease;
-  z-index: 1000;
-}
-
-.dark-mode-toggle:hover {
-  transform: scale(1.1) rotate(15deg);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
 }
 
 /* Responsive filters */

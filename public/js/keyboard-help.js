@@ -28,7 +28,6 @@ class KeyboardShortcutsHelp {
       ]},
       { category: 'General', items: [
         { keys: ['?'], description: 'Show This Help' },
-        { keys: ['Ctrl', 'Shift', 'D'], description: 'Toggle Dark Mode' },
         { keys: ['Ctrl', '/'], description: 'Toggle Sidebar' },
       ]}
     ];
@@ -100,12 +99,6 @@ class KeyboardShortcutsHelp {
             }
             break;
         }
-      }
-
-      // Toggle dark mode
-      if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
-        e.preventDefault();
-        document.getElementById('darkModeToggle')?.click();
       }
 
       // Toggle sidebar
@@ -343,23 +336,6 @@ class KeyboardShortcutsHelp {
         margin: 0 4px;
       }
 
-      /* Dark mode */
-      [data-theme="dark"] .shortcuts-help-content {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .shortcuts-help-header {
-        background: var(--bg-alt, #0f172a);
-      }
-
-      [data-theme="dark"] .shortcut-item {
-        background: var(--bg-alt, #0f172a);
-      }
-
-      [data-theme="dark"] .shortcut-keys kbd {
-        background: var(--card, #1e293b);
-        border-color: var(--border-light, #334155);
-      }
     `;
     document.head.appendChild(style);
   }

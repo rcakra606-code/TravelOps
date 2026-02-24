@@ -80,11 +80,11 @@ async function handleLogout() {
   `;
   document.head.appendChild(style);
   
-  // Clear storage and redirect after animation
+  // Clear storage and redirect to proper logout page
   setTimeout(() => {
     localStorage.clear();
     sessionStorage.clear();
-    window.location.href = '/login.html';
+    window.location.href = '/logout.html';
   }, 1500);
 }
 

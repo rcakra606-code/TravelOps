@@ -461,16 +461,6 @@ class ErrorRecovery {
         overflow-x: auto;
         max-height: 150px;
       }
-      
-      /* Dark mode */
-      [data-theme="dark"] .error-recovery-content {
-        background: var(--card, #1e293b);
-      }
-      
-      [data-theme="dark"] .btn-dismiss {
-        background: #334155;
-        border-color: #475569;
-      }
     `;
     document.head.appendChild(style);
   }

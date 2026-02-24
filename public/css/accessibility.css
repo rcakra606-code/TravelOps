@@ -452,36 +452,4 @@ html {
   scrollbar-color: var(--border, #d1d5db) var(--bg-alt, #f3f4f6);
 }
 
-/* === DARK MODE OVERRIDES === */
-[data-theme="dark"] .skip-link {
-  background: #60a5fa;
-}
 
-[data-theme="dark"] [data-tooltip]::before {
-  background: #374151;
-}
-
-[data-theme="dark"] [data-tooltip]::after {
-  border-top-color: #374151;
-}
-
-[data-theme="dark"] [data-tooltip-pos="bottom"]::after {
-  border-top-color: transparent;
-  border-bottom-color: #374151;
-}
-
-[data-theme="dark"] .breadcrumbs .current {
-  color: #f3f4f6;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-track {
-  background: #1f2937;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb {
-  background: #4b5563;
-}
-
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
-  background: #6b7280;
-}

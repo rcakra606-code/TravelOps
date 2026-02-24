@@ -116,7 +116,6 @@ Scripts added to:
 - Alt+T = Tours
 - Ctrl+N = New record
 - Ctrl+F = Search/Filter
-- Ctrl+D = Toggle dark mode
 
 ### Activity Feed
 - Click the 🔔 bell icon (bottom right)

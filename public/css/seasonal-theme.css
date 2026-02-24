@@ -491,29 +491,3 @@ body.logout-page[data-season] {
 .season-badge.autumn {
   background: linear-gradient(135deg, #ef6c00, #8d6e63);
 }
-
-/* =========================================================
-   DARK MODE ADJUSTMENTS
-   ========================================================= */
-
-.dark-mode[data-season] {
-  --season-accent: rgba(255, 255, 255, 0.1);
-}
-
-.dark-mode[data-season] body {
-  background: var(--bg);
-}
-
-.dark-mode[data-season] .sales-table thead {
-  background: var(--season-primary) !important;
-  color: white !important;
-}
-
-.dark-mode[data-season] .sales-table th {
-  color: white !important;
-}
-
-.dark-mode[data-season] th {
-  background: var(--season-primary) !important;
-  color: white !important;
-}

@@ -1359,11 +1359,6 @@ window.editTelecom = (id) => window.crudHandlers?.openEditTelecomModal(id);
 window.editHotelBooking = (id) => window.crudHandlers?.openEditHotelBookingModal(id);
 window.deleteItem = (entity, id) => window.crudHandlers?.deleteItem(entity, id);
 
-/* === DARK MODE TOGGLE === */
-(function initDarkMode() {
-  // Dark mode is handled by theme-toggle.js - no duplicate handler needed here
-})();
-
 /* === EMAIL NOTIFICATION TESTING === */
 async function checkEmailConfiguration() {
   const statusIcon = el('emailStatusIcon');

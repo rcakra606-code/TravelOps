@@ -1473,13 +1473,6 @@ class CustomerDatabase {
           flex-direction: column;
         }
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .customer-db-content,
-      [data-theme="dark"] .customer-detail-content,
-      [data-theme="dark"] .customer-form-content {
-        background: var(--card, #1e293b);
-      }
     `;
     document.head.appendChild(style);
   }

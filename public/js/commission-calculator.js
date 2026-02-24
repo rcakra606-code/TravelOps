@@ -809,11 +809,6 @@ Generated: ${new Date().toLocaleString()}
         font-weight: 700;
         color: #10b981;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .commission-content {
-        background: var(--card, #1e293b);
-      }
     `;
     document.head.appendChild(style);
   }

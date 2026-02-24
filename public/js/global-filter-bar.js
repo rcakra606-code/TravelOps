@@ -541,24 +541,6 @@ class GlobalFilterBar {
         color: var(--primary-dark, #1e40af);
       }
       
-      /* Dark mode */
-      [data-theme="dark"] .gfb-search-input,
-      [data-theme="dark"] .gfb-filter-select,
-      [data-theme="dark"] .gfb-date-input {
-        background: var(--card, #1f2937);
-        border-color: var(--border-light, #374151);
-        color: var(--text-primary, #f9fafb);
-      }
-      
-      [data-theme="dark"] .gfb-reset-btn {
-        background: var(--bg-alt, #374151);
-        border-color: var(--border-light, #4b5563);
-      }
-      
-      [data-theme="dark"] .gfb-filter-chip {
-        background: rgba(59, 130, 246, 0.2);
-      }
-      
       /* Responsive */
       @media (max-width: 768px) {
         .gfb-search-row {

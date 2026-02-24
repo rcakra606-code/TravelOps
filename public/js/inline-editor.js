@@ -444,12 +444,6 @@ class InlineEditor {
         0%, 100% { background: transparent; }
         50% { background: rgba(239, 68, 68, 0.2); }
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .inline-edit-input {
-        background: var(--card, #1e293b);
-        border-color: var(--primary, #3b82f6);
-      }
     `;
     document.head.appendChild(style);
   }

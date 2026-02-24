@@ -340,19 +340,6 @@ class DashboardAnalytics {
         color: var(--text-secondary, #94a3b8);
         text-align: center;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .analytics-panel {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .analytics-header {
-        background: var(--bg-alt, #0f172a);
-      }
-
-      [data-theme="dark"] .mini-metric {
-        background: var(--bg-alt, #0f172a);
-      }
     `;
     document.head.appendChild(style);
   }

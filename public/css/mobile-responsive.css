@@ -308,7 +308,6 @@
 @media print {
   .sidebar,
   .mobile-menu-btn,
-  .dark-mode-toggle,
   .batch-actions-bar,
   button,
   .btn {
@@ -462,13 +461,6 @@
     padding: 16px;
   }
 
-  /* Theme toggle position mobile */
-  .theme-toggle {
-    bottom: 80px;
-    right: 16px;
-    width: 44px;
-    height: 44px;
-  }
 }
 
 /* Extra small screens */

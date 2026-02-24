@@ -222,33 +222,6 @@
           color: var(--gray-800, #1e293b);
         }
         
-        /* Dark mode */
-        [data-theme="dark"] .breadcrumb-nav {
-          border-color: var(--gray-700, #334155);
-        }
-        
-        [data-theme="dark"] .breadcrumb-link {
-          color: var(--gray-400, #94a3b8);
-        }
-        
-        [data-theme="dark"] .breadcrumb-link:hover {
-          color: var(--primary-400, #60a5fa);
-          background: rgba(59, 130, 246, 0.1);
-        }
-        
-        [data-theme="dark"] .breadcrumb-current {
-          color: var(--gray-200, #e2e8f0);
-        }
-        
-        [data-theme="dark"] .breadcrumb-back {
-          background: var(--gray-700, #334155);
-          color: var(--gray-300, #cbd5e1);
-        }
-        
-        [data-theme="dark"] .breadcrumb-back:hover {
-          background: var(--gray-600, #475569);
-        }
-        
         /* Mobile */
         @media (max-width: 640px) {
           .breadcrumb-nav {

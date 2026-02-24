@@ -514,68 +514,6 @@
   background: var(--primary-hover, #2563eb);
 }
 
-/* Dark Mode Support */
-[data-theme="dark"] .wizard-modal {
-  background: var(--bg-card, #1f2937);
-}
-
-[data-theme="dark"] .wizard-header {
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .wizard-progress {
-  background: var(--bg-subtle, #111827);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .wizard-steps::before {
-  background: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .step-icon {
-  background: var(--bg-card, #1f2937);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .passenger-card {
-  background: var(--bg-subtle, #111827);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .passenger-header {
-  background: var(--bg-card, #1f2937);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .passenger-form input {
-  background: var(--bg-card, #1f2937);
-  border-color: var(--border-medium, #374151);
-  color: var(--text-primary, #f9fafb);
-}
-
-[data-theme="dark"] .financial-summary-card,
-[data-theme="dark"] .confirm-section {
-  background: var(--bg-subtle, #111827);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .confirm-passenger {
-  background: var(--bg-card, #1f2937);
-}
-
-[data-theme="dark"] .wizard-footer {
-  background: var(--bg-subtle, #111827);
-  border-color: var(--border-medium, #374151);
-}
-
-[data-theme="dark"] .wizard-form-grid input,
-[data-theme="dark"] .wizard-form-grid select,
-[data-theme="dark"] .wizard-form-grid textarea {
-  background: var(--bg-subtle, #111827);
-  border-color: var(--border-medium, #374151);
-  color: var(--text-primary, #f9fafb);
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .wizard-modal {
@@ -646,13 +584,4 @@
 .badge-info {
   background: var(--info, #3b82f6);
   color: white;
-}
-
-[data-theme="dark"] .tour-row-readonly {
-  background-color: rgba(75, 85, 99, 0.1) !important;
-}
-
-[data-theme="dark"] .btn-view-only {
-  background: var(--bg-subtle, #374151);
-  border-color: var(--border-medium, #4b5563);
 }

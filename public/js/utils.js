@@ -87,10 +87,6 @@ const loadingUtils = {
           animation: skeleton-loading 1.5s infinite;
           border-radius: 4px;
         }
-        [data-theme="dark"] .skeleton-line {
-          background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
-          background-size: 200% 100%;
-        }
         @keyframes skeleton-loading {
           0% { background-position: 200% 0; }
           100% { background-position: -200% 0; }

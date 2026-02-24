@@ -943,11 +943,6 @@
   animation: spin 1s linear infinite;
 }
 
-/* Dark mode loading overlay */
-[data-theme="dark"] .loading-overlay {
-  background: rgba(17, 24, 39, 0.9);
-}
-
 /* =========================================================
    ADDITIONAL UI ENHANCEMENTS
    Filter chips, progress bars, trends, accessibility
@@ -1504,14 +1499,6 @@ a:focus-visible {
   height: 32px;
   background: var(--gradient-primary, linear-gradient(135deg, #667eea 0%, #764ba2 100%));
   border-radius: 3px;
-}
-
-[data-theme="dark"] .header h2,
-[data-theme="dark"] .page-header h2 {
-  background: linear-gradient(135deg, #f1f5f9 0%, #cbd5e1 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* Header Actions */

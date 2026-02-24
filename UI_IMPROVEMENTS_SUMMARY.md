@@ -447,8 +447,7 @@ document.addEventListener('click', (e) => {
 ## 🚀 Future Enhancements (Optional)
 
 ### Potential Additions
-1. **Dark Mode Toggle** (already has button, needs theme switching logic)
-2. **Export to PDF** (integrate jsPDF for all tables)
+1. **Export to PDF** (integrate jsPDF for all tables)
 3. **Print Optimization** (custom print stylesheets)
 4. **Keyboard Shortcuts** (Ctrl+S to save, Ctrl+F to search, etc.)
 5. **Undo/Redo** (for inline edits and batch operations)

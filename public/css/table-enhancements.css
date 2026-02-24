@@ -15,17 +15,9 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-[data-theme="dark"] .table tbody tr:hover {
-  background-color: rgba(96, 165, 250, 0.1);
-}
-
 /* Zebra striping */
 .table-striped tbody tr:nth-child(even) {
   background-color: var(--row-even, rgba(0, 0, 0, 0.02));
-}
-
-[data-theme="dark"] .table-striped tbody tr:nth-child(even) {
-  background-color: rgba(255, 255, 255, 0.02);
 }
 
 /* Sticky table headers */
@@ -35,11 +27,6 @@
   background: var(--card, #fff);
   z-index: 10;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-}
-
-[data-theme="dark"] .table-sticky thead th {
-  background: var(--card-dark, #1f2937);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 /* Quick actions on hover */
@@ -156,17 +143,6 @@
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 4px;
-}
-
-[data-theme="dark"] .skeleton,
-[data-theme="dark"] .skeleton-cell {
-  background: linear-gradient(
-    90deg,
-    #374151 0%,
-    #4b5563 50%,
-    #374151 100%
-  );
-  background-size: 200% 100%;
 }
 
 /* Empty state */

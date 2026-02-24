@@ -901,11 +901,6 @@ class StaffManagement {
         font-size: 12px;
         font-weight: 600;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .staff-mgmt-content {
-        background: var(--card, #1e293b);
-      }
     `;
     document.head.appendChild(style);
   }

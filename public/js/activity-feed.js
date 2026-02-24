@@ -417,19 +417,6 @@ class ActivityFeed {
       .empty-activity span {
         font-size: 48px;
       }
-
-      /* Dark mode */
-      [data-theme="dark"] .activity-content {
-        background: var(--card, #1e293b);
-      }
-
-      [data-theme="dark"] .activity-item {
-        background: var(--bg-alt, #0f172a);
-      }
-
-      [data-theme="dark"] .activity-icon {
-        background: var(--card, #1e293b);
-      }
     `;
     document.head.appendChild(style);
   }
