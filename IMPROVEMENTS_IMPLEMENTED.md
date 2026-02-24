@@ -54,11 +54,6 @@
 - Customizable company info
 - Print-ready output
 
-#### activity-feed.js
-- Real-time activity tracking
-- Bell icon with unread count
-- Shows create/update/delete actions
-
 ### 3. Service Worker Updates ✅
 - Updated to v5 with all new files cached
 - Added all dashboard HTML files
@@ -116,11 +111,6 @@ Scripts added to:
 - Alt+T = Tours
 - Ctrl+N = New record
 - Ctrl+F = Search/Filter
-
-### Activity Feed
-- Click the 🔔 bell icon (bottom right)
-- View all recent activity
-- Clear history if needed
 
 ### PWA Install
 - On mobile: Add to Home Screen prompt appears

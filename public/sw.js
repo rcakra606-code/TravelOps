@@ -52,7 +52,6 @@ const STATIC_ASSETS = [
   '/js/customer-database.js',
   '/js/batch-status.js',
   '/js/commission-calculator.js',
-  '/js/activity-feed.js',
   '/js/advanced-reporting.js',
   '/js/staff-management.js',
   '/js/dashboard-analytics.js',

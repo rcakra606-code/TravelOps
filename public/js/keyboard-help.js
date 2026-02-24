@@ -11,7 +11,6 @@ class KeyboardShortcutsHelp {
         { keys: ['Alt', 'S'], description: 'Go to Sales' },
         { keys: ['Alt', 'T'], description: 'Go to Tours' },
         { keys: ['Alt', 'D'], description: 'Go to Documents' },
-        { keys: ['Alt', 'R'], description: 'Open Recent Items' },
       ]},
       { category: 'Actions', items: [
         { keys: ['Ctrl', 'N'], description: 'Create New Record' },
