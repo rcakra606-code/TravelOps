@@ -410,7 +410,7 @@ export async function createApp() {
   
   function generateCsrfToken(userId) {
     const token = crypto.randomBytes(32).toString('hex');
-    const expires = Date.now() + (60 * 60 * 1000); // 1 hour
+    const expires = Date.now() + (24 * 60 * 60 * 1000); // 24 hours (session-lived)
     csrfTokens.set(userId, { token, expires });
     // Clean up expired tokens periodically
     if (csrfTokens.size > 1000) {

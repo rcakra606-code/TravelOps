@@ -703,9 +703,26 @@ async function fetchJson(url, opts = {}) {
     throw new Error('Session expired');
   }
   
-  // For 403, throw error to let caller handle it
+  // For 403, check if it's a CSRF failure and auto-retry with fresh token
   if (res.status === 403) {
     const errorData = await res.json().catch(() => ({ error: 'Forbidden' }));
+    if (errorData.error && errorData.error.includes('CSRF')) {
+      console.log('🔄 CSRF token expired, refreshing and retrying...');
+      await fetchCsrfToken();
+      opts.headers = {
+        ...(opts.headers || {}),
+        ...getHeaders(!!opts.body),
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache'
+      };
+      const retryRes = await fetch(api(url), opts);
+      if (retryRes.ok) {
+        try { return await retryRes.json(); } catch { return null; }
+      }
+      // If retry also failed, fall through to error
+      const retryError = await retryRes.json().catch(() => ({ error: 'Forbidden' }));
+      throw new Error(retryError.error || 'Akses ditolak');
+    }
     throw new Error(errorData.error || 'Akses ditolak');
   }
   
@@ -764,6 +781,8 @@ function startTokenRefresh() {
             console.log(`🔄 Token refreshed (idle: ${idleMinutes}m)`);
             const remaining = getTokenRemainingMinutes();
             if (remaining != null) console.log(`[auth] Post-refresh remaining ~${remaining}m`);
+            // Also refresh CSRF token to keep it in sync
+            await fetchCsrfToken();
           }
         } else if (response.status === 401 || response.status === 403) {
           handleSessionExpired();
