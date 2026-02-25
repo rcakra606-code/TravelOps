@@ -1071,9 +1071,10 @@
     
     try {
       const token = localStorage.getItem('token');
+      const csrfToken = sessionStorage.getItem('csrfToken') || '';
       const res = await fetch(`/api/sales-targets/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, 'X-CSRF-Token': csrfToken }
       });
       
       if (res.ok) {
@@ -1161,6 +1162,7 @@
     
     try {
       const token = localStorage.getItem('token');
+      const csrfToken = sessionStorage.getItem('csrfToken') || '';
       const url = id ? `/api/sales-targets/${id}` : '/api/sales-targets';
       const method = id ? 'PUT' : 'POST';
       
@@ -1168,7 +1170,8 @@
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify(data)
       });
@@ -1204,6 +1207,7 @@
     
     try {
       const token = localStorage.getItem('token');
+      const csrfToken = sessionStorage.getItem('csrfToken') || '';
       const url = id ? `/api/sales-targets/${id}` : '/api/sales-targets';
       const method = id ? 'PUT' : 'POST';
       
@@ -1211,7 +1215,8 @@
         method,
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': csrfToken
         },
         body: JSON.stringify(data)
       });
