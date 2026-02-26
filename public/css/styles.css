@@ -1,8 +1,8 @@
 /* Base styles */
 :root {
-  --bg: #f4f7fb;
+  --bg: #f8fafc;
   --card: #fff;
-  --primary: #0f62fe;
+  --primary: #2563eb;
   --muted: #6b7280;
   --radius: 14px;
   --border-light: #e2e8f0;
@@ -28,7 +28,7 @@ body {
 /* Sidebar */
 .sidebar {
   width: 300px;
-  background: linear-gradient(180deg, #072f5f, #0f62fe);
+  background: linear-gradient(180deg, #0f172a 0%, #1e3a8a 60%, #1d4ed8 100%);
   color: #fff;
   padding: 24px 18px;
   border-radius: 12px;
@@ -559,10 +559,6 @@ h4 {
   width: 40px;
   height: 40px;
   border-width: 3px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* Loading Overlay */

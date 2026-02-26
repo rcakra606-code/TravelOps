@@ -567,6 +567,18 @@
         </div>
       </div>
       
+      <!-- Corporate Group -->
+      <div class="nav-group" id="groupCorporate">
+        <button class="nav-group-header" data-group="corporate">
+          <span class="group-icon">🏢</span>
+          <span class="group-title">Corporate</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+        </div>
+      </div>
+
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
@@ -1298,8 +1310,8 @@
   <script src="/js/ui-extras.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/mobile-menu.js"></script>
-  <script src="/js/auth-common.js?v=20260225"></script>
-  <script src="/js/logout-handler.js?v=20260225"></script>
+  <script type="module" src="/js/auth-common.js"></script>
+  <script src="/js/logout-handler.js"></script>
   <script src="/js/confirm-dialog.js"></script>
   <script>
     // Start token refresh system (uses window.startTokenRefresh from auth-common.js)
@@ -2763,8 +2775,8 @@
       }
     });
   </script>
-<script src="/js/sidebar-enhancements.js?v=20251215"></script>
-<script src="/js/keyboard-shortcuts.js?v=20251215"></script>
+<script src="/js/sidebar-enhancements.js"></script>
+<script src="/js/keyboard-shortcuts.js"></script>
 <script src="/js/sidebar-groups.js"></script>
 <script src="/js/error-monitoring.js"></script>
 <script src="/js/api-cache.js"></script>

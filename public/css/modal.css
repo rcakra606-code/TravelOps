@@ -98,8 +98,6 @@
   display: flex;
   justify-content: flex-end;
   gap: 12px;
-}
-  gap: var(--space-3, 12px);
   border-radius: 0 0 var(--radius-xl, 20px) var(--radius-xl, 20px);
 }
 

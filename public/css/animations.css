@@ -3,8 +3,8 @@
    Micro-animations and polish
    =================================== */
 
-/* Base transitions */
-* {
+/* Base transitions — scoped to interactive elements only (no wildcard *) */
+button, a, input, select, textarea, .btn, .card, .badge, .nav a, .nav button {
   transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform;
   transition-duration: 0.15s;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
@@ -320,34 +320,9 @@ button:not(:disabled):hover,
   transition: opacity 0.3s, transform 0.3s;
 }
 
-/* Stagger animation for lists */
-.stagger-item {
-  opacity: 0;
-  animation: fadeInUp 0.5s ease forwards;
-}
-
-@keyframes fadeInUp {
+/* Stagger animation for list items */
+@keyframes staggerFadeIn {
   from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.stagger-item:nth-child(1) { animation-delay: 0.05s; }
-.stagger-item:nth-child(2) { animation-delay: 0.1s; }
-.stagger-item:nth-child(3) { animation-delay: 0.15s; }
-.stagger-item:nth-child(4) { animation-delay: 0.2s; }
-.stagger-item:nth-child(5) { animation-delay: 0.25s; }
-.stagger-item:nth-child(n+6) { animation-delay: 0.3s; }
-
-/* Success checkmark animation */
-@keyframes checkmark {
-  0% {
-    stroke-dashoffset: 100;
   }
   100% {
     stroke-dashoffset: 0;
@@ -423,28 +398,6 @@ html {
 .stagger-item:nth-child(8) { animation-delay: 0.4s; }
 .stagger-item:nth-child(9) { animation-delay: 0.45s; }
 .stagger-item:nth-child(10) { animation-delay: 0.5s; }
-
-/* Bounce in animation */
-@keyframes bounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-  70% {
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.bounce-in {
-  animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
 
 /* Zoom in animation */
 @keyframes zoomIn {

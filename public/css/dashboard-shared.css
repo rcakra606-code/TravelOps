@@ -744,10 +744,6 @@
   color: var(--text-secondary, #64748b);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
 /* === PROFIT MARGIN BADGES === */
 .profit-margin {
   display: inline-flex;

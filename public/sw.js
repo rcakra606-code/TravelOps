@@ -1,5 +1,5 @@
-// TravelOps Service Worker - Enhanced PWA v10
-const CACHE_NAME = 'travelops-v11';
+// TravelOps Service Worker - Enhanced PWA v12
+const CACHE_NAME = 'travelops-v12';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',

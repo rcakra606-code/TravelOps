@@ -4,7 +4,7 @@
    ========================================================= */
 
 :root {
-  /* Light mode (default) */
+  /* Filter variables */
   --filter-bg: #ffffff;
   --filter-border: #e5e7eb;
   --filter-text: #374151;

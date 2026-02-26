@@ -103,7 +103,8 @@
         <div class="nav-group-items">
           <a href="/outstanding-dashboard.html">📋 Outstanding</a>
           <a href="/cashout-dashboard.html">💸 Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display: none;">⚙️ Admin Settings</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
@@ -636,8 +637,8 @@
 <script type="module" src="/js/auth-common.js"></script>
 <script src="/js/logout-handler.js"></script>
 <!-- Dashboard logic (now relies on auth-common for auth utilities) -->
-<script src="/js/dashboard.js?v=9"></script>
-<script defer src="/js/crud-handlers.js?v=7"></script>
+<script src="/js/dashboard.js"></script>
+<script defer src="/js/crud-handlers.js"></script>
 
 <!-- Service Worker Registration (external to comply with CSP) -->
 <script src="/js/sw-register.js"></script>

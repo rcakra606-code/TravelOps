@@ -57,15 +57,15 @@ h4 { font-size: 1.125rem; }
   --gray-800: #1e293b;
   --gray-900: #0f172a;
   
-  /* Semantic colors */
-  --success: #10b981;
-  --success-light: #d1fae5;
-  --warning: #f59e0b;
+  /* Semantic colors — aligned with app-v2.css */
+  --success: #16a34a;
+  --success-light: #dcfce7;
+  --warning: #d97706;
   --warning-light: #fef3c7;
-  --danger: #ef4444;
+  --danger: #dc2626;
   --danger-light: #fee2e2;
-  --info: #3b82f6;
-  --info-light: #dbeafe;
+  --info: #0ea5e9;
+  --info-light: #e0f2fe;
   
   /* Refined shadows */
   --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
@@ -428,10 +428,6 @@ h4 { font-size: 1.125rem; }
   width: 32px;
   height: 32px;
   border-width: 3px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
 }
 
 /* Loading overlay */

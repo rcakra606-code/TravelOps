@@ -160,12 +160,6 @@
   font-size: 1rem;
 }
 
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
-}
-
 .form-field.has-error .form-control {
   border-color: #ef4444;
   background: rgba(239, 68, 68, 0.02);

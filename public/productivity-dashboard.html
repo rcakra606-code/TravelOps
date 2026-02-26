@@ -474,6 +474,18 @@
           <a href="/productivity-dashboard.html" class="active">📈 Productivity</a>
         </div>
       </div>
+
+      <!-- Corporate Group -->
+      <div class="nav-group" id="groupCorporate">
+        <button class="nav-group-header" data-group="corporate">
+          <span class="group-icon">🏢</span>
+          <span class="group-title">Corporate</span>
+          <span class="group-arrow">▼</span>
+        </button>
+        <div class="nav-group-items">
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+        </div>
+      </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
@@ -486,6 +498,7 @@
           <a href="/outstanding-dashboard.html">📋 Outstanding</a>
           <a href="/cashout-dashboard.html">💸 Cash Out</a>
           <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
@@ -909,7 +922,7 @@
 </div>
 
 <!-- Scripts -->
-<script src="/js/auth-common.js"></script>
+<script type="module" src="/js/auth-common.js"></script>
 <script src="/js/ui-extras.js"></script>
 <script src="/js/toast.js"></script>
 <script src="/js/confirm-dialog.js"></script>
