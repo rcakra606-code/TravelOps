@@ -63,8 +63,8 @@ function switchTab(tabName) {
 function updateTabCounts() {
   if (!toursDataForCRUD.length) return;
   const user = window.getUser();
-  const activeTours = toursDataForCRUD.filter(t => !isTourArchived(t));
-  const archivedTours = toursDataForCRUD.filter(t => isTourArchived(t));
+  const activeTours = toursDataForCRUD.filter(t => !isTourArchived(t) && !isTour2025OrEarlier(t));
+  const archivedTours = toursDataForCRUD.filter(t => isTourArchived(t) || isTour2025OrEarlier(t));
   
   let myTours;
   if (user.type === 'admin' || user.type === 'semi-admin' || user.type === 'semiadmin') {
@@ -340,7 +340,8 @@ let atCurrentPage = 1;
 const atPageSize = 25;
 
 function renderArchivedTab() {
-  atAllTours = toursDataForCRUD.filter(t => isTourArchived(t));
+  // Show both explicitly archived and 2025-departure tours
+  atAllTours = toursDataForCRUD.filter(t => isTourArchived(t) || isTour2025OrEarlier(t));
 
   // Populate region filter
   const uniqueRegions = [...new Set(atAllTours.map(t => t.region_id).filter(Boolean))];
@@ -785,10 +786,20 @@ async function renderDashboard() {
     console.log('Query string:', q);
     
     // Fetch tours data and metrics
-    const [toursData, metrics] = await Promise.all([
+    const [allToursData, metrics] = await Promise.all([
       window.fetchJson('/api/tours' + (q ? '?' + q : '')),
       window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
+    
+    // Filter out archived and 2025-departure tours from analytics (they belong in Archived tab)
+    const toursData = (allToursData || []).filter(t => {
+      if (t.is_archived === 1 || t.is_archived === true) return false;
+      if (t.departure_date) {
+        const depYear = new Date(t.departure_date).getFullYear();
+        if (depYear <= 2025) return false;
+      }
+      return true;
+    });
     
     console.log('Received toursData count:', toursData?.length || 0);
     console.log('Received metrics:', metrics);
@@ -1347,8 +1358,8 @@ function renderToursTable() {
   
   let filtered = [...toursDataForCRUD];
   
-  // Tour Data tab: exclude archived tours (they go to Archived Tours tab)
-  filtered = filtered.filter(t => !isTourArchived(t));
+  // Tour Data tab: exclude archived AND 2025-departure tours (they go to Archived Tours tab)
+  filtered = filtered.filter(t => !isTourArchived(t) && !isTour2025OrEarlier(t));
   
   if (toursFilters.search) {
     const search = toursFilters.search.toLowerCase();
