@@ -32,6 +32,46 @@
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/micro-interactions.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
+<style>
+  /* My Tours Tab Styles */
+  .mt-summary-row { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
+  .mt-summary-item { background: var(--card); padding: 16px 24px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; min-width: 150px; text-align: center; }
+  .mt-summary-value { font-size: 28px; font-weight: 700; color: var(--primary); }
+  .mt-summary-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+  .mt-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 24px; }
+  .mt-stat-card { background: var(--card, #fff); border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+  .mt-stat-card h4 { font-size: 14px; color: var(--text-secondary); margin: 0 0 16px 0; display: flex; align-items: center; gap: 8px; }
+  .mt-stat-items { display: flex; flex-direction: column; gap: 12px; }
+  .mt-stat-row { display: flex; justify-content: space-between; align-items: center; }
+  .mt-stat-label { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+  .mt-stat-badge { padding: 4px 10px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+  .mt-stat-badge.pending { background: #fef3c7; color: #92400e; }
+  .mt-stat-badge.completed { background: #d1fae5; color: #065f46; }
+  .mt-stat-badge.cancelled { background: #fee2e2; color: #991b1b; }
+  .mt-stat-badge.invoiced { background: #dbeafe; color: #1e40af; }
+  .mt-stat-badge.not-invoiced { background: #f3f4f6; color: #4b5563; }
+  .mt-big-number { font-size: 28px; font-weight: 700; line-height: 1; }
+  .mt-progress-bar { height: 8px; background: var(--bg-alt); border-radius: 4px; overflow: hidden; margin-top: 8px; }
+  .mt-progress-fill { height: 100%; border-radius: 4px; transition: width 0.5s ease; }
+  .mt-progress-fill.pending { background: #f59e0b; }
+  .mt-progress-fill.completed { background: #10b981; }
+  .mt-progress-fill.cancelled { background: #ef4444; }
+  .mt-invoice-status { padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+  .mt-invoice-status.yes { background: #d1fae5; color: #065f46; }
+  .mt-invoice-status.no { background: #fee2e2; color: #991b1b; }
+  .mt-status-chip { padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+  .mt-status-chip.pending { background: #fef3c7; color: #92400e; }
+  .mt-status-chip.completed { background: #d1fae5; color: #065f46; }
+  .mt-status-chip.cancelled { background: #fee2e2; color: #991b1b; }
+  .tab-count { font-size: 11px; background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 10px; margin-left: 4px; }
+  .tab-btn.active .tab-count { background: rgba(255,255,255,0.3); }
+
+  /* Archived Tours Summary */
+  .at-summary-row { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
+  .at-summary-item { background: var(--card); padding: 16px 24px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; min-width: 150px; text-align: center; }
+  .at-summary-value { font-size: 28px; font-weight: 700; color: var(--text-secondary); }
+  .at-summary-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+</style>
 <script src="/js/seasonal-theme.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
@@ -54,7 +94,6 @@
         </button>
         <div class="nav-group-items">
           <a href="/tours-dashboard.html" class="active">🧳 Tours</a>
-          <a href="/my-tours.html">📋 My Tours</a>
           <a href="/documents-dashboard.html">📄 Documents</a>
           <a href="/hotel-dashboard.html">🏨 Hotel</a>
           <a href="/cruise-dashboard.html">🚢 Cruise</a>
@@ -123,6 +162,15 @@
       </div>
     </div>
 
+    <!-- Dashboard Tabs -->
+    <div class="dashboard-tabs" id="toursDashboardTabs">
+      <button class="tab-btn active" data-tab="tour-data">🧳 Tour Data <span class="tab-count" id="tabCountTourData"></span></button>
+      <button class="tab-btn" data-tab="my-tours">📋 My Tours <span class="tab-count" id="tabCountMyTours"></span></button>
+      <button class="tab-btn" data-tab="archived-tours">📦 Archived Tours <span class="tab-count" id="tabCountArchived"></span></button>
+    </div>
+
+    <!-- TAB: Tour Data (Active Tours) -->
+    <div id="tabTourData" class="tab-content">
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
         <h3>Tours Analytics</h3>
@@ -338,6 +386,205 @@
       <!-- Pagination Controls -->
       <div id="toursPagination" style="margin-top: 20px;"></div>
     </div>
+    </div><!-- /tabTourData -->
+
+    <!-- TAB: My Tours -->
+    <div id="tabMyTours" class="tab-content" style="display:none;">
+      <!-- Summary Row (populated by JS) -->
+      <div class="mt-summary-row">
+        <div class="mt-summary-item">
+          <div class="mt-summary-value" id="mtTotalTours">0</div>
+          <div class="mt-summary-label">Total Tours</div>
+        </div>
+        <div class="mt-summary-item">
+          <div class="mt-summary-value" id="mtTotalPassengers">0</div>
+          <div class="mt-summary-label">Total Passengers</div>
+        </div>
+        <div class="mt-summary-item">
+          <div class="mt-summary-value" id="mtTotalSales">Rp 0</div>
+          <div class="mt-summary-label">Total Sales</div>
+        </div>
+        <div class="mt-summary-item">
+          <div class="mt-summary-value" id="mtAvgPassengers">0</div>
+          <div class="mt-summary-label">Avg Passengers/Tour</div>
+        </div>
+      </div>
+
+      <!-- Sales by Invoice Status -->
+      <div class="mt-stats-grid" style="margin-bottom: 24px;">
+        <div class="mt-stat-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
+          <h4 style="color: #166534;">✅ Invoiced Sales</h4>
+          <div class="mt-big-number" id="mtSalesInvoiced" style="color: #16a34a;">Rp 0</div>
+          <div style="font-size: 13px; color: #166534; margin-top: 8px;"><span id="mtToursInvoicedCount">0</span> tours with invoice</div>
+        </div>
+        <div class="mt-stat-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+          <h4 style="color: #92400e;">⏳ Not Invoiced Yet</h4>
+          <div class="mt-big-number" id="mtSalesNotInvoiced" style="color: #d97706;">Rp 0</div>
+          <div style="font-size: 13px; color: #92400e; margin-top: 8px;"><span id="mtToursNotInvoicedCount">0</span> tours pending invoice</div>
+        </div>
+        <div class="mt-stat-card" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
+          <h4 style="color: #1e40af;">📊 Invoice Coverage</h4>
+          <div class="mt-big-number" id="mtInvoiceCoverage" style="color: #2563eb;">0%</div>
+          <div style="font-size: 13px; color: #1e40af; margin-top: 8px;">of total sales value invoiced</div>
+        </div>
+      </div>
+
+      <!-- Statistics Cards -->
+      <div class="mt-stats-grid">
+        <div class="mt-stat-card">
+          <h4>🚶 Passengers by Tour Status</h4>
+          <div class="mt-stat-items">
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtPaxPending">0</span></div>
+            <div class="mt-progress-bar"><div class="mt-progress-fill pending" id="mtProgressPending" style="width:0%"></div></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtPaxCompleted">0</span></div>
+            <div class="mt-progress-bar"><div class="mt-progress-fill completed" id="mtProgressCompleted" style="width:0%"></div></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>❌</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtPaxCancelled">0</span></div>
+            <div class="mt-progress-bar"><div class="mt-progress-fill cancelled" id="mtProgressCancelled" style="width:0%"></div></div>
+          </div>
+        </div>
+        <div class="mt-stat-card">
+          <h4>📝 Invoice Status</h4>
+          <div class="mt-stat-items">
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Invoiced Tours</div><span class="mt-stat-badge invoiced" id="mtToursInvoiced">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Not Invoiced</div><span class="mt-stat-badge not-invoiced" id="mtToursNotInvoiced">0</span></div>
+            <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light);">
+              <div class="mt-stat-row"><div class="mt-stat-label" style="font-weight: 600;">Invoice Rate</div><span class="mt-big-number" id="mtInvoiceRate" style="color: var(--primary);">0%</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-stat-card">
+          <h4>🗂️ Tours by Status</h4>
+          <div class="mt-stat-items">
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtToursPending">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtToursCompleted">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>❌</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtToursCancelled">0</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="card" style="margin-top: 20px; margin-bottom: 16px;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="mtSearchInput" placeholder="🔍 Search tour code, passenger, booking code..." style="flex: 1; min-width: 250px;" />
+          <div id="mtStaffFilterGroup" style="display:none; align-items: center; gap: 4px;">
+            <label style="font-size: 12px; color: var(--text-secondary); margin-right: 4px;">👤 User:</label>
+            <select id="mtFilterStaff" style="min-width: 140px;"><option value="">All Users</option></select>
+          </div>
+          <select id="mtFilterYear" style="min-width: 120px;"><option value="">All Years</option></select>
+          <select id="mtFilterMonth" style="min-width: 130px;">
+            <option value="">All Months</option>
+            <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+            <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+            <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+            <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+          </select>
+          <select id="mtFilterStatus" style="min-width: 140px;">
+            <option value="">All Status</option>
+            <option value="belum jalan">⏳ Belum Jalan</option>
+            <option value="sudah jalan">✅ Sudah Jalan</option>
+            <option value="tidak jalan">❌ Tidak Jalan</option>
+          </select>
+          <select id="mtFilterInvoice" style="min-width: 140px;">
+            <option value="">All Invoice Status</option>
+            <option value="invoiced">✅ Invoiced</option>
+            <option value="not-invoiced">⏳ Not Invoiced</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- My Tours Table -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3>📋 My Tour Records</h3>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Reg Date</th>
+                <th>Tour Code</th>
+                <th>Booking Code</th>
+                <th>Lead Passenger</th>
+                <th class="mt-staff-column" style="display:none;">Staff</th>
+                <th>Pax</th>
+                <th>Departure</th>
+                <th>Status</th>
+                <th>Invoice #</th>
+                <th>Total Sales</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="mtToursTableBody">
+              <tr><td colspan="11" class="text-center">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="mtToursPagination" style="margin-top: 20px;"></div>
+      </div>
+    </div><!-- /tabMyTours -->
+
+    <!-- TAB: Archived Tours -->
+    <div id="tabArchivedTours" class="tab-content" style="display:none;">
+      <!-- Summary Row -->
+      <div class="at-summary-row">
+        <div class="at-summary-item">
+          <div class="at-summary-value" id="atTotalTours">0</div>
+          <div class="at-summary-label">Archived Tours</div>
+        </div>
+        <div class="at-summary-item">
+          <div class="at-summary-value" id="atTotalPassengers">0</div>
+          <div class="at-summary-label">Total Passengers</div>
+        </div>
+        <div class="at-summary-item">
+          <div class="at-summary-value" id="atTotalSales">Rp 0</div>
+          <div class="at-summary-label">Total Sales</div>
+        </div>
+      </div>
+
+      <!-- Search and Filter -->
+      <div class="card" style="margin-top: 0; margin-bottom: 16px;">
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
+          <input type="text" id="atSearchInput" placeholder="🔍 Search archived tours..." style="flex: 1; min-width: 250px;" />
+          <select id="atFilterRegion" style="min-width: 140px;"><option value="">All Regions</option></select>
+          <select id="atFilterStaff" style="min-width: 140px;"><option value="">All Staff</option></select>
+        </div>
+      </div>
+
+      <!-- Archived Tours Table -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h3>📦 Archived Tours (2025 & Earlier)</h3>
+          <button id="archiveTours2025BtnTab" class="btn btn-secondary" style="display:none;" title="Archive remaining 2025 tours">📦 Archive 2025</button>
+        </div>
+        <div style="overflow-x: auto;">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tour Code</th>
+                <th>Registration</th>
+                <th>Departure</th>
+                <th>Region</th>
+                <th>Lead Passenger</th>
+                <th>Pax</th>
+                <th>Status</th>
+                <th>Staff</th>
+                <th>Sales Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="atToursTableBody">
+              <tr><td colspan="10" class="text-center">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="atToursPagination" style="margin-top: 20px;"></div>
+      </div>
+
+      <div class="card" style="margin-top: 16px; padding: 16px; background: var(--bg-subtle); border-radius: 8px; text-align: center; color: var(--text-secondary);">
+        <strong>📋 Read Only</strong> — Archived tours from 2025 and earlier cannot be edited or deleted. They are preserved for historical records.
+      </div>
+    </div><!-- /tabArchivedTours -->
+
   </main>
 </div>
 

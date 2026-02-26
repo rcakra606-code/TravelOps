@@ -2,6 +2,7 @@
    TOURS DASHBOARD SCRIPT
    Focused analytics for tours, participants, and departures
    Includes 7-day departure warnings
+   3-Tab Layout: Tour Data | My Tours | Archived Tours
    ========================================================= */
 
 /* === GLOBAL HELPERS (auth-common.js provides shared auth) === */
@@ -9,6 +10,495 @@ const el = id => document.getElementById(id);
 
 // Store interval reference for cleanup
 let refreshInterval = null;
+
+/* === TAB MANAGEMENT === */
+let currentTab = 'tour-data';
+
+function initTabs() {
+  const tabButtons = document.querySelectorAll('#toursDashboardTabs .tab-btn');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      switchTab(btn.dataset.tab);
+    });
+  });
+
+  // Check URL parameter for initial tab
+  const urlParams = new URLSearchParams(window.location.search);
+  const tabParam = urlParams.get('tab');
+  if (tabParam && ['tour-data', 'my-tours', 'archived-tours'].includes(tabParam)) {
+    switchTab(tabParam);
+  }
+}
+
+function switchTab(tabName) {
+  currentTab = tabName;
+
+  // Update tab buttons
+  document.querySelectorAll('#toursDashboardTabs .tab-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabName);
+  });
+
+  // Show/hide tab content
+  document.getElementById('tabTourData').style.display = tabName === 'tour-data' ? '' : 'none';
+  document.getElementById('tabMyTours').style.display = tabName === 'my-tours' ? '' : 'none';
+  document.getElementById('tabArchivedTours').style.display = tabName === 'archived-tours' ? '' : 'none';
+
+  // Load tab-specific data
+  if (tabName === 'my-tours' && toursDataForCRUD.length > 0) {
+    renderMyToursTab();
+  } else if (tabName === 'archived-tours' && toursDataForCRUD.length > 0) {
+    renderArchivedTab();
+  }
+
+  // Update URL without reload
+  const url = new URL(window.location);
+  if (tabName === 'tour-data') {
+    url.searchParams.delete('tab');
+  } else {
+    url.searchParams.set('tab', tabName);
+  }
+  window.history.replaceState({}, '', url);
+}
+
+function updateTabCounts() {
+  if (!toursDataForCRUD.length) return;
+  const user = window.getUser();
+  const activeTours = toursDataForCRUD.filter(t => !isTourArchived(t));
+  const archivedTours = toursDataForCRUD.filter(t => isTourArchived(t));
+  
+  let myTours;
+  if (user.type === 'admin' || user.type === 'semi-admin' || user.type === 'semiadmin') {
+    myTours = toursDataForCRUD;
+  } else {
+    const staffName = user.name || user.username;
+    myTours = toursDataForCRUD.filter(t => t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase());
+  }
+
+  const countEl1 = el('tabCountTourData');
+  const countEl2 = el('tabCountMyTours');
+  const countEl3 = el('tabCountArchived');
+  if (countEl1) countEl1.textContent = activeTours.length;
+  if (countEl2) countEl2.textContent = myTours.length;
+  if (countEl3) countEl3.textContent = archivedTours.length;
+}
+
+/* =========================================================
+   MY TOURS TAB
+   ========================================================= */
+let mtFilteredTours = [];
+let mtAllTours = [];
+let mtCurrentPage = 1;
+const mtPageSize = 25;
+let mtIsAdminView = false;
+
+function initMyToursTab() {
+  const user = window.getUser();
+  mtIsAdminView = user.type === 'admin' || user.type === 'semi-admin' || user.type === 'semiadmin';
+
+  // Show staff filter/column for admin
+  if (mtIsAdminView) {
+    const staffGroup = el('mtStaffFilterGroup');
+    if (staffGroup) staffGroup.style.display = 'flex';
+    document.querySelectorAll('.mt-staff-column').forEach(col => col.style.display = 'table-cell');
+  }
+
+  // Setup event listeners
+  const mtSearch = el('mtSearchInput');
+  if (mtSearch) mtSearch.addEventListener('input', mtDebounce(mtApplyFilters, 300));
+  
+  ['mtFilterStaff', 'mtFilterYear', 'mtFilterMonth', 'mtFilterStatus', 'mtFilterInvoice'].forEach(id => {
+    const elem = el(id);
+    if (elem) elem.addEventListener('change', mtApplyFilters);
+  });
+}
+
+function mtDebounce(fn, delay) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => fn.apply(this, args), delay);
+  };
+}
+
+function renderMyToursTab() {
+  const user = window.getUser();
+
+  // Filter to user's tours (basic users) or all tours (admin)
+  if (mtIsAdminView) {
+    mtAllTours = [...toursDataForCRUD];
+    // Populate staff filter dropdown
+    const uniqueStaff = [...new Set(toursDataForCRUD.map(t => t.staff_name).filter(Boolean))].sort();
+    const staffSelect = el('mtFilterStaff');
+    if (staffSelect) {
+      const currentVal = staffSelect.value;
+      staffSelect.innerHTML = '<option value="">All Users</option>' + 
+        uniqueStaff.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
+    }
+  } else {
+    const staffName = user.name || user.username;
+    mtAllTours = toursDataForCRUD.filter(t => 
+      t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase()
+    );
+  }
+
+  // Populate year filter
+  const years = [...new Set(mtAllTours.map(t => t.departure_date ? t.departure_date.substring(0, 4) : null).filter(Boolean))].sort((a, b) => b - a);
+  const yearSelect = el('mtFilterYear');
+  if (yearSelect) {
+    const currentVal = yearSelect.value;
+    yearSelect.innerHTML = '<option value="">All Years</option>' + years.map(y => `<option value="${y}" ${y === currentVal ? 'selected' : ''}>${y}</option>`).join('');
+  }
+
+  mtApplyFilters();
+}
+
+function mtApplyFilters() {
+  const search = (el('mtSearchInput')?.value || '').toLowerCase().trim();
+  const staffFilter = el('mtFilterStaff')?.value || '';
+  const yearFilter = el('mtFilterYear')?.value || '';
+  const monthFilter = el('mtFilterMonth')?.value || '';
+  const statusFilter = el('mtFilterStatus')?.value || '';
+  const invoiceFilter = el('mtFilterInvoice')?.value || '';
+
+  mtFilteredTours = mtAllTours.filter(tour => {
+    if (staffFilter && tour.staff_name !== staffFilter) return false;
+    if (search) {
+      const searchFields = [tour.tour_code, tour.booking_code, tour.lead_passenger, tour.all_passengers, tour.invoice_number, tour.phone_number, tour.email, tour.staff_name].filter(Boolean).join(' ').toLowerCase();
+      if (!searchFields.includes(search)) return false;
+    }
+    if (yearFilter && tour.departure_date) {
+      if (tour.departure_date.substring(0, 4) !== yearFilter) return false;
+    }
+    if (monthFilter && tour.departure_date) {
+      if (tour.departure_date.substring(5, 7) !== monthFilter) return false;
+    }
+    if (statusFilter && tour.status !== statusFilter) return false;
+    if (invoiceFilter === 'invoiced' && (!tour.invoice_number || !tour.invoice_number.trim())) return false;
+    if (invoiceFilter === 'not-invoiced' && tour.invoice_number && tour.invoice_number.trim()) return false;
+    return true;
+  });
+
+  mtRenderTable();
+  mtUpdateStats();
+}
+
+function mtHasActiveFilters() {
+  return (el('mtSearchInput')?.value?.trim()) ||
+         (el('mtFilterStaff')?.value) ||
+         (el('mtFilterYear')?.value) ||
+         (el('mtFilterMonth')?.value) ||
+         (el('mtFilterStatus')?.value) ||
+         (el('mtFilterInvoice')?.value);
+}
+
+function mtFormatCurrency(amount) {
+  const num = parseFloat(amount) || 0;
+  return 'Rp ' + num.toLocaleString('id-ID');
+}
+
+function mtTruncate(str, len) {
+  if (!str) return '-';
+  return str.length > len ? str.substring(0, len) + '...' : str;
+}
+
+function mtUpdateStats() {
+  const dataForStats = mtFilteredTours.length > 0 || mtHasActiveFilters() ? mtFilteredTours : mtAllTours;
+  
+  const totalTours = dataForStats.length;
+  const totalPassengers = dataForStats.reduce((sum, t) => sum + (parseInt(t.jumlah_peserta) || 0), 0);
+  const totalSales = dataForStats.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+  const avgPax = totalTours > 0 ? Math.round(totalPassengers / totalTours) : 0;
+
+  if (el('mtTotalTours')) el('mtTotalTours').textContent = totalTours;
+  if (el('mtTotalPassengers')) el('mtTotalPassengers').textContent = totalPassengers;
+  if (el('mtTotalSales')) el('mtTotalSales').textContent = mtFormatCurrency(totalSales);
+  if (el('mtAvgPassengers')) el('mtAvgPassengers').textContent = avgPax;
+
+  // Passengers by status
+  const paxByStatus = { 'belum jalan': 0, 'sudah jalan': 0, 'tidak jalan': 0 };
+  const toursByStatus = { 'belum jalan': 0, 'sudah jalan': 0, 'tidak jalan': 0 };
+  dataForStats.forEach(t => {
+    const status = (t.status || 'belum jalan').toLowerCase();
+    const pax = parseInt(t.jumlah_peserta) || 0;
+    if (paxByStatus.hasOwnProperty(status)) { paxByStatus[status] += pax; toursByStatus[status]++; }
+  });
+
+  if (el('mtPaxPending')) el('mtPaxPending').textContent = paxByStatus['belum jalan'];
+  if (el('mtPaxCompleted')) el('mtPaxCompleted').textContent = paxByStatus['sudah jalan'];
+  if (el('mtPaxCancelled')) el('mtPaxCancelled').textContent = paxByStatus['tidak jalan'];
+
+  const maxPax = Math.max(...Object.values(paxByStatus), 1);
+  if (el('mtProgressPending')) el('mtProgressPending').style.width = (paxByStatus['belum jalan'] / maxPax * 100) + '%';
+  if (el('mtProgressCompleted')) el('mtProgressCompleted').style.width = (paxByStatus['sudah jalan'] / maxPax * 100) + '%';
+  if (el('mtProgressCancelled')) el('mtProgressCancelled').style.width = (paxByStatus['tidak jalan'] / maxPax * 100) + '%';
+
+  if (el('mtToursPending')) el('mtToursPending').textContent = toursByStatus['belum jalan'];
+  if (el('mtToursCompleted')) el('mtToursCompleted').textContent = toursByStatus['sudah jalan'];
+  if (el('mtToursCancelled')) el('mtToursCancelled').textContent = toursByStatus['tidak jalan'];
+
+  // Invoice stats
+  const invoicedTours = dataForStats.filter(t => t.invoice_number && t.invoice_number.trim());
+  const notInvoicedTours = dataForStats.filter(t => !t.invoice_number || !t.invoice_number.trim());
+  const invoiceRate = totalTours > 0 ? Math.round((invoicedTours.length / totalTours) * 100) : 0;
+
+  if (el('mtToursInvoiced')) el('mtToursInvoiced').textContent = invoicedTours.length;
+  if (el('mtToursNotInvoiced')) el('mtToursNotInvoiced').textContent = notInvoicedTours.length;
+  if (el('mtInvoiceRate')) el('mtInvoiceRate').textContent = invoiceRate + '%';
+
+  const salesInvoiced = invoicedTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+  const salesNotInvoiced = notInvoicedTours.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+  const invoiceCoverage = totalSales > 0 ? Math.round((salesInvoiced / totalSales) * 100) : 0;
+
+  if (el('mtSalesInvoiced')) el('mtSalesInvoiced').textContent = mtFormatCurrency(salesInvoiced);
+  if (el('mtSalesNotInvoiced')) el('mtSalesNotInvoiced').textContent = mtFormatCurrency(salesNotInvoiced);
+  if (el('mtToursInvoicedCount')) el('mtToursInvoicedCount').textContent = invoicedTours.length;
+  if (el('mtToursNotInvoicedCount')) el('mtToursNotInvoicedCount').textContent = notInvoicedTours.length;
+  if (el('mtInvoiceCoverage')) el('mtInvoiceCoverage').textContent = invoiceCoverage + '%';
+}
+
+function mtRenderTable() {
+  const tbody = el('mtToursTableBody');
+  if (!tbody) return;
+  const colSpan = mtIsAdminView ? 12 : 11;
+
+  // Event delegation
+  tbody.onclick = (e) => {
+    const editBtn = e.target.closest('.mt-btn-edit');
+    const viewBtn = e.target.closest('.mt-btn-view');
+    if (editBtn) {
+      const id = parseInt(editBtn.dataset.id);
+      const tour = toursDataForCRUD.find(t => t.id === id);
+      if (tour && isTourArchived(tour)) { window.toast.warning('This tour is archived and cannot be edited'); return; }
+      if (tour && !isTour2025OrEarlier(tour) && window.TourWizard) {
+        window.TourWizard.edit(id);
+      } else {
+        window.editTour(id);
+      }
+    } else if (viewBtn) {
+      const id = parseInt(viewBtn.dataset.id);
+      if (window.TourWizard) { window.TourWizard.view(id); } else { window.editTour(id); }
+    }
+  };
+
+  if (mtFilteredTours.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="${colSpan}" class="text-center"><div style="padding:40px;color:var(--text-secondary);">📭 ${mtAllTours.length === 0 ? 'You have no tour bookings yet' : 'No tours match your filters'}</div></td></tr>`;
+    if (window.paginationUtils) window.paginationUtils.renderPaginationControls('mtToursPagination', { data: [], currentPage: 1, totalPages: 0, totalItems: 0 }, () => {});
+    return;
+  }
+
+  // Sort by departure date (newest first)
+  const sorted = [...mtFilteredTours].sort((a, b) => (b.departure_date || '').localeCompare(a.departure_date || ''));
+
+  // Paginate
+  const paginated = window.paginationUtils ? window.paginationUtils.paginate(sorted, mtCurrentPage, mtPageSize) : { data: sorted, currentPage: 1, totalPages: 1, totalItems: sorted.length };
+
+  tbody.innerHTML = paginated.data.map(tour => {
+    const status = (tour.status || 'belum jalan').toLowerCase();
+    const statusClass = status === 'sudah jalan' ? 'completed' : status === 'tidak jalan' ? 'cancelled' : 'pending';
+    const statusIcon = status === 'sudah jalan' ? '✅' : status === 'tidak jalan' ? '❌' : '⏳';
+    const statusText = status.charAt(0).toUpperCase() + status.slice(1);
+    const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
+    const staffColumn = mtIsAdminView ? `<td class="mt-staff-column">${tour.staff_name || '-'}</td>` : '';
+    const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
+    const is2025 = depYear <= 2025 || tour.is_archived === 1;
+    const isV2 = tour.data_version === 2;
+    const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
+    const archivedBadge = tour.is_archived === 1 ? '<span class="badge badge-neutral" style="margin-left:4px;font-size:10px;">📦 Archived</span>' : '';
+    const editButton = is2025
+      ? `<button class="btn btn-sm mt-btn-view" data-id="${tour.id}" title="View (Read-only)">🔍 View</button>`
+      : `<button class="btn btn-sm btn-primary mt-btn-edit" data-id="${tour.id}">✏️ Edit</button>`;
+
+    return `<tr class="${is2025 ? 'tour-row-readonly' : ''}">
+      <td>${tour.registration_date || '-'}</td>
+      <td><strong>${tour.tour_code || '-'}</strong>${versionBadge}${archivedBadge}</td>
+      <td>${tour.booking_code || '-'}</td>
+      <td title="${tour.lead_passenger || '-'}">${mtTruncate(tour.lead_passenger, 20)}</td>
+      ${staffColumn}
+      <td style="text-align:center;"><strong>${tour.jumlah_peserta || 0}</strong></td>
+      <td>${tour.departure_date || '-'}</td>
+      <td><span class="mt-status-chip ${statusClass}">${statusIcon} ${statusText}</span></td>
+      <td>${hasInvoice ? `<span class="mt-invoice-status yes">✅ ${tour.invoice_number}</span>` : `<span class="mt-invoice-status no">⏳ Pending</span>`}</td>
+      <td>${mtFormatCurrency(tour.total_nominal_sales || tour.sales_amount || 0)}</td>
+      <td>${editButton}</td>
+    </tr>`;
+  }).join('');
+
+  if (window.paginationUtils) {
+    window.paginationUtils.renderPaginationControls('mtToursPagination', paginated, (page) => {
+      mtCurrentPage = page;
+      mtRenderTable();
+    });
+  }
+}
+
+/* =========================================================
+   ARCHIVED TOURS TAB
+   ========================================================= */
+let atFilteredTours = [];
+let atAllTours = [];
+let atCurrentPage = 1;
+const atPageSize = 25;
+
+function renderArchivedTab() {
+  atAllTours = toursDataForCRUD.filter(t => isTourArchived(t));
+
+  // Populate region filter
+  const uniqueRegions = [...new Set(atAllTours.map(t => t.region_id).filter(Boolean))];
+  const regionSelect = el('atFilterRegion');
+  if (regionSelect) {
+    const currentVal = regionSelect.value;
+    regionSelect.innerHTML = '<option value="">All Regions</option>' +
+      uniqueRegions.map(rid => {
+        const region = regionsData.find(r => r.id === rid);
+        const name = region ? region.region_name : `Region ${rid}`;
+        return `<option value="${rid}" ${String(rid) === currentVal ? 'selected' : ''}>${name}</option>`;
+      }).join('');
+  }
+
+  // Populate staff filter
+  const uniqueStaff = [...new Set(atAllTours.map(t => t.staff_name).filter(Boolean))].sort();
+  const staffSelect = el('atFilterStaff');
+  if (staffSelect) {
+    const currentVal = staffSelect.value;
+    staffSelect.innerHTML = '<option value="">All Staff</option>' +
+      uniqueStaff.map(s => `<option value="${s}" ${s === currentVal ? 'selected' : ''}>${s}</option>`).join('');
+  }
+
+  // Show archive button for admin if there are unarchived 2025 tours
+  const user = window.getUser();
+  const archiveBtnTab = el('archiveTours2025BtnTab');
+  if (archiveBtnTab && user.type === 'admin') {
+    const unarchived2025 = toursDataForCRUD.filter(t => !isTourArchived(t) && isTour2025OrEarlier(t)).length;
+    if (unarchived2025 > 0) {
+      archiveBtnTab.style.display = '';
+      archiveBtnTab.textContent = `📦 Archive 2025 (${unarchived2025})`;
+    } else {
+      archiveBtnTab.style.display = 'none';
+    }
+  }
+
+  atApplyFilters();
+}
+
+function initArchivedTab() {
+  const atSearch = el('atSearchInput');
+  if (atSearch) atSearch.addEventListener('input', mtDebounce(atApplyFilters, 300));
+
+  ['atFilterRegion', 'atFilterStaff'].forEach(id => {
+    const elem = el(id);
+    if (elem) elem.addEventListener('change', atApplyFilters);
+  });
+
+  // Archive 2025 button in archived tab
+  const archiveBtnTab = el('archiveTours2025BtnTab');
+  if (archiveBtnTab) {
+    archiveBtnTab.addEventListener('click', async () => {
+      const doArchive = async () => {
+        try {
+          archiveBtnTab.disabled = true;
+          archiveBtnTab.textContent = '⏳ Archiving...';
+          const result = await window.fetchJson('/api/tours/archive-2025', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }
+          });
+          window.toast.success(result.message || `Archived ${result.archived} tours`);
+          archiveBtnTab.style.display = 'none';
+          await loadToursData();
+          renderArchivedTab();
+          updateTabCounts();
+        } catch (err) {
+          window.toast.error(err.message || 'Failed to archive tours');
+          archiveBtnTab.disabled = false;
+          archiveBtnTab.textContent = '📦 Archive 2025';
+        }
+      };
+
+      if (window.CRUDModal && window.CRUDModal.delete) {
+        window.CRUDModal.delete('Archive 2025 Tours', 'all tours with 2025 or earlier departure dates. They will become read-only', doArchive);
+      } else if (confirm('Archive all tours with 2025 departure dates? They will become read-only.')) {
+        await doArchive();
+      }
+    });
+  }
+}
+
+function atApplyFilters() {
+  const search = (el('atSearchInput')?.value || '').toLowerCase().trim();
+  const regionFilter = el('atFilterRegion')?.value || '';
+  const staffFilter = el('atFilterStaff')?.value || '';
+
+  atFilteredTours = atAllTours.filter(tour => {
+    if (regionFilter && String(tour.region_id) !== regionFilter) return false;
+    if (staffFilter && tour.staff_name !== staffFilter) return false;
+    if (search) {
+      const searchFields = [tour.tour_code, tour.booking_code, tour.lead_passenger, tour.staff_name, tour.all_passengers].filter(Boolean).join(' ').toLowerCase();
+      if (!searchFields.includes(search)) return false;
+    }
+    return true;
+  });
+
+  atRenderTable();
+  atUpdateStats();
+}
+
+function atUpdateStats() {
+  const data = atFilteredTours;
+  const totalTours = data.length;
+  const totalPassengers = data.reduce((sum, t) => sum + (parseInt(t.jumlah_peserta) || 0), 0);
+  const totalSales = data.reduce((sum, t) => sum + (parseFloat(t.total_nominal_sales) || parseFloat(t.sales_amount) || 0), 0);
+
+  if (el('atTotalTours')) el('atTotalTours').textContent = totalTours;
+  if (el('atTotalPassengers')) el('atTotalPassengers').textContent = totalPassengers;
+  if (el('atTotalSales')) el('atTotalSales').textContent = mtFormatCurrency(totalSales);
+}
+
+function atRenderTable() {
+  const tbody = el('atToursTableBody');
+  if (!tbody) return;
+
+  // Event delegation
+  tbody.onclick = (e) => {
+    const viewBtn = e.target.closest('.at-btn-view');
+    if (viewBtn) {
+      const id = parseInt(viewBtn.dataset.id);
+      if (window.TourWizard) { window.TourWizard.view(id); } else { window.editTour(id); }
+    }
+  };
+
+  if (atFilteredTours.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="10" class="text-center"><div style="padding:40px;color:var(--text-secondary);">📦 No archived tours found</div></td></tr>';
+    if (window.paginationUtils) window.paginationUtils.renderPaginationControls('atToursPagination', { data: [], currentPage: 1, totalPages: 0, totalItems: 0 }, () => {});
+    return;
+  }
+
+  const sorted = [...atFilteredTours].sort((a, b) => (b.departure_date || '').localeCompare(a.departure_date || ''));
+  const paginated = window.paginationUtils ? window.paginationUtils.paginate(sorted, atCurrentPage, atPageSize) : { data: sorted, currentPage: 1, totalPages: 1, totalItems: sorted.length };
+
+  tbody.innerHTML = paginated.data.map(item => {
+    const region = regionsData.find(r => r.id === item.region_id);
+    const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
+    const formatDate = (val) => val ? new Date(val).toLocaleDateString('id-ID') : '—';
+
+    return `<tr class="table-row tour-row-archived">
+      <td><strong>${item.tour_code || '—'}</strong><span class="badge badge-neutral" style="margin-left:4px;font-size:10px;">📦</span></td>
+      <td>${formatDate(item.registration_date)}</td>
+      <td>${formatDate(item.departure_date)}</td>
+      <td>${region ? region.region_name : '—'}</td>
+      <td>${item.lead_passenger || '—'}</td>
+      <td class="text-center">${item.jumlah_peserta || 0}</td>
+      <td><span class="badge badge-${item.status === 'sudah jalan' ? 'success' : item.status === 'tidak jalan' ? 'danger' : 'warning'}">${item.status || 'belum jalan'}</span></td>
+      <td>${item.staff_name || '—'}</td>
+      <td class="text-right">${formatCurrency(item.sales_amount)}</td>
+      <td class="actions"><button class="btn btn-sm at-btn-view" data-id="${item.id}" title="View (Read-only)">🔍 View</button></td>
+    </tr>`;
+  }).join('');
+
+  if (window.paginationUtils) {
+    window.paginationUtils.renderPaginationControls('atToursPagination', paginated, (page) => {
+      atCurrentPage = page;
+      atRenderTable();
+    });
+  }
+}
 
 /* === DISPLAY USER INFO === */
 (() => {
@@ -702,6 +1192,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   await populateFilterDropdowns();
   renderDashboard();
   
+  // Initialize tabs
+  initTabs();
+  initMyToursTab();
+  initArchivedTab();
+  
   // Initialize Tour Wizard with loaded data
   initTourWizard();
   
@@ -763,7 +1258,7 @@ window.addEventListener('DOMContentLoaded', async () => {
 let toursDataForCRUD = [];
 let toursFilters = { search: '' };
 let toursCurrentPage = 1;
-const toursPageSize = 25;
+let toursPageSize = 25;
 
 // Initialize Tour Wizard when data is loaded
 function initTourWizard() {
@@ -798,6 +1293,10 @@ async function loadToursData() {
     toursDataForCRUD = await window.fetchJson('/api/tours') || [];
     toursCurrentPage = 1; // Reset to first page
     renderToursTable();
+    updateTabCounts();
+    // Refresh active tab
+    if (currentTab === 'my-tours') renderMyToursTab();
+    else if (currentTab === 'archived-tours') renderArchivedTab();
   } catch (err) {
     console.error('Failed to load tours:', err);
     window.toast.error('Failed to load tours data');
@@ -847,6 +1346,10 @@ function renderToursTable() {
   };
   
   let filtered = [...toursDataForCRUD];
+  
+  // Tour Data tab: exclude archived tours (they go to Archived Tours tab)
+  filtered = filtered.filter(t => !isTourArchived(t));
+  
   if (toursFilters.search) {
     const search = toursFilters.search.toLowerCase();
     filtered = filtered.filter(t => 
@@ -1135,7 +1638,7 @@ const toursSearchInput = el('searchInput') || el('searchTours');
 if (toursSearchInput) {
   toursSearchInput.addEventListener('input', (e) => {
     toursFilters.search = e.target.value;
-    toursPagination.currentPage = 1; // Reset to first page on search
+    toursCurrentPage = 1; // Reset to first page on search
     renderToursTable();
   });
 }
@@ -1143,8 +1646,8 @@ if (toursSearchInput) {
 // Items per page selector
 if (el('toursItemsPerPage')) {
   el('toursItemsPerPage').addEventListener('change', (e) => {
-    toursPagination.itemsPerPage = parseInt(e.target.value);
-    toursPagination.currentPage = 1; // Reset to first page
+    toursPageSize = parseInt(e.target.value) || 25;
+    toursCurrentPage = 1; // Reset to first page
     renderToursTable();
   });
 }
