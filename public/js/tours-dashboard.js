@@ -772,11 +772,21 @@ function initTourWizard() {
   }
 }
 
-// Helper: Check if a tour is from 2025 or earlier (view-only)
+// Helper: Check if a tour is archived or from 2025 or earlier (view-only)
+function isTourArchived(tour) {
+  if (!tour) return true;
+  return tour.is_archived === 1 || tour.is_archived === true;
+}
+
 function isTour2025OrEarlier(tour) {
   if (!tour || !tour.departure_date) return true;
   const depYear = new Date(tour.departure_date).getFullYear();
   return depYear <= 2025;
+}
+
+// Returns true if tour should be read-only (archived OR 2025-)
+function isTourReadOnly(tour) {
+  return isTourArchived(tour) || isTour2025OrEarlier(tour);
 }
 
 async function loadToursData() {
@@ -807,6 +817,10 @@ function renderToursTable() {
     if (editBtn) {
       const id = parseInt(editBtn.dataset.id);
       const tour = toursDataForCRUD.find(t => t.id === id);
+      if (tour && isTourArchived(tour)) {
+        window.toast.warning('This tour is archived and cannot be edited');
+        return;
+      }
       // Use wizard for 2026+ tours
       if (tour && !isTour2025OrEarlier(tour) && window.TourWizard) {
         window.TourWizard.edit(id);
@@ -815,6 +829,11 @@ function renderToursTable() {
       }
     } else if (deleteBtn) {
       const id = parseInt(deleteBtn.dataset.id);
+      const tour = toursDataForCRUD.find(t => t.id === id);
+      if (tour && isTourArchived(tour)) {
+        window.toast.warning('This tour is archived and cannot be deleted');
+        return;
+      }
       window.deleteTour(id);
     } else if (viewBtn) {
       const id = parseInt(viewBtn.dataset.id);
@@ -854,13 +873,14 @@ function renderToursTable() {
     const region = regionsData.find(r => r.id === item.region_id);
     const formatCurrency = (val) => val ? `Rp ${parseFloat(val).toLocaleString('id-ID')}` : '—';
     const formatDate = (val) => val ? new Date(val).toLocaleDateString('id-ID') : '—';
-    const is2025 = isTour2025OrEarlier(item);
+    const readOnly = isTourReadOnly(item);
+    const archived = isTourArchived(item);
     const isV2 = item.data_version === 2;
     
-    // Determine action buttons based on year
+    // Determine action buttons based on archive/year state
     let actionButtons = '';
-    if (is2025) {
-      // 2025 and earlier: View only
+    if (readOnly) {
+      // Archived or 2025 and earlier: View only
       actionButtons = `
         <button class="btn-icon" data-action="quick-view" data-id="${item.id}" title="Quick View">👁️</button>
         <button class="btn btn-sm btn-view-only" data-id="${item.id}" title="View (Read-only)">🔍 View</button>
@@ -876,10 +896,11 @@ function renderToursTable() {
     
     // Add version badge for data_version 2 tours
     const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
+    const archivedBadge = archived ? '<span class="badge badge-neutral" style="margin-left:4px;font-size:10px;">📦 Archived</span>' : '';
     
     return `
-    <tr class="table-row ${is2025 ? 'tour-row-readonly' : ''}">
-      <td><strong>${item.tour_code || '—'}</strong>${versionBadge}</td>
+    <tr class="table-row ${readOnly ? 'tour-row-readonly' : ''} ${archived ? 'tour-row-archived' : ''}">
+      <td><strong>${item.tour_code || '—'}</strong>${versionBadge}${archivedBadge}</td>
       <td>${formatDate(item.registration_date)}</td>
       <td>${formatDate(item.departure_date)}</td>
       <td>${region ? region.region_name : '—'}</td>
@@ -1051,6 +1072,60 @@ if (el('addTourBtn')) {
     } catch (error) {
       console.error('❌ ERROR calling CRUDModal.create:', error);
       console.error('❌ Error stack:', error.stack);
+    }
+  });
+}
+
+// Archive 2025 tours button (admin only)
+const archiveBtn = el('archiveTours2025Btn');
+if (archiveBtn) {
+  // Show button only for admin
+  const user = window.getUser();
+  if (user && user.type === 'admin') {
+    archiveBtn.style.display = '';
+    // Check if there are unarchived 2025 tours
+    window.fetchJson('/api/tours/archive-status').then(status => {
+      if (status && status.unarchived2025 > 0) {
+        archiveBtn.textContent = `📦 Archive 2025 (${status.unarchived2025})`;
+        archiveBtn.style.display = '';
+      } else {
+        archiveBtn.style.display = 'none';
+      }
+    }).catch(() => {});
+  }
+  
+  archiveBtn.addEventListener('click', async () => {
+    // Confirm before archiving
+    if (!window.CRUDModal || !window.CRUDModal.delete) {
+      if (!confirm('Archive all tours with 2025 departure dates? They will become read-only and non-editable.')) return;
+    }
+    
+    const doArchive = async () => {
+      try {
+        archiveBtn.disabled = true;
+        archiveBtn.textContent = '⏳ Archiving...';
+        const result = await window.fetchJson('/api/tours/archive-2025', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        window.toast.success(result.message || `Archived ${result.archived} tours`);
+        archiveBtn.style.display = 'none';
+        await loadToursData();
+      } catch (err) {
+        window.toast.error(err.message || 'Failed to archive tours');
+        archiveBtn.disabled = false;
+        archiveBtn.textContent = '📦 Archive 2025';
+      }
+    };
+    
+    if (window.CRUDModal && window.CRUDModal.delete) {
+      window.CRUDModal.delete(
+        'Archive 2025 Tours',
+        'all tours with 2025 or earlier departure dates. They will become read-only and non-editable',
+        doArchive
+      );
+    } else {
+      await doArchive();
     }
   });
 }

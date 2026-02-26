@@ -562,6 +562,7 @@ async function createSchema(db) {
   await ensureColumn('tours', 'return_date', 'TEXT');
   await ensureColumn('tours', 'data_version', 'INTEGER DEFAULT 1');
   await ensureColumn('tours', 'remarks_request', 'TEXT');
+  await ensureColumn('tours', 'is_archived', 'INTEGER DEFAULT 0');
 
   // Tour Passengers: all columns (for new multi-passenger format)
   await ensureColumn('tour_passengers', 'tour_id', 'INTEGER NOT NULL');
@@ -651,6 +652,7 @@ async function createSchema(db) {
   await ensureIndex('tours', 'idx_tours_region', 'region_id');
   await ensureIndex('tours', 'idx_tours_status', 'status');
   await ensureIndex('tours', 'idx_tours_data_version', 'data_version');
+  await ensureIndex('tours', 'idx_tours_archived', 'is_archived');
   
   // Tour Passengers indexes
   await ensureIndex('tour_passengers', 'idx_tour_passengers_tour', 'tour_id');

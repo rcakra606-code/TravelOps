@@ -905,11 +905,12 @@
       const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
       const staffColumn = isAdminView ? `<td class="staff-column">${tour.staff_name || '-'}</td>` : '';
       
-      // Check if tour is from 2025 or earlier (view-only)
+      // Check if tour is from 2025 or earlier, or archived (view-only)
       const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
-      const is2025 = depYear <= 2025;
+      const is2025 = depYear <= 2025 || tour.is_archived === 1;
       const isV2 = tour.data_version === 2;
       const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
+      const archivedBadge = tour.is_archived === 1 ? '<span class="badge badge-neutral" style="margin-left:4px;font-size:10px;">📦 Archived</span>' : '';
       
       // Different edit button based on year
       const editButton = is2025 
@@ -919,7 +920,7 @@
       return `
         <tr class="${is2025 ? 'tour-row-readonly' : ''}">
           <td>${tour.registration_date || '-'}</td>
-          <td><strong>${tour.tour_code || '-'}</strong>${versionBadge}</td>
+          <td><strong>${tour.tour_code || '-'}</strong>${versionBadge}${archivedBadge}</td>
           <td>${tour.booking_code || '-'}</td>
           <td title="${tour.lead_passenger || '-'}">${truncate(tour.lead_passenger, 20)}</td>
           ${staffColumn}
@@ -964,6 +965,9 @@
   window.openEditModal = function(id, viewOnly = false) {
     const tour = allTours.find(t => t.id === id);
     if (!tour) return;
+    
+    // Force view-only for archived tours
+    if (tour.is_archived === 1) viewOnly = true;
     
     // Check if tour is 2026+ and use wizard
     const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;

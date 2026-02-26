@@ -43,7 +43,7 @@ function isStrongPassword(pw='') {
 const TABLE_COLUMNS = {
   users: ['username', 'password', 'name', 'email', 'type', 'failed_attempts', 'locked_until', 'created_at'],
   sales: ['transaction_date', 'invoice_no', 'staff_name', 'region_id', 'status', 'sales_amount', 'profit_amount', 'notes', 'unique_code', 'month', 'created_at', 'created_by', 'updated_at', 'updated_by'],
-  tours: ['registration_date', 'lead_passenger', 'all_passengers', 'tour_code', 'region_id', 'departure_date', 'return_date', 'booking_code', 'tour_price', 'sales_amount', 'total_nominal_sales', 'profit_amount', 'discount_amount', 'discount_remarks', 'staff_name', 'jumlah_peserta', 'phone_number', 'email', 'status', 'link_pelunasan_tour', 'invoice_number', 'data_version', 'remarks', 'remarks_request', 'created_at', 'created_by', 'updated_at', 'updated_by'],
+  tours: ['registration_date', 'lead_passenger', 'all_passengers', 'tour_code', 'region_id', 'departure_date', 'return_date', 'booking_code', 'tour_price', 'sales_amount', 'total_nominal_sales', 'profit_amount', 'discount_amount', 'discount_remarks', 'staff_name', 'jumlah_peserta', 'phone_number', 'email', 'status', 'link_pelunasan_tour', 'invoice_number', 'data_version', 'remarks', 'remarks_request', 'is_archived', 'created_at', 'created_by', 'updated_at', 'updated_by'],
   documents: ['receive_date', 'send_date', 'guest_name', 'passport_country', 'process_type', 'booking_code', 'invoice_number', 'phone_number', 'estimated_done', 'staff_name', 'tour_code', 'notes', 'created_at', 'created_by', 'updated_at', 'updated_by'],
   targets: ['month', 'year', 'staff_name', 'target_sales', 'target_profit', 'created_at', 'created_by', 'updated_at', 'updated_by'],
   regions: ['region_name', 'description'],
@@ -1159,6 +1159,14 @@ export async function createApp() {
         // Sales and targets: only admin and semi-admin can edit
         if ((t === 'sales' || t === 'targets') && req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
         
+        // Block editing archived tours
+        if (t === 'tours') {
+          const archiveCheck = await db.get('SELECT is_archived FROM tours WHERE id=?', [idParam]);
+          if (archiveCheck && archiveCheck.is_archived === 1) {
+            return res.status(403).json({ error: 'This tour is archived and cannot be edited' });
+          }
+        }
+        
         // Hash password if updating users table with a password field
         if (t === 'users' && req.body.password) {
           const password = req.body.password;
@@ -1259,6 +1267,13 @@ export async function createApp() {
         // Validate ID is a positive integer
         const id = parseInt(req.params.id, 10);
         if (isNaN(id) || id < 1) return res.status(400).json({ error: 'Invalid ID parameter' });
+        // Block deleting archived tours
+        if (t === 'tours') {
+          const archiveCheck = await db.get('SELECT is_archived FROM tours WHERE id=?', [id]);
+          if (archiveCheck && archiveCheck.is_archived === 1) {
+            return res.status(403).json({ error: 'This tour is archived and cannot be deleted' });
+          }
+        }
         // Overtime delete is admin-only
         if (t === 'overtime' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete overtime records' });
         // Users table: admin-only for delete
@@ -1716,6 +1731,11 @@ export async function createApp() {
       const existing = await db.get('SELECT * FROM tours WHERE id=?', [tourId]);
       if (!existing) return res.status(404).json({ error: 'Tour not found' });
       
+      // Block editing archived tours
+      if (existing.is_archived === 1) {
+        return res.status(403).json({ error: 'This tour is archived and cannot be edited' });
+      }
+      
       // Check ownership for basic users
       if (req.user.type === 'basic' && existing.staff_name !== req.user.name) {
         return res.status(403).json({ error: 'Unauthorized edit (ownership mismatch)' });
@@ -1854,6 +1874,90 @@ export async function createApp() {
     } catch (error) {
       console.error('GET /api/tours/v2/:id error:', error);
       res.status(500).json({ error: 'Failed to fetch tour' });
+    }
+  });
+
+  // ===================================================================
+  // TOUR ARCHIVING - Archive 2025 tours to make them non-editable
+  // ===================================================================
+  
+  // Archive all 2025 departure tours (admin only)
+  app.post('/api/tours/archive-2025', authMiddleware(), async (req, res) => {
+    try {
+      if (req.user.type !== 'admin') {
+        return res.status(403).json({ error: 'Only admin can archive tours' });
+      }
+      
+      const isPg = db.dialect === 'postgres';
+      
+      // Count how many will be archived
+      const countResult = isPg
+        ? await db.get(`SELECT COUNT(*) as count FROM tours WHERE departure_date < '2026-01-01' AND (is_archived IS NULL OR is_archived = 0)`)
+        : await db.get(`SELECT COUNT(*) as count FROM tours WHERE departure_date < '2026-01-01' AND (is_archived IS NULL OR is_archived = 0)`);
+      
+      const count = countResult?.count || 0;
+      
+      if (count === 0) {
+        return res.json({ archived: 0, message: 'No 2025 tours to archive' });
+      }
+      
+      // Archive all tours with departure_date in 2025 or earlier
+      await db.run(
+        `UPDATE tours SET is_archived = 1, updated_at = ?, updated_by = ? WHERE departure_date < '2026-01-01' AND (is_archived IS NULL OR is_archived = 0)`,
+        [new Date().toISOString(), req.user.username]
+      );
+      
+      await logActivity(req.user.username, 'ARCHIVE', 'tours', null, JSON.stringify({ count, year: '2025 and earlier' }));
+      logger.info({ user: req.user.username, count }, '2025 tours archived');
+      
+      res.json({ archived: count, message: `Successfully archived ${count} tours with 2025 or earlier departure dates` });
+    } catch (error) {
+      logger.error({ err: error, user: req.user?.username }, 'Archive 2025 tours error');
+      res.status(500).json({ error: 'Failed to archive tours' });
+    }
+  });
+  
+  // Unarchive a single tour (admin only)
+  app.post('/api/tours/unarchive/:id', authMiddleware(), async (req, res) => {
+    try {
+      if (req.user.type !== 'admin') {
+        return res.status(403).json({ error: 'Only admin can unarchive tours' });
+      }
+      
+      const tourId = parseInt(req.params.id, 10);
+      if (isNaN(tourId) || tourId < 1) return res.status(400).json({ error: 'Invalid ID' });
+      
+      const tour = await db.get('SELECT id, is_archived FROM tours WHERE id=?', [tourId]);
+      if (!tour) return res.status(404).json({ error: 'Tour not found' });
+      if (!tour.is_archived) return res.json({ message: 'Tour is not archived' });
+      
+      await db.run('UPDATE tours SET is_archived = 0, updated_at = ?, updated_by = ? WHERE id=?',
+        [new Date().toISOString(), req.user.username, tourId]);
+      
+      await logActivity(req.user.username, 'UNARCHIVE', 'tours', tourId, 'Tour unarchived');
+      logger.info({ user: req.user.username, tourId }, 'Tour unarchived');
+      
+      res.json({ unarchived: true, message: 'Tour unarchived successfully' });
+    } catch (error) {
+      logger.error({ err: error, user: req.user?.username }, 'Unarchive tour error');
+      res.status(500).json({ error: 'Failed to unarchive tour' });
+    }
+  });
+  
+  // Get archive status counts
+  app.get('/api/tours/archive-status', authMiddleware(), async (req, res) => {
+    try {
+      const archived = await db.get(`SELECT COUNT(*) as count FROM tours WHERE is_archived = 1`);
+      const active = await db.get(`SELECT COUNT(*) as count FROM tours WHERE is_archived IS NULL OR is_archived = 0`);
+      const tours2025 = await db.get(`SELECT COUNT(*) as count FROM tours WHERE departure_date < '2026-01-01' AND (is_archived IS NULL OR is_archived = 0)`);
+      
+      res.json({
+        archived: archived?.count || 0,
+        active: active?.count || 0,
+        unarchived2025: tours2025?.count || 0
+      });
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to get archive status' });
     }
   });
 
