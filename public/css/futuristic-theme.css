@@ -1,0 +1,448 @@
+/* =============================================================
+   TRAVELOPS FUTURISTIC THEME — Option C: Hybrid Modern
+   Light base + glassmorphism cards + gradient accents
+   + glowing buttons + animated header + glass modals
+   ============================================================= */
+
+/* === ADDITIONAL DESIGN TOKENS === */
+:root {
+  --ft-glass-bg: rgba(255, 255, 255, 0.65);
+  --ft-glass-border: rgba(255, 255, 255, 0.45);
+  --ft-glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.12);
+  --ft-blur: 14px;
+  --ft-gradient-accent: linear-gradient(135deg, #2563eb 0%, #7c3aed 50%, #06b6d4 100%);
+  --ft-gradient-accent-alt: linear-gradient(135deg, #06b6d4 0%, #2563eb 50%, #7c3aed 100%);
+  --ft-gradient-btn: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+  --ft-gradient-btn-success: linear-gradient(135deg, #16a34a 0%, #059669 100%);
+  --ft-gradient-btn-danger: linear-gradient(135deg, #dc2626 0%, #be123c 100%);
+  --ft-glow-primary: 0 0 20px rgba(37, 99, 235, 0.35);
+  --ft-glow-accent: 0 0 24px rgba(124, 58, 237, 0.30);
+  --ft-glow-success: 0 0 18px rgba(22, 163, 74, 0.30);
+  --ft-glow-danger: 0 0 18px rgba(220, 38, 38, 0.30);
+  --ft-radius-glass: 16px;
+  --ft-accent-strip: 3px;
+}
+
+/* === ANIMATED GRADIENT HEADER BAR === */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--ft-gradient-accent);
+  background-size: 200% 100%;
+  animation: ft-header-sweep 4s ease-in-out infinite alternate;
+  z-index: 10000;
+  pointer-events: none;
+}
+
+@keyframes ft-header-sweep {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+/* Offset body content so the 3px bar doesn't overlap */
+body { padding-top: 3px; }
+
+/* === SUBTLE BACKGROUND MESH === */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 600px 400px at 10% 20%, rgba(37, 99, 235, 0.04), transparent),
+    radial-gradient(ellipse 500px 350px at 85% 70%, rgba(124, 58, 237, 0.04), transparent),
+    radial-gradient(ellipse 400px 300px at 50% 90%, rgba(6, 182, 212, 0.03), transparent);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* === GLASSMORPHISM CARDS === */
+.card,
+.metric-card,
+.stat-card,
+.metric-box,
+.summary-item {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(var(--ft-blur));
+  -webkit-backdrop-filter: blur(var(--ft-blur));
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--ft-radius-glass);
+  box-shadow: var(--ft-glass-shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Gradient accent strip on top of every card */
+.card::before,
+.metric-card::before,
+.stat-card::before,
+.metric-box::before,
+.summary-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--ft-accent-strip);
+  background: var(--card-accent, var(--ft-gradient-accent));
+  transform: scaleX(1);
+  transform-origin: left;
+  opacity: 0.85;
+  z-index: 1;
+}
+
+/* Card hover — lift + stronger glow */
+.card:hover,
+.metric-card:hover,
+.stat-card:hover,
+.metric-box:hover,
+.summary-item:hover {
+  box-shadow: var(--ft-glass-shadow), var(--ft-glow-primary);
+  border-color: rgba(37, 99, 235, 0.25);
+  transform: translateY(-3px);
+}
+
+.card:hover::before,
+.metric-card:hover::before,
+.stat-card:hover::before,
+.metric-box:hover::before,
+.summary-item:hover::before {
+  opacity: 1;
+}
+
+/* === GRADIENT BUTTONS WITH GLOW === */
+.btn.primary,
+.btn-primary {
+  background: var(--ft-gradient-btn);
+  border: none;
+  color: #fff;
+  box-shadow: var(--shadow-btn, 0 2px 4px rgba(0,0,0,0.08));
+  position: relative;
+  overflow: hidden;
+}
+
+.btn.primary::after,
+.btn-primary::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.18) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.btn.primary:hover,
+.btn-primary:hover {
+  box-shadow: var(--ft-glow-primary);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: var(--ft-gradient-btn-danger);
+  border: none;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  box-shadow: var(--ft-glow-danger);
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: rgba(37, 99, 235, 0.06);
+  border: 1px solid rgba(37, 99, 235, 0.30);
+  color: var(--primary);
+  backdrop-filter: blur(6px);
+}
+
+.btn-outline:hover {
+  background: rgba(37, 99, 235, 0.12);
+  border-color: rgba(37, 99, 235, 0.50);
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.15);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.70);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--ft-glass-border);
+}
+
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.90);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* === GLOWING SIDEBAR ACTIVE INDICATOR === */
+.nav a.active,
+.nav button.active {
+  background: linear-gradient(90deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    inset 3px 0 0 0 #60a5fa,
+    0 0 16px rgba(96, 165, 250, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.nav a:hover,
+.nav button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.20);
+  box-shadow: 0 0 10px rgba(96, 165, 250, 0.12);
+}
+
+/* Sidebar glass effect enhancement */
+.sidebar {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* === SOFT GRADIENT TABLE ROW HOVER === */
+.table tbody tr:hover {
+  background: linear-gradient(90deg,
+    rgba(37, 99, 235, 0.06) 0%,
+    rgba(124, 58, 237, 0.04) 50%,
+    rgba(6, 182, 212, 0.06) 100%
+  );
+}
+
+.table thead th {
+  background: rgba(241, 245, 249, 0.80);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 2px solid rgba(37, 99, 235, 0.15);
+}
+
+/* === GLASSMORPHISM MODALS === */
+.modal.active {
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.modal-card {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(var(--ft-blur));
+  -webkit-backdrop-filter: blur(var(--ft-blur));
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--ft-radius-glass);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.20), var(--ft-glow-accent);
+}
+
+.modal-header {
+  background: transparent;
+  border-bottom: 1px solid rgba(37, 99, 235, 0.10);
+}
+
+.modal-title {
+  background: var(--ft-gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+/* === ENHANCED INPUTS === */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15), 0 0 12px rgba(37, 99, 235, 0.10);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* === BADGES WITH SUBTLE GLOW === */
+.badge-primary { box-shadow: 0 0 8px rgba(67, 56, 202, 0.15); }
+.badge-success { box-shadow: 0 0 8px rgba(21, 128, 61, 0.15); }
+.badge-warning { box-shadow: 0 0 8px rgba(180, 83, 9, 0.15); }
+.badge-danger  { box-shadow: 0 0 8px rgba(185, 28, 28, 0.15); }
+.badge-info    { box-shadow: 0 0 8px rgba(3, 105, 161, 0.15); }
+
+/* === PAGE HEADER GRADIENT TEXT === */
+.page-header h2,
+.header h2 {
+  background: var(--ft-gradient-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === METRIC VALUE SHIMMER === */
+.metric-value,
+.stat-card .value {
+  background: linear-gradient(135deg, var(--gray-900) 0%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === DASHBOARD TABS GLASS === */
+.dashboard-tabs,
+.productivity-tabs {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--radius-lg, 14px);
+  padding: 4px;
+}
+
+.dashboard-tabs .tab-btn.active,
+.productivity-tabs .tab-btn.active {
+  background: var(--ft-gradient-btn);
+  color: #fff;
+  box-shadow: var(--ft-glow-primary);
+  border: none;
+}
+
+.dashboard-tabs .tab-btn:not(.active):hover,
+.productivity-tabs .tab-btn:not(.active):hover {
+  background: rgba(37, 99, 235, 0.08);
+}
+
+/* === FILTER ROW GLASS === */
+.filter-row,
+.searchbar {
+  background: rgba(255, 255, 255, 0.50);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--radius-lg, 14px);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+}
+
+/* === SCROLLBAR ACCENT === */
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary) 0%, var(--accent, #7c3aed) 100%);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--primary-hover, #1d4ed8) 0%, #6d28d9 100%);
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(241, 245, 249, 0.60);
+}
+
+/* === NAV GROUP GLASS STYLING === */
+.nav-group-header {
+  backdrop-filter: blur(4px);
+}
+
+/* === TOAST / NOTIFICATION GLASS === */
+.toast,
+.notification-item {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(var(--ft-blur));
+  -webkit-backdrop-filter: blur(var(--ft-blur));
+  border: 1px solid var(--ft-glass-border);
+  box-shadow: var(--ft-glass-shadow);
+}
+
+/* === USERBOX GLOW === */
+.userbox {
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.08);
+}
+
+/* === BRAND TEXT GRADIENT === */
+.brand {
+  background: linear-gradient(135deg, #fff 0%, #93c5fd 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* === SUBTLE CARD INNER SHIMMER ON HOVER === */
+.card::after,
+.metric-card::after,
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  transition: left 0.6s ease;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card:hover::after,
+.metric-card:hover::after,
+.stat-card:hover::after {
+  left: 120%;
+}
+
+/* === CONFIRM DIALOG GLASS === */
+.confirm-overlay {
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.confirm-dialog {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(var(--ft-blur));
+  -webkit-backdrop-filter: blur(var(--ft-blur));
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--ft-radius-glass);
+  box-shadow: var(--ft-glass-shadow), var(--ft-glow-accent);
+}
+
+/* === MOBILE MENU BUTTON GLASS === */
+.mobile-menu-btn {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--ft-glass-border);
+  box-shadow: var(--ft-glass-shadow);
+}
+
+/* === LOADING / EMPTY STATES === */
+.empty-state {
+  background: var(--ft-glass-bg);
+  backdrop-filter: blur(var(--ft-blur));
+  -webkit-backdrop-filter: blur(var(--ft-blur));
+  border: 1px solid var(--ft-glass-border);
+  border-radius: var(--ft-radius-glass);
+}
+
+/* === RESPONSIVE ADJUSTMENTS === */
+@media (max-width: 768px) {
+  body::before {
+    height: 2px;
+  }
+  body { padding-top: 2px; }
+
+  .card,
+  .metric-card,
+  .stat-card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* === PRINT — disable glass/blur effects === */
+@media print {
+  body::before,
+  body::after { display: none; }
+  .card, .metric-card, .stat-card, .modal-card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: #fff;
+    box-shadow: none;
+    border: 1px solid #e2e8f0;
+  }
+}
