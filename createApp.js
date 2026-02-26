@@ -56,7 +56,9 @@ const TABLE_COLUMNS = {
   productivity: ['month', 'year', 'product_type', 'retail_sales', 'retail_profit', 'corporate_sales', 'corporate_profit', 'staff_name', 'retail_margin', 'corporate_margin', 'total_sales', 'total_profit', 'total_margin', 'created_at', 'updated_at'],
   ticket_recaps: ['booking_code', 'airline_code', 'gds_system', 'airline_name', 'passenger_names', 'staff_name', 'status', 'is_open_ticket', 'open_ticket_reminder_sent_date', 'notes', 'reminder_sent_7d', 'reminder_sent_3d', 'reminder_sent_2d', 'reminder_sent_1d', 'reminder_sent_0d', 'arrival_reminder_sent', 'created_by', 'created_at', 'updated_at', 'updated_by'],
   tracking_deliveries: ['send_date', 'passport_count', 'invoice_no', 'booking_code', 'courier', 'tracking_no', 'recipient', 'address', 'details', 'status', 'tracking_data', 'created_by', 'created_at', 'updated_at'],
-  tracking_receivings: ['receive_date', 'passport_count', 'sender', 'tracking_no', 'details', 'created_by', 'created_at', 'updated_at']
+  tracking_receivings: ['receive_date', 'passport_count', 'sender', 'tracking_no', 'details', 'created_by', 'created_at', 'updated_at'],
+  corporate_accounts: ['account_code', 'corporate_name', 'address', 'office_email', 'credit_limit', 'contract_link', 'remarks', 'status', 'pic_bookers', 'service_fees', 'airlines', 'created_by', 'created_at', 'updated_at', 'updated_by'],
+  corporate_sales: ['corporate_id', 'year', 'month', 'type', 'amount', 'profit', 'created_by', 'created_at']
 };
 
 // Validate column names against whitelist to prevent SQL injection
@@ -856,7 +858,7 @@ export async function createApp() {
     }
   });
 
-  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity','ticket_recaps'];
+  const tables = ['sales','tours','documents','targets','regions','users','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity','ticket_recaps','corporate_accounts','corporate_sales'];
   const staffOwnedTables = new Set(['sales','tours','documents','targets','telecom','hotel_bookings','overtime','cruise','outstanding','cashout','productivity','ticket_recaps']);
 
   for (const t of tables) {
@@ -1262,6 +1264,10 @@ export async function createApp() {
         // Users table: admin-only for delete
         if (t === 'users' && req.user.type !== 'admin') return res.status(403).json({ error:'Only admin can delete user accounts' });
         if (req.user.type === 'basic') return res.status(403).json({ error:'Unauthorized' });
+        // Cascade delete related corporate_sales when deleting a corporate_account
+        if (t === 'corporate_accounts') {
+          await db.run('DELETE FROM corporate_sales WHERE corporate_id=?', [id]);
+        }
         await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
         await logActivity(req.user.username, 'DELETE', t, id, 'Record deleted');
         logger.info({ user: req.user.username, entity: t, recordId: id, action: 'DELETE' }, 'Record deleted');
@@ -1461,6 +1467,52 @@ export async function createApp() {
       res.status(500).json({ error: 'Failed to delete sales target' });
     }
   });
+
+  // ===============================================
+  // Corporate Dashboard - Load accounts with sales
+  // ===============================================
+
+  // Get all corporate accounts with their sales data merged
+  app.get('/api/corporate/full', authMiddleware(), async (req, res) => {
+    try {
+      const accounts = await db.all('SELECT * FROM corporate_accounts ORDER BY corporate_name ASC');
+      const sales = await db.all('SELECT * FROM corporate_sales ORDER BY year DESC, month DESC');
+
+      // Merge sales into accounts (mimics the old localStorage structure)
+      const salesByCorpId = {};
+      sales.forEach(s => {
+        if (!salesByCorpId[s.corporate_id]) salesByCorpId[s.corporate_id] = [];
+        salesByCorpId[s.corporate_id].push(s);
+      });
+
+      const result = accounts.map(acc => {
+        // Parse JSON text fields
+        let pic_bookers = [];
+        let service_fees = {};
+        let airlines = [];
+        try { pic_bookers = JSON.parse(acc.pic_bookers || '[]'); } catch { pic_bookers = []; }
+        try { service_fees = JSON.parse(acc.service_fees || '{}'); } catch { service_fees = {}; }
+        try { airlines = JSON.parse(acc.airlines || '[]'); } catch { airlines = []; }
+
+        return {
+          ...acc,
+          pic_bookers,
+          service_fees,
+          airlines,
+          sales: salesByCorpId[acc.id] || []
+        };
+      });
+
+      res.json(result);
+    } catch (error) {
+      logger.error({ err: error }, 'GET /api/corporate/full error');
+      res.status(500).json({ error: 'Failed to fetch corporate data' });
+    }
+  });
+
+  // Delete corporate sales when deleting a corporate account (cascade)
+  // NOTE: This endpoint is overridden by the generic CRUD loop above,
+  // so cascade logic is handled inside the generic DELETE handler.
 
   // ===============================================
   // Tour Passengers API (for data_version 2 tours)

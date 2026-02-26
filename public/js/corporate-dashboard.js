@@ -1,6 +1,7 @@
 /* =========================================================
    CORPORATE DASHBOARD SCRIPT
    Corporate account management and sales analysis
+   Persists data to backend API (corporate_accounts + corporate_sales tables)
    ========================================================= */
 
 // Wait for auth-common.js to load
@@ -24,9 +25,8 @@ const user = getUser();
 
 // Data stores
 let corporateAccounts = [];
-let corporateSales = [];
 let charts = {};
-let editingCorporateId = null;
+let editingCorporateId = null; // now stores DB id, not array index
 
 // Display user info
 el('userName').textContent = user.name || user.username || '—';
@@ -55,6 +55,16 @@ function formatCompactCurrency(value) {
 function formatPercent(value) {
   const num = parseFloat(value) || 0;
   return (num >= 0 ? '+' : '') + num.toFixed(1) + '%';
+}
+
+// Helper: find corporate account by DB id
+function findCorpById(id) {
+  return corporateAccounts.find(c => c.id == id);
+}
+
+// Helper: find array index by DB id
+function findCorpIndexById(id) {
+  return corporateAccounts.findIndex(c => c.id == id);
 }
 
 /* === TAB MANAGEMENT === */
@@ -96,23 +106,24 @@ function initTabs() {
   });
 }
 
-/* === LOCAL STORAGE DATA MANAGEMENT === */
-function loadCorporateData() {
+/* === API DATA MANAGEMENT === */
+async function loadCorporateData() {
   try {
-    corporateAccounts = JSON.parse(localStorage.getItem('corporateAccounts') || '[]');
-  } catch {
+    const data = await fetchJson('/api/corporate/full');
+    if (Array.isArray(data)) {
+      corporateAccounts = data;
+    } else {
+      corporateAccounts = [];
+    }
+  } catch (err) {
+    console.error('Failed to load corporate data:', err);
     corporateAccounts = [];
+    toast.error('Failed to load corporate data from server');
   }
-}
-
-function saveCorporateData() {
-  localStorage.setItem('corporateAccounts', JSON.stringify(corporateAccounts));
 }
 
 /* === DASHBOARD SUMMARY === */
 async function loadDashboardSummary() {
-  loadCorporateData();
-  
   // Update cards
   el('totalAccounts').textContent = corporateAccounts.length;
   el('activeContracts').textContent = corporateAccounts.filter(c => c.status === 'active').length;
@@ -127,10 +138,10 @@ async function loadDashboardSummary() {
   corporateAccounts.forEach(corp => {
     if (corp.sales) {
       corp.sales.forEach(sale => {
-        if (sale.year === currentYear) {
+        if (parseInt(sale.year) === currentYear) {
           totalRevenue += parseFloat(sale.amount) || 0;
           totalProfit += parseFloat(sale.profit) || 0;
-        } else if (sale.year === currentYear - 1) {
+        } else if (parseInt(sale.year) === currentYear - 1) {
           lastYearRevenue += parseFloat(sale.amount) || 0;
           lastYearProfit += parseFloat(sale.profit) || 0;
         }
@@ -178,9 +189,9 @@ function renderRevenueChart() {
       corp.sales.forEach(sale => {
         const month = parseInt(sale.month) - 1;
         if (month >= 0 && month < 12) {
-          if (sale.year === currentYear) {
+          if (parseInt(sale.year) === currentYear) {
             currentYearData[month] += parseFloat(sale.amount) || 0;
-          } else if (sale.year === lastYear) {
+          } else if (parseInt(sale.year) === lastYear) {
             lastYearData[month] += parseFloat(sale.amount) || 0;
           }
         }
@@ -242,7 +253,7 @@ function renderTopAccountsChart() {
     let total = 0;
     if (corp.sales) {
       corp.sales.forEach(sale => {
-        if (sale.year === currentYear) {
+        if (parseInt(sale.year) === currentYear) {
           total += parseFloat(sale.amount) || 0;
         }
       });
@@ -326,7 +337,7 @@ function renderCorporateList() {
     return;
   }
   
-  tbody.innerHTML = corporateAccounts.map((corp, idx) => `
+  tbody.innerHTML = corporateAccounts.map(corp => `
     <tr>
       <td>${corp.account_code || '—'}</td>
       <td>${corp.corporate_name || '—'}</td>
@@ -334,14 +345,14 @@ function renderCorporateList() {
       <td>${formatCurrency(corp.credit_limit || 0)}</td>
       <td><span class="status-badge ${corp.status === 'active' ? 'status-active' : 'status-pending'}">${corp.status || 'active'}</span></td>
       <td>
-        <button class="btn btn-sm btn-secondary" onclick="editCorporate(${idx})">✏️ Edit</button>
-        <button class="btn btn-sm btn-danger" onclick="deleteCorporate(${idx})">🗑️ Delete</button>
+        <button class="btn btn-sm btn-secondary" onclick="editCorporate(${corp.id})">✏️ Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="deleteCorporate(${corp.id})">🗑️ Delete</button>
       </td>
     </tr>
   `).join('');
 }
 
-let selectedCorporateIdx = null;
+let selectedCorporateId = null; // DB id
 
 function updateCorporateSelects() {
   const selects = [el('serviceFeeCorpSelect'), el('airlinesCorpSelect'), el('salesFilterCorp'), el('globalCorporateSelect'), el('salesCorporateSelect')];
@@ -353,9 +364,9 @@ function updateCorporateSelects() {
     select.innerHTML = '';
     if (firstOption) select.appendChild(firstOption.cloneNode(true));
     
-    corporateAccounts.forEach((corp, idx) => {
+    corporateAccounts.forEach(corp => {
       const option = document.createElement('option');
-      option.value = idx;
+      option.value = corp.id; // Use DB id
       option.textContent = `${corp.account_code} - ${corp.corporate_name}`;
       select.appendChild(option);
     });
@@ -365,36 +376,36 @@ function updateCorporateSelects() {
 }
 
 /* === GLOBAL CORPORATE SELECTOR === */
-function selectCorporate(idx) {
-  selectedCorporateIdx = idx;
+function selectCorporate(corpId) {
+  selectedCorporateId = corpId;
   
   // Update all sub-tab selectors
   if (el('serviceFeeCorpSelect')) {
-    el('serviceFeeCorpSelect').value = idx;
-    loadServiceFees(idx);
+    el('serviceFeeCorpSelect').value = corpId;
+    loadServiceFees(corpId);
   }
   if (el('airlinesCorpSelect')) {
-    el('airlinesCorpSelect').value = idx;
-    loadAirlines(idx);
+    el('airlinesCorpSelect').value = corpId;
+    loadAirlines(corpId);
   }
   
   // Update info display
+  const corp = findCorpById(corpId);
   const infoEl = el('selectedCorporateInfo');
-  if (infoEl && idx !== '' && corporateAccounts[idx]) {
-    const corp = corporateAccounts[idx];
+  if (infoEl && corp) {
     infoEl.textContent = `Credit Limit: ${formatCurrency(corp.credit_limit || 0)} | Status: ${corp.status || 'active'}`;
   } else if (infoEl) {
     infoEl.textContent = '';
   }
   
   // Load corporate detail if on detail tab
-  if (idx !== '' && corporateAccounts[idx]) {
-    loadCorporateDetailForm(idx);
+  if (corp) {
+    loadCorporateDetailForm(corpId);
   }
 }
 
-function loadCorporateDetailForm(idx) {
-  const corp = corporateAccounts[idx];
+function loadCorporateDetailForm(corpId) {
+  const corp = findCorpById(corpId);
   if (!corp) return;
   
   const form = el('corporateDetailForm');
@@ -408,12 +419,16 @@ function loadCorporateDetailForm(idx) {
   form.contract_link.value = corp.contract_link || '';
   form.remarks.value = corp.remarks || '';
   
+  // Store the DB id on the form for saving
+  form.dataset.corpId = corp.id;
+  
   // Load PIC Bookers
   const picList = el('picBookersList');
   if (picList) {
     picList.innerHTML = '';
-    if (corp.pic_bookers && corp.pic_bookers.length > 0) {
-      corp.pic_bookers.forEach(pic => addPicBookerRow(pic));
+    const bookers = Array.isArray(corp.pic_bookers) ? corp.pic_bookers : [];
+    if (bookers.length > 0) {
+      bookers.forEach(pic => addPicBookerRow(pic));
     } else {
       addPicBookerRow();
     }
@@ -421,20 +436,25 @@ function loadCorporateDetailForm(idx) {
 }
 
 /* === CORPORATE MODAL === */
-function openCorporateModal(editIdx = null) {
-  editingCorporateId = editIdx;
+function openCorporateModal(editId = null) {
+  editingCorporateId = editId;
   const modal = el('corporateModal');
   const form = el('quickCorporateForm');
   const title = el('corporateModalTitle');
   
-  if (editIdx !== null && corporateAccounts[editIdx]) {
-    title.textContent = 'Edit Corporate Account';
-    const corp = corporateAccounts[editIdx];
-    form.account_code.value = corp.account_code || '';
-    form.corporate_name.value = corp.corporate_name || '';
-    form.address.value = corp.address || '';
-    form.office_email.value = corp.office_email || '';
-    form.credit_limit.value = corp.credit_limit || 0;
+  if (editId !== null) {
+    const corp = findCorpById(editId);
+    if (corp) {
+      title.textContent = 'Edit Corporate Account';
+      form.account_code.value = corp.account_code || '';
+      form.corporate_name.value = corp.corporate_name || '';
+      form.address.value = corp.address || '';
+      form.office_email.value = corp.office_email || '';
+      form.credit_limit.value = corp.credit_limit || 0;
+    } else {
+      title.textContent = 'Add Corporate Account';
+      form.reset();
+    }
   } else {
     title.textContent = 'Add Corporate Account';
     form.reset();
@@ -448,7 +468,7 @@ function closeCorporateModal() {
   editingCorporateId = null;
 }
 
-function saveCorporateFromModal() {
+async function saveCorporateFromModal() {
   const form = el('quickCorporateForm');
   
   const data = {
@@ -457,11 +477,7 @@ function saveCorporateFromModal() {
     address: form.address.value.trim(),
     office_email: form.office_email.value.trim(),
     credit_limit: parseFloat(form.credit_limit.value) || 0,
-    status: 'active',
-    pic_bookers: [],
-    service_fees: {},
-    airlines: [],
-    sales: []
+    status: 'active'
   };
   
   if (!data.account_code || !data.corporate_name) {
@@ -469,34 +485,50 @@ function saveCorporateFromModal() {
     return;
   }
   
-  if (editingCorporateId !== null) {
-    // Preserve existing nested data
-    const existing = corporateAccounts[editingCorporateId];
-    data.pic_bookers = existing.pic_bookers || [];
-    data.service_fees = existing.service_fees || {};
-    data.airlines = existing.airlines || [];
-    data.sales = existing.sales || [];
-    corporateAccounts[editingCorporateId] = data;
-    toast.success('Corporate account updated');
-  } else {
-    corporateAccounts.push(data);
-    toast.success('Corporate account added');
+  try {
+    if (editingCorporateId !== null) {
+      // Preserve existing nested JSON data
+      const existing = findCorpById(editingCorporateId);
+      if (existing) {
+        data.pic_bookers = JSON.stringify(existing.pic_bookers || []);
+        data.service_fees = JSON.stringify(existing.service_fees || {});
+        data.airlines = JSON.stringify(existing.airlines || []);
+      }
+      await fetchJson(`/api/corporate_accounts/${editingCorporateId}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      toast.success('Corporate account updated');
+    } else {
+      // New account - initialize empty nested data
+      data.pic_bookers = '[]';
+      data.service_fees = '{}';
+      data.airlines = '[]';
+      await fetchJson('/api/corporate_accounts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      toast.success('Corporate account added');
+    }
+    
+    await loadCorporateData();
+    renderCorporateList();
+    updateCorporateSelects();
+    loadDashboardSummary();
+    closeCorporateModal();
+  } catch (err) {
+    console.error('Save corporate error:', err);
+    toast.error('Failed to save corporate account: ' + (err.message || 'Unknown error'));
   }
-  
-  saveCorporateData();
-  renderCorporateList();
-  updateCorporateSelects();
-  loadDashboardSummary();
-  closeCorporateModal();
 }
 
 // Global functions for inline onclick handlers
-window.editCorporate = function(idx) {
+window.editCorporate = function(corpId) {
   // Set global selector
   if (el('globalCorporateSelect')) {
-    el('globalCorporateSelect').value = idx;
+    el('globalCorporateSelect').value = corpId;
   }
-  selectCorporate(idx);
+  selectCorporate(corpId);
   
   // Switch to detail subtab
   document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
@@ -506,14 +538,19 @@ window.editCorporate = function(idx) {
   el('subtab-detail')?.classList.add('active');
 };
 
-window.deleteCorporate = function(idx) {
-  if (confirm('Are you sure you want to delete this corporate account?')) {
-    corporateAccounts.splice(idx, 1);
-    saveCorporateData();
-    renderCorporateList();
-    updateCorporateSelects();
-    loadDashboardSummary();
-    toast.success('Corporate account deleted');
+window.deleteCorporate = async function(corpId) {
+  if (confirm('Are you sure you want to delete this corporate account? All related sales data will also be deleted.')) {
+    try {
+      await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'DELETE' });
+      await loadCorporateData();
+      renderCorporateList();
+      updateCorporateSelects();
+      loadDashboardSummary();
+      toast.success('Corporate account deleted');
+    } catch (err) {
+      console.error('Delete corporate error:', err);
+      toast.error('Failed to delete corporate account: ' + (err.message || 'Unknown error'));
+    }
   }
 };
 
@@ -576,10 +613,10 @@ function addAirlineRow(data = {}) {
 }
 
 /* === SERVICE FEES === */
-function loadServiceFees(corpIdx) {
-  if (corpIdx === '' || corporateAccounts[corpIdx] === undefined) return;
+function loadServiceFees(corpId) {
+  const corp = findCorpById(corpId);
+  if (!corp) return;
   
-  const corp = corporateAccounts[corpIdx];
   const fees = corp.service_fees || {};
   
   // Populate form fields
@@ -598,9 +635,10 @@ function loadServiceFees(corpIdx) {
   });
 }
 
-function saveServiceFees() {
-  const corpIdx = el('serviceFeeCorpSelect').value;
-  if (corpIdx === '' || corporateAccounts[corpIdx] === undefined) {
+async function saveServiceFees() {
+  const corpId = el('serviceFeeCorpSelect').value;
+  const corp = findCorpById(corpId);
+  if (!corp) {
     toast.error('Please select a corporate first');
     return;
   }
@@ -620,21 +658,30 @@ function saveServiceFees() {
     if (typeSelect) fees[`${field}_type`] = typeSelect.value;
   });
   
-  corporateAccounts[corpIdx].service_fees = fees;
-  saveCorporateData();
-  toast.success('Service fees saved');
+  try {
+    await fetchJson(`/api/corporate_accounts/${corpId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ service_fees: JSON.stringify(fees) })
+    });
+    // Update local cache
+    corp.service_fees = fees;
+    toast.success('Service fees saved');
+  } catch (err) {
+    console.error('Save service fees error:', err);
+    toast.error('Failed to save service fees: ' + (err.message || 'Unknown error'));
+  }
 }
 
 /* === AIRLINES MANAGEMENT === */
-function loadAirlines(corpIdx) {
+function loadAirlines(corpId) {
   const list = el('airlinesList');
   if (!list) return;
   list.innerHTML = '';
   
-  if (corpIdx === '' || corporateAccounts[corpIdx] === undefined) return;
+  const corp = findCorpById(corpId);
+  if (!corp) return;
   
-  const corp = corporateAccounts[corpIdx];
-  const airlines = corp.airlines || [];
+  const airlines = Array.isArray(corp.airlines) ? corp.airlines : [];
   
   airlines.forEach(airline => addAirlineRow(airline));
   
@@ -643,9 +690,10 @@ function loadAirlines(corpIdx) {
   }
 }
 
-function saveAirlines() {
-  const corpIdx = el('airlinesCorpSelect').value;
-  if (corpIdx === '' || corporateAccounts[corpIdx] === undefined) {
+async function saveAirlines() {
+  const corpId = el('airlinesCorpSelect').value;
+  const corp = findCorpById(corpId);
+  if (!corp) {
     toast.error('Please select a corporate first');
     return;
   }
@@ -663,9 +711,18 @@ function saveAirlines() {
     }
   });
   
-  corporateAccounts[corpIdx].airlines = airlines;
-  saveCorporateData();
-  toast.success('Airlines saved');
+  try {
+    await fetchJson(`/api/corporate_accounts/${corpId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ airlines: JSON.stringify(airlines) })
+    });
+    // Update local cache
+    corp.airlines = airlines;
+    toast.success('Airlines saved');
+  } catch (err) {
+    console.error('Save airlines error:', err);
+    toast.error('Failed to save airlines: ' + (err.message || 'Unknown error'));
+  }
 }
 
 /* === SALES COMPARISON === */
@@ -674,11 +731,12 @@ function loadSalesComparison() {
   if (!tbody) return;
   
   const year = parseInt(el('salesCompareYear').value) || new Date().getFullYear();
-  const filterCorp = el('salesFilterCorp').value;
+  const filterCorpId = el('salesFilterCorp').value;
   
   let accountsToShow = corporateAccounts;
-  if (filterCorp !== '') {
-    accountsToShow = [corporateAccounts[filterCorp]].filter(Boolean);
+  if (filterCorpId !== '') {
+    const found = findCorpById(filterCorpId);
+    accountsToShow = found ? [found] : [];
   }
   
   if (accountsToShow.length === 0) {
@@ -700,10 +758,10 @@ function loadSalesComparison() {
     if (corp.sales) {
       corp.sales.forEach(sale => {
         const month = parseInt(sale.month);
-        if (sale.year === year && monthlyData[month]) {
+        if (parseInt(sale.year) === year && monthlyData[month]) {
           monthlyData[month].sales += parseFloat(sale.amount) || 0;
           monthlyData[month].profit += parseFloat(sale.profit) || 0;
-        } else if (sale.year === year - 1 && lastYearData[month]) {
+        } else if (parseInt(sale.year) === year - 1 && lastYearData[month]) {
           lastYearData[month].sales += parseFloat(sale.amount) || 0;
           lastYearData[month].profit += parseFloat(sale.profit) || 0;
         }
@@ -751,9 +809,9 @@ function renderGrowthChart(accounts, year) {
     
     if (corp.sales) {
       corp.sales.forEach(sale => {
-        if (sale.year === year) {
+        if (parseInt(sale.year) === year) {
           currentTotal += parseFloat(sale.amount) || 0;
-        } else if (sale.year === year - 1) {
+        } else if (parseInt(sale.year) === year - 1) {
           lastTotal += parseFloat(sale.amount) || 0;
         }
       });
@@ -803,11 +861,12 @@ function renderGrowthChart(accounts, year) {
 }
 
 /* === SALES MANAGEMENT === */
-function addSalesData(e) {
+async function addSalesData(e) {
   e.preventDefault();
   
-  const corpIdx = el('salesCorporateSelect').value;
-  if (corpIdx === '' || !corporateAccounts[corpIdx]) {
+  const corpId = el('salesCorporateSelect').value;
+  const corp = findCorpById(corpId);
+  if (!corp) {
     toast.error('Please select a corporate');
     return;
   }
@@ -823,31 +882,33 @@ function addSalesData(e) {
     return;
   }
   
-  // Initialize sales array if not exists
-  if (!corporateAccounts[corpIdx].sales) {
-    corporateAccounts[corpIdx].sales = [];
+  try {
+    await fetchJson('/api/corporate_sales', {
+      method: 'POST',
+      body: JSON.stringify({
+        corporate_id: parseInt(corpId),
+        year,
+        month,
+        type,
+        amount,
+        profit
+      })
+    });
+    
+    toast.success('Sales data added successfully');
+    
+    // Reset form
+    el('salesAmount').value = '';
+    el('salesProfit').value = '';
+    
+    // Reload data and refresh displays
+    await loadCorporateData();
+    loadSalesComparison();
+    loadDashboardSummary();
+  } catch (err) {
+    console.error('Add sales error:', err);
+    toast.error('Failed to add sales data: ' + (err.message || 'Unknown error'));
   }
-  
-  // Add sales data
-  corporateAccounts[corpIdx].sales.push({
-    year,
-    month,
-    type,
-    amount,
-    profit,
-    created_at: new Date().toISOString()
-  });
-  
-  saveCorporateData();
-  toast.success('Sales data added successfully');
-  
-  // Reset form
-  el('salesAmount').value = '';
-  el('salesProfit').value = '';
-  
-  // Refresh displays
-  loadSalesComparison();
-  loadDashboardSummary();
 }
 
 /* === MONTH VS MONTH COMPARISON === */
@@ -856,7 +917,7 @@ function compareMonths() {
   const year1 = parseInt(el('monthCompare1Year').value);
   const month2 = parseInt(el('monthCompare2Month').value);
   const year2 = parseInt(el('monthCompare2Year').value);
-  const filterCorp = el('monthCompareCorp').value;
+  const filterCorpId = el('monthCompareCorp').value;
   
   const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const period1Label = `${monthNames[month1]} ${year1}`;
@@ -869,8 +930,9 @@ function compareMonths() {
   el('period2ProfitHeader').textContent = `${period2Label} Profit`;
   
   let accountsToShow = corporateAccounts;
-  if (filterCorp !== '') {
-    accountsToShow = [corporateAccounts[filterCorp]].filter(Boolean);
+  if (filterCorpId !== '') {
+    const found = findCorpById(filterCorpId);
+    accountsToShow = found ? [found] : [];
   }
   
   if (accountsToShow.length === 0) {
@@ -954,9 +1016,9 @@ function populateMonthCompareDropdown() {
   if (!select) return;
   
   select.innerHTML = '<option value="">All Corporates</option>';
-  corporateAccounts.forEach((corp, idx) => {
+  corporateAccounts.forEach(corp => {
     const option = document.createElement('option');
-    option.value = idx;
+    option.value = corp.id;
     option.textContent = corp.corporate_name || corp.account_code;
     select.appendChild(option);
   });
@@ -998,13 +1060,13 @@ function initEventListeners() {
   
   // Service fee corporate select
   el('serviceFeeCorpSelect')?.addEventListener('change', (e) => {
-    const idx = e.target.value;
+    const id = e.target.value;
     // Sync with global selector
     if (el('globalCorporateSelect')) {
-      el('globalCorporateSelect').value = idx;
-      selectCorporate(idx);
+      el('globalCorporateSelect').value = id;
+      selectCorporate(id);
     }
-    loadServiceFees(idx);
+    loadServiceFees(id);
   });
   
   // Save service fees
@@ -1012,13 +1074,13 @@ function initEventListeners() {
   
   // Airlines corporate select
   el('airlinesCorpSelect')?.addEventListener('change', (e) => {
-    const idx = e.target.value;
+    const id = e.target.value;
     // Sync with global selector
     if (el('globalCorporateSelect')) {
-      el('globalCorporateSelect').value = idx;
-      selectCorporate(idx);
+      el('globalCorporateSelect').value = id;
+      selectCorporate(id);
     }
-    loadAirlines(idx);
+    loadAirlines(id);
   });
   
   // Save airlines
@@ -1047,7 +1109,7 @@ function initEventListeners() {
   });
 }
 
-function saveCorporateDetail() {
+async function saveCorporateDetail() {
   const form = el('corporateDetailForm');
   
   // Collect PIC bookers
@@ -1071,11 +1133,8 @@ function saveCorporateDetail() {
     credit_limit: parseFloat(form.credit_limit.value) || 0,
     contract_link: form.contract_link.value.trim(),
     remarks: form.remarks.value.trim(),
-    pic_bookers: picBookers,
-    status: 'active',
-    service_fees: {},
-    airlines: [],
-    sales: []
+    pic_bookers: JSON.stringify(picBookers),
+    status: 'active'
   };
   
   if (!data.account_code || !data.corporate_name) {
@@ -1083,36 +1142,53 @@ function saveCorporateDetail() {
     return;
   }
   
-  // Check if editing existing or creating new
-  const existingIdx = corporateAccounts.findIndex(c => c.account_code === data.account_code);
-  
-  if (existingIdx >= 0) {
-    // Preserve existing nested data
-    const existing = corporateAccounts[existingIdx];
-    data.service_fees = existing.service_fees || {};
-    data.airlines = existing.airlines || [];
-    data.sales = existing.sales || [];
-    corporateAccounts[existingIdx] = data;
-    toast.success('Corporate account updated');
-  } else {
-    corporateAccounts.push(data);
-    toast.success('Corporate account added');
+  try {
+    // Check if we're editing an existing account (by form data-corp-id or by matching account_code)
+    const corpIdFromForm = form.dataset.corpId;
+    const existingById = corpIdFromForm ? findCorpById(corpIdFromForm) : null;
+    const existingByCode = !existingById ? corporateAccounts.find(c => c.account_code === data.account_code) : null;
+    const existing = existingById || existingByCode;
+    
+    if (existing) {
+      // Preserve existing nested data that isn't being edited here
+      data.service_fees = JSON.stringify(existing.service_fees || {});
+      data.airlines = JSON.stringify(existing.airlines || []);
+      
+      await fetchJson(`/api/corporate_accounts/${existing.id}`, {
+        method: 'PUT',
+        body: JSON.stringify(data)
+      });
+      toast.success('Corporate account updated');
+    } else {
+      // New account
+      data.service_fees = '{}';
+      data.airlines = '[]';
+      
+      await fetchJson('/api/corporate_accounts', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+      toast.success('Corporate account added');
+    }
+    
+    await loadCorporateData();
+    renderCorporateList();
+    updateCorporateSelects();
+    loadDashboardSummary();
+    
+    // Switch to list view
+    document.querySelector('.sub-tab[data-subtab="list"]')?.click();
+  } catch (err) {
+    console.error('Save corporate detail error:', err);
+    toast.error('Failed to save corporate account: ' + (err.message || 'Unknown error'));
   }
-  
-  saveCorporateData();
-  renderCorporateList();
-  updateCorporateSelects();
-  loadDashboardSummary();
-  
-  // Switch to list view
-  document.querySelector('.sub-tab[data-subtab="list"]')?.click();
 }
 
 /* === INITIALIZE === */
-function init() {
+async function init() {
   initTabs();
   initEventListeners();
-  loadCorporateData();
+  await loadCorporateData();
   loadDashboardSummary();
   renderCorporateList();
   updateCorporateSelects();

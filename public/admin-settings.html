@@ -1298,8 +1298,8 @@
   <script src="/js/ui-extras.js"></script>
   <script src="/js/toast.js"></script>
   <script src="/js/mobile-menu.js"></script>
-  <script src="/js/auth-common.js?v=20251215"></script>
-  <script src="/js/logout-handler.js?v=20251215"></script>
+  <script src="/js/auth-common.js?v=20260225"></script>
+  <script src="/js/logout-handler.js?v=20260225"></script>
   <script src="/js/confirm-dialog.js"></script>
   <script>
     // Start token refresh system (uses window.startTokenRefresh from auth-common.js)
@@ -1687,13 +1687,19 @@
     }
     
     async function deleteUserAdmin(id) {
+      const user = allUsersData.find(u => u.id === id);
+      const currentUser = window.getUser ? window.getUser() : null;
+      if (user && currentUser && user.username === currentUser.username) {
+        toast.error('Cannot delete your own account');
+        return;
+      }
       if (!confirm('Delete this user? This cannot be undone.')) return;
       try {
         await fetchJson(`/api/users/${id}`, { method: 'DELETE' });
         toast.success('User deleted');
         loadUsers();
       } catch (err) {
-        toast.error('Failed to delete user');
+        toast.error('Failed to delete user: ' + (err.message || 'Unknown error'));
       }
     }
     // ============ END USER MANAGEMENT ============

@@ -409,6 +409,39 @@ async function createSchema(db) {
     created_at ${ts} ${createdDefault}
   )`);
 
+  // Corporate Accounts - corporate client management
+  await db.run(`CREATE TABLE IF NOT EXISTS corporate_accounts (
+    id ${idCol},
+    account_code TEXT NOT NULL,
+    corporate_name TEXT NOT NULL,
+    address TEXT,
+    office_email TEXT,
+    credit_limit ${num()} DEFAULT 0,
+    contract_link TEXT,
+    remarks TEXT,
+    status TEXT DEFAULT 'active',
+    pic_bookers TEXT DEFAULT '[]',
+    service_fees TEXT DEFAULT '{}',
+    airlines TEXT DEFAULT '[]',
+    created_by TEXT,
+    created_at ${ts} ${createdDefault},
+    updated_at ${ts},
+    updated_by TEXT
+  )`);
+
+  // Corporate Sales - monthly sales data per corporate account
+  await db.run(`CREATE TABLE IF NOT EXISTS corporate_sales (
+    id ${idCol},
+    corporate_id INTEGER NOT NULL,
+    year INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    type TEXT DEFAULT 'General',
+    amount ${num()} DEFAULT 0,
+    profit ${num()} DEFAULT 0,
+    created_by TEXT,
+    created_at ${ts} ${createdDefault}
+  )`);
+
   // App Settings - stores application configuration including margin thresholds
   await db.run(`CREATE TABLE IF NOT EXISTS app_settings (
     id ${idCol},
@@ -664,6 +697,12 @@ async function createSchema(db) {
   await ensureIndex('overtime', 'idx_overtime_staff', 'staff_name');
   await ensureIndex('overtime', 'idx_overtime_date', 'event_date');
   await ensureIndex('productivity', 'idx_productivity_staff', 'staff_name');
+
+  // Corporate indexes
+  await ensureIndex('corporate_accounts', 'idx_corp_acc_code', 'account_code');
+  await ensureIndex('corporate_accounts', 'idx_corp_acc_status', 'status');
+  await ensureIndex('corporate_sales', 'idx_corp_sales_corp', 'corporate_id');
+  await ensureIndex('corporate_sales', 'idx_corp_sales_period', 'year, month');
 
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
