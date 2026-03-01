@@ -1935,11 +1935,13 @@ el('confirmImportBtn')?.addEventListener('click', async () => {
   
   for (const row of importData) {
     try {
+      const csrfToken = sessionStorage.getItem('csrfToken');
       const response = await fetch('/api/productivity', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
         },
         body: JSON.stringify(row)
       });

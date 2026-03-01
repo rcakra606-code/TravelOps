@@ -423,10 +423,11 @@ class TrackingDashboard {
     try {
       const url = id ? `/api/tracking/deliveries/${id}` : '/api/tracking/deliveries';
       const method = id ? 'PUT' : 'POST';
+      const csrfToken = sessionStorage.getItem('csrfToken');
       
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) },
         body: JSON.stringify(data)
       });
 
@@ -493,10 +494,11 @@ class TrackingDashboard {
     try {
       const url = id ? `/api/tracking/receivings/${id}` : '/api/tracking/receivings';
       const method = id ? 'PUT' : 'POST';
+      const csrfToken = sessionStorage.getItem('csrfToken');
       
       const res = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) },
         body: JSON.stringify(data)
       });
 
@@ -551,10 +553,11 @@ class TrackingDashboard {
     }
 
     const token = localStorage.getItem('token');
+    const csrfToken = sessionStorage.getItem('csrfToken');
     try {
       const res = await fetch(`/api/tracking/deliveries/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) },
         body: JSON.stringify({ status: 'delivered' })
       });
 
@@ -587,10 +590,11 @@ class TrackingDashboard {
     this.renderDeliveries();
 
     const token = localStorage.getItem('token');
+    const csrfToken = sessionStorage.getItem('csrfToken');
     try {
       const res = await fetch(`/api/tracking/deliveries/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) }
       });
 
       if (res.ok) {
@@ -625,10 +629,11 @@ class TrackingDashboard {
     this.renderReceivings();
 
     const token = localStorage.getItem('token');
+    const csrfToken = sessionStorage.getItem('csrfToken');
     try {
       const res = await fetch(`/api/tracking/receivings/${id}`, {
         method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
+        headers: { 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) }
       });
 
       if (res.ok) {

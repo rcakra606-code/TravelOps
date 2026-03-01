@@ -110,11 +110,13 @@ class AuditTrail {
   async sendToServer(entry) {
     try {
       const token = localStorage.getItem('token');
+      const csrfToken = sessionStorage.getItem('csrfToken');
       await fetch('/api/audit-logs', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
         },
         body: JSON.stringify(entry)
       });

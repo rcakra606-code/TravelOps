@@ -76,9 +76,11 @@ function initAuth() {
 // API helper
 async function fetchJson(url, options = {}) {
   const token = localStorage.getItem('token');
+  const csrfToken = sessionStorage.getItem('csrfToken');
   const headers = {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
   };
   
   const response = await fetch(url, { ...options, headers });

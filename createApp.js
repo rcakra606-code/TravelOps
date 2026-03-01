@@ -508,28 +508,7 @@ export async function createApp() {
     };
   }
   
-  // ===================================================================
-  // CSRF MIDDLEWARE - Validate on state-changing requests
-  // ===================================================================
-  function csrfMiddleware(req, res, next) {
-    // Skip CSRF for GET, HEAD, OPTIONS requests
-    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
-      return next();
-    }
-    // Skip CSRF for login/logout (no user context yet)
-    if (req.path === '/api/login' || req.path === '/api/logout' || req.path === '/api/refresh') {
-      return next();
-    }
-    // If user is authenticated, validate CSRF token
-    if (req.user) {
-      const csrfToken = req.headers['x-csrf-token'];
-      if (!csrfToken || !validateCsrfToken(req.user.id, csrfToken)) {
-        logSecurityEvent(SecurityEvent.CSRF_FAIL, { userId: req.user.id, username: req.user.username, path: req.path, method: req.method, ip: req.ip });
-        return res.status(403).json({ error: 'Invalid or missing CSRF token. Please refresh the page.' });
-      }
-    }
-    next();
-  }
+  // (CSRF validation is handled inline in authMiddleware above)
 
   // ===================================================================
   // EMERGENCY ADMIN PASSWORD RESET (No auth required, uses secret key)
