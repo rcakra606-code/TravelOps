@@ -1605,30 +1605,59 @@ async function viewReminderStats() {
     }
     
     const data = await response.json();
+    const stats = data.stats || [];
+    const summary = data.summary || {};
     
-    if (response.ok && data.stats) {
-      if (data.stats.length === 0) {
-        showEmailResult(true, 'No reminders sent yet', {
-          message: 'Reminders will appear here after being sent'
-        });
-        statsTable.style.display = 'none';
-      } else {
-        statsBody.innerHTML = data.stats.map(stat => `
-          <tr>
-            <td>${stat.days_until_departure} ${stat.days_until_departure === 1 ? 'day' : 'days'}</td>
-            <td><strong>${stat.count}</strong></td>
-            <td>${stat.sent_date}</td>
-          </tr>
-        `).join('');
-        statsTable.style.display = 'block';
-        
-        // Hide results div when showing stats
-        const resultsDiv = el('emailTestResults');
-        if (resultsDiv) resultsDiv.style.display = 'none';
-      }
-    } else {
-      showEmailResult(false, data.error || 'Failed to load statistics');
+    // Always show summary cards
+    const summaryHtml = `
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;">
+        <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
+          <div style="font-size:22px;font-weight:700;color:var(--primary,#4f46e5);">${summary.totalSent || 0}</div>
+          <div style="font-size:12px;color:#6b7280;">Total Sent</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
+          <div style="font-size:22px;font-weight:700;color:var(--success,#16a34a);">${summary.sentThisWeek || 0}</div>
+          <div style="font-size:12px;color:#6b7280;">This Week</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
+          <div style="font-size:22px;font-weight:700;color:var(--info,#0ea5e9);">${summary.upcomingTours || 0}</div>
+          <div style="font-size:12px;color:#6b7280;">Upcoming Tours</div>
+        </div>
+        <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
+          <div style="font-size:22px;font-weight:700;color:var(--warning,#d97706);">${summary.pendingReminders || 0}</div>
+          <div style="font-size:12px;color:#6b7280;">Pending</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:16px;font-size:12px;color:#6b7280;margin-bottom:8px;flex-wrap:wrap;">
+        <span>🗺️ Tours: ${summary.toursSent || 0}</span>
+        <span>🚢 Cruises: ${summary.cruisesSent || 0}</span>
+        <span>🔙 Returns: ${summary.returnsSent || 0}</span>
+      </div>`;
+
+    // Show summary in results area
+    const resultsDiv = el('emailTestResults');
+    if (resultsDiv) {
+      resultsDiv.style.display = 'block';
+      resultsDiv.innerHTML = `<div style="padding:16px;background:#ecfdf5;border:1px solid #10b981;border-radius:12px;">
+        <h4 style="margin:0 0 12px;color:#065f46;">📊 Email Reminder Statistics</h4>
+        ${summaryHtml}
+        <div style="font-size:11px;color:#9ca3af;">Last updated: ${new Date().toLocaleString()}</div>
+      </div>`;
+    }
+
+    if (stats.length === 0) {
       statsTable.style.display = 'none';
+    } else {
+      const typeLabels = { tour: '🗺️ Tour', cruise: '🚢 Cruise', 'return': '🔙 Return' };
+      statsBody.innerHTML = stats.map(stat => `
+        <tr>
+          <td>${typeLabels[stat.type] || stat.type || '🗺️ Tour'}</td>
+          <td>${stat.days_before ?? stat.days_until_departure ?? '-'} ${(stat.days_before ?? stat.days_until_departure) === 1 ? 'day' : 'days'}</td>
+          <td><strong>${stat.count}</strong></td>
+          <td>${stat.sent_date}</td>
+        </tr>
+      `).join('');
+      statsTable.style.display = 'block';
     }
   } catch (error) {
     console.error('Stats error:', error);

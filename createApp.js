@@ -3393,8 +3393,9 @@ export async function createApp() {
     }
     
     try {
-      const stats = await getReminderStats();
-      res.json({ stats });
+      const result = await getReminderStats();
+      // result = { rows: [...], summary: { totalSent, upcomingTours, ... } }
+      res.json({ stats: result.rows, summary: result.summary });
     } catch (err) {
       logger.error({ err }, 'Failed to get reminder stats');
       res.status(500).json({ error: 'Failed to get reminder statistics', details: err.message });

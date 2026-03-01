@@ -441,35 +441,126 @@ async function manualTrigger() {
 }
 
 /**
- * Get reminder statistics
+ * Get reminder statistics — comprehensive stats from all reminder tables
+ * Returns both a detailed rows array and an aggregated summary object
  */
 async function getReminderStats() {
   try {
-    // First ensure the table exists
+    // Ensure all reminder tables exist
     await db.run(getCreateTableSQL());
-
-    // Handle date formatting for both SQLite and Postgres
     const isPostgres = db.dialect === 'postgres';
-    const dateFunc = isPostgres ? "DATE(sent_at)" : "DATE(sent_at)";
-    
-    // Now get the statistics
-    const sql = `
-      SELECT 
-        days_until_departure,
-        COUNT(*) as count,
-        ${dateFunc} as sent_date
-      FROM email_reminders
-      GROUP BY days_until_departure, ${dateFunc}
-      ORDER BY sent_date DESC, days_until_departure DESC
-      LIMIT 50
-    `;
+    const cruiseTableSql = isPostgres
+      ? `CREATE TABLE IF NOT EXISTS cruise_reminders (
+          id SERIAL PRIMARY KEY, cruise_id INTEGER NOT NULL,
+          days_until_sailing INTEGER NOT NULL,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(cruise_id, days_until_sailing))`
+      : `CREATE TABLE IF NOT EXISTS cruise_reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, cruise_id INTEGER NOT NULL,
+          days_until_sailing INTEGER NOT NULL,
+          sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(cruise_id, days_until_sailing))`;
+    await db.run(cruiseTableSql);
+    const returnTableSql = isPostgres
+      ? `CREATE TABLE IF NOT EXISTS return_reminders (
+          id SERIAL PRIMARY KEY, tour_id INTEGER NOT NULL,
+          days_until_return INTEGER NOT NULL,
+          sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(tour_id, days_until_return))`
+      : `CREATE TABLE IF NOT EXISTS return_reminders (
+          id INTEGER PRIMARY KEY AUTOINCREMENT, tour_id INTEGER NOT NULL,
+          days_until_return INTEGER NOT NULL,
+          sent_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(tour_id, days_until_return))`;
+    await db.run(returnTableSql);
 
-    const rows = await db.all(sql, []);
-    return rows || [];
+    const dateFunc = isPostgres ? "TO_CHAR(sent_at, 'YYYY-MM-DD')" : "DATE(sent_at)";
+    const today = new Date().toISOString().split('T')[0];
+
+    // --- Detailed rows from all 3 tables ---
+    const tourRows = await db.all(`
+      SELECT 'tour' as type, days_until_departure as days_before, COUNT(*) as count, ${dateFunc} as sent_date
+      FROM email_reminders GROUP BY days_until_departure, ${dateFunc}
+      ORDER BY sent_date DESC LIMIT 30`, []);
+
+    const cruiseRows = await db.all(`
+      SELECT 'cruise' as type, days_until_sailing as days_before, COUNT(*) as count, ${dateFunc} as sent_date
+      FROM cruise_reminders GROUP BY days_until_sailing, ${dateFunc}
+      ORDER BY sent_date DESC LIMIT 30`, []);
+
+    const returnRows = await db.all(`
+      SELECT 'return' as type, days_until_return as days_before, COUNT(*) as count, ${dateFunc} as sent_date
+      FROM return_reminders GROUP BY days_until_return, ${dateFunc}
+      ORDER BY sent_date DESC LIMIT 30`, []);
+
+    // Merge and sort by date desc
+    const allRows = [...(tourRows || []), ...(cruiseRows || []), ...(returnRows || [])]
+      .sort((a, b) => (b.sent_date || '').localeCompare(a.sent_date || ''));
+
+    // --- Aggregated summary ---
+    const tourTotal = await db.get('SELECT COUNT(*) as c FROM email_reminders', []);
+    const cruiseTotal = await db.get('SELECT COUNT(*) as c FROM cruise_reminders', []);
+    const returnTotal = await db.get('SELECT COUNT(*) as c FROM return_reminders', []);
+    const totalSent = (tourTotal?.c || 0) + (cruiseTotal?.c || 0) + (returnTotal?.c || 0);
+
+    // Upcoming tours (departure >= today, active)
+    let upcomingTours = 0;
+    try {
+      const row = await db.get(
+        "SELECT COUNT(*) as c FROM tours WHERE departure_date >= ? AND status != 'tidak jalan'", [today]);
+      upcomingTours = row?.c || 0;
+    } catch (_) { /* tours table may not exist */ }
+
+    // Upcoming cruises
+    let upcomingCruises = 0;
+    try {
+      const row = await db.get(
+        "SELECT COUNT(*) as c FROM cruises WHERE sailing_start >= ?", [today]);
+      upcomingCruises = row?.c || 0;
+    } catch (_) { /* cruises table may not exist */ }
+
+    // Pending = upcoming items within the 7-day reminder window that haven't been reminded yet
+    let pendingReminders = 0;
+    const sevenDaysOut = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    try {
+      const row = await db.get(`
+        SELECT COUNT(*) as c FROM tours t
+        WHERE t.departure_date >= ? AND t.departure_date <= ?
+          AND t.status != 'tidak jalan'
+          AND t.id NOT IN (SELECT tour_id FROM email_reminders)`, [today, sevenDaysOut]);
+      pendingReminders += (row?.c || 0);
+    } catch (_) { /* table may not exist */ }
+    try {
+      const row = await db.get(`
+        SELECT COUNT(*) as c FROM cruises c2
+        WHERE c2.sailing_start >= ? AND c2.sailing_start <= ?
+          AND c2.id NOT IN (SELECT cruise_id FROM cruise_reminders)`, [today, sevenDaysOut]);
+      pendingReminders += (row?.c || 0);
+    } catch (_) { /* table may not exist */ }
+
+    // Recent activity (last 7 days)
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const recentTour = await db.get(`SELECT COUNT(*) as c FROM email_reminders WHERE sent_at >= ?`, [weekAgo]);
+    const recentCruise = await db.get(`SELECT COUNT(*) as c FROM cruise_reminders WHERE sent_at >= ?`, [weekAgo]);
+    const recentReturn = await db.get(`SELECT COUNT(*) as c FROM return_reminders WHERE sent_at >= ?`, [weekAgo]);
+    const sentThisWeek = (recentTour?.c || 0) + (recentCruise?.c || 0) + (recentReturn?.c || 0);
+
+    return {
+      rows: allRows,
+      summary: {
+        totalSent,
+        toursSent: tourTotal?.c || 0,
+        cruisesSent: cruiseTotal?.c || 0,
+        returnsSent: returnTotal?.c || 0,
+        upcomingTours,
+        upcomingCruises,
+        pendingReminders,
+        sentThisWeek
+      }
+    };
   } catch (err) {
     logger.error('Error fetching reminder stats:', err);
-    // Return empty array instead of throwing
-    return [];
+    return { rows: [], summary: { totalSent: 0, upcomingTours: 0, upcomingCruises: 0, pendingReminders: 0, sentThisWeek: 0, toursSent: 0, cruisesSent: 0, returnsSent: 0 } };
   }
 }
 

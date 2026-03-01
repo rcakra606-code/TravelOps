@@ -2155,23 +2155,47 @@
       
       try {
         const response = await fetchJson('/api/email/reminder-stats');
-        const stats = response.stats || {};
+        const summary = response.summary || {};
+        const rows = response.stats || [];
         
         content.innerHTML = `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px;">
             <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
-              <div style="font-size: 24px; font-weight: bold; color: var(--primary);">${stats.totalSent || 0}</div>
+              <div style="font-size: 24px; font-weight: bold; color: var(--primary);">${summary.totalSent || 0}</div>
               <div style="font-size: 12px; color: var(--text-secondary);">Total Sent</div>
             </div>
             <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
-              <div style="font-size: 24px; font-weight: bold; color: var(--success);">${stats.upcomingTours || 0}</div>
+              <div style="font-size: 24px; font-weight: bold; color: var(--success);">${summary.upcomingTours || 0}</div>
               <div style="font-size: 12px; color: var(--text-secondary);">Upcoming Tours</div>
             </div>
             <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
-              <div style="font-size: 24px; font-weight: bold; color: var(--warning);">${stats.pendingReminders || 0}</div>
+              <div style="font-size: 24px; font-weight: bold; color: var(--warning);">${summary.pendingReminders || 0}</div>
               <div style="font-size: 12px; color: var(--text-secondary);">Pending Reminders</div>
             </div>
+            <div style="text-align: center; padding: 12px; background: var(--card); border-radius: 6px;">
+              <div style="font-size: 24px; font-weight: bold; color: var(--info, #0ea5e9);">${summary.sentThisWeek || 0}</div>
+              <div style="font-size: 12px; color: var(--text-secondary);">Sent This Week</div>
+            </div>
           </div>
+          <div style="display: flex; gap: 16px; margin-top: 12px; font-size: 13px; color: var(--text-secondary); flex-wrap: wrap;">
+            <span>🗺️ Tours: ${summary.toursSent || 0}</span>
+            <span>🚢 Cruises: ${summary.cruisesSent || 0}</span>
+            <span>🔙 Returns: ${summary.returnsSent || 0}</span>
+            <span>🚢 Upcoming Cruises: ${summary.upcomingCruises || 0}</span>
+          </div>
+          ${rows.length > 0 ? `
+          <div style="margin-top: 16px;">
+            <h5 style="margin: 0 0 8px; font-size: 14px;">Recent Activity</h5>
+            <table class="table" style="font-size: 13px;">
+              <thead><tr><th>Type</th><th>Days Before</th><th>Count</th><th>Date</th></tr></thead>
+              <tbody>${rows.slice(0, 20).map(r => `<tr>
+                <td>${r.type === 'cruise' ? '🚢 Cruise' : r.type === 'return' ? '🔙 Return' : '🗺️ Tour'}</td>
+                <td>${r.days_before ?? '-'} ${(r.days_before ?? 0) === 1 ? 'day' : 'days'}</td>
+                <td><strong>${r.count}</strong></td>
+                <td>${r.sent_date}</td>
+              </tr>`).join('')}</tbody>
+            </table>
+          </div>` : ''}
           <div style="margin-top: 12px; font-size: 12px; color: var(--text-secondary);">
             Last updated: ${new Date().toLocaleString()}
           </div>
