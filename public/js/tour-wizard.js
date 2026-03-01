@@ -23,6 +23,21 @@ window.TourWizard = (function() {
   // Modal element
   let wizardModal = null;
   
+  // Normalize date string to YYYY-MM-DD format for <input type="date">
+  function normalizeDate(dateStr) {
+    if (!dateStr) return '';
+    // Already in YYYY-MM-DD format
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
+    // ISO datetime string like "2026-05-15T00:00:00.000Z" — extract date part
+    if (typeof dateStr === 'string' && dateStr.includes('T')) return dateStr.split('T')[0];
+    // Try to parse and format
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      return d.toISOString().split('T')[0];
+    } catch { return dateStr; }
+  }
+  
   // Initialize wizard with required data
   function init(regions, users) {
     wizardState.regions = regions || [];
@@ -54,10 +69,16 @@ window.TourWizard = (function() {
       wizardState.editMode = true;
       wizardState.tourId = tourId;
       wizardState.currentStep = 1;
+      
+      // Normalize date fields to YYYY-MM-DD for <input type="date"> compatibility
+      tour.departure_date = normalizeDate(tour.departure_date);
+      tour.registration_date = normalizeDate(tour.registration_date);
+      tour.return_date = normalizeDate(tour.return_date);
+      
       wizardState.tourData = { ...tour };
       
-      // Check if 2025 tour (view-only)
-      const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
+      // Check if 2025 tour (view-only) — use normalized date string directly
+      const depYear = tour.departure_date ? parseInt(tour.departure_date.substring(0, 4), 10) : 2025;
       wizardState.isViewOnly = depYear <= 2025;
       
       // Load passengers for data_version 2, or create from old format
@@ -140,7 +161,7 @@ window.TourWizard = (function() {
     wizardModal = document.createElement('div');
     wizardModal.className = 'wizard-modal-overlay';
     wizardModal.innerHTML = `
-      <div class="wizard-modal">
+      <div class="wizard-modal wizard-modal-with-sidebar">
         <div class="wizard-header">
           <h2 class="wizard-title">${wizardState.editMode ? (wizardState.isViewOnly ? '👁️ View Tour' : '✏️ Edit Tour') : '✨ New Tour'}</h2>
           <button type="button" class="wizard-close" data-action="close">&times;</button>
@@ -150,8 +171,20 @@ window.TourWizard = (function() {
           ${renderProgressSteps()}
         </div>
         
-        <div class="wizard-body">
-          ${renderCurrentStep()}
+        <div class="wizard-content-wrapper">
+          <div class="wizard-body">
+            ${renderCurrentStep()}
+          </div>
+          
+          <aside class="wizard-preview-sidebar" id="wizardPreviewSidebar">
+            <div class="preview-sidebar-header">
+              <span>📋 Live Preview</span>
+              <button type="button" class="preview-toggle-btn" data-action="toggle-preview" title="Toggle preview">◀</button>
+            </div>
+            <div class="preview-sidebar-content">
+              ${renderPreviewSidebar()}
+            </div>
+          </aside>
         </div>
         
         <div class="wizard-footer">
@@ -504,6 +537,150 @@ window.TourWizard = (function() {
     `;
   }
   
+  // Render live preview sidebar (shows all form data at all times)
+  function renderPreviewSidebar() {
+    const d = wizardState.tourData;
+    const region = wizardState.regions.find(r => r.id == d.region_id);
+    const totals = calculateTotals();
+    
+    return `
+      <div class="preview-section">
+        <div class="preview-section-title">📋 Tour Info</div>
+        <div class="preview-row">
+          <span class="preview-label">Tour Code</span>
+          <span class="preview-value ${d.tour_code ? '' : 'empty'}" id="pv-tour-code">${d.tour_code || '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Booking Code</span>
+          <span class="preview-value ${d.booking_code ? '' : 'empty'}" id="pv-booking-code">${d.booking_code || '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Registration</span>
+          <span class="preview-value ${d.registration_date ? '' : 'empty'}">${d.registration_date ? formatDate(d.registration_date) : '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Departure</span>
+          <span class="preview-value ${d.departure_date ? '' : 'empty'}">${d.departure_date ? formatDate(d.departure_date) : '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Return</span>
+          <span class="preview-value ${d.return_date ? '' : 'empty'}">${d.return_date ? formatDate(d.return_date) : '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Region</span>
+          <span class="preview-value ${region ? '' : 'empty'}">${region ? region.region_name : '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Status</span>
+          <span class="preview-value">${d.status || '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Staff</span>
+          <span class="preview-value ${d.staff_name ? '' : 'empty'}">${d.staff_name || '—'}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Participants</span>
+          <span class="preview-value">${d.jumlah_peserta || 1}</span>
+        </div>
+      </div>
+      
+      <div class="preview-section">
+        <div class="preview-section-title">👥 Passengers (${wizardState.passengers.length})</div>
+        ${wizardState.passengers.length === 0 ? '<div class="preview-empty">No passengers yet</div>' :
+          wizardState.passengers.map((p, i) => `
+            <div class="preview-passenger ${i === 0 ? 'lead' : ''}">
+              <span class="preview-passenger-name">${i === 0 ? '⭐ ' : ''}${p.name || '(No name)'}</span>
+              ${i === 0 && (p.phone_number || p.email) ? 
+                `<span class="preview-passenger-contact">${p.phone_number || ''}${p.email ? ' • ' + p.email : ''}</span>` : ''}
+              <span class="preview-passenger-price">Rp ${formatNumber(calculateNetPrice(p))}</span>
+            </div>
+          `).join('')}
+      </div>
+      
+      <div class="preview-section">
+        <div class="preview-section-title">💰 Financial</div>
+        <div class="preview-row">
+          <span class="preview-label">Base Price</span>
+          <span class="preview-value">Rp ${formatNumber(totals.totalBasePrice)}</span>
+        </div>
+        <div class="preview-row">
+          <span class="preview-label">Discount</span>
+          <span class="preview-value text-danger">- Rp ${formatNumber(totals.totalDiscount)}</span>
+        </div>
+        <div class="preview-row preview-total">
+          <span class="preview-label">Net Sales</span>
+          <span class="preview-value">Rp ${formatNumber(totals.totalNetSales)}</span>
+        </div>
+        <div class="preview-row preview-profit">
+          <span class="preview-label">Profit</span>
+          <span class="preview-value text-success">Rp ${formatNumber(totals.totalProfit)}</span>
+        </div>
+      </div>
+      
+      ${(d.discount_remarks || d.remarks_request || d.invoice_number || d.link_pelunasan_tour) ? `
+        <div class="preview-section">
+          <div class="preview-section-title">📝 Additional</div>
+          ${d.discount_remarks ? `<div class="preview-row full"><span class="preview-label">Discount Remarks</span><span class="preview-value">${d.discount_remarks}</span></div>` : ''}
+          ${d.remarks_request ? `<div class="preview-row full"><span class="preview-label">Remarks</span><span class="preview-value">${d.remarks_request}</span></div>` : ''}
+          ${d.invoice_number ? `<div class="preview-row"><span class="preview-label">Invoice</span><span class="preview-value">${d.invoice_number}</span></div>` : ''}
+          ${d.link_pelunasan_tour ? `<div class="preview-row"><span class="preview-label">Payment Link</span><span class="preview-value"><a href="${d.link_pelunasan_tour}" target="_blank" style="color:var(--primary, #3b82f6);">🔗 Link</a></span></div>` : ''}
+        </div>
+      ` : ''}
+    `;
+  }
+  
+  // Update the preview sidebar (called on every input change)
+  function updatePreviewSidebar() {
+    if (!wizardModal) return;
+    const sidebarContent = wizardModal.querySelector('.preview-sidebar-content');
+    if (sidebarContent) {
+      sidebarContent.innerHTML = renderPreviewSidebar();
+    }
+  }
+  
+  // Check for duplicate tour_code or booking_code
+  let duplicateCheckTimeout = null;
+  async function checkDuplicate(field, value) {
+    if (!value || !value.trim()) return;
+    
+    try {
+      const params = new URLSearchParams({ [field]: value.trim() });
+      if (wizardState.editMode && wizardState.tourId) {
+        params.set('exclude_id', wizardState.tourId);
+      }
+      const result = await window.fetchJson(`/api/tours/check-duplicate?${params}`);
+      
+      if (result.hasDuplicates && result.duplicates[field]) {
+        const dup = result.duplicates[field];
+        const inputEl = wizardModal?.querySelector(`input[name="${field}"]`);
+        if (inputEl) {
+          inputEl.style.borderColor = '#ef4444';
+          inputEl.style.boxShadow = '0 0 0 3px rgba(239, 68, 68, 0.15)';
+          // Show warning next to the field
+          let warning = inputEl.parentElement.querySelector('.duplicate-warning');
+          if (!warning) {
+            warning = document.createElement('div');
+            warning.className = 'duplicate-warning';
+            inputEl.parentElement.appendChild(warning);
+          }
+          const otherField = field === 'tour_code' ? 'booking_code' : 'tour_code';
+          warning.innerHTML = `⚠️ Duplicate! Already used by ${otherField}: ${dup[otherField] || dup.id}`;
+        }
+      } else {
+        // Clear any existing warning
+        const inputEl = wizardModal?.querySelector(`input[name="${field}"]`);
+        if (inputEl) {
+          inputEl.style.borderColor = '';
+          inputEl.style.boxShadow = '';
+          const warning = inputEl.parentElement.querySelector('.duplicate-warning');
+          if (warning) warning.remove();
+        }
+      }
+    } catch (err) {
+      console.error('Duplicate check failed:', err);
+    }
+  }
+  
   // Render footer buttons
   function renderFooterButtons() {
     const isFirst = wizardState.currentStep === 1;
@@ -558,6 +735,17 @@ window.TourWizard = (function() {
       btn.addEventListener('click', saveTour);
     });
     
+    // Preview sidebar toggle
+    wizardModal.querySelectorAll('[data-action="toggle-preview"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const sidebar = wizardModal.querySelector('.wizard-preview-sidebar');
+        if (sidebar) {
+          sidebar.classList.toggle('collapsed');
+          btn.textContent = sidebar.classList.contains('collapsed') ? '▶' : '◀';
+        }
+      });
+    });
+    
     // Form input changes
     wizardModal.querySelectorAll('input, select, textarea').forEach(input => {
       input.addEventListener('change', handleInputChange);
@@ -597,6 +785,12 @@ window.TourWizard = (function() {
         const count = parseInt(value) || 1;
         wizardState.tourData.jumlah_peserta = count;
       }
+      
+      // Duplicate check on tour_code or booking_code (debounced)
+      if ((name === 'tour_code' || name === 'booking_code') && e.type === 'change') {
+        clearTimeout(duplicateCheckTimeout);
+        duplicateCheckTimeout = setTimeout(() => checkDuplicate(name, value), 300);
+      }
     }
     
     // Passenger fields
@@ -616,6 +810,9 @@ window.TourWizard = (function() {
         updatePassengerSubtotal(index);
       }
     }
+    
+    // Update preview sidebar on every change
+    updatePreviewSidebar();
   }
   
   // Update passenger subtotal display
@@ -741,6 +938,9 @@ window.TourWizard = (function() {
     if (progressEl) progressEl.innerHTML = renderProgressSteps();
     if (bodyEl) bodyEl.innerHTML = renderCurrentStep();
     if (footerEl) footerEl.innerHTML = renderFooterButtons();
+    
+    // Update preview sidebar
+    updatePreviewSidebar();
     
     // Re-attach event listeners
     attachEventListeners();
@@ -885,7 +1085,8 @@ window.TourWizard = (function() {
   // Check if tour is editable (2026+)
   function isTourEditable(tour) {
     if (!tour || !tour.departure_date) return true;
-    const depYear = new Date(tour.departure_date).getFullYear();
+    const dateStr = normalizeDate(tour.departure_date);
+    const depYear = dateStr ? parseInt(dateStr.substring(0, 4), 10) : 2026;
     return depYear >= 2026;
   }
   

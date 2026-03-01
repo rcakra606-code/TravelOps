@@ -39,6 +39,19 @@
   transition: transform 0.3s ease;
 }
 
+/* Modal with sidebar — wider to accommodate preview panel */
+.wizard-modal.wizard-modal-with-sidebar {
+  max-width: 1200px;
+}
+
+/* Content wrapper: form + sidebar side by side */
+.wizard-content-wrapper {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .wizard-modal-overlay.active .wizard-modal {
   transform: scale(1);
 }
@@ -149,6 +162,7 @@
   flex: 1;
   overflow-y: auto;
   padding: 24px;
+  min-width: 0;
 }
 
 .wizard-step-content {
@@ -521,6 +535,19 @@
     max-height: 95vh;
   }
   
+  .wizard-modal.wizard-modal-with-sidebar {
+    max-width: 95%;
+  }
+  
+  /* Hide sidebar on mobile */
+  .wizard-preview-sidebar {
+    display: none !important;
+  }
+  
+  .wizard-content-wrapper {
+    flex-direction: column;
+  }
+  
   .wizard-form-grid {
     grid-template-columns: 1fr;
   }
@@ -557,6 +584,213 @@
   
   .step-label {
     display: none;
+  }
+}
+
+/* =========================================================
+   LIVE PREVIEW SIDEBAR
+   Shows all form data in real-time as user fills the wizard
+   ========================================================= */
+
+.wizard-preview-sidebar {
+  width: 300px;
+  min-width: 300px;
+  border-left: 1px solid var(--border-medium, #e5e7eb);
+  background: var(--bg-subtle, #f9fafb);
+  overflow-y: auto;
+  transition: width 0.3s ease, min-width 0.3s ease, opacity 0.3s ease;
+}
+
+.wizard-preview-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  border-left: none;
+}
+
+.preview-sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-medium, #e5e7eb);
+  background: var(--bg-card, #fff);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-primary, #111827);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.preview-toggle-btn {
+  background: none;
+  border: 1px solid var(--border-medium, #e5e7eb);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 2px 6px;
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  transition: background 0.2s;
+}
+
+.preview-toggle-btn:hover {
+  background: var(--bg-hover, #f3f4f6);
+  color: var(--text-primary, #111827);
+}
+
+.preview-sidebar-content {
+  padding: 12px;
+}
+
+.preview-section {
+  margin-bottom: 16px;
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border-light, #f3f4f6);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.preview-section-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary, #111827);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+}
+
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 4px 0;
+  gap: 8px;
+}
+
+.preview-row.full {
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preview-label {
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+.preview-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  text-align: right;
+  word-break: break-word;
+}
+
+.preview-value.empty {
+  color: var(--text-secondary, #9ca3af);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.preview-value.text-danger {
+  color: var(--danger, #ef4444);
+}
+
+.preview-value.text-success {
+  color: var(--success, #10b981);
+}
+
+.preview-total {
+  border-top: 1px solid var(--border-medium, #e5e7eb);
+  margin-top: 4px;
+  padding-top: 8px;
+}
+
+.preview-total .preview-value {
+  font-weight: 600;
+}
+
+.preview-profit {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.03));
+  margin: 4px -12px -12px -12px;
+  padding: 8px 12px;
+  border-radius: 0 0 10px 10px;
+}
+
+.preview-profit .preview-value {
+  font-weight: 600;
+}
+
+.preview-empty {
+  font-size: 12px;
+  color: var(--text-secondary, #9ca3af);
+  font-style: italic;
+  text-align: center;
+  padding: 8px;
+}
+
+.preview-passenger {
+  padding: 6px 8px;
+  background: var(--bg-subtle, #f9fafb);
+  border-radius: 6px;
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.preview-passenger.lead {
+  border-left: 3px solid var(--primary, #3b82f6);
+}
+
+.preview-passenger-name {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+}
+
+.preview-passenger-contact {
+  font-size: 10px;
+  color: var(--text-secondary, #6b7280);
+}
+
+.preview-passenger-price {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-primary, #111827);
+  text-align: right;
+}
+
+/* =========================================================
+   DUPLICATE WARNING
+   Shows inline warning on booking_code / tour_code fields
+   ========================================================= */
+
+.duplicate-warning {
+  margin-top: 4px;
+  padding: 5px 8px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #dc2626;
+  font-weight: 500;
+  animation: duplicateWarnIn 0.3s ease;
+}
+
+@keyframes duplicateWarnIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Tablet sidebar: narrower */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .wizard-preview-sidebar {
+    width: 240px;
+    min-width: 240px;
   }
 }
 

@@ -302,8 +302,8 @@ function mtRenderTable() {
     const statusText = status.charAt(0).toUpperCase() + status.slice(1);
     const hasInvoice = tour.invoice_number && tour.invoice_number.trim();
     const staffColumn = mtIsAdminView ? `<td class="mt-staff-column">${tour.staff_name || '-'}</td>` : '';
-    const depYear = tour.departure_date ? new Date(tour.departure_date).getFullYear() : 2025;
-    const is2025 = depYear <= 2025 || tour.is_archived === 1;
+    const depYear = tour.departure_date ? parseInt(String(tour.departure_date).substring(0, 4), 10) : 2025;
+    const is2025 = (isNaN(depYear) || depYear <= 2025) || tour.is_archived === 1;
     const isV2 = tour.data_version === 2;
     const versionBadge = isV2 ? '<span class="badge badge-info" style="margin-left:4px;font-size:10px;">v2</span>' : '';
     const archivedBadge = tour.is_archived === 1 ? '<span class="badge badge-neutral" style="margin-left:4px;font-size:10px;">📦 Archived</span>' : '';
@@ -798,8 +798,8 @@ async function renderDashboard() {
     const toursData = (allToursData || []).filter(t => {
       if (t.is_archived === 1 || t.is_archived === true) return false;
       if (t.departure_date) {
-        const depYear = new Date(t.departure_date).getFullYear();
-        if (depYear <= 2025) return false;
+        const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
+        if (!isNaN(depYear) && depYear <= 2025) return false;
       }
       return true;
     });
@@ -1289,8 +1289,10 @@ function isTourArchived(tour) {
 
 function isTour2025OrEarlier(tour) {
   if (!tour || !tour.departure_date) return true;
-  const depYear = new Date(tour.departure_date).getFullYear();
-  return depYear <= 2025;
+  // Use substring to avoid timezone issues with new Date()
+  const dateStr = String(tour.departure_date);
+  const depYear = dateStr.includes('T') ? parseInt(dateStr.substring(0, 4), 10) : parseInt(dateStr.substring(0, 4), 10);
+  return isNaN(depYear) || depYear <= 2025;
 }
 
 // Returns true if tour should be read-only (archived OR 2025-)
