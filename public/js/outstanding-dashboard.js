@@ -325,7 +325,7 @@ function editOutstanding(id) {
   });
 }
 
-function deleteOutstanding(id) {
+async function deleteOutstanding(id) {
   const user = window.getUser();
   if (user.type !== 'admin') {
     window.toast?.error('Access denied: Only admin can delete records');
@@ -335,11 +335,31 @@ function deleteOutstanding(id) {
   const item = outstandingData.find(r => r.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Outstanding Record', `Invoice ${item.nomor_invoice}`, async () => {
+  const displayName = `Invoice ${item.nomor_invoice}`;
+  
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Outstanding Record?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete outstanding record "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await window.fetchJson(`/api/outstanding/${id}`, { method: 'DELETE' });
     window.toast?.success('Outstanding record deleted successfully');
     await loadOutstandingData();
-  });
+  } catch (error) {
+    console.error('Delete outstanding failed:', error);
+    window.toast?.error(error.message || 'Failed to delete outstanding record');
+  }
 }
 
 /* === EXPORT / IMPORT / TEMPLATE === */

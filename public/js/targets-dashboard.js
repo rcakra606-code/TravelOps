@@ -253,23 +253,35 @@ async function editTarget(id) {
 }
 
 async function deleteTarget(id) {
-  console.log('🗑️ Delete Target called with id:', id);
-  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = targetsData.find(t => t.id === id);
-  if (!item) {
-    console.error('Target item not found:', id);
-    return;
-  }
+  if (!item) return;
   
   const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const displayName = `${item.staff_name} - ${monthNames[item.month - 1]} ${item.year}`;
   
-  console.log('Calling CRUDModal.delete for target:', item);
-  window.CRUDModal.delete('Target', displayName, async () => {
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Target?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete target "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await fetchJson(`/api/targets/${id}`, { method: 'DELETE' });
     window.toast.success('Target deleted successfully');
     await loadTargets();
-  });
+  } catch (error) {
+    console.error('Delete target failed:', error);
+    window.toast.error(error.message || 'Failed to delete target');
+  }
 }
 
 // Hide Add Target button for basic staff

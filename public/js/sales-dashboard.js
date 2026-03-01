@@ -920,11 +920,31 @@ window.deleteSale = async function(id) {
   const item = salesDataForCRUD.find(s => s.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Sales', `${item.month || 'this sale'}`, async () => {
+  const displayName = item.month || 'this sale';
+  
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Sales?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete sales "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await window.fetchJson(`/api/sales/${id}`, { method: 'DELETE' });
     window.toast.success('Sales deleted successfully');
     await Promise.all([loadSalesData(), renderDashboard()]);
-  });
+  } catch (error) {
+    console.error('Delete sale failed:', error);
+    window.toast.error(error.message || 'Failed to delete sales');
+  }
 };
 
 if (el('addSaleBtn')) {

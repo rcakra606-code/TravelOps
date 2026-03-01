@@ -199,20 +199,34 @@ window.editHotel = async function(id) {
 };
 
 window.deleteHotel = async function(id) {
-  console.log('🗑️ Delete Hotel called with id:', id);
-  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = hotelData.find(h => h.id === id);
-  if (!item) {
-    console.error('Hotel item not found:', id);
-    return;
-  }
+  if (!item) return;
   
-  console.log('Calling CRUDModal.delete for hotel:', item);
-  window.CRUDModal.delete('Hotel Booking', `${item.hotel_name} - ${item.confirmation_number || 'No confirmation'}`, async () => {
+  const displayName = `${item.hotel_name} - ${item.confirmation_number || 'No confirmation'}`;
+  
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Hotel Booking?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete hotel booking "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await fetchJson(`/api/hotel_bookings/${id}`, { method: 'DELETE' });
     window.toast.success('Hotel booking deleted');
     await loadHotel();
-  });
+  } catch (error) {
+    console.error('Delete hotel failed:', error);
+    window.toast.error(error.message || 'Failed to delete hotel booking');
+  }
 };
 
 el('addHotelBtn').addEventListener('click', () => {

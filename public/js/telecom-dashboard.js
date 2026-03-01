@@ -211,20 +211,34 @@ window.editTelecom = async function(id) {
 };
 
 window.deleteTelecom = async function(id) {
-  console.log('🗑️ Delete Telecom called with id:', id);
-  console.log('CRUDModal available:', !!window.CRUDModal);
   const item = telecomData.find(t => t.id === id);
-  if (!item) {
-    console.error('Telecom item not found:', id);
-    return;
-  }
+  if (!item) return;
   
-  console.log('Calling CRUDModal.delete for telecom:', item);
-  window.CRUDModal.delete('Telecom', `${item.nama} - ${item.no_telephone}`, async () => {
+  const displayName = `${item.nama} - ${item.no_telephone}`;
+  
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Telecom?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete telecom "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await fetchJson(`/api/telecom/${id}`, { method: 'DELETE' });
     window.toast.success('Telecom deleted');
     await loadTelecom();
-  });
+  } catch (error) {
+    console.error('Delete telecom failed:', error);
+    window.toast.error(error.message || 'Failed to delete telecom');
+  }
 };
 
 el('addTelecomBtn').addEventListener('click', () => {

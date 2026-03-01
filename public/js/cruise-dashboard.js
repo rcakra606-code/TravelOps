@@ -303,12 +303,30 @@ async function deleteCruise(id) {
   
   const displayName = `${item.cruise_brand} - ${item.ship_name} (${item.sailing_start})`;
   
-  window.CRUDModal.delete('Cruise Booking', displayName, async () => {
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Cruise Booking?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete cruise booking "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
     toast.success('Cruise booking deleted successfully');
     await loadCruises();
-  });
-};
+  } catch (error) {
+    console.error('Delete cruise failed:', error);
+    toast.error(error.message || 'Failed to delete cruise booking');
+  }
+}
 
 el('addCruiseBtn').addEventListener('click', () => {
   window.CRUDModal.create('Add New Cruise Booking', [

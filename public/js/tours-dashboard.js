@@ -1636,36 +1636,35 @@ if (archiveBtn) {
   
   archiveBtn.addEventListener('click', async () => {
     // Confirm before archiving
-    if (!window.CRUDModal || !window.CRUDModal.delete) {
-      if (!confirm('Archive all tours with 2025 departure dates? They will become read-only and non-editable.')) return;
-    }
-    
-    const doArchive = async () => {
-      try {
-        archiveBtn.disabled = true;
-        archiveBtn.textContent = '⏳ Archiving...';
-        const result = await window.fetchJson('/api/tours/archive-2025', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        window.toast.success(result.message || `Archived ${result.archived} tours`);
-        archiveBtn.style.display = 'none';
-        await loadToursData();
-      } catch (err) {
-        window.toast.error(err.message || 'Failed to archive tours');
-        archiveBtn.disabled = false;
-        archiveBtn.textContent = '📦 Archive 2025';
-      }
-    };
-    
-    if (window.CRUDModal && window.CRUDModal.delete) {
-      window.CRUDModal.delete(
-        'Archive 2025 Tours',
-        'all tours with 2025 or earlier departure dates. They will become read-only and non-editable',
-        doArchive
-      );
+    let confirmed = false;
+    if (window.confirmDialog) {
+      confirmed = await window.confirmDialog.show({
+        title: 'Archive 2025 Tours?',
+        message: 'Archive all tours with 2025 or earlier departure dates? They will become read-only and non-editable.',
+        confirmText: 'Archive',
+        cancelText: 'Cancel',
+        confirmColor: '#f59e0b',
+        icon: '📦'
+      });
     } else {
-      await doArchive();
+      confirmed = confirm('Archive all tours with 2025 departure dates? They will become read-only and non-editable.');
+    }
+    if (!confirmed) return;
+    
+    try {
+      archiveBtn.disabled = true;
+      archiveBtn.textContent = '⏳ Archiving...';
+      const result = await window.fetchJson('/api/tours/archive-2025', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      window.toast.success(result.message || `Archived ${result.archived} tours`);
+      archiveBtn.style.display = 'none';
+      await loadToursData();
+    } catch (err) {
+      window.toast.error(err.message || 'Failed to archive tours');
+      archiveBtn.disabled = false;
+      archiveBtn.textContent = '📦 Archive 2025';
     }
   });
 }

@@ -254,12 +254,30 @@ async function deleteOvertime(id) {
   const item = overtimeData.find(o => o.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Overtime', item.event_name, async () => {
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Overtime?',
+      message: `Are you sure you want to delete "${item.event_name}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete overtime "${item.event_name}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
     toast.success('Overtime deleted successfully');
     await loadOvertime();
-  });
-};
+  } catch (error) {
+    console.error('Delete overtime failed:', error);
+    toast.error(error.message || 'Failed to delete overtime');
+  }
+}
 
 el('addOvertimeBtn').addEventListener('click', () => {
   window.CRUDModal.create('Add Overtime', [

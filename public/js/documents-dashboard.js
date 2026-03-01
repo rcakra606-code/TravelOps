@@ -818,11 +818,31 @@ window.deleteDocument = async function(id) {
   const item = documentsDataForCRUD.find(d => d.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Document', `${item.guest_name || 'this document'}`, async () => {
+  const displayName = item.guest_name || 'this document';
+  
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Document?',
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete document "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
     await window.fetchJson(`/api/documents/${id}`, { method: 'DELETE' });
     window.toast.success('Document deleted successfully');
     await Promise.all([loadDocumentsData(), renderDashboard()]);
-  });
+  } catch (error) {
+    console.error('Delete document failed:', error);
+    window.toast.error(error.message || 'Failed to delete document');
+  }
 };
 
 if (el('addDocumentBtn')) {

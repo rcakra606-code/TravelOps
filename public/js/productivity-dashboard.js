@@ -894,18 +894,19 @@ window.openAddProductivityModal = function(productType) {
     const warnings = validateProductivityData(formData);
     if (warnings.length > 0) {
       // Show warnings but allow to continue
-      const proceed = await new Promise(resolve => {
-        if (window.confirmDialog) {
-          window.confirmDialog(
-            'Data Validation Warnings',
-            `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
-            () => resolve(true),
-            () => resolve(false)
-          );
-        } else {
-          resolve(confirm(warnings.join('\n') + '\n\nDo you want to save anyway?'));
-        }
-      });
+      let proceed = false;
+      if (window.confirmDialog) {
+        proceed = await window.confirmDialog.show({
+          title: 'Data Validation Warnings',
+          message: `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
+          confirmText: 'Save Anyway',
+          cancelText: 'Cancel',
+          confirmColor: '#f59e0b',
+          icon: '⚠️'
+        });
+      } else {
+        proceed = confirm(warnings.join('\n') + '\n\nDo you want to save anyway?');
+      }
       if (!proceed) return;
     }
     
@@ -1042,18 +1043,19 @@ window.editProductivity = async function(id) {
     // Validate data before saving
     const warnings = validateProductivityData(formData);
     if (warnings.length > 0) {
-      const proceed = await new Promise(resolve => {
-        if (window.confirmDialog) {
-          window.confirmDialog(
-            'Data Validation Warnings',
-            `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
-            () => resolve(true),
-            () => resolve(false)
-          );
-        } else {
-          resolve(confirm(warnings.join('\n') + '\n\nDo you want to save anyway?'));
-        }
-      });
+      let proceed = false;
+      if (window.confirmDialog) {
+        proceed = await window.confirmDialog.show({
+          title: 'Data Validation Warnings',
+          message: `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
+          confirmText: 'Save Anyway',
+          cancelText: 'Cancel',
+          confirmColor: '#f59e0b',
+          icon: '⚠️'
+        });
+      } else {
+        proceed = confirm(warnings.join('\n') + '\n\nDo you want to save anyway?');
+      }
       if (!proceed) return;
     }
     
@@ -1107,16 +1109,32 @@ window.deleteProductivity = async function(id) {
   if (!item) return;
   
   const product = PRODUCT_TYPES.find(p => p.id === item.product_type);
+  const title = `${product?.name || 'Productivity'} Record`;
+  const displayName = `${getMonthName(item.month)} ${item.year} - ${item.staff_name}`;
   
-  window.CRUDModal.delete(
-    `${product?.name || 'Productivity'} Record`,
-    `${getMonthName(item.month)} ${item.year} - ${item.staff_name}`,
-    async () => {
-      await window.fetchJson(`/api/productivity/${id}`, { method: 'DELETE' });
-      window.toast?.success('Record deleted successfully');
-      await loadData();
-    }
-  );
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: `Delete ${title}?`,
+      message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete ${title} "${displayName}"? This action cannot be undone.`);
+  }
+  if (!confirmed) return;
+  
+  try {
+    await window.fetchJson(`/api/productivity/${id}`, { method: 'DELETE' });
+    window.toast?.success('Record deleted successfully');
+    await loadData();
+  } catch (error) {
+    console.error('Delete productivity failed:', error);
+    window.toast?.error(error.message || 'Failed to delete record');
+  }
 };
 
 /* === FILTER MODAL === */
