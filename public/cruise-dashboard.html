@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -8,10 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/app-v2.css">
+  <link rel="stylesheet" href="/css/app-v2.css">
   <link rel="stylesheet" href="/css/dashboard.css">
   <link rel="stylesheet" href="/css/modal.css">
-    <link rel="stylesheet" href="/css/table-enhancements.css">
+  <link rel="stylesheet" href="/css/table-enhancements.css">
   <link rel="stylesheet" href="/css/filter-enhancements.css">
   <link rel="stylesheet" href="/css/status-badges.css">
   <link rel="stylesheet" href="/css/animations.css">
@@ -32,81 +32,81 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">â˜°</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">ðŸš€ TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">ðŸ  Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">ðŸ“¦</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">ðŸ§³ Tours</a>
-          <a href="/documents-dashboard.html">ðŸ“„ Documents</a>
-          <a href="/hotel-dashboard.html">ðŸ¨ Hotel</a>
-          <a href="/cruise-dashboard.html" class="active">ðŸš¢ Cruise</a>
-          <a href="/telecom-dashboard.html">ðŸ“ž Telecom</a>
-          <a href="/tracking-dashboard.html">ðŸ“¦ Tracking</a>
-          <a href="/ticket-recap-dashboard.html">âœˆï¸ Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html" class="active">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">ðŸ“Š</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">ðŸ’° Sales & Target</a>
-          <a href="/overtime-dashboard.html">â° Overtime</a>
-          <a href="/productivity-dashboard.html">ðŸ“ˆ Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">ðŸ¢</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">ðŸ“Š Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">âš™ï¸</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">ðŸ“‹ Outstanding</a>
-          <a href="/cashout-dashboard.html">ðŸ’¸ Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">âš™ï¸ Admin Settings</a>
-          <a href="/logs-dashboard.html">ðŸ“‹ System Logs</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">ðŸ‘¤ Profile</a>
-      <a href="/logout.html" id="logoutLink">ðŸšª Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">â€”</div>
-      <div id="userRole">â€”</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
@@ -148,7 +148,7 @@
         <input 
           type="text" 
           id="searchInput" 
-          placeholder="ðŸ” Search by cruise brand, ship, PIC..." 
+          placeholder="🔍 Search by cruise brand, ship, PIC..." 
           style="flex: 1; min-width: 250px;"
         />
         <select id="brandFilter" style="min-width: 150px;">
@@ -157,8 +157,8 @@
         <input type="date" id="startDateFilter" placeholder="Sailing From" style="min-width: 150px;" />
         <input type="date" id="endDateFilter" placeholder="Sailing To" style="min-width: 150px;" />
         <button id="clearFilters" class="btn btn-secondary">Clear Filters</button>
-        <button id="importBtn" class="btn btn-outline" title="Import from CSV">ðŸ“¤ Import</button>
-        <button id="exportBtn" class="btn btn-outline">ðŸ“Š Export CSV</button>
+        <button id="importBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+        <button id="exportBtn" class="btn btn-outline">📊 Export CSV</button>
         <input type="file" id="importFileInput" accept=".csv" style="display:none;">
       </div>
 

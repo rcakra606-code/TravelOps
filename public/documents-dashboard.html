@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -32,81 +32,81 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">â˜°</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">ðŸš€ TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">ðŸ  Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">ðŸ“¦</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">ðŸ§³ Tours</a>
-          <a href="/documents-dashboard.html" class="active">ðŸ“„ Documents</a>
-          <a href="/hotel-dashboard.html">ðŸ¨ Hotel</a>
-          <a href="/cruise-dashboard.html">ðŸš¢ Cruise</a>
-          <a href="/telecom-dashboard.html">ðŸ“ž Telecom</a>
-          <a href="/tracking-dashboard.html">ðŸ“¦ Tracking</a>
-          <a href="/ticket-recap-dashboard.html">âœˆï¸ Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html" class="active">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">ðŸ“Š</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">ðŸ’° Sales & Target</a>
-          <a href="/overtime-dashboard.html">â° Overtime</a>
-          <a href="/productivity-dashboard.html">ðŸ“ˆ Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">ðŸ¢</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">ðŸ“Š Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">âš™ï¸</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">â–¼</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">ðŸ“‹ Outstanding</a>
-          <a href="/cashout-dashboard.html">ðŸ’¸ Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">âš™ï¸ Admin Settings</a>
-          <a href="/logs-dashboard.html">ðŸ“‹ System Logs</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">ðŸ‘¤ Profile</a>
-      <a href="/logout.html" id="logoutLink">ðŸšª Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">â€”</div>
-      <div id="userRole">â€”</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
@@ -204,7 +204,7 @@
       <!-- Pending Documents Table -->
       <div class="chart-container" style="margin-top: 20px;">
         <div class="chart-header">
-          <div class="chart-title">â³ Documents in Process (Not Sent Yet)</div>
+          <div class="chart-title">⏳ Documents in Process (Not Sent Yet)</div>
         </div>
         <div style="padding: 16px;">
           <table style="width: 100%; border-collapse: collapse;">
@@ -227,8 +227,8 @@
 
       <!-- Export/Import Buttons -->
       <div style="text-align: right; margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
-        <button id="importDocumentsBtn" class="btn btn-secondary" title="Import from CSV">â¬†ï¸ Import</button>
-        <button id="exportDocumentsCSV" class="btn">â¬‡ï¸ Export Documents Data</button>
+        <button id="importDocumentsBtn" class="btn btn-secondary" title="Import from CSV">⬆️ Import</button>
+        <button id="exportDocumentsCSV" class="btn">⬇️ Export Documents Data</button>
         <input type="file" id="importDocumentsFileInput" accept=".csv" style="display:none;">
       </div>
     </div>
@@ -239,7 +239,7 @@
         <input 
           type="text" 
           id="searchInput" 
-          placeholder="ðŸ” Search by customer, tour code, passport..." 
+          placeholder="🔍 Search by customer, tour code, passport..." 
           style="flex: 1; min-width: 250px;"
         />
         <select id="filterYear" style="min-width: 120px;">
@@ -268,17 +268,17 @@
         <select id="filterStaff" style="min-width: 140px;">
           <option value="">All Staff</option>
         </select>
-        <button id="clearFilters" class="btn btn-secondary">ðŸ”„ Reset</button>
-        <button id="exportDocumentsBtn" class="btn btn-outline">ðŸ“Š Export</button>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
+        <button id="exportDocumentsBtn" class="btn btn-outline">📊 Export</button>
       </div>
     </div>
 
     <!-- Documents Data Table with CRUD -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-        <h3>ðŸ“‹ Documents Records</h3>
+        <h3>📋 Documents Records</h3>
         <div style="display: flex; gap: 10px;">
-          <input type="text" id="searchDocuments" placeholder="ðŸ” Search documents..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
+          <input type="text" id="searchDocuments" placeholder="🔍 Search documents..." style="padding: 8px 12px; border: 1px solid var(--border-medium); border-radius: 6px;">
           <button id="addDocumentBtn" class="btn btn-primary">+ Add Document</button>
         </div>
       </div>
