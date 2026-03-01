@@ -6,7 +6,7 @@
 
 /* Hover row highlighting */
 .table tbody tr {
-  transition: background-color 0.15s ease, transform 0.15s ease;
+  transition: background-color 0.15s ease, transform 0.15s ease, color 0.15s ease;
 }
 
 .table tbody tr:hover {

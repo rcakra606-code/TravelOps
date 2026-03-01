@@ -398,7 +398,10 @@
   transition: all 0.2s ease;
 }
 
-/* Table row hover styles removed — single source in app-v2.css */
+/* Table row hover text enhancement */
+.table tbody tr:hover td {
+  color: var(--primary-700, #1d4ed8);
+}
 
 /* === ACTION BUTTONS === */
 .btn-action {

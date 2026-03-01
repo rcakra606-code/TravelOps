@@ -206,6 +206,12 @@
 }
 
 /* Responsive Adjustments */
+@media (max-width: 768px) {
+  .modal-card {
+    margin: 12px;
+  }
+}
+
 @media (max-width: 640px) {
   .modal-card {
     margin: 16px;
