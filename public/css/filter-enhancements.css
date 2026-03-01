@@ -1,3 +1,112 @@
+﻿/* =========================================================
+   MODERN FILTER CONTROLS STYLING
+   Clean, professional filter UI
+   ========================================================= */
+
+:root {
+  /* Filter variables */
+  --filter-bg: #ffffff;
+  --filter-border: #e5e7eb;
+  --filter-text: #374151;
+  --filter-label: #6b7280;
+  --filter-hover: #f9fafb;
+  --filter-focus: #3b82f6;
+  --filter-shadow: rgba(0, 0, 0, 0.05);
+}
+
+.filter-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  background: var(--filter-bg);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px var(--filter-shadow);
+  border: 1px solid var(--filter-border);
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 140px;
+}
+
+.filter-group label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--filter-label);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.filter-select,
+.filter-input {
+  padding: 8px 12px;
+  border: 1.5px solid var(--filter-border);
+  border-radius: 8px;
+  background: var(--filter-bg);
+  color: var(--filter-text);
+  font-size: 0.9rem;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.filter-select:hover,
+.filter-input:hover {
+  background: var(--filter-hover);
+  border-color: var(--filter-focus);
+}
+
+.filter-select:focus,
+.filter-input:focus {
+  outline: none;
+  border-color: var(--filter-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.filter-btn {
+  padding: 8px 20px;
+  margin-top: auto;
+  border: none;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.filter-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.filter-btn:active {
+  transform: translateY(0);
+}
+
+/* Responsive filters */
+@media (max-width: 768px) {
+  .filter-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .filter-group {
+    min-width: 100%;
+  }
+  
+  .filter-btn {
+    width: 100%;
+  }
+}
+
+
 /* ===================================
    FILTER ENHANCEMENTS
    Filter chips, badges, quick dates
@@ -277,3 +386,4 @@
   font-weight: 700;
   color: #15803d;
 }
+

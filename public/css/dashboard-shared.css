@@ -398,17 +398,7 @@
   transition: all 0.2s ease;
 }
 
-.table tbody tr {
-  transition: all 0.2s ease;
-}
-
-.table tbody tr:hover {
-  background: var(--primary-50, #eff6ff);
-}
-
-.table tbody tr:hover td {
-  color: var(--primary-700, #1d4ed8);
-}
+/* Table row hover styles removed — single source in app-v2.css */
 
 /* === ACTION BUTTONS === */
 .btn-action {

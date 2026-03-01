@@ -1,5 +1,5 @@
 // TravelOps Service Worker - Enhanced PWA v14
-const CACHE_NAME = 'travelops-v19';
+const CACHE_NAME = 'travelops-v20';
 const STATIC_ASSETS = [
   '/',
   '/single-dashboard.html',
@@ -14,11 +14,9 @@ const STATIC_ASSETS = [
   '/overtime-dashboard.html',
   '/cruise-dashboard.html',
   '/outstanding-dashboard.html',
-  '/css/styles.css',
   '/css/app-v2.css',
   '/css/dashboard.css',
   '/css/modal.css',
-  '/css/filters.css',
   '/css/mobile-responsive.css',
   '/css/table-enhancements.css',
   '/css/filter-enhancements.css',
@@ -28,7 +26,6 @@ const STATIC_ASSETS = [
   '/css/ui-enhancements.css',
   '/css/professional-polish.css',
   '/css/seasonal-theme.css',
-  '/css/micro-interactions.css',
   '/css/futuristic-theme.css',
   '/css/accessibility.css',
   '/js/auth-common.js',

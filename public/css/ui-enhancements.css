@@ -292,19 +292,7 @@
   border-spacing: 0;
 }
 
-/* Zebra Striping */
-.table tbody tr:nth-child(even) {
-  background: var(--bg-alt, #f9fafb);
-}
-
-/* Row Hover */
-.table tbody tr {
-  transition: background var(--transition-fast);
-}
-
-.table tbody tr:hover {
-  background: rgba(59, 130, 246, 0.05) !important;
-}
+/* Table row styles removed — single source in app-v2.css */
 
 /* Sortable Headers */
 .table th.sortable {
