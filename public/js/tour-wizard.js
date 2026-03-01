@@ -802,11 +802,8 @@ window.TourWizard = (function() {
       
       closeWizard();
       
-      // Refresh data if available
-      if (typeof loadToursData === 'function') loadToursData();
-      if (typeof renderDashboard === 'function') renderDashboard();
-      
-      // Dispatch custom event for external handlers
+      // Dispatch custom event - tours-dashboard.js handles data refresh via this event
+      // (Do NOT call loadToursData/renderDashboard directly to avoid duplicate API calls)
       window.dispatchEvent(new CustomEvent('tourWizardSaved'));
       
     } catch (error) {

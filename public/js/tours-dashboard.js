@@ -124,10 +124,13 @@ function renderMyToursTab() {
   const user = window.getUser();
 
   // Filter to user's tours (basic users) or all tours (admin)
+  // Exclude archived and 2025-or-earlier tours (only show active data)
+  const activeTours = toursDataForCRUD.filter(t => !isTourArchived(t) && !isTour2025OrEarlier(t));
+  
   if (mtIsAdminView) {
-    mtAllTours = [...toursDataForCRUD];
+    mtAllTours = [...activeTours];
     // Populate staff filter dropdown
-    const uniqueStaff = [...new Set(toursDataForCRUD.map(t => t.staff_name).filter(Boolean))].sort();
+    const uniqueStaff = [...new Set(activeTours.map(t => t.staff_name).filter(Boolean))].sort();
     const staffSelect = el('mtFilterStaff');
     if (staffSelect) {
       const currentVal = staffSelect.value;
@@ -136,7 +139,7 @@ function renderMyToursTab() {
     }
   } else {
     const staffName = user.name || user.username;
-    mtAllTours = toursDataForCRUD.filter(t => 
+    mtAllTours = activeTours.filter(t => 
       t.staff_name && t.staff_name.toLowerCase() === staffName.toLowerCase()
     );
   }
@@ -1212,8 +1215,8 @@ window.addEventListener('DOMContentLoaded', async () => {
   initTourWizard();
   
   // Listen for wizard save events to refresh data
-  window.addEventListener('tourWizardSaved', () => {
-    loadToursData();
+  window.addEventListener('tourWizardSaved', async () => {
+    await loadToursData();
     renderDashboard();
   });
   
@@ -1503,11 +1506,34 @@ window.deleteTour = async function(id) {
   const item = toursDataForCRUD.find(t => t.id === id);
   if (!item) return;
   
-  window.CRUDModal.delete('Tour', `${item.tour_code || 'this tour'} - ${item.lead_passenger}`, async () => {
+  const itemLabel = `${item.tour_code || 'this tour'} - ${item.lead_passenger || 'Unknown'}`;
+  
+  // Use confirmDialog directly (with native confirm fallback)
+  let confirmed = false;
+  if (window.confirmDialog) {
+    confirmed = await window.confirmDialog.show({
+      title: 'Delete Tour?',
+      message: `Are you sure you want to delete "${itemLabel}"? This action cannot be undone.`,
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: '#dc2626',
+      icon: '🗑️'
+    });
+  } else {
+    confirmed = confirm(`Delete tour "${itemLabel}"? This action cannot be undone.`);
+  }
+  
+  if (!confirmed) return;
+  
+  try {
     await window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' });
     window.toast.success('Tour deleted successfully');
-    await Promise.all([loadToursData(), renderDashboard()]);
-  });
+    await loadToursData();
+    renderDashboard();
+  } catch (error) {
+    console.error('Delete tour failed:', error);
+    window.toast.error(error.message || 'Failed to delete tour');
+  }
 };
 
 if (el('addTourBtn')) {
