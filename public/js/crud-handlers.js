@@ -1495,6 +1495,12 @@ async function bulkDelete(entity) {
   try {
     // Use bulk delete endpoint for efficiency
     const ids = Array.from(state.selected[entity]);
+    // Optimistic: remove items from local state immediately
+    const originalData = [...(state[entity] || [])];
+    const idSet = new Set(ids.map(Number));
+    state[entity] = (state[entity] || []).filter(i => !idSet.has(Number(i.id)));
+    renderTable(entity);
+    
     const result = await fetchJson(`/api/${entity}/bulk-delete`, {
       method: 'POST',
       body: JSON.stringify({ ids })
@@ -1502,11 +1508,12 @@ async function bulkDelete(entity) {
     
     state.selected[entity].clear();
     toast.success(`Successfully deleted ${result.deleted} item(s)`);
-    
-    await loadData(entity);
-    renderTable(entity);
     updateBulkActionsUI(entity);
+    // Background sync
+    loadData(entity).then(() => renderTable(entity)).catch(() => {});
   } catch (err) {
+    // Restore on failure
+    if (originalData) { state[entity] = originalData; renderTable(entity); }
     const errorMsg = err.message || err.details?.error || 'Failed to delete items';
     toast.error(errorMsg);
     console.error('Bulk delete error:', err);
@@ -1544,9 +1551,8 @@ async function deleteItem(entity, id) {
   try {
     await fetchJson(`/api/${entity}/${id}`, { method: 'DELETE' });
     toast.success('Data berhasil dihapus');
-    // Refresh data from server to ensure sync
-    await loadData(entity);
-    renderTable(entity);
+    // Background sync for consistency (non-blocking)
+    loadData(entity).then(() => renderTable(entity)).catch(() => {});
   } catch (err) {
     // Restore data if delete failed
     state[entity] = originalData;
@@ -1713,31 +1719,54 @@ async function handleModalSubmit(formData, context) {
     }
 
     if (action === 'create') {
-      await fetchJson(`/api/${entity}`, {
+      const result = await fetchJson(`/api/${entity}`, {
         method: 'POST',
         body: formData
       });
       toast.success('Data berhasil ditambahkan');
+      // Optimistic: inject returned record into local state immediately
+      if (result && result.record) {
+        if (!state[entity]) state[entity] = [];
+        state[entity].push(result.record);
+        renderTable(entity);
+        // Highlight the new row
+        requestAnimationFrame(() => {
+          const row = document.querySelector(`tr[data-id="${result.record.id}"], tr[data-row-id="${result.record.id}"]`);
+          if (row) { row.classList.add('row-flash-in'); }
+        });
+      }
     } else if (action === 'update') {
-      await fetchJson(`/api/${entity}/${id}`, {
+      const result = await fetchJson(`/api/${entity}/${id}`, {
         method: 'PUT',
         body: formData
       });
       toast.success('Data berhasil diperbarui');
+      // Optimistic: patch the record in local state immediately
+      if (result && result.record && state[entity]) {
+        const idx = state[entity].findIndex(i => i.id === id || i.id === Number(id));
+        if (idx !== -1) {
+          state[entity][idx] = result.record;
+        }
+        renderTable(entity);
+        // Highlight the updated row
+        requestAnimationFrame(() => {
+          const row = document.querySelector(`tr[data-id="${id}"], tr[data-row-id="${id}"]`);
+          if (row) { row.classList.add('row-flash-update'); }
+        });
+      }
     }
     
-    // Reload data
-    await loadData(entity);
-    
-    // Refresh table if we're on that section
-    const activeSection = document.querySelector('.section.active');
-    if (activeSection && activeSection.id === entity) {
-      renderTable(entity);
-    }
+    // Background sync: silently re-fetch to ensure consistency (non-blocking)
+    loadData(entity).then(() => {
+      const activeSection = document.querySelector('.section.active');
+      if (activeSection && activeSection.id === entity) {
+        renderTable(entity);
+      }
+    }).catch(() => {});
     
     // Reload regions/users if those were updated
-    if (entity === 'regions') await loadRegions();
-    if (entity === 'users') await loadUsers();
+    if (entity === 'regions') loadRegions();
+    if (entity === 'users') loadUsers();
     
     return true;
   } catch (err) {
@@ -2139,9 +2168,7 @@ async function init() {
           if (result !== false) {
             // Close modal on success
             if (window.closeModal) window.closeModal(true);
-            // Refresh table
-            await loadData(context.entity);
-            renderTable(context.entity);
+            // handleModalSubmit already updates state + renders; no extra loadData needed
           }
         } catch (err) {
           console.error('Modal submit error:', err);

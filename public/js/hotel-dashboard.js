@@ -182,9 +182,10 @@ window.editHotel = async function(id) {
     { type: 'text', name: 'supplier_name', label: 'Supplier Name', icon: '🏢', placeholder: 'Hotel supplier name' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], item, async (formData) => {
-    await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+    const result = await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Hotel booking updated');
-    await loadHotel();
+    if (result && result.record) { const idx = hotelData.findIndex(i => i.id === item.id); if (idx !== -1) hotelData[idx] = result.record; applyFiltersAndRender(); }
+    loadHotel();
   }, {
     entity: 'hotel',
     size: 'large',
@@ -220,9 +221,10 @@ window.deleteHotel = async function(id) {
   if (!confirmed) return;
   
   try {
+    hotelData = hotelData.filter(i => i.id !== id); applyFiltersAndRender();
     await fetchJson(`/api/hotel_bookings/${id}`, { method: 'DELETE' });
     window.toast.success('Hotel booking deleted');
-    await loadHotel();
+    loadHotel();
   } catch (error) {
     console.error('Delete hotel failed:', error);
     window.toast.error(error.message || 'Failed to delete hotel booking');
@@ -247,9 +249,10 @@ el('addHotelBtn').addEventListener('click', () => {
     { type: 'text', name: 'supplier_name', label: 'Supplier Name', icon: '🏢', placeholder: 'Hotel supplier name' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], async (formData) => {
-    await fetchJson('/api/hotel_bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+    const result = await fetchJson('/api/hotel_bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Hotel booking added');
-    await loadHotel();
+    if (result && result.record) { hotelData.push(result.record); applyFiltersAndRender(); }
+    loadHotel();
   }, {
     entity: 'hotel',
     size: 'large',

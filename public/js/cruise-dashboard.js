@@ -273,12 +273,13 @@ async function editCruise(id) {
       formData.participant_names = formData.participant_names.join(', ');
     }
     
-    await fetchJson(`/api/cruise/${item.id}`, {
+    const result = await fetchJson(`/api/cruise/${item.id}`, {
       method: 'PUT',
       body: JSON.stringify(formData)
     });
     toast.success('Cruise booking updated successfully');
-    await loadCruises();
+    if (result && result.record) { const idx = cruiseData.findIndex(i => i.id === item.id); if (idx !== -1) cruiseData[idx] = result.record; applyFiltersAndRender(); }
+    loadCruises();
   }, {
     entity: 'cruise',
     size: 'large',
@@ -319,9 +320,10 @@ async function deleteCruise(id) {
   if (!confirmed) return;
   
   try {
+    cruiseData = cruiseData.filter(i => i.id !== id); applyFiltersAndRender();
     await fetchJson(`/api/cruise/${id}`, { method: 'DELETE' });
     toast.success('Cruise booking deleted successfully');
-    await loadCruises();
+    loadCruises();
   } catch (error) {
     console.error('Delete cruise failed:', error);
     toast.error(error.message || 'Failed to delete cruise booking');
@@ -420,13 +422,14 @@ el('addCruiseBtn').addEventListener('click', () => {
       formData.participant_names = formData.participant_names.join(', ');
     }
     
-    await fetchJson('/api/cruise', {
+    const result = await fetchJson('/api/cruise', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
     toast.success('Cruise booking added successfully');
-    await loadCruises();
+    if (result && result.record) { cruiseData.push(result.record); applyFiltersAndRender(); }
+    loadCruises();
   }, {
     entity: 'cruise',
     size: 'large',

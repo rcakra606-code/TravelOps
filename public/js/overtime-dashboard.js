@@ -231,12 +231,13 @@ async function editOvertime(id) {
       placeholder: 'Additional notes'
     }
   ], item, async (formData) => {
-    await fetchJson(`/api/overtime/${item.id}`, {
+    const result = await fetchJson(`/api/overtime/${item.id}`, {
       method: 'PUT',
       body: JSON.stringify(formData)
     });
     toast.success('Overtime updated successfully');
-    await loadOvertime();
+    if (result && result.record) { const idx = overtimeData.findIndex(i => i.id === item.id); if (idx !== -1) overtimeData[idx] = result.record; applyFiltersAndRender(); }
+    loadOvertime();
   }, {
     entity: 'overtime',
     autoSave: true,
@@ -270,9 +271,10 @@ async function deleteOvertime(id) {
   if (!confirmed) return;
   
   try {
+    overtimeData = overtimeData.filter(i => i.id !== id); applyFiltersAndRender();
     await fetchJson(`/api/overtime/${id}`, { method: 'DELETE' });
     toast.success('Overtime deleted successfully');
-    await loadOvertime();
+    loadOvertime();
   } catch (error) {
     console.error('Delete overtime failed:', error);
     toast.error(error.message || 'Failed to delete overtime');
@@ -336,13 +338,14 @@ el('addOvertimeBtn').addEventListener('click', () => {
       placeholder: 'Additional notes'
     }
   ], async (formData) => {
-    await fetchJson('/api/overtime', {
+    const result = await fetchJson('/api/overtime', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
     toast.success('Overtime added successfully');
-    await loadOvertime();
+    if (result && result.record) { overtimeData.push(result.record); applyFiltersAndRender(); }
+    loadOvertime();
   }, {
     entity: 'overtime',
     autoSave: true,

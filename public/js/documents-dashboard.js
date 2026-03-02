@@ -804,9 +804,10 @@ window.editDocument = async function(id) {
     { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
     { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
   ], item, async (formData) => {
-    await window.fetchJson(`/api/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    const result = await window.fetchJson(`/api/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Document updated successfully');
-    await Promise.all([loadDocumentsData(), renderDashboard()]);
+    if (result && result.record) { const idx = documentsDataForCRUD.findIndex(i => i.id === item.id); if (idx !== -1) documentsDataForCRUD[idx] = result.record; renderDashboard(); }
+    loadDocumentsData().then(() => renderDashboard()).catch(() => {});
   }, {
     entity: 'documents',
     size: 'large',
@@ -836,9 +837,10 @@ window.deleteDocument = async function(id) {
   if (!confirmed) return;
   
   try {
+    documentsDataForCRUD = documentsDataForCRUD.filter(i => i.id !== id); renderDashboard();
     await window.fetchJson(`/api/documents/${id}`, { method: 'DELETE' });
     window.toast.success('Document deleted successfully');
-    await Promise.all([loadDocumentsData(), renderDashboard()]);
+    loadDocumentsData().then(() => renderDashboard()).catch(() => {});
   } catch (error) {
     console.error('Delete document failed:', error);
     window.toast.error(error.message || 'Failed to delete document');
@@ -864,9 +866,10 @@ if (el('addDocumentBtn')) {
       { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
       { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
     ], async (formData) => {
-      await window.fetchJson('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      const result = await window.fetchJson('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Document added successfully');
-      await Promise.all([loadDocumentsData(), renderDashboard()]);
+      if (result && result.record) { documentsDataForCRUD.push(result.record); renderDashboard(); }
+      loadDocumentsData().then(() => renderDashboard()).catch(() => {});
     }, {
       entity: 'documents',
       size: 'large',

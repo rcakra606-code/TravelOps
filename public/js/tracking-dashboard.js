@@ -436,7 +436,7 @@ class TrackingDashboard {
         window.showToast?.(id ? 'Pengiriman berhasil diperbarui!' : 'Pengiriman berhasil disimpan!', 'success');
         window.logAudit?.(id ? 'update' : 'create', 'tracking_deliveries', id || result.id, data);
         this.closeDeliveryModal();
-        await this.loadData();
+        this.loadData();
       } else {
         const error = await res.json();
         window.showToast?.(error.message || 'Gagal menyimpan pengiriman', 'error');
@@ -507,7 +507,7 @@ class TrackingDashboard {
         window.showToast?.(id ? 'Penerimaan berhasil diperbarui!' : 'Penerimaan berhasil disimpan!', 'success');
         window.logAudit?.(id ? 'update' : 'create', 'tracking_receivings', id || result.id, data);
         this.closeReceivingModal();
-        await this.loadData();
+        this.loadData();
       } else {
         const error = await res.json();
         window.showToast?.(error.message || 'Gagal menyimpan penerimaan', 'error');
@@ -562,8 +562,12 @@ class TrackingDashboard {
       });
 
       if (res.ok) {
+        // Optimistic: update local state immediately
+        delivery.status = 'delivered';
+        this.renderDeliveries();
+        this.updateStats();
         window.showToast?.('Status berhasil diperbarui!', 'success');
-        await this.loadData();
+        this.loadData();
       } else {
         const error = await res.json();
         window.showToast?.(error.message || 'Gagal memperbarui status', 'error');

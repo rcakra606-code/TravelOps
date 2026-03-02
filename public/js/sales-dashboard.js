@@ -900,9 +900,10 @@ window.editSale = async function(id) {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
+    const result = await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
     window.toast.success('Sales updated successfully');
-    await Promise.all([loadSalesData(), renderDashboard()]);
+    if (result && result.record) { const idx = salesDataForCRUD.findIndex(i => i.id === item.id); if (idx !== -1) salesDataForCRUD[idx] = result.record; renderDashboard(); }
+    loadSalesData().then(() => renderDashboard()).catch(() => {});
   }, {
     entity: 'sales',
     validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
@@ -938,9 +939,10 @@ window.deleteSale = async function(id) {
   if (!confirmed) return;
   
   try {
+    salesDataForCRUD = salesDataForCRUD.filter(i => i.id !== id); renderDashboard();
     await window.fetchJson(`/api/sales/${id}`, { method: 'DELETE' });
     window.toast.success('Sales deleted successfully');
-    await Promise.all([loadSalesData(), renderDashboard()]);
+    loadSalesData().then(() => renderDashboard()).catch(() => {});
   } catch (error) {
     console.error('Delete sale failed:', error);
     window.toast.error(error.message || 'Failed to delete sales');
@@ -967,9 +969,10 @@ if (el('addSaleBtn')) {
         if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
       });
       
-      await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+      const result = await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
       window.toast.success('Sales added successfully');
-      await Promise.all([loadSalesData(), renderDashboard()]);
+      if (result && result.record) { salesDataForCRUD.push(result.record); renderDashboard(); }
+      loadSalesData().then(() => renderDashboard()).catch(() => {});
     }, {
       entity: 'sales',
       validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }

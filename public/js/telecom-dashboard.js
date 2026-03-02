@@ -201,9 +201,10 @@ window.editTelecom = async function(id) {
     if (formData.jumlah_deposit) {
       formData.jumlah_deposit = window.parseFormattedNumber(formData.jumlah_deposit);
     }
-    await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+    const result = await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom updated');
-    await loadTelecom();
+    if (result && result.record) { const idx = telecomData.findIndex(i => i.id === item.id); if (idx !== -1) telecomData[idx] = result.record; applyFiltersAndRender(); }
+    loadTelecom();
   }, {
     entity: 'telecom',
     validation: { nama: { required: true }, no_telephone: { required: true }, tanggal_mulai: { required: true }, region_id: { required: true }, staff_name: { required: true }, deposit: { required: true } }
@@ -232,9 +233,10 @@ window.deleteTelecom = async function(id) {
   if (!confirmed) return;
   
   try {
+    telecomData = telecomData.filter(i => i.id !== id); applyFiltersAndRender();
     await fetchJson(`/api/telecom/${id}`, { method: 'DELETE' });
     window.toast.success('Telecom deleted');
-    await loadTelecom();
+    loadTelecom();
   } catch (error) {
     console.error('Delete telecom failed:', error);
     window.toast.error(error.message || 'Failed to delete telecom');
@@ -268,9 +270,10 @@ el('addTelecomBtn').addEventListener('click', () => {
     if (formData.jumlah_deposit) {
       formData.jumlah_deposit = window.parseFormattedNumber(formData.jumlah_deposit);
     }
-    await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
+    const result = await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
     window.toast.success('Telecom added');
-    await loadTelecom();
+    if (result && result.record) { telecomData.push(result.record); applyFiltersAndRender(); }
+    loadTelecom();
   }, {
     entity: 'telecom',
     validation: { nama: { required: true }, no_telephone: { required: true }, tanggal_mulai: { required: true }, region_id: { required: true }, staff_name: { required: true }, deposit: { required: true } }

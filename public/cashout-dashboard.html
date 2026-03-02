@@ -568,11 +568,13 @@
     if (!confirm('Are you sure you want to delete this cash out record?')) return;
     
     try {
+      allCashouts = allCashouts.filter(c => c.id !== id); renderTable(); updateStats();
       await fetchJson(`/api/cashout/${id}`, { method: 'DELETE' });
       window.toast?.success('Record deleted successfully');
-      await loadData();
+      loadData();
     } catch (err) {
       window.toast?.error('Delete failed: ' + err.message);
+      loadData();
     }
   };
   
@@ -609,7 +611,7 @@
       }
       
       closeCashoutModal();
-      await loadData();
+      loadData();
     } catch (err) {
       window.toast?.error('Save failed: ' + err.message);
     }

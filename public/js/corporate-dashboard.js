@@ -511,11 +511,8 @@ async function saveCorporateFromModal() {
       toast.success('Corporate account added');
     }
     
-    await loadCorporateData();
-    renderCorporateList();
-    updateCorporateSelects();
-    loadDashboardSummary();
     closeCorporateModal();
+    loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }).catch(() => {});
   } catch (err) {
     console.error('Save corporate error:', err);
     toast.error('Failed to save corporate account: ' + (err.message || 'Unknown error'));
@@ -541,12 +538,12 @@ window.editCorporate = function(corpId) {
 window.deleteCorporate = async function(corpId) {
   if (confirm('Are you sure you want to delete this corporate account? All related sales data will also be deleted.')) {
     try {
-      await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'DELETE' });
-      await loadCorporateData();
+      corporateAccounts = corporateAccounts.filter(a => String(a.id) !== String(corpId));
       renderCorporateList();
       updateCorporateSelects();
-      loadDashboardSummary();
+      await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'DELETE' });
       toast.success('Corporate account deleted');
+      loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }).catch(() => {});
     } catch (err) {
       console.error('Delete corporate error:', err);
       toast.error('Failed to delete corporate account: ' + (err.message || 'Unknown error'));

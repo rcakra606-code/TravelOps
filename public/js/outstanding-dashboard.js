@@ -270,13 +270,14 @@ function addOutstanding() {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    await window.fetchJson('/api/outstanding', { 
+    const result = await window.fetchJson('/api/outstanding', { 
       method: 'POST', 
       headers: { 'Content-Type': 'application/json' }, 
       body: JSON.stringify(formData) 
     });
     window.toast?.success('Outstanding record added successfully');
-    await loadOutstandingData();
+    if (result && result.record) { outstandingData.push(result.record); renderTable(); updateSummary(); }
+    loadOutstandingData();
   }, {
     entity: 'outstanding',
     validation: { 
@@ -309,13 +310,14 @@ function editOutstanding(id) {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    await window.fetchJson(`/api/outstanding/${item.id}`, { 
+    const result = await window.fetchJson(`/api/outstanding/${item.id}`, { 
       method: 'PUT', 
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData) 
     });
     window.toast?.success('Outstanding record updated successfully');
-    await loadOutstandingData();
+    if (result && result.record) { const idx = outstandingData.findIndex(i => i.id === item.id); if (idx !== -1) outstandingData[idx] = result.record; renderTable(); updateSummary(); }
+    loadOutstandingData();
   }, {
     entity: 'outstanding',
     validation: { 
@@ -353,9 +355,10 @@ async function deleteOutstanding(id) {
   if (!confirmed) return;
   
   try {
+    outstandingData = outstandingData.filter(i => i.id !== id); renderTable(); updateSummary();
     await window.fetchJson(`/api/outstanding/${id}`, { method: 'DELETE' });
     window.toast?.success('Outstanding record deleted successfully');
-    await loadOutstandingData();
+    loadOutstandingData();
   } catch (error) {
     console.error('Delete outstanding failed:', error);
     window.toast?.error(error.message || 'Failed to delete outstanding record');

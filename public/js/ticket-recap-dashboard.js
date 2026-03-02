@@ -725,6 +725,9 @@ window.deleteTicket = async function(id) {
   if (confirmed !== true && !confirm(`Delete ticket "${ticket.booking_code}"?`)) return;
   
   try {
+    allTickets = allTickets.filter(t => t.id !== id);
+    filteredTickets = filteredTickets.filter(t => t.id !== id);
+    renderTable();
     await fetchJson(`/api/ticket_recaps/${id}`, { method: 'DELETE' });
     window.toast?.success('Ticket deleted successfully');
     loadTickets();

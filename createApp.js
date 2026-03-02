@@ -1123,7 +1123,9 @@ export async function createApp() {
         const result = await db.run(sql, values);
         await logActivity(req.user.username, 'CREATE', t, result.lastID, JSON.stringify(safeBody));
         logger.info({ user: req.user.username, entity: t, recordId: result.lastID, action: 'CREATE' }, 'Record created');
-        res.json({ id: result.lastID });
+        // Return full record for instant UI update
+        const created = await db.get(`SELECT * FROM ${t} WHERE id=?`, [result.lastID]);
+        res.json({ id: result.lastID, record: created || { id: result.lastID, ...safeBody } });
       } catch (error) {
         logger.error({ err: error, entity: t, user: req.user?.username }, 'POST handler error');
         res.status(500).json({ error: 'Failed to create record' });
@@ -1235,7 +1237,9 @@ export async function createApp() {
         await db.run(sql, [...values, idParam]);
         await logActivity(req.user.username, 'UPDATE', t, idParam, JSON.stringify(safeBody));
         logger.info({ user: req.user.username, entity: t, recordId: idParam, action: 'UPDATE' }, 'Record updated');
-        res.json({ updated:true });
+        // Return full record for instant UI update
+        const updated = await db.get(`SELECT * FROM ${t} WHERE id=?`, [idParam]);
+        res.json({ updated: true, record: updated || { id: idParam, ...safeBody } });
       } catch (error) {
         logger.error({ err: error, entity: t, user: req.user?.username }, 'PUT handler error');
         res.status(500).json({ error: 'Failed to update record' });

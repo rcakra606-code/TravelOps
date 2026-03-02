@@ -924,13 +924,14 @@ window.openAddProductivityModal = function(productType) {
     delete formData.retail_margin_display;
     delete formData.corporate_margin_display;
     
-    await window.fetchJson('/api/productivity', {
+    const result = await window.fetchJson('/api/productivity', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
     
     window.toast?.success(`${product.name} record added successfully`);
+    if (result && result.record) { productivityData.push(result.record); }
     await loadData();
   }, {
     entity: 'productivity',
@@ -1073,13 +1074,14 @@ window.editProductivity = async function(id) {
     delete formData.retail_margin_display;
     delete formData.corporate_margin_display;
     
-    await window.fetchJson(`/api/productivity/${id}`, {
+    const result = await window.fetchJson(`/api/productivity/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(formData)
     });
     
     window.toast?.success(`${product.name} record updated successfully`);
+    if (result && result.record) { const idx = productivityData.findIndex(i => i.id === id); if (idx !== -1) productivityData[idx] = result.record; }
     await loadData();
   }, {
     entity: 'productivity',
@@ -1128,6 +1130,7 @@ window.deleteProductivity = async function(id) {
   if (!confirmed) return;
   
   try {
+    productivityData = productivityData.filter(i => i.id !== id);
     await window.fetchJson(`/api/productivity/${id}`, { method: 'DELETE' });
     window.toast?.success('Record deleted successfully');
     await loadData();

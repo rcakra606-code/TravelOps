@@ -937,3 +937,26 @@ table tbody tr:hover {
   transform: translateY(-4px);
   box-shadow: 0 20px 40px -8px rgba(0, 0, 0, 0.1);
 }
+
+/* ===================================
+   OPTIMISTIC UI ROW FLASH ANIMATIONS
+   Visual feedback for CRUD operations
+   =================================== */
+
+@keyframes rowFlashIn {
+  0%   { background-color: rgba(34, 197, 94, 0.35); }
+  100% { background-color: transparent; }
+}
+
+@keyframes rowFlashUpdate {
+  0%   { background-color: rgba(59, 130, 246, 0.35); }
+  100% { background-color: transparent; }
+}
+
+.row-flash-in {
+  animation: rowFlashIn 1.2s ease-out forwards;
+}
+
+.row-flash-update {
+  animation: rowFlashUpdate 1.2s ease-out forwards;
+}
