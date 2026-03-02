@@ -1214,9 +1214,28 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Initialize Tour Wizard with loaded data
   initTourWizard();
   
-  // Listen for wizard save events to refresh data
-  window.addEventListener('tourWizardSaved', async () => {
-    loadToursData();
+  // Listen for wizard save events — supports optimistic update and background sync
+  window.addEventListener('tourWizardSaved', (e) => {
+    if (e.detail && e.detail.tourData) {
+      // Optimistic update — immediately update table with wizard data
+      const { editMode, tourId, tourData } = e.detail;
+      // Ensure region_name is available for table display
+      if (!tourData.region_name && tourData.region_id) {
+        const region = regionsData.find(r => String(r.id) === String(tourData.region_id));
+        if (region) tourData.region_name = region.region_name;
+      }
+      if (editMode && tourId) {
+        const idx = toursDataForCRUD.findIndex(t => t.id === tourId);
+        if (idx !== -1) Object.assign(toursDataForCRUD[idx], tourData);
+      } else {
+        toursDataForCRUD.push({ ...tourData, id: Date.now() });
+      }
+      renderToursTable();
+      updateTabCounts();
+    } else {
+      // Background sync — API call completed, reload authoritative data
+      loadToursData();
+    }
   });
   
   // Auto-refresh with visual indicator - store reference for cleanup
@@ -1526,15 +1545,15 @@ window.deleteTour = async function(id) {
   
   if (!confirmed) return;
   
-  try {
-    toursDataForCRUD = toursDataForCRUD.filter(i => i.id !== id); renderToursTable(); updateTabCounts();
-    await window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' });
-    window.toast.success('Tour deleted successfully');
-    loadToursData();
-  } catch (error) {
-    console.error('Delete tour failed:', error);
-    window.toast.error(error.message || 'Failed to delete tour');
-  }
+  // Optimistic removal — update table instantly
+  toursDataForCRUD = toursDataForCRUD.filter(i => i.id !== id);
+  renderToursTable();
+  updateTabCounts();
+  
+  // Fire API in background
+  window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' })
+    .then(() => { window.toast.success('Tour deleted successfully'); loadToursData(); })
+    .catch(err => { window.toast.error(err.message || 'Failed to delete tour'); loadToursData(); });
 };
 
 if (el('addTourBtn')) {

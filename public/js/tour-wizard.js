@@ -947,69 +947,71 @@ window.TourWizard = (function() {
   }
   
   // Save tour
-  async function saveTour() {
-    try {
-      if (!validateCurrentStep()) return;
-      
-      collectCurrentStepData();
-      
-      // Prepare tour data - clone and clean up non-database fields
-      const tourData = { ...wizardState.tourData };
-      
-      // Remove fields that don't belong in the database
-      delete tourData.region_name;    // Joined from regions table
-      delete tourData.passengers;     // Separate table
-      delete tourData.id;             // Don't update the ID
-      
-      tourData.jumlah_peserta = parseInt(tourData.jumlah_peserta) || 1;
-      tourData.region_id = parseInt(tourData.region_id) || null;
-      
-      // Prepare passengers data
-      const passengers = wizardState.passengers.map((p, i) => ({
-        name: p.name,
-        phone_number: i === 0 ? p.phone_number : null,
-        email: i === 0 ? p.email : null,
-        base_price: parseFloat(p.base_price) || 0,
-        discount: parseFloat(p.discount) || 0,
-        profit: parseFloat(p.profit) || 0
-      }));
-      
-      const payload = { tour: tourData, passengers };
-      
-      console.log('💾 Saving tour...', {
-        editMode: wizardState.editMode,
-        tourId: wizardState.tourId,
-        tourData,
-        passengersCount: passengers.length
-      });
-      
-      if (wizardState.editMode) {
-        const response = await window.fetchJson(`/api/tours/v2/${wizardState.tourId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        console.log('✅ Tour update response:', response);
-        window.toast.success('Tour updated successfully');
-      } else {
-        await window.fetchJson('/api/tours/v2', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        window.toast.success('Tour created successfully');
-      }
-      
-      closeWizard();
-      
-      // Dispatch custom event - tours-dashboard.js handles data refresh via this event
-      // (Do NOT call loadToursData/renderDashboard directly to avoid duplicate API calls)
-      window.dispatchEvent(new CustomEvent('tourWizardSaved'));
-      
-    } catch (error) {
-      console.error('Error saving tour:', error);
-      window.toast.error(error.message || 'Failed to save tour');
+  function saveTour() {
+    if (!validateCurrentStep()) return;
+    
+    collectCurrentStepData();
+    
+    // Prepare tour data - clone and clean up non-database fields
+    const tourData = { ...wizardState.tourData };
+    
+    // Remove fields that don't belong in the database
+    delete tourData.region_name;    // Joined from regions table
+    delete tourData.passengers;     // Separate table
+    delete tourData.id;             // Don't update the ID
+    
+    tourData.jumlah_peserta = parseInt(tourData.jumlah_peserta) || 1;
+    tourData.region_id = parseInt(tourData.region_id) || null;
+    
+    // Prepare passengers data
+    const passengers = wizardState.passengers.map((p, i) => ({
+      name: p.name,
+      phone_number: i === 0 ? p.phone_number : null,
+      email: i === 0 ? p.email : null,
+      base_price: parseFloat(p.base_price) || 0,
+      discount: parseFloat(p.discount) || 0,
+      profit: parseFloat(p.profit) || 0
+    }));
+    
+    const payload = { tour: tourData, passengers };
+    
+    // Capture state before closing wizard
+    const isEdit = wizardState.editMode;
+    const savedTourId = wizardState.tourId;
+    
+    // Build optimistic data for immediate table update (preserve display fields)
+    const optimisticData = { ...wizardState.tourData };
+    // Ensure lead_passenger is set from passengers for table display
+    if (wizardState.passengers.length > 0) {
+      optimisticData.lead_passenger = wizardState.passengers[0].name || optimisticData.lead_passenger || '';
+      optimisticData.all_passengers = wizardState.passengers.map(p => p.name).filter(Boolean).join(', ');
+      optimisticData.phone_number = wizardState.passengers[0].phone_number || '';
+      optimisticData.email = wizardState.passengers[0].email || '';
     }
+    
+    // Close wizard immediately for instant responsiveness
+    closeWizard();
+    
+    // Dispatch event with optimistic data so dashboard updates table instantly
+    window.dispatchEvent(new CustomEvent('tourWizardSaved', { 
+      detail: { editMode: isEdit, tourId: savedTourId, tourData: optimisticData } 
+    }));
+    
+    // Fire API in background — do NOT await
+    const url = isEdit ? `/api/tours/v2/${savedTourId}` : '/api/tours/v2';
+    const method = isEdit ? 'PUT' : 'POST';
+    
+    window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(() => {
+        window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
+        // Sync authoritative data from server
+        window.dispatchEvent(new CustomEvent('tourWizardSaved'));
+      })
+      .catch(err => {
+        window.toast.error(err.message || 'Failed to save tour');
+        // Revert to server state
+        window.dispatchEvent(new CustomEvent('tourWizardSaved'));
+      });
   }
   
   // Close wizard
