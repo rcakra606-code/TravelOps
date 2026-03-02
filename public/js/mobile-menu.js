@@ -48,19 +48,19 @@
       menuBtn.classList.remove('menu-open');
     });
 
-    // Close on nav link click (mobile)
-    if (window.innerWidth <= 768) {
-      const navLinks = sidebar.querySelectorAll('a, button[data-section]');
-      navLinks.forEach(link => {
-        link.addEventListener('click', () => {
+    // Close on nav link click (check mobile at click time, not bind time)
+    const navLinks = sidebar.querySelectorAll('a, button[data-section]');
+    navLinks.forEach(link => {
+      link.addEventListener('click', () => {
+        if (window.innerWidth <= 768) {
           setTimeout(() => {
             sidebar.classList.remove('mobile-open');
             overlay.classList.remove('visible');
             menuBtn.classList.remove('menu-open');
           }, 200);
-        });
+        }
       });
-    }
+    });
 
     // Handle resize
     let resizeTimer;
@@ -73,6 +73,14 @@
           menuBtn.classList.remove('menu-open');
         }
       }, 250);
+    });
+
+    // Dashboard tabs scroll indicator (fade hint when scrolled to end)
+    document.querySelectorAll('.dashboard-tabs').forEach(tabs => {
+      tabs.addEventListener('scroll', () => {
+        const atEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 2;
+        tabs.classList.toggle('scrolled-end', atEnd);
+      });
     });
   }
 })();

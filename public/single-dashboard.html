@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -33,7 +33,7 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<script src="/js/seasonal-theme.js"></script>
+<script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -124,54 +124,54 @@
 
    <section id="summary" class="card section active">
   <!-- === WELCOME MESSAGE === -->
-  <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 40px; border-radius: 12px; color: white; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-    <h1 style="margin: 0 0 8px 0; font-size: 32px; font-weight: 700;">Welcome to TravelOps! 👋</h1>
-    <p style="margin: 0; font-size: 18px; opacity: 0.95;" id="welcomeMessage">Manage your travel business with ease</p>
+  <div class="welcome-banner">
+    <h1 class="welcome-title">Welcome to TravelOps! 👋</h1>
+    <p class="welcome-subtitle" id="welcomeMessage">Manage your travel business with ease</p>
   </div>
 
   <!-- === QUICK NAVIGATION === -->
-  <div style="margin-bottom: 24px;">
-    <h3 style="margin: 0 0 16px 0; font-size: 18px; color: var(--text-primary);">🚀 Quick Navigation</h3>
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
-      <a href="/sales-targets-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#3b82f6'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">💰</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Sales</div>
+  <div class="quick-nav-section">
+    <h3 class="quick-nav-heading">🚀 Quick Navigation</h3>
+    <div class="quick-nav-grid">
+      <a href="/sales-targets-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">💰</div>
+          <div class="quick-nav-label">Sales</div>
         </div>
       </a>
       
-      <a href="/tours-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#10b981'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">🧳</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Tours</div>
+      <a href="/tours-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">🧳</div>
+          <div class="quick-nav-label">Tours</div>
         </div>
       </a>
       
-      <a href="/documents-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#f59e0b'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">📄</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Documents</div>
+      <a href="/documents-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">📄</div>
+          <div class="quick-nav-label">Documents</div>
         </div>
       </a>
       
-      <a href="/productivity-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#8b5cf6'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">📈</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Productivity</div>
+      <a href="/productivity-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">📈</div>
+          <div class="quick-nav-label">Productivity</div>
         </div>
       </a>
       
-      <a href="/hotel-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#ec4899'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">🏨</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Hotel</div>
+      <a href="/hotel-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">🏨</div>
+          <div class="quick-nav-label">Hotel</div>
         </div>
       </a>
       
-      <a href="/cruise-dashboard.html" style="text-decoration: none;">
-        <div style="background: var(--card); border: 2px solid var(--border-light); border-radius: 12px; padding: 24px; text-align: center; transition: all 0.3s; cursor: pointer;" onmouseover="this.style.borderColor='#06b6d4'; this.style.transform='translateY(-2px)';" onmouseout="this.style.borderColor='var(--border-light)'; this.style.transform='translateY(0)';">
-          <div style="font-size: 40px; margin-bottom: 12px;">🚢</div>
-          <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">Cruise</div>
+      <a href="/cruise-dashboard.html" class="quick-nav-link">
+        <div class="quick-nav-card">
+          <div class="quick-nav-icon">🚢</div>
+          <div class="quick-nav-label">Cruise</div>
         </div>
       </a>
     </div>
@@ -180,7 +180,7 @@
 
     <!-- Sales -->
     <section id="sales" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Sales</h3>
         <div>
           <button id="addSalesBtn" class="btn primary">+ Add Sales</button>
@@ -192,7 +192,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="salesSearch" placeholder="Search invoice / staff / status..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="salesSearch" placeholder="Search invoice / staff / status..." class="searchbar-input">
         <select id="salesPageSize" data-pagesize-entity="sales">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -213,7 +213,7 @@
 
     <!-- Tours -->
     <section id="tours" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Tours</h3>
         <div>
           <button id="addTourBtn" class="btn primary">+ Add Tour</button>
@@ -225,7 +225,7 @@
         </div>
       </div>
             <div class="searchbar">
-        <input id="toursSearch" placeholder="Search code / staff / region..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="toursSearch" placeholder="Search code / staff / region..." class="searchbar-input">
         <select id="toursPageSize" data-pagesize-entity="tours">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -253,7 +253,7 @@
 
     <!-- Documents -->
     <section id="documents" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Documents</h3>
         <div>
           <button id="addDocBtn" class="btn primary">+ Add Document</button>
@@ -265,7 +265,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="documentsSearch" placeholder="Search name / passport / booking..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="documentsSearch" placeholder="Search name / passport / booking..." class="searchbar-input">
         <select id="docsPageSize" data-pagesize-entity="documents">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -285,7 +285,7 @@
 
     <!-- Targets -->
     <section id="targets" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Targets</h3>
         <div>
           <button id="addTargetBtn" class="btn primary">+ Add Target</button>
@@ -297,7 +297,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="targetsSearch" placeholder="Search staff / month / year..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="targetsSearch" placeholder="Search staff / month / year..." class="searchbar-input">
         <select id="targetsPageSize" data-pagesize-entity="targets">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -339,7 +339,7 @@
 
     <!-- Telecom -->
     <section id="telecom" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Telecom</h3>
         <div>
           <button id="addTelecomBtn" class="btn primary">+ Add Telecom</button>
@@ -348,7 +348,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="telecomSearch" placeholder="Search name / phone / type..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="telecomSearch" placeholder="Search name / phone / type..." class="searchbar-input">
         <select id="telecomPageSize" data-pagesize-entity="telecom">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -377,7 +377,7 @@
 
     <!-- Hotel Bookings -->
     <section id="hotel_bookings" class="card section">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div class="section-header">
         <h3>Hotel Bookings</h3>
         <div>
           <button id="addHotelBookingBtn" class="btn primary">+ Add Booking</button>
@@ -386,7 +386,7 @@
         </div>
       </div>
       <div class="searchbar">
-        <input id="hotelBookingsSearch" placeholder="Search hotel / guest / confirmation..." style="flex:1;padding:8px;border-radius:8px;border:1px solid #d1d5db">
+        <input id="hotelBookingsSearch" placeholder="Search hotel / guest / confirmation..." class="searchbar-input">
         <select id="hotelBookingsPageSize" data-pagesize-entity="hotel_bookings">
           <option value="5">5</option>
           <option value="10" selected>10</option>
@@ -616,32 +616,32 @@
 </div>
 
 <!-- Load shared auth module first to provide fetchJson & token management -->
-<script src="/js/toast.js"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/confirm-dialog.js"></script>
-<script src="/js/accessibility.js"></script>
-<script src="/js/mobile-menu.js"></script>
-<script src="/js/table-enhancer.js"></script>
-<script src="/js/filter-manager.js"></script>
-<script src="/js/chart-enhancer.js"></script>
-<script src="/js/quick-view.js"></script>
-<script src="/js/dashboard-customizer.js"></script>
-<script src="/js/advanced-search.js"></script>
-<script src="/js/enhanced-search-filter.js"></script>
-<script src="/js/form-builder.js"></script>
-<script src="/js/form-validator.js"></script>
-<script src="/js/crud-modal.js"></script>
+<script src="/js/toast.js" defer></script>
+<script src="/js/utils.js" defer></script>
+<script src="/js/confirm-dialog.js" defer></script>
+<script src="/js/accessibility.js" defer></script>
+<script src="/js/mobile-menu.js" defer></script>
+<script src="/js/table-enhancer.js" defer></script>
+<script src="/js/filter-manager.js" defer></script>
+<script src="/js/chart-enhancer.js" defer></script>
+<script src="/js/quick-view.js" defer></script>
+<script src="/js/dashboard-customizer.js" defer></script>
+<script src="/js/advanced-search.js" defer></script>
+<script src="/js/enhanced-search-filter.js" defer></script>
+<script src="/js/form-builder.js" defer></script>
+<script src="/js/form-validator.js" defer></script>
+<script src="/js/crud-modal.js" defer></script>
 <script type="module" src="/js/auth-common.js"></script>
-<script src="/js/logout-handler.js"></script>
+<script src="/js/logout-handler.js" defer></script>
 <!-- Dashboard logic (now relies on auth-common for auth utilities) -->
-<script src="/js/dashboard.js"></script>
+<script src="/js/dashboard.js" defer></script>
 <script defer src="/js/crud-handlers.js"></script>
 
 <!-- Service Worker Registration (external to comply with CSP) -->
-<script src="/js/sw-register.js"></script>
+<script src="/js/sw-register.js" defer></script>
 
 <!-- App Enhancements: Auto-refresh, Notifications, Error Handling -->
-<script src="/js/app-enhancements.js"></script>
+<script src="/js/app-enhancements.js" defer></script>
 
 <!-- Removed logout confirmation modal; using direct navigation to /logout.html -->
 
@@ -659,43 +659,39 @@
     } catch (e) {}
   });
 </script>
-<script src="/js/sidebar-enhancements.js"></script>
-<script src="/js/table-export.js"></script>
-<script src="/js/keyboard-shortcuts.js"></script>
+<script src="/js/sidebar-enhancements.js" defer></script>
+<script src="/js/table-export.js" defer></script>
+<script src="/js/keyboard-shortcuts.js" defer></script>
 
 <!-- New Enhancement Modules -->
-<script src="/js/global-search.js"></script>
-<script src="/js/tour-calendar.js"></script>
-<script src="/js/yoy-analytics.js"></script>
-<script src="/js/bulk-importer.js"></script>
-<script src="/js/dashboard-widgets.js"></script>
-<script src="/js/audit-trail.js"></script>
-<script src="/js/i18n.js"></script>
-<script src="/js/data-exporter.js"></script>
-<script src="/js/ui-enhancements.js"></script>
+<script src="/js/global-search.js" defer></script>
+<script src="/js/tour-calendar.js" defer></script>
+<script src="/js/yoy-analytics.js" defer></script>
+<script src="/js/bulk-importer.js" defer></script>
+<script src="/js/dashboard-widgets.js" defer></script>
+<script src="/js/audit-trail.js" defer></script>
+<script src="/js/i18n.js" defer></script>
+<script src="/js/data-exporter.js" defer></script>
+<script src="/js/ui-enhancements.js" defer></script>
 
 <!-- UX Enhancements -->
-<script src="/js/undo-manager.js"></script>
-<script src="/js/form-dirty-state.js"></script>
-<script src="/js/security-utils.js"></script>
-<script src="/js/ui-extras.js"></script>
-<script src="/js/auto-save.js"></script>
-<script src="/js/error-recovery.js"></script>
-<script src="/js/inline-editor.js"></script>
-<script src="/js/smart-defaults.js"></script>
-<script src="/js/bulk-actions.js"></script>
+<script src="/js/undo-manager.js" defer></script>
+<script src="/js/form-dirty-state.js" defer></script>
+<script src="/js/security-utils.js" defer></script>
+<script src="/js/ui-extras.js" defer></script>
+<script src="/js/auto-save.js" defer></script>
+<script src="/js/error-recovery.js" defer></script>
+<script src="/js/inline-editor.js" defer></script>
+<script src="/js/smart-defaults.js" defer></script>
+<script src="/js/bulk-actions.js" defer></script>
 <!-- Additional Feature Modules -->
-<script src="/js/saved-filters.js"></script>
-<script src="/js/pwa-install.js"></script>
-<script src="/js/keyboard-help.js"></script>
+<script src="/js/saved-filters.js" defer></script>
+<script src="/js/pwa-install.js" defer></script>
+<script src="/js/keyboard-help.js" defer></script>
 
-<script src="/js/pdf-export.js"></script>
-<script src="/js/customer-database.js"></script>
-<script src="/js/dashboard-analytics.js"></script>
-<script src="/js/sidebar-groups.js"></script>
-<script src="/js/error-monitoring.js"></script>
-<script src="/js/api-cache.js"></script>
-<script src="/js/breadcrumb-nav.js"></script>
-<script src="/js/lazy-loader.js"></script>
+<script src="/js/pdf-export.js" defer></script>
+<script src="/js/customer-database.js" defer></script>
+<script src="/js/dashboard-analytics.js" defer></script>
+<script src="/js/sidebar-groups.js" defer></script>
 </body>
 </html>

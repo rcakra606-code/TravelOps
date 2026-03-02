@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<script src="/js/seasonal-theme.js"></script>
+<script src="/js/seasonal-theme.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 </head>
 <body>
@@ -119,7 +119,7 @@
 
     <!-- Filter Section -->
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-header">
         <h3>Hotel Analytics</h3>
         <button id="hotelFilterBtn" class="btn">🔍 Filter</button>
       </div>
@@ -193,7 +193,7 @@
 
     <!-- Hotel Data Table with CRUD -->
     <div class="card" style="margin-top: 20px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div class="section-header">
         <h3>📋 Hotel Records</h3>
         <div style="display: flex; gap: 10px;">
           <button id="importHotelBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
@@ -243,28 +243,28 @@
   </div>
 </div>
 
-<script src="/js/toast.js"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/confirm-dialog.js"></script>
-<script src="/js/accessibility.js"></script>
-<script src="/js/mobile-menu.js"></script>
-<script src="/js/table-enhancer.js"></script>
-<script src="/js/filter-manager.js"></script>
-<script src="/js/chart-enhancer.js"></script>
-<script src="/js/quick-view.js"></script>
-<script src="/js/dashboard-customizer.js"></script>
-<script src="/js/advanced-search.js"></script>
-<script src="/js/enhanced-search-filter.js"></script>
-<script src="/js/form-builder.js"></script>
-<script src="/js/form-validator.js"></script>
-<script src="/js/crud-modal.js"></script>
+<script src="/js/toast.js" defer></script>
+<script src="/js/utils.js" defer></script>
+<script src="/js/confirm-dialog.js" defer></script>
+<script src="/js/accessibility.js" defer></script>
+<script src="/js/mobile-menu.js" defer></script>
+<script src="/js/table-enhancer.js" defer></script>
+<script src="/js/filter-manager.js" defer></script>
+<script src="/js/chart-enhancer.js" defer></script>
+<script src="/js/quick-view.js" defer></script>
+<script src="/js/dashboard-customizer.js" defer></script>
+<script src="/js/advanced-search.js" defer></script>
+<script src="/js/enhanced-search-filter.js" defer></script>
+<script src="/js/form-builder.js" defer></script>
+<script src="/js/form-validator.js" defer></script>
+<script src="/js/crud-modal.js" defer></script>
 <script type="module" src="/js/auth-common.js"></script>
-<script src="/js/logout-handler.js"></script>
-<script src="/js/dashboard.js"></script>
+<script src="/js/logout-handler.js" defer></script>
+<script src="/js/dashboard.js" defer></script>
 <script type="module" src="/js/hotel-dashboard.js"></script>
-<script src="/js/app-enhancements.js"></script>
-<script src="/js/bulk-importer.js"></script>
-<script src="/js/data-exporter.js"></script>
+<script src="/js/app-enhancements.js" defer></script>
+<script src="/js/bulk-importer.js" defer></script>
+<script src="/js/data-exporter.js" defer></script>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     try {
@@ -279,33 +279,29 @@
     } catch (e) {}
   });
 </script>
-<script src="/js/sidebar-enhancements.js"></script>
-<script src="/js/table-export.js"></script>
-<script src="/js/keyboard-shortcuts.js"></script>
-<script src="/js/ui-enhancements.js"></script>
-<script src="/js/undo-manager.js"></script>
-<script src="/js/form-dirty-state.js"></script>
-<script src="/js/security-utils.js"></script>
-<script src="/js/ui-extras.js"></script>
-<script src="/js/auto-save.js"></script>
-<script src="/js/error-recovery.js"></script>
-<script src="/js/inline-editor.js"></script>
-<script src="/js/smart-defaults.js"></script>
-<script src="/js/bulk-actions.js"></script>
+<script src="/js/sidebar-enhancements.js" defer></script>
+<script src="/js/table-export.js" defer></script>
+<script src="/js/keyboard-shortcuts.js" defer></script>
+<script src="/js/ui-enhancements.js" defer></script>
+<script src="/js/undo-manager.js" defer></script>
+<script src="/js/form-dirty-state.js" defer></script>
+<script src="/js/security-utils.js" defer></script>
+<script src="/js/ui-extras.js" defer></script>
+<script src="/js/auto-save.js" defer></script>
+<script src="/js/error-recovery.js" defer></script>
+<script src="/js/inline-editor.js" defer></script>
+<script src="/js/smart-defaults.js" defer></script>
+<script src="/js/bulk-actions.js" defer></script>
 
 <!-- Additional Feature Modules -->
-<script src="/js/saved-filters.js"></script>
-<script src="/js/pwa-install.js"></script>
-<script src="/js/keyboard-help.js"></script>
+<script src="/js/saved-filters.js" defer></script>
+<script src="/js/pwa-install.js" defer></script>
+<script src="/js/keyboard-help.js" defer></script>
 
-<script src="/js/pdf-export.js"></script>
-<script src="/js/customer-database.js"></script>
+<script src="/js/pdf-export.js" defer></script>
+<script src="/js/customer-database.js" defer></script>
 <!-- Management & Reporting Modules -->
-<script src="/js/dashboard-analytics.js"></script>
-<script src="/js/sidebar-groups.js"></script>
-<script src="/js/error-monitoring.js"></script>
-<script src="/js/api-cache.js"></script>
-<script src="/js/breadcrumb-nav.js"></script>
-<script src="/js/lazy-loader.js"></script>
+<script src="/js/dashboard-analytics.js" defer></script>
+<script src="/js/sidebar-groups.js" defer></script>
 </body>
 </html>

@@ -188,10 +188,12 @@
     background: #ef4444;
   }
 
-  /* Touch-friendly buttons */
+  /* Touch-friendly buttons (scoped to interactive elements only) */
   button,
   .btn,
-  a {
+  a.nav-link,
+  .nav-group-header,
+  .sidebar .nav a {
     min-height: 44px;
     min-width: 44px;
   }
@@ -210,7 +212,7 @@
   }
 
   /* Modal adjustments */
-  .modal-content {
+  .modal-card {
     width: calc(100% - 32px);
     max-height: 90vh;
     margin: 16px;
@@ -221,6 +223,12 @@
     padding: 16px;
   }
 
+  .modal-close {
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+  }
+
   /* Form grid mobile */
   .form-grid {
     grid-template-columns: 1fr !important;
@@ -228,11 +236,11 @@
 
   /* Charts mobile */
   .chart-container {
-    min-height: 250px;
+    min-height: 200px;
   }
 
   canvas {
-    max-height: 250px !important;
+    max-height: 280px;
   }
 
   /* Batch actions bar mobile */
@@ -486,5 +494,178 @@
   .controls input,
   .controls select {
     width: 100%;
+  }
+
+  /* Welcome banner mobile */
+  .welcome-banner {
+    padding: 24px 16px;
+  }
+
+  .welcome-title {
+    font-size: 22px;
+  }
+
+  .welcome-subtitle {
+    font-size: 15px;
+  }
+
+  /* Quick nav mobile */
+  .quick-nav-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+
+  .quick-nav-card {
+    padding: 16px 8px;
+  }
+
+  .quick-nav-icon {
+    font-size: 28px;
+    margin-bottom: 6px;
+  }
+
+  .quick-nav-label {
+    font-size: 13px;
+  }
+
+  /* Section header mobile */
+  .section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .section-header > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .section-header .btn {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 13px;
+    padding: 8px 12px;
+    text-align: center;
+    justify-content: center;
+  }
+
+  /* Filter bar mobile */
+  .filter-bar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-bar > * {
+    width: 100%;
+  }
+
+  .filter-search-input {
+    width: 100%;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  /* Charts grid mobile */
+  .charts-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Dashboard tabs scroll indicator */
+  .dashboard-tabs {
+    position: relative;
+  }
+
+  .dashboard-tabs::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 30px;
+    background: linear-gradient(to right, transparent, var(--card, #fff));
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.3s;
+  }
+
+  .dashboard-tabs.scrolled-end::after {
+    opacity: 0;
+  }
+
+  /* Table on mobile - horizontal scroll with hint */
+  .table-scroll-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -16px;
+    padding: 0 16px;
+    position: relative;
+  }
+
+  .table-scroll-wrapper::after {
+    content: '→ scroll';
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    font-size: 11px;
+    color: var(--text-secondary, #6b7280);
+    opacity: 0.6;
+    pointer-events: none;
+    animation: fadeOutHint 3s forwards;
+  }
+
+  @keyframes fadeOutHint {
+    0%, 70% { opacity: 0.6; }
+    100% { opacity: 0; }
+  }
+
+  /* Pagination mobile */
+  .pagination {
+    flex-wrap: wrap;
+    gap: 4px;
+    justify-content: center;
+  }
+
+  .pagination-btn {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Table checkbox touch target */
+  .table-checkbox {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Searchbar mobile */
+  .searchbar {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .searchbar input {
+    width: 100%;
+    flex: none;
+  }
+
+  .searchbar select {
+    width: 100%;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  .quick-nav-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .welcome-banner {
+    padding: 16px 12px;
+  }
+
+  .welcome-title {
+    font-size: 18px;
   }
 }

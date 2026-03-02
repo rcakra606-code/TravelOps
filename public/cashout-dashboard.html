@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<script src="/js/seasonal-theme.js"></script>
+<script src="/js/seasonal-theme.js" defer></script>
   <style>
     .stats-grid {
       display: grid;
@@ -232,7 +232,7 @@
 
     <!-- Data Table -->
     <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div class="section-header">
         <h3 style="margin:0;">📋 Cash Out Records</h3>
         <span id="recordCount" style="color:var(--text-secondary);font-size:13px;">0 records</span>
       </div>
@@ -272,7 +272,7 @@
       <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
         <input type="hidden" name="id" id="formId">
         
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="charts-row">
           <div class="form-group">
             <label>Tanggal Permintaan <span style="color:#ef4444;">*</span></label>
             <input type="date" name="request_date" id="requestDate" required>
@@ -338,11 +338,11 @@
 </div>
 
 <script type="module" src="/js/auth-common.js"></script>
-<script src="/js/ui-extras.js"></script>
+<script src="/js/ui-extras.js" defer></script>
 <script type="module" src="/js/dashboard.js"></script>
-<script src="/js/toast.js"></script>
-<script src="/js/utils.js"></script>
-<script src="/js/confirm-dialog.js"></script>
+<script src="/js/toast.js" defer></script>
+<script src="/js/utils.js" defer></script>
+<script src="/js/confirm-dialog.js" defer></script>
 
 <script>
   const el = id => document.getElementById(id);
@@ -657,14 +657,10 @@
   window.addEventListener('beforeunload', () => clearInterval(_cashoutRefresh));
 </script>
 
-<script src="/js/sidebar-enhancements.js"></script>
-<script src="/js/mobile-menu.js"></script>
-<script src="/js/keyboard-shortcuts.js"></script>
-<script src="/js/logout-handler.js"></script>
-<script src="/js/sidebar-groups.js"></script>
-<script src="/js/error-monitoring.js"></script>
-<script src="/js/api-cache.js"></script>
-<script src="/js/breadcrumb-nav.js"></script>
-<script src="/js/lazy-loader.js"></script>
+<script src="/js/sidebar-enhancements.js" defer></script>
+<script src="/js/mobile-menu.js" defer></script>
+<script src="/js/keyboard-shortcuts.js" defer></script>
+<script src="/js/logout-handler.js" defer></script>
+<script src="/js/sidebar-groups.js" defer></script>
 </body>
 </html>

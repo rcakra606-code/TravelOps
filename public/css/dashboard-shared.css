@@ -330,7 +330,7 @@
 /* Charts Row Layout */
 .charts-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
   gap: 24px;
   margin-bottom: 28px;
 }
@@ -908,4 +908,128 @@
     box-shadow: none;
     border: 1px solid #e2e8f0;
   }
+}
+
+/* === WELCOME BANNER === */
+.welcome-banner {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px;
+  border-radius: 12px;
+  color: white;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.welcome-title {
+  margin: 0 0 8px 0;
+  font-size: 32px;
+  font-weight: 700;
+  color: white;
+}
+
+.welcome-subtitle {
+  margin: 0;
+  font-size: 18px;
+  opacity: 0.95;
+  color: white;
+}
+
+/* === QUICK NAVIGATION === */
+.quick-nav-section {
+  margin-bottom: 24px;
+}
+
+.quick-nav-heading {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: var(--text-primary);
+}
+
+.quick-nav-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(150px, 100%), 1fr));
+  gap: 16px;
+}
+
+.quick-nav-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.quick-nav-card {
+  background: var(--card, #fff);
+  border: 2px solid var(--border-light, #e5e7eb);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.quick-nav-card:hover,
+.quick-nav-card:active {
+  border-color: var(--primary, #2563eb);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.quick-nav-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+
+.quick-nav-label {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* === SECTION HEADER === */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* === FILTER BAR === */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.filter-search-input {
+  flex: 1;
+  min-width: min(250px, 100%);
+}
+
+.filter-select {
+  min-width: 120px;
+}
+
+/* === SEARCHBAR === */
+.searchbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.searchbar input {
+  flex: 1;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+}
+
+.searchbar-input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
 }

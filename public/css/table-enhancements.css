@@ -361,3 +361,74 @@
 .table-scroll-container::-webkit-scrollbar-thumb:hover {
   background: var(--border-dark, #9ca3af);
 }
+
+/* === TABLE MOBILE RESPONSIVENESS === */
+@media (max-width: 768px) {
+  /* Disable hover transforms on touch */
+  .table tbody tr:hover {
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Hide resize handles on mobile */
+  .table th .resize-handle {
+    display: none;
+  }
+
+  /* Compact padding for mobile */
+  .table-compact tbody tr td {
+    padding: 6px 8px;
+    font-size: 0.8rem;
+  }
+
+  .table.table-compact td,
+  .table.table-compact th {
+    padding: 6px 6px;
+    font-size: 12px;
+  }
+
+  /* Larger checkboxes for touch */
+  .table-checkbox {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Show quick actions always on touch */
+  .table tbody tr .quick-actions {
+    opacity: 1;
+  }
+
+  /* Row details grid stacks on mobile */
+  .row-details-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  /* Empty state compact */
+  .empty-state {
+    padding: 32px 16px;
+  }
+
+  .empty-state-icon {
+    font-size: 48px;
+  }
+
+  /* Batch actions mobile */
+  .batch-actions-bar {
+    left: 16px;
+    right: 16px;
+    transform: translateY(100px);
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .batch-actions-bar.visible {
+    transform: translateY(0);
+  }
+
+  .batch-actions-bar button {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}

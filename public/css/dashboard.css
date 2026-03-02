@@ -593,16 +593,19 @@
   }
 
   /* Stack search/filter controls vertically */
-  .card > div[style*="flex"] {
-    flex-direction: column !important;
-    align-items: stretch !important;
+  .filter-bar,
+  .section-header,
+  .card > .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  .card > div[style*="flex"] input,
-  .card > div[style*="flex"] select,
-  .card > div[style*="flex"] button {
-    width: 100% !important;
-    min-width: 100% !important;
+  .filter-bar input,
+  .filter-bar select,
+  .filter-bar button,
+  .section-header .btn {
+    width: 100%;
+    min-width: 0;
   }
 }
 

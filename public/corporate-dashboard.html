@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -28,7 +28,7 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<script src="/js/seasonal-theme.js"></script>
+<script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   /* Corporate Dashboard Specific Styles */
@@ -509,7 +509,7 @@
       </div>
 
       <!-- Charts Row -->
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+      <div class="charts-row" style="margin-bottom: 20px;">
         <div class="chart-container">
           <h3>Monthly Revenue Trend</h3>
           <canvas id="revenueChart" height="250"></canvas>
@@ -1039,17 +1039,13 @@
   </div>
 </div>
 
-<script src="/js/security-utils.js"></script>
-<script src="/js/ui-extras.js"></script>
-<script src="/js/auto-save.js"></script>
-<script src="/js/error-recovery.js"></script>
+<script src="/js/security-utils.js" defer></script>
+<script src="/js/ui-extras.js" defer></script>
+<script src="/js/auto-save.js" defer></script>
+<script src="/js/error-recovery.js" defer></script>
 <script type="module" src="/js/auth-common.js"></script>
-<script src="/js/sidebar-groups.js"></script>
-<script src="/js/toast.js"></script>
+<script src="/js/sidebar-groups.js" defer></script>
+<script src="/js/toast.js" defer></script>
 <script type="module" src="/js/corporate-dashboard.js"></script>
-<script src="/js/error-monitoring.js"></script>
-<script src="/js/api-cache.js"></script>
-<script src="/js/breadcrumb-nav.js"></script>
-<script src="/js/lazy-loader.js"></script>
 </body>
 </html>
