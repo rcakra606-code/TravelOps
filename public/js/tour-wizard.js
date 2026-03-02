@@ -992,10 +992,10 @@ window.TourWizard = (function() {
     // Close wizard immediately for instant responsiveness
     closeWizard();
     
-    // Dispatch event with optimistic data so dashboard updates table instantly
-    window.dispatchEvent(new CustomEvent('tourWizardSaved', { 
-      detail: { editMode: isEdit, tourId: savedTourId, tourData: optimisticData } 
-    }));
+    // Directly update tours table for instant feedback (no event indirection)
+    if (window.updateToursCRUD) {
+      window.updateToursCRUD(isEdit, savedTourId, optimisticData);
+    }
     
     // Fire API in background — do NOT await
     const url = isEdit ? `/api/tours/v2/${savedTourId}` : '/api/tours/v2';
@@ -1005,12 +1005,12 @@ window.TourWizard = (function() {
       .then(() => {
         window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
         // Sync authoritative data from server
-        window.dispatchEvent(new CustomEvent('tourWizardSaved'));
+        if (window.syncToursFromServer) window.syncToursFromServer();
       })
       .catch(err => {
         window.toast.error(err.message || 'Failed to save tour');
         // Revert to server state
-        window.dispatchEvent(new CustomEvent('tourWizardSaved'));
+        if (window.syncToursFromServer) window.syncToursFromServer();
       });
   }
   

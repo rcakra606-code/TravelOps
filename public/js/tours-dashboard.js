@@ -1214,28 +1214,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   // Initialize Tour Wizard with loaded data
   initTourWizard();
   
-  // Listen for wizard save events — supports optimistic update and background sync
-  window.addEventListener('tourWizardSaved', (e) => {
-    if (e.detail && e.detail.tourData) {
-      // Optimistic update — immediately update table with wizard data
-      const { editMode, tourId, tourData } = e.detail;
-      // Ensure region_name is available for table display
-      if (!tourData.region_name && tourData.region_id) {
-        const region = regionsData.find(r => String(r.id) === String(tourData.region_id));
-        if (region) tourData.region_name = region.region_name;
-      }
-      if (editMode && tourId) {
-        const idx = toursDataForCRUD.findIndex(t => t.id === tourId);
-        if (idx !== -1) Object.assign(toursDataForCRUD[idx], tourData);
-      } else {
-        toursDataForCRUD.push({ ...tourData, id: Date.now() });
-      }
-      renderToursTable();
-      updateTabCounts();
-    } else {
-      // Background sync — API call completed, reload authoritative data
-      loadToursData();
-    }
+  // Listen for wizard save events — background sync after API completes
+  window.addEventListener('tourWizardSaved', () => {
+    loadToursData();
   });
   
   // Auto-refresh with visual indicator - store reference for cleanup
@@ -1298,6 +1279,32 @@ function initTourWizard() {
     window.TourWizard.init(regionsData, usersData);
   }
 }
+
+// Exposed globally so tour-wizard.js can call directly for instant table update
+window.updateToursCRUD = function(editMode, tourId, tourData) {
+  if (!tourData) return;
+  // Ensure region_name is resolved for table display
+  if (!tourData.region_name && tourData.region_id) {
+    const region = regionsData.find(r => String(r.id) === String(tourData.region_id));
+    if (region) tourData.region_name = region.region_name;
+  }
+  if (editMode && tourId) {
+    const idx = toursDataForCRUD.findIndex(t => t.id === tourId);
+    if (idx !== -1) Object.assign(toursDataForCRUD[idx], tourData);
+  } else {
+    toursDataForCRUD.push({ ...tourData, id: Date.now() });
+  }
+  renderToursTable();
+  updateTabCounts();
+  // Also refresh active sub-tabs
+  if (currentTab === 'my-tours') renderMyToursTab();
+  else if (currentTab === 'archived-tours') renderArchivedTab();
+};
+
+// Exposed globally so wizard/other scripts can trigger server sync
+window.syncToursFromServer = function() {
+  loadToursData();
+};
 
 // Helper: Check if a tour is archived or from 2025 or earlier (view-only)
 function isTourArchived(tour) {
