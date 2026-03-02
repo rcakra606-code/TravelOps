@@ -903,8 +903,7 @@ async function renderDashboard() {
     }
     
     // Participants per Region (derive name from regions list using region_id)
-    const regionList = await window.fetchJson('/api/regions');
-    const regionMap = Object.fromEntries((regionList || []).map(r => [String(r.id), r.region_name]));
+    const regionMap = Object.fromEntries((regionsData || []).map(r => [String(r.id), r.region_name]));
     const regionData = {};
     toursData.forEach(tour => {
       const rname = regionMap[String(tour.region_id)] || null;
@@ -1216,7 +1215,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Listen for wizard save events to refresh data
   window.addEventListener('tourWizardSaved', async () => {
-    loadToursData().then(() => renderDashboard()).catch(() => {});
+    loadToursData();
   });
   
   // Auto-refresh with visual indicator - store reference for cleanup
@@ -1491,10 +1490,11 @@ window.editTour = async function(id) {
     
     const idx = toursDataForCRUD.findIndex(i => i.id === item.id);
     if (idx !== -1) Object.assign(toursDataForCRUD[idx], formData);
-    renderDashboard();
+    renderToursTable();
+    updateTabCounts();
     window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-      .then(() => { window.toast.success('Tour updated successfully'); loadToursData().then(() => renderDashboard()); })
-      .catch(err => { window.toast.error(err.message || 'Update failed'); loadToursData().then(() => renderDashboard()); });
+      .then(() => { window.toast.success('Tour updated successfully'); loadToursData(); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadToursData(); });
   }, {
     entity: 'tours',
     size: 'large',
@@ -1526,10 +1526,10 @@ window.deleteTour = async function(id) {
   if (!confirmed) return;
   
   try {
-    toursDataForCRUD = toursDataForCRUD.filter(i => i.id !== id); renderDashboard();
+    toursDataForCRUD = toursDataForCRUD.filter(i => i.id !== id); renderToursTable(); updateTabCounts();
     await window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' });
     window.toast.success('Tour deleted successfully');
-    loadToursData().then(() => renderDashboard()).catch(() => {});
+    loadToursData();
   } catch (error) {
     console.error('Delete tour failed:', error);
     window.toast.error(error.message || 'Failed to delete tour');
@@ -1598,10 +1598,11 @@ if (el('addTourBtn')) {
       
       toursDataForCRUD.push({ ...formData, id: Date.now() });
       console.log('🔥 API call started');
-      renderDashboard();
+      renderToursTable();
+      updateTabCounts();
       window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-        .then(() => { console.log('🔥 API call completed'); window.toast.success('Tour added successfully'); loadToursData().then(() => renderDashboard()); })
-        .catch(err => { window.toast.error(err.message || 'Create failed'); loadToursData().then(() => renderDashboard()); });
+        .then(() => { console.log('🔥 API call completed'); window.toast.success('Tour added successfully'); loadToursData(); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); loadToursData(); });
     }, {
       entity: 'tours',
       size: 'large',
@@ -1740,6 +1741,5 @@ document.addEventListener('click', (e) => {
   }
 });
 
-// Load tours data on page load
-loadToursData();
+// Tours data loaded during renderDashboard() init — no extra call needed
 

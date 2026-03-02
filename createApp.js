@@ -1266,6 +1266,10 @@ export async function createApp() {
         if (t === 'corporate_accounts') {
           await db.run('DELETE FROM corporate_sales WHERE corporate_id=?', [id]);
         }
+        // Cascade delete related tour_passengers when deleting a tour
+        if (t === 'tours') {
+          await db.run('DELETE FROM tour_passengers WHERE tour_id=?', [id]);
+        }
         await db.run(`DELETE FROM ${t} WHERE id=?`, [id]);
         await logActivity(req.user.username, 'DELETE', t, id, 'Record deleted');
         logger.info({ user: req.user.username, entity: t, recordId: id, action: 'DELETE' }, 'Record deleted');
