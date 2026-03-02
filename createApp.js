@@ -2424,7 +2424,37 @@ export async function createApp() {
         targetsParams
       );
       
-      const toursQuery = buildWhere('departure_date');
+      // Build active-tours-only conditions: non-archived + departure year >= 2026
+      // tableAlias: optional prefix like 't.' for JOINed queries
+      const buildActiveToursWhere = (dateField, tableAlias = '') => {
+        const base = buildWhere(dateField);
+        const activeConditions = [];
+        const activeParams = [...base.params];
+        
+        // Start from existing conditions (strip 'WHERE ' prefix if present)
+        if (base.where) {
+          activeConditions.push(base.where.replace(/^WHERE /, ''));
+        }
+        
+        // Exclude archived tours
+        activeConditions.push(`(${tableAlias}is_archived IS NULL OR ${tableAlias}is_archived != 1)`);
+        
+        // Only 2026+ departure dates (must have departure_date)
+        if (isPg) {
+          activeConditions.push(`${tableAlias}departure_date IS NOT NULL`);
+          activeConditions.push(`EXTRACT(YEAR FROM ${tableAlias}departure_date) >= 2026`);
+        } else {
+          activeConditions.push(`${tableAlias}departure_date IS NOT NULL`);
+          activeConditions.push(`CAST(strftime('%Y', ${tableAlias}departure_date) AS INTEGER) >= 2026`);
+        }
+        
+        return {
+          where: activeConditions.length ? 'WHERE ' + activeConditions.join(' AND ') : '',
+          params: activeParams
+        };
+      };
+      
+      const toursQuery = buildActiveToursWhere('departure_date');
       const participants = await db.get(
         `SELECT COALESCE(SUM(jumlah_peserta), 0) AS total_participants FROM tours ${toursQuery.where}`,
         toursQuery.params
@@ -2436,7 +2466,7 @@ export async function createApp() {
         docsQuery.params
       );
       
-      const monthlyQuery = buildWhere('departure_date');
+      const monthlyQuery = buildActiveToursWhere('departure_date');
       const participants_by_month = await db.all(
         isPg 
           ? `SELECT TO_CHAR(departure_date,'MM') AS month, SUM(jumlah_peserta) AS participants FROM tours ${monthlyQuery.where} GROUP BY month`
@@ -2444,7 +2474,7 @@ export async function createApp() {
         monthlyQuery.params
       );
       
-      const regionQuery = buildWhere('t.departure_date');
+      const regionQuery = buildActiveToursWhere('t.departure_date', 't.');
       const participants_by_region = await db.all(
         `SELECT r.region_name, SUM(t.jumlah_peserta) AS participants
          FROM tours t

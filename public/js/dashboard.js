@@ -675,11 +675,19 @@ async function renderCharts() {
     if (region) params.region = region;
     
     const q = new URLSearchParams(params).toString();
-    const [metrics, toursData] = await Promise.all([
+    const [metrics, allToursData] = await Promise.all([
       fetchJson('/api/metrics' + (q ? '?' + q : '')),
       fetchJson('/api/tours' + (q ? '?' + q : ''))
     ]);
     if (!metrics) return;
+
+    // Filter to active tours only (non-archived, 2026+)
+    const toursData = (allToursData || []).filter(t => {
+      if (t.is_archived === 1 || t.is_archived === true) return false;
+      if (!t.departure_date) return false;
+      const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
+      return !isNaN(depYear) && depYear >= 2026;
+    });
 
     const ctx = id => document.getElementById(id)?.getContext('2d');
     const safeCreateChart = (canvasId, config) => {
@@ -1126,9 +1134,17 @@ async function loadProfileStats() {
     
     // Get user's data
     const sales = await fetchJson('/api/sales');
-    const tours = await fetchJson('/api/tours');
+    const allTours = await fetchJson('/api/tours');
     const documents = await fetchJson('/api/documents');
     const targets = await fetchJson('/api/targets');
+    
+    // Filter to active tours only (non-archived, 2026+)
+    const tours = (allTours || []).filter(t => {
+      if (t.is_archived === 1 || t.is_archived === true) return false;
+      if (!t.departure_date) return false;
+      const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
+      return !isNaN(depYear) && depYear >= 2026;
+    });
     
     // Filter by user if not admin
     const userSales = user.type === 'admin' ? sales : sales.filter(s => s.staff_name === user.name);

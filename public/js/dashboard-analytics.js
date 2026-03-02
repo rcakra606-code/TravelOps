@@ -61,12 +61,20 @@ class DashboardAnalytics {
     indicator?.classList.add('refreshing');
 
     try {
-      const [tours, sales, hotels, overtime] = await Promise.all([
+      const [allTours, sales, hotels, overtime] = await Promise.all([
         window.fetchJson?.('/api/tours') || [],
         window.fetchJson?.('/api/sales') || [],
         window.fetchJson?.('/api/hotel_bookings') || [],
         window.fetchJson?.('/api/overtime') || []
       ]);
+
+      // Filter to active tours only (non-archived, 2026+)
+      const tours = allTours.filter(t => {
+        if (t.is_archived === 1 || t.is_archived === true) return false;
+        if (!t.departure_date) return false;
+        const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
+        return !isNaN(depYear) && depYear >= 2026;
+      });
 
       const now = new Date();
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());

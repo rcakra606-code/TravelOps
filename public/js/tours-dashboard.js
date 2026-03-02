@@ -794,13 +794,10 @@ async function renderDashboard() {
       window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
     ]);
     
-    // Filter out archived and 2025-departure tours from analytics (they belong in Archived tab)
+    // Filter to active tours only (non-archived, 2026+ departure, must have departure_date)
     const toursData = (allToursData || []).filter(t => {
-      if (t.is_archived === 1 || t.is_archived === true) return false;
-      if (t.departure_date) {
-        const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
-        if (!isNaN(depYear) && depYear <= 2025) return false;
-      }
+      if (isTourArchived(t)) return false;
+      if (isTour2025OrEarlier(t)) return false;
       return true;
     });
     

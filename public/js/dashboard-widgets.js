@@ -354,11 +354,22 @@ class DashboardWidgets {
     }).format(amount);
   }
   
+  // Filter to active tours only (non-archived, 2026+ departure)
+  filterActiveTours(tours) {
+    return (tours || []).filter(t => {
+      if (t.is_archived === 1 || t.is_archived === true) return false;
+      if (!t.departure_date) return false;
+      const depYear = parseInt(String(t.departure_date).substring(0, 4), 10);
+      return !isNaN(depYear) && depYear >= 2026;
+    });
+  }
+  
   async renderQuickStats(el) {
-    const [tours, sales] = await Promise.all([
+    const [allTours, sales] = await Promise.all([
       this.fetchAPI('/api/tours'),
       this.fetchAPI('/api/sales')
     ]);
+    const tours = this.filterActiveTours(allTours);
     
     const now = new Date();
     const thisMonth = tours.filter(t => {
@@ -405,7 +416,8 @@ class DashboardWidgets {
   }
   
   async renderRecentTours(el) {
-    const tours = await this.fetchAPI('/api/tours');
+    const allTours = await this.fetchAPI('/api/tours');
+    const tours = this.filterActiveTours(allTours);
     const recent = tours.slice(0, 5);
     
     el.innerHTML = `
@@ -445,7 +457,8 @@ class DashboardWidgets {
   }
   
   async renderUpcomingDepartures(el) {
-    const tours = await this.fetchAPI('/api/tours');
+    const allTours = await this.fetchAPI('/api/tours');
+    const tours = this.filterActiveTours(allTours);
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
