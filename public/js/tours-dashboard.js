@@ -747,7 +747,7 @@ async function populateFilterDropdowns() {
 }
 
 /* === RENDER DASHBOARD === */
-async function renderDashboard() {
+async function renderDashboard(preloadedTours) {
   // Don't refresh if modal is open (user might be filling a form)
   const modal = document.getElementById('modal');
   if (modal && modal.classList.contains('active')) {
@@ -784,15 +784,16 @@ async function renderDashboard() {
     if (region) params.region = region;
     if (dateType) params.dateType = dateType;
     
-    console.log('Rendering tours dashboard with params:', params);
     const q = new URLSearchParams(params).toString();
-    console.log('Query string:', q);
     
-    // Fetch tours data and metrics
-    const [allToursData, metrics] = await Promise.all([
-      window.fetchJson('/api/tours' + (q ? '?' + q : '')),
-      window.fetchJson('/api/metrics' + (q ? '?' + q : ''))
-    ]);
+    // Use preloaded tours data if available (from loadToursData), otherwise fetch
+    const hasFilters = month || year || staff || region;
+    const allToursData = (!hasFilters && preloadedTours) 
+      ? preloadedTours 
+      : await window.fetchJson('/api/tours' + (q ? '?' + q : ''));
+    
+    // Only fetch metrics if we actually use them (guard kept for future use)
+    // const metrics = await window.fetchJson('/api/metrics' + (q ? '?' + q : ''));
     
     // Filter to active tours only (non-archived, 2026+ departure, must have departure_date)
     const toursData = (allToursData || []).filter(t => {
@@ -801,10 +802,7 @@ async function renderDashboard() {
       return true;
     });
     
-    console.log('Received toursData count:', toursData?.length || 0);
-    console.log('Received metrics:', metrics);
-    
-    if (!metrics) return;
+
     
     // Destroy existing charts properly and clear canvas references
     Object.keys(charts).forEach(key => {
@@ -1094,8 +1092,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   
   await populateFilterDropdowns();
-  loadToursData();
-  renderDashboard();
+  loadToursData(); // This calls renderDashboard() internally after data loads
   
   // Initialize tabs
   initTabs();
@@ -1110,27 +1107,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     loadToursData();
   });
   
-  // Auto-refresh with visual indicator - store reference for cleanup
-  let lastRefresh = Date.now();
-  refreshInterval = setInterval(() => {
-    // Don't refresh if modal is open
-    const modal = document.getElementById('modal');
-    if (modal && modal.classList.contains('active')) {
-      return;
-    }
-    
-    const now = Date.now();
-    if (now - lastRefresh >= 60000) {
-      lastRefresh = now;
-      renderDashboard();
-      // Show subtle refresh indicator
-      const indicator = document.createElement('div');
-      indicator.textContent = '🔄 Data refreshed';
-      indicator.style.cssText = 'position:fixed;top:70px;right:20px;padding:8px 16px;background:var(--success);color:white;border-radius:6px;font-size:12px;z-index:9999;animation:fadeInOut 2s;';
-      document.body.appendChild(indicator);
-      setTimeout(() => indicator.remove(), 2000);
-    }
-  }, 60000);
+  // Auto-refresh every 60 seconds\n  refreshInterval = setInterval(() => {\n    // Don't refresh if modal or wizard is open\n    const modal = document.getElementById('modal');\n    if (modal && modal.classList.contains('active')) return;\n    renderDashboard();\n  }, 60000);
   
   // Cleanup interval on page unload to prevent memory leaks
   window.addEventListener('beforeunload', () => {
@@ -1202,16 +1179,16 @@ async function loadToursData() {
     tbody.innerHTML = '<tr><td colspan="11" class="text-center">⏳ Loading tours data...</td></tr>';
   }
   try {
-    toursDataForCRUD = await window.fetchJson('/api/tours') || [];
-    console.log('📊 Loaded', toursDataForCRUD.length, 'tours, rendering...');
+    toursDataForCRUD = await window.fetchJson('/api/tours?_t=' + Date.now()) || [];
+    console.log('📊 Loaded', toursDataForCRUD.length, 'tours');
     toursCurrentPage = 1; // Reset to first page
     renderToursTable();
     updateTabCounts();
     // Refresh active tab
     if (currentTab === 'my-tours') renderMyToursTab();
     else if (currentTab === 'archived-tours') renderArchivedTab();
-    // Also refresh dashboard charts/metrics so the whole page reflects new data
-    renderDashboard();
+    // Refresh dashboard charts/metrics, passing already-loaded data to avoid re-fetching
+    renderDashboard(toursDataForCRUD);
   } catch (err) {
     console.error('Failed to load tours:', err);
     if (window.toast) window.toast.error('Failed to load tours data');
@@ -1219,16 +1196,6 @@ async function loadToursData() {
 }
 
 function renderToursTable() {
-  console.log('📋 renderToursTable() called. toursDataForCRUD has', toursDataForCRUD.length, 'items');
-  if (toursDataForCRUD.length > 0) {
-    const sample = toursDataForCRUD[0];
-    console.log('📋 Sample tour:', { id: sample.id, tour_code: sample.tour_code, departure_date: sample.departure_date, is_archived: sample.is_archived, data_version: sample.data_version });
-    // Show how many pass each filter
-    const notArchived = toursDataForCRUD.filter(t => !isTourArchived(t));
-    const not2025 = toursDataForCRUD.filter(t => !isTour2025OrEarlier(t));
-    const both = toursDataForCRUD.filter(t => !isTourArchived(t) && !isTour2025OrEarlier(t));
-    console.log('📋 Filter breakdown: notArchived=' + notArchived.length + ', not2025OrEarlier=' + not2025.length + ', both=' + both.length);
-  }
   const tbody = el('toursTableBody');
   if (!tbody) return;
   

@@ -751,6 +751,44 @@ async function createSchema(db) {
   await ensureColumn('targets', 'updated_at', isPg ? 'TIMESTAMPTZ' : 'TEXT');
   await ensureColumn('targets', 'updated_by', 'TEXT');
 
+  // ===== DATABASE INDEXES =====
+  // Speed up frequently-queried columns used in WHERE, JOIN, and ORDER BY clauses
+  const indexes = [
+    // Tours — filtered by departure_date, is_archived, staff_name, region_id in almost every query
+    'CREATE INDEX IF NOT EXISTS idx_tours_departure ON tours(departure_date)',
+    'CREATE INDEX IF NOT EXISTS idx_tours_archived ON tours(is_archived)',
+    'CREATE INDEX IF NOT EXISTS idx_tours_staff ON tours(staff_name)',
+    'CREATE INDEX IF NOT EXISTS idx_tours_region ON tours(region_id)',
+    // Sales — filtered by month (YYYY-MM), staff_name, region_id
+    'CREATE INDEX IF NOT EXISTS idx_sales_month ON sales(month)',
+    'CREATE INDEX IF NOT EXISTS idx_sales_staff ON sales(staff_name)',
+    'CREATE INDEX IF NOT EXISTS idx_sales_region ON sales(region_id)',
+    // Tour passengers — JOINed on tour_id
+    'CREATE INDEX IF NOT EXISTS idx_tour_passengers_tour ON tour_passengers(tour_id)',
+    // Documents — filtered by receive_date
+    'CREATE INDEX IF NOT EXISTS idx_documents_receive_date ON documents(receive_date)',
+    // Targets — composite lookups
+    'CREATE INDEX IF NOT EXISTS idx_targets_lookup ON targets(staff_name, month, year)',
+    // Sales targets — composite lookups
+    'CREATE INDEX IF NOT EXISTS idx_sales_targets_lookup ON sales_targets(staff_name, month, year)',
+    // Activity logs — sorted by created_at
+    'CREATE INDEX IF NOT EXISTS idx_activity_logs_created ON activity_logs(created_at)',
+    // Ticket segments — JOINed on ticket_id
+    'CREATE INDEX IF NOT EXISTS idx_ticket_segments_ticket ON ticket_segments(ticket_id)',
+    // Overtime — filtered by staff_name, event_date
+    'CREATE INDEX IF NOT EXISTS idx_overtime_staff ON overtime(staff_name)',
+    // Cashout — filtered by staff_name
+    'CREATE INDEX IF NOT EXISTS idx_cashout_staff ON cashout(staff_name)',
+    // Productivity — filtered by staff_name
+    'CREATE INDEX IF NOT EXISTS idx_productivity_staff ON productivity(staff_name)',
+    // Corporate sales — FK lookup
+    'CREATE INDEX IF NOT EXISTS idx_corporate_sales_corp ON corporate_sales(corporate_id)',
+  ];
+  
+  for (const idx of indexes) {
+    try { await db.run(idx); } catch (e) { /* index may already exist */ }
+  }
+
   if (process.env.NODE_ENV !== 'test') {
     console.log('✅ All database migrations completed successfully');
   }

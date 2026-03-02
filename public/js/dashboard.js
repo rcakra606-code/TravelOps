@@ -626,10 +626,9 @@ async function refreshAll() {
 
 /* === AUTO REFRESH === */
 let autoInterval = null;
-let chartInterval = null;
 function startAutoRefresh() {
   if (autoInterval) clearInterval(autoInterval);
-  autoInterval = setInterval(() => refreshAll(), 30000);
+  autoInterval = setInterval(() => refreshAll(), 60000); // 60s refresh is sufficient
 }
 function stopAutoRefresh() { if (autoInterval) clearInterval(autoInterval); autoInterval = null; }
 
@@ -1311,7 +1310,8 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
   
-  chartInterval = setInterval(renderCharts, 30000);
+  // Use single auto-refresh interval (startAutoRefresh handles charts + summary + CRUD)
+  // No separate chartInterval needed — refreshAll() already calls renderCharts()
   if (getUser().type === 'admin') loadActivity();
   
   // Cleanup intervals on page unload to prevent memory leaks
@@ -1319,10 +1319,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (autoInterval) {
       clearInterval(autoInterval);
       autoInterval = null;
-    }
-    if (chartInterval) {
-      clearInterval(chartInterval);
-      chartInterval = null;
     }
   });
   

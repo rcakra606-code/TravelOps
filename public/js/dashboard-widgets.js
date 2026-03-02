@@ -277,6 +277,14 @@ class DashboardWidgets {
   }
   
   async initializeWidgetComponents() {
+    // Pre-fetch shared data once for all widgets that need tours/sales
+    const [sharedTours, sharedSales] = await Promise.all([
+      this.fetchAPI('/api/tours'),
+      this.fetchAPI('/api/sales')
+    ]);
+    this._sharedTours = this.filterActiveTours(sharedTours);
+    this._sharedSales = sharedSales || [];
+    
     for (const widgetId of this.layout) {
       const widget = this.availableWidgets[widgetId];
       if (!widget) continue;
@@ -365,11 +373,9 @@ class DashboardWidgets {
   }
   
   async renderQuickStats(el) {
-    const [allTours, sales] = await Promise.all([
-      this.fetchAPI('/api/tours'),
-      this.fetchAPI('/api/sales')
-    ]);
-    const tours = this.filterActiveTours(allTours);
+    // Use pre-fetched shared data instead of redundant API calls
+    const tours = this._sharedTours || [];
+    const sales = this._sharedSales || [];
     
     const now = new Date();
     const thisMonth = tours.filter(t => {
@@ -416,8 +422,8 @@ class DashboardWidgets {
   }
   
   async renderRecentTours(el) {
-    const allTours = await this.fetchAPI('/api/tours');
-    const tours = this.filterActiveTours(allTours);
+    // Use pre-fetched shared data
+    const tours = this._sharedTours || [];
     const recent = tours.slice(0, 5);
     
     el.innerHTML = `
@@ -457,8 +463,8 @@ class DashboardWidgets {
   }
   
   async renderUpcomingDepartures(el) {
-    const allTours = await this.fetchAPI('/api/tours');
-    const tours = this.filterActiveTours(allTours);
+    // Use pre-fetched shared data
+    const tours = this._sharedTours || [];
     const now = new Date();
     now.setHours(0, 0, 0, 0);
     
