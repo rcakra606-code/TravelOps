@@ -109,7 +109,7 @@ function initTabs() {
 /* === API DATA MANAGEMENT === */
 async function loadCorporateData() {
   try {
-    const data = await fetchJson('/api/corporate/full');
+    const data = await fetchJson('/api/corporate/full?_t=' + Date.now());
     if (Array.isArray(data)) {
       corporateAccounts = data;
     } else {
@@ -1197,3 +1197,10 @@ async function init() {
 }
 
 init();
+
+// Auto-refresh every 60s (skip if modal open)
+let _corpRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadCorporateData().then(() => { renderCorporateList(); loadDashboardSummary(); });
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_corpRefresh));

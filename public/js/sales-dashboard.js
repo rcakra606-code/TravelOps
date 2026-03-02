@@ -272,10 +272,10 @@ async function renderDashboard() {
     
     // Fetch data - also get targets for trend charts (staff filter uses 'staff' param like sales)
     const [achievementMetrics, trendData, topStaffData, targetsData] = await Promise.all([
-      window.fetchJson('/api/metrics?' + achievementQ),
-      window.fetchJson('/api/sales?' + trendQ),
-      window.fetchJson('/api/sales?' + topStaffQ),
-      window.fetchJson('/api/targets' + (staff ? '?' + new URLSearchParams({ staff }).toString() : '')).catch(err => {
+      window.fetchJson('/api/metrics?' + achievementQ + '&_t=' + Date.now()),
+      window.fetchJson('/api/sales?' + trendQ + '&_t=' + Date.now()),
+      window.fetchJson('/api/sales?' + topStaffQ + '&_t=' + Date.now()),
+      window.fetchJson('/api/targets' + (staff ? '?' + new URLSearchParams({ staff }).toString() + '&_t=' + Date.now() : '?_t=' + Date.now())).catch(err => {
         console.warn('Failed to fetch targets:', err);
         return [];
       })
@@ -822,7 +822,7 @@ let salesFilters = { search: '' };
 
 async function loadSalesData() {
   try {
-    salesDataForCRUD = await window.fetchJson('/api/sales') || [];
+    salesDataForCRUD = await window.fetchJson('/api/sales?_t=' + Date.now()) || [];
     renderSalesTable();
   } catch (err) {
     console.error('Failed to load sales:', err);

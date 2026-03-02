@@ -520,6 +520,38 @@
         min-width: unset;
       }
     }
+
+    /* Log sub-tab styles */
+    .log-sub-tab {
+      padding: 6px 16px;
+      background: transparent;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      font-size: 0.85rem;
+      color: var(--text-secondary, #6b7280);
+      transition: all 0.2s;
+    }
+    .log-sub-tab.active {
+      background: var(--bg, #fff);
+      color: var(--accent, #3b82f6);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      font-weight: 600;
+    }
+    .log-sub-tab:hover:not(.active) { background: rgba(59,130,246,0.05); }
+    #logTableHead th { padding: 8px 10px; text-align: left; font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); border-bottom: 2px solid var(--border-light); white-space: nowrap; }
+    #logTableBody td { padding: 6px 10px; border-bottom: 1px solid var(--border-light); vertical-align: top; max-width: 250px; overflow: hidden; text-overflow: ellipsis; }
+    #logTableBody tr:hover { background: var(--bg-alt, #f9fafb); }
+    .log-level-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.72rem; text-transform: uppercase; }
+    .log-level-badge.error { background: #fef2f2; color: #dc2626; }
+    .log-level-badge.warn { background: #fffbeb; color: #d97706; }
+    .log-level-badge.info { background: #eff6ff; color: #2563eb; }
+    .log-level-badge.debug { background: #f3f4f6; color: #6b7280; }
+    .sec-badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-weight: 600; font-size: 0.72rem; }
+    .sec-badge.critical { background: #fef2f2; color: #dc2626; }
+    .sec-badge.warning { background: #fffbeb; color: #d97706; }
+    .sec-badge.normal { background: #f0fdf4; color: #16a34a; }
   </style>
 </head>
 <body>
@@ -587,7 +619,6 @@
           <a href="/outstanding-dashboard.html">📋 Outstanding</a>
           <a href="/cashout-dashboard.html">💸 Cash Out</a>
           <a href="/admin-settings.html" class="active">⚙️ Admin Settings</a>
-          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
@@ -622,6 +653,7 @@
         <button class="settings-tab" data-tab="import-export">📦 Import/Export</button>
         <button class="settings-tab" data-tab="activity">📜 Activity Log</button>
         <button class="settings-tab" data-tab="system">🖥️ System</button>
+        <button class="settings-tab" data-tab="logs">📋 Logs</button>
       </div>
 
       <!-- General Settings Panel -->
@@ -1299,6 +1331,55 @@
           </div>
         </div>
       </div>
+
+      <!-- System Logs Panel -->
+      <div class="settings-panel" id="panel-logs">
+        <div class="settings-section">
+          <h3>📋 System Logs</h3>
+          <p style="color:var(--text-secondary);margin-bottom:16px">Monitor application events, security incidents, and audit trail</p>
+
+          <!-- Log Sub-tabs -->
+          <div style="display:flex;gap:4px;margin-bottom:16px;background:var(--bg-alt,#f3f4f6);padding:6px;border-radius:10px;">
+            <button class="log-sub-tab active" data-logtab="app" onclick="switchLogTab('app')">📊 Application</button>
+            <button class="log-sub-tab" data-logtab="security" onclick="switchLogTab('security')">🔒 Security</button>
+            <button class="log-sub-tab" data-logtab="audit" onclick="switchLogTab('audit')">📝 Audit Trail</button>
+          </div>
+
+          <!-- Log Stats -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;" id="logStats">
+            <div class="status-card"><div class="status-card-icon">📊</div><div class="status-card-value" id="logStatTotal">0</div><div class="status-card-label">Total Events</div></div>
+            <div class="status-card"><div class="status-card-icon">⚠️</div><div class="status-card-value" id="logStatWarnings" style="color:#f59e0b">0</div><div class="status-card-label">Warnings</div></div>
+            <div class="status-card"><div class="status-card-icon">❌</div><div class="status-card-value" id="logStatErrors" style="color:#ef4444">0</div><div class="status-card-label">Errors</div></div>
+            <div class="status-card"><div class="status-card-icon">🔒</div><div class="status-card-value" id="logStatSecurity" style="color:#10b981">0</div><div class="status-card-label">Security</div></div>
+          </div>
+
+          <!-- Log Controls -->
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:16px;padding:12px;background:var(--bg-alt,#f3f4f6);border-radius:10px;border:1px solid var(--border-light,#e5e7eb);">
+            <label style="font-weight:600;font-size:0.85rem;color:var(--text-secondary)">Date:</label>
+            <select id="logDateSelect" style="padding:6px 10px;border:1px solid var(--border-light);border-radius:6px;font-size:0.85rem"><option value="">Today</option></select>
+            <label style="font-weight:600;font-size:0.85rem;color:var(--text-secondary)">Lines:</label>
+            <select id="logLinesSelect" style="padding:6px 10px;border:1px solid var(--border-light);border-radius:6px;font-size:0.85rem">
+              <option value="50">50</option><option value="100" selected>100</option><option value="200">200</option><option value="500">500</option>
+            </select>
+            <input type="text" id="logFilter" placeholder="🔍 Filter logs..." style="flex:1;min-width:180px;padding:6px 10px;border:1px solid var(--border-light);border-radius:6px;font-size:0.85rem" oninput="applyLogFilter()">
+            <button onclick="loadSystemLogs()" style="padding:6px 16px;background:var(--accent,#3b82f6);color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer">🔄 Refresh</button>
+          </div>
+
+          <!-- Log Table -->
+          <div style="overflow-x:auto;border-radius:10px;border:1px solid var(--border-light,#e5e7eb);max-height:55vh;overflow-y:auto;">
+            <table style="width:100%;border-collapse:collapse;font-size:0.82rem;">
+              <thead><tr id="logTableHead" style="background:var(--bg-alt);position:sticky;top:0"></tr></thead>
+              <tbody id="logTableBody"></tbody>
+            </table>
+          </div>
+          <div id="logEmpty" style="display:none;text-align:center;padding:32px;color:var(--text-secondary)">
+            <div style="font-size:2.5rem;margin-bottom:8px">📋</div>
+            <h4>No logs found</h4>
+            <p>No log entries for the selected filters.</p>
+          </div>
+        </div>
+      </div>
+
     </div><!-- End card -->
   </main>
 </div><!-- End app -->
@@ -1359,6 +1440,7 @@
         if (tab.dataset.tab === 'regions') loadRegions();
         if (tab.dataset.tab === 'backup') loadBackups();
         if (tab.dataset.tab === 'email') checkEmailConfig();
+        if (tab.dataset.tab === 'logs') loadSystemLogs();
       });
     });
 
@@ -2796,6 +2878,108 @@
       }
     });
   </script>
+
+  <!-- System Logs Logic -->
+  <script>
+    (function() {
+      let logTab = 'app';
+      let allLogEntries = [];
+      let filteredLogEntries = [];
+      const LEVEL_MAP = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' };
+
+      function getLevelName(e) { return (e.level && LEVEL_MAP[e.level]) || (e.level ? String(e.level) : 'info'); }
+      function getLevelClass(e) { const n = getLevelName(e); return (n === 'error' || n === 'fatal') ? 'error' : n === 'warn' ? 'warn' : (n === 'debug' || n === 'trace') ? 'debug' : 'info'; }
+      function getSecBadge(ev) {
+        if (['EMERGENCY_RESET','ACCOUNT_LOCKED','SUSPICIOUS_INPUT','BLOCKED_COLUMN'].includes(ev)) return 'critical';
+        if (['LOGIN_FAIL','AUTH_FAIL','CSRF_FAIL','PERMISSION_DENIED','RATE_LIMITED'].includes(ev)) return 'warning';
+        return 'normal';
+      }
+      function fmtTime(e) {
+        const ts = e.time || e.timestamp;
+        if (!ts) return '—';
+        try { return new Date(ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' }); } catch { return String(ts).substring(11, 19); }
+      }
+      function esc(s) { if (!s) return ''; const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+      window.switchLogTab = function(tab) {
+        logTab = tab;
+        document.querySelectorAll('.log-sub-tab').forEach(t => t.classList.toggle('active', t.dataset.logtab === tab));
+        loadSystemLogs();
+      };
+
+      window.loadSystemLogs = async function() {
+        const type = logTab === 'audit' ? 'security' : logTab;
+        const date = document.getElementById('logDateSelect').value;
+        const lines = document.getElementById('logLinesSelect').value;
+        // Load dates
+        try {
+          const dd = await fetchJson(`/api/logs/${type}/dates`);
+          const sel = document.getElementById('logDateSelect');
+          const cur = sel.value;
+          sel.innerHTML = '<option value="">Today</option>';
+          if (dd && dd.dates) dd.dates.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; sel.appendChild(o); });
+          if (cur) sel.value = cur;
+        } catch {}
+        // Load logs
+        try {
+          let url = `/api/logs/${type}?lines=${lines}`;
+          if (date) url += `&date=${date}`;
+          const data = await fetchJson(url);
+          allLogEntries = (data && data.logs) ? data.logs : [];
+          if (logTab === 'audit') allLogEntries = allLogEntries.filter(l => l.audit === true);
+          updateLogStats();
+          applyLogFilter();
+        } catch (err) {
+          console.error('Failed to load logs:', err);
+          if (typeof toast !== 'undefined') toast.error('Failed to load logs');
+          allLogEntries = [];
+          applyLogFilter();
+        }
+      };
+
+      function updateLogStats() {
+        document.getElementById('logStatTotal').textContent = allLogEntries.length;
+        document.getElementById('logStatWarnings').textContent = allLogEntries.filter(l => getLevelName(l) === 'warn').length;
+        document.getElementById('logStatErrors').textContent = allLogEntries.filter(l => getLevelName(l) === 'error' || getLevelName(l) === 'fatal').length;
+        document.getElementById('logStatSecurity').textContent = allLogEntries.filter(l => l.securityEvent).length;
+      }
+
+      window.applyLogFilter = function() {
+        const q = (document.getElementById('logFilter').value || '').toLowerCase();
+        filteredLogEntries = q ? allLogEntries.filter(l => JSON.stringify(l).toLowerCase().includes(q)) : allLogEntries;
+        renderLogTable();
+      };
+
+      function renderLogTable() {
+        const head = document.getElementById('logTableHead');
+        const body = document.getElementById('logTableBody');
+        const empty = document.getElementById('logEmpty');
+        if (!filteredLogEntries.length) { head.innerHTML = ''; body.innerHTML = ''; empty.style.display = 'block'; return; }
+        empty.style.display = 'none';
+        if (logTab === 'security') {
+          head.innerHTML = '<th>Time</th><th>Event</th><th>Severity</th><th>Username</th><th>IP</th><th>Details</th><th></th>';
+          body.innerHTML = filteredLogEntries.map((l, i) => `<tr><td>${fmtTime(l)}</td><td><strong>${esc(l.securityEvent || l.msg || '—')}</strong></td><td><span class="sec-badge ${getSecBadge(l.securityEvent || '')}">${getSecBadge(l.securityEvent || '')}</span></td><td>${esc(l.username || '—')}</td><td>${esc(l.ip || '—')}</td><td>${esc(l.reason || l.action || l.msg || '').substring(0, 50)}</td><td><button onclick="showLogDetail(${i})" style="background:none;border:none;cursor:pointer">🔍</button></td></tr>`).join('');
+        } else if (logTab === 'audit') {
+          head.innerHTML = '<th>Time</th><th>Action</th><th>Entity</th><th>Record</th><th>User</th><th>Details</th><th></th>';
+          body.innerHTML = filteredLogEntries.map((l, i) => `<tr><td>${fmtTime(l)}</td><td><strong>${esc(l.action || '—')}</strong></td><td>${esc(l.entity || '—')}</td><td>${esc(String(l.recordId || '—'))}</td><td>${esc(l.username || '—')}</td><td>${esc(l.msg || '').substring(0, 50)}</td><td><button onclick="showLogDetail(${i})" style="background:none;border:none;cursor:pointer">🔍</button></td></tr>`).join('');
+        } else {
+          head.innerHTML = '<th>Time</th><th>Level</th><th>Method</th><th>URL</th><th>Status</th><th>Duration</th><th>User</th><th></th>';
+          body.innerHTML = filteredLogEntries.map((l, i) => `<tr><td>${fmtTime(l)}</td><td><span class="log-level-badge ${getLevelClass(l)}">${getLevelName(l)}</span></td><td>${esc(l.method || '—')}</td><td title="${esc(l.url || '')}">${esc((l.url || l.msg || '—').substring(0,40))}</td><td>${l.statusCode || '—'}</td><td>${l.duration_ms != null ? l.duration_ms + 'ms' : '—'}</td><td>${esc(l.username || '—')}</td><td><button onclick="showLogDetail(${i})" style="background:none;border:none;cursor:pointer">🔍</button></td></tr>`).join('');
+        }
+      }
+
+      window.showLogDetail = function(i) {
+        const l = filteredLogEntries[i];
+        if (!l) return;
+        if (typeof confirmDialog !== 'undefined' && confirmDialog.show) {
+          confirmDialog.show({ title: 'Log Entry Details', message: '<pre style="background:var(--bg-alt);padding:12px;border-radius:8px;overflow:auto;max-height:50vh;font-size:0.8rem;white-space:pre-wrap">' + esc(JSON.stringify(l, null, 2)) + '</pre>', confirmText: 'Close', showCancel: false });
+        } else {
+          alert(JSON.stringify(l, null, 2));
+        }
+      };
+    })();
+  </script>
+
 <script src="/js/sidebar-enhancements.js"></script>
 <script src="/js/keyboard-shortcuts.js"></script>
 <script src="/js/sidebar-groups.js"></script>

@@ -53,7 +53,7 @@ async function loadStaff() {
 async function loadOvertime() {
   try {
     loadingUtils.showTableLoader('overtimeTableBody', 7);
-    const data = await fetchJson('/api/overtime');
+    const data = await fetchJson('/api/overtime?_t=' + Date.now());
     overtimeData = data || [];
     applyFiltersAndRender();
   } catch (err) {
@@ -543,6 +543,13 @@ sortUtils.addSortableHeaders('overtimeTable',
 // Initialize
 await loadStaff();
 await loadOvertime();
+
+// Auto-refresh every 60s (skip if modal open)
+let _overtimeRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadOvertime();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_overtimeRefresh));
 
 // Hide actions column header for basic users
 if (user.type === 'basic') {

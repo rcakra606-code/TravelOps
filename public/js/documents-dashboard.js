@@ -254,7 +254,7 @@ async function renderDashboard() {
     const q = new URLSearchParams(params).toString();
     
     // Fetch documents data
-    let docsData = await window.fetchJson('/api/documents' + (q ? '?' + q : ''));
+    let docsData = await window.fetchJson('/api/documents' + (q ? '?' + q + '&_t=' + Date.now() : '?_t=' + Date.now()));
     
     if (!docsData) return;
     
@@ -710,7 +710,7 @@ const documentsPageSize = 25;
 
 async function loadDocumentsData() {
   try {
-    documentsDataForCRUD = await window.fetchJson('/api/documents') || [];
+    documentsDataForCRUD = await window.fetchJson('/api/documents?_t=' + Date.now()) || [];
     renderDocumentsTable();
   } catch (err) {
     console.error('Failed to load documents:', err);

@@ -137,7 +137,7 @@ function applyOutstandingFilters(formData) {
 /* === LOAD DATA === */
 async function loadOutstandingData() {
   try {
-    outstandingData = await window.fetchJson('/api/outstanding') || [];
+    outstandingData = await window.fetchJson('/api/outstanding?_t=' + Date.now()) || [];
     renderTable();
     updateSummary();
   } catch (err) {
@@ -549,4 +549,11 @@ window.addEventListener('DOMContentLoaded', async () => {
   
   // Load data
   await loadOutstandingData();
+
+  // Auto-refresh every 60s (skip if modal open)
+  let _outstandingRefresh = setInterval(() => {
+    if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+    loadOutstandingData();
+  }, 60000);
+  window.addEventListener('beforeunload', () => clearInterval(_outstandingRefresh));
 });

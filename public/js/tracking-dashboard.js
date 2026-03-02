@@ -242,8 +242,8 @@ class TrackingDashboard {
     
     try {
       const [deliveriesRes, receivingsRes] = await Promise.all([
-        fetch('/api/tracking/deliveries', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/tracking/receivings', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch('/api/tracking/deliveries?_t=' + Date.now(), { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch('/api/tracking/receivings?_t=' + Date.now(), { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
 
       if (deliveriesRes.ok) this.deliveries = await deliveriesRes.json();
@@ -912,8 +912,15 @@ class TrackingDashboard {
 
 // Initialize - prevent multiple instantiation
 let trackingDashboard;
+let _trackingRefresh;
 document.addEventListener('DOMContentLoaded', () => {
   if (!trackingDashboard) {
     trackingDashboard = new TrackingDashboard();
+    // Auto-refresh every 60s (skip if modal open)
+    _trackingRefresh = setInterval(() => {
+      if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+      trackingDashboard.loadData();
+    }, 60000);
+    window.addEventListener('beforeunload', () => clearInterval(_trackingRefresh));
   }
 });

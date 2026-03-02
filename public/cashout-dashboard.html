@@ -179,7 +179,6 @@
           <a href="/outstanding-dashboard.html">📋 Outstanding</a>
           <a href="/cashout-dashboard.html" class="active">💸 Cash Out</a>
           <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
-          <a href="/logs-dashboard.html">📋 System Logs</a>
         </div>
       </div>
       
@@ -424,7 +423,7 @@
   
   async function loadData() {
     try {
-      allCashouts = await fetchJson('/api/cashout');
+      allCashouts = await fetchJson('/api/cashout?_t=' + Date.now());
       renderTable();
       updateStats();
     } catch (err) {
@@ -649,6 +648,13 @@
   
   // Initialize on load
   document.addEventListener('DOMContentLoaded', init);
+
+  // Auto-refresh every 60s (skip if modal open)
+  let _cashoutRefresh = setInterval(() => {
+    if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+    loadData();
+  }, 60000);
+  window.addEventListener('beforeunload', () => clearInterval(_cashoutRefresh));
 </script>
 
 <script src="/js/sidebar-enhancements.js"></script>

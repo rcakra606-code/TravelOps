@@ -102,7 +102,7 @@ async function fetchJson(url, options = {}) {
 // Load all tickets
 async function loadTickets() {
   try {
-    allTickets = await fetchJson('/api/ticket_recaps/full');
+    allTickets = await fetchJson('/api/ticket_recaps/full?_t=' + Date.now());
     updateAirlineFilter();
     applyFilters();
     updateMetrics();
@@ -778,3 +778,10 @@ function exportToCSV() {
 
 // Export for external use
 export { loadTickets, allTickets };
+
+// Auto-refresh every 60s (skip if modal open)
+let _ticketRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadTickets();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_ticketRefresh));

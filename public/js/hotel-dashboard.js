@@ -63,7 +63,7 @@ async function loadUsers() {
 async function loadHotel() {
   try {
     window.loadingUtils.showTableLoader('hotelTableBody', 8);
-    hotelData = await fetchJson('/api/hotel_bookings') || [];
+    hotelData = await fetchJson('/api/hotel_bookings?_t=' + Date.now()) || [];
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load hotel:', err);
@@ -444,4 +444,11 @@ el('importHotelFileInput')?.addEventListener('change', async (e) => {
 
 // Initialize
 Promise.all([loadRegions(), loadUsers()]).then(() => loadHotel());
+
+// Auto-refresh every 60s (skip if modal open)
+let _hotelRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadHotel();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_hotelRefresh));
 

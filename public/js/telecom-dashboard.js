@@ -63,7 +63,7 @@ async function loadUsers() {
 async function loadTelecom() {
   try {
     window.loadingUtils.showTableLoader('telecomTableBody', 9);
-    telecomData = await fetchJson('/api/telecom') || [];
+    telecomData = await fetchJson('/api/telecom?_t=' + Date.now()) || [];
     applyFiltersAndRender();
   } catch (err) {
     console.error('Failed to load telecom:', err);
@@ -355,4 +355,11 @@ el('exportTelecomBtn').addEventListener('click', () => {
 
 // Initialize
 Promise.all([loadRegions(), loadUsers()]).then(() => loadTelecom());
+
+// Auto-refresh every 60s (skip if modal open)
+let _telecomRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadTelecom();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_telecomRefresh));
 

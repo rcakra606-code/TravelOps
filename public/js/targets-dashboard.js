@@ -62,7 +62,7 @@ async function loadStaff() {
 async function loadTargets() {
   try {
     window.loadingUtils.showTableLoader('targetsTableBody', 6);
-    const data = await fetchJson('/api/targets');
+    const data = await fetchJson('/api/targets?_t=' + Date.now());
     targetsData = data || [];
     applyFiltersAndRender();
   } catch (err) {
@@ -583,6 +583,13 @@ async function init() {
 }
 
 init();
+
+// Auto-refresh every 60s (skip if modal open)
+let _targetsRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadTargets();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_targetsRefresh));
 
 // Expose functions globally
 window.editTarget = editTarget;

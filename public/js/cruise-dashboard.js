@@ -52,7 +52,7 @@ async function loadStaff() {
 async function loadCruises() {
   try {
     loadingUtils.showTableLoader('cruiseTableBody', 9);
-    const data = await fetchJson('/api/cruise');
+    const data = await fetchJson('/api/cruise?_t=' + Date.now());
     cruiseData = data || [];
     
     // Populate brand filter
@@ -678,3 +678,10 @@ document.addEventListener('click', (e) => {
 
 await loadStaff();
 await loadCruises();
+
+// Auto-refresh every 60s (skip if modal open)
+let _cruiseRefresh = setInterval(() => {
+  if (document.querySelector('.modal.show, .modal[style*="flex"]')) return;
+  loadCruises();
+}, 60000);
+window.addEventListener('beforeunload', () => clearInterval(_cruiseRefresh));
