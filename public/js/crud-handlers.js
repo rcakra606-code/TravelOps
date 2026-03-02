@@ -1719,41 +1719,41 @@ async function handleModalSubmit(formData, context) {
     }
 
     if (action === 'create') {
-      const result = await fetchJson(`/api/${entity}`, {
-        method: 'POST',
-        body: formData
-      });
+      // Optimistic: inject form data into local state immediately (before API call)
+      if (!state[entity]) state[entity] = [];
+      const tempId = Date.now();
+      const tempRecord = { ...formData, id: tempId };
+      state[entity].push(tempRecord);
+      renderTable(entity);
       toast.success('Data berhasil ditambahkan');
-      // Optimistic: inject returned record into local state immediately
-      if (result && result.record) {
-        if (!state[entity]) state[entity] = [];
-        state[entity].push(result.record);
-        renderTable(entity);
-        // Highlight the new row
-        requestAnimationFrame(() => {
-          const row = document.querySelector(`tr[data-id="${result.record.id}"], tr[data-row-id="${result.record.id}"]`);
-          if (row) { row.classList.add('row-flash-in'); }
-        });
-      }
-    } else if (action === 'update') {
-      const result = await fetchJson(`/api/${entity}/${id}`, {
-        method: 'PUT',
-        body: formData
+      // Highlight the new row
+      requestAnimationFrame(() => {
+        const row = document.querySelector(`tr[data-id="${tempId}"], tr[data-row-id="${tempId}"]`);
+        if (row) { row.classList.add('row-flash-in'); }
       });
-      toast.success('Data berhasil diperbarui');
-      // Optimistic: patch the record in local state immediately
-      if (result && result.record && state[entity]) {
+      // Fire API in background — server sync
+      fetchJson(`/api/${entity}`, { method: 'POST', body: formData })
+        .then(() => loadData(entity).then(() => renderTable(entity)))
+        .catch(() => loadData(entity).then(() => renderTable(entity)));
+    } else if (action === 'update') {
+      // Optimistic: patch local state immediately with form data (before API call)
+      if (state[entity]) {
         const idx = state[entity].findIndex(i => i.id === id || i.id === Number(id));
         if (idx !== -1) {
-          state[entity][idx] = result.record;
+          state[entity][idx] = { ...state[entity][idx], ...formData };
         }
         renderTable(entity);
-        // Highlight the updated row
-        requestAnimationFrame(() => {
-          const row = document.querySelector(`tr[data-id="${id}"], tr[data-row-id="${id}"]`);
-          if (row) { row.classList.add('row-flash-update'); }
-        });
       }
+      toast.success('Data berhasil diperbarui');
+      // Highlight the updated row
+      requestAnimationFrame(() => {
+        const row = document.querySelector(`tr[data-id="${id}"], tr[data-row-id="${id}"]`);
+        if (row) { row.classList.add('row-flash-update'); }
+      });
+      // Fire API in background — server sync
+      fetchJson(`/api/${entity}/${id}`, { method: 'PUT', body: formData })
+        .then(() => loadData(entity).then(() => renderTable(entity)))
+        .catch(() => loadData(entity).then(() => renderTable(entity)));
     }
     
     // Background sync: silently re-fetch to ensure consistency (non-blocking)

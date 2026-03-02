@@ -182,10 +182,12 @@ window.editHotel = async function(id) {
     { type: 'text', name: 'supplier_name', label: 'Supplier Name', icon: '🏢', placeholder: 'Hotel supplier name' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], item, async (formData) => {
-    const result = await fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    window.toast.success('Hotel booking updated');
-    if (result && result.record) { const idx = hotelData.findIndex(i => i.id === item.id); if (idx !== -1) hotelData[idx] = result.record; applyFiltersAndRender(); }
-    loadHotel();
+    const idx = hotelData.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(hotelData[idx], formData);
+    applyFiltersAndRender();
+    fetchJson(`/api/hotel_bookings/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Hotel booking updated'); loadHotel(); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadHotel(); });
   }, {
     entity: 'hotel',
     size: 'large',
@@ -249,10 +251,11 @@ el('addHotelBtn').addEventListener('click', () => {
     { type: 'text', name: 'supplier_name', label: 'Supplier Name', icon: '🏢', placeholder: 'Hotel supplier name' },
     { type: 'select', name: 'staff_name', label: 'Staff', required: true, options: usersData.map(u => ({ value: u.name, label: u.name })) }
   ], async (formData) => {
-    const result = await fetchJson('/api/hotel_bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    window.toast.success('Hotel booking added');
-    if (result && result.record) { hotelData.push(result.record); applyFiltersAndRender(); }
-    loadHotel();
+    hotelData.push({ ...formData, id: Date.now() });
+    applyFiltersAndRender();
+    fetchJson('/api/hotel_bookings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Hotel booking added'); loadHotel(); })
+      .catch(err => { window.toast.error(err.message || 'Create failed'); loadHotel(); });
   }, {
     entity: 'hotel',
     size: 'large',

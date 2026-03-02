@@ -270,14 +270,11 @@ function addOutstanding() {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    const result = await window.fetchJson('/api/outstanding', { 
-      method: 'POST', 
-      headers: { 'Content-Type': 'application/json' }, 
-      body: JSON.stringify(formData) 
-    });
-    window.toast?.success('Outstanding record added successfully');
-    if (result && result.record) { outstandingData.push(result.record); renderTable(); updateSummary(); }
-    loadOutstandingData();
+    outstandingData.push({ ...formData, id: Date.now() });
+    renderTable(); updateSummary();
+    window.fetchJson('/api/outstanding', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast?.success('Outstanding record added successfully'); loadOutstandingData(); })
+      .catch(err => { window.toast?.error(err.message || 'Create failed'); loadOutstandingData(); });
   }, {
     entity: 'outstanding',
     validation: { 
@@ -310,14 +307,12 @@ function editOutstanding(id) {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    const result = await window.fetchJson(`/api/outstanding/${item.id}`, { 
-      method: 'PUT', 
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData) 
-    });
-    window.toast?.success('Outstanding record updated successfully');
-    if (result && result.record) { const idx = outstandingData.findIndex(i => i.id === item.id); if (idx !== -1) outstandingData[idx] = result.record; renderTable(); updateSummary(); }
-    loadOutstandingData();
+    const idx = outstandingData.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(outstandingData[idx], formData);
+    renderTable(); updateSummary();
+    window.fetchJson(`/api/outstanding/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast?.success('Outstanding record updated successfully'); loadOutstandingData(); })
+      .catch(err => { window.toast?.error(err.message || 'Update failed'); loadOutstandingData(); });
   }, {
     entity: 'outstanding',
     validation: { 

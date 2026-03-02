@@ -675,22 +675,22 @@ async function handleSubmit(e) {
     
     const payload = { ticket, segments };
     
+    // Close modal immediately for instant UX
+    closeModal();
+    
     if (editingId) {
-      await fetchJson(`/api/ticket_recaps/${editingId}/full`, {
+      fetchJson(`/api/ticket_recaps/${editingId}/full`, {
         method: 'PUT',
         body: JSON.stringify(payload)
-      });
-      window.toast?.success('Ticket updated successfully');
+      }).then(() => { window.toast?.success('Ticket updated successfully'); loadTickets(); })
+        .catch(err => { window.toast?.error(err.message || 'Failed to save ticket'); loadTickets(); });
     } else {
-      await fetchJson('/api/ticket_recaps/full', {
+      fetchJson('/api/ticket_recaps/full', {
         method: 'POST',
         body: JSON.stringify(payload)
-      });
-      window.toast?.success('Ticket created successfully');
+      }).then(() => { window.toast?.success('Ticket created successfully'); loadTickets(); })
+        .catch(err => { window.toast?.error(err.message || 'Failed to save ticket'); loadTickets(); });
     }
-    
-    closeModal();
-    loadTickets();
   } catch (error) {
     console.error('Save error:', error);
     window.toast?.error(error.message || 'Failed to save ticket');

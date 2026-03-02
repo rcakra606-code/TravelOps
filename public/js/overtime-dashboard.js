@@ -231,13 +231,12 @@ async function editOvertime(id) {
       placeholder: 'Additional notes'
     }
   ], item, async (formData) => {
-    const result = await fetchJson(`/api/overtime/${item.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(formData)
-    });
-    toast.success('Overtime updated successfully');
-    if (result && result.record) { const idx = overtimeData.findIndex(i => i.id === item.id); if (idx !== -1) overtimeData[idx] = result.record; applyFiltersAndRender(); }
-    loadOvertime();
+    const idx = overtimeData.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(overtimeData[idx], formData);
+    applyFiltersAndRender();
+    fetchJson(`/api/overtime/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) })
+      .then(() => { toast.success('Overtime updated successfully'); loadOvertime(); })
+      .catch(err => { toast.error(err.message || 'Update failed'); loadOvertime(); });
   }, {
     entity: 'overtime',
     autoSave: true,
@@ -338,14 +337,11 @@ el('addOvertimeBtn').addEventListener('click', () => {
       placeholder: 'Additional notes'
     }
   ], async (formData) => {
-    const result = await fetchJson('/api/overtime', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    toast.success('Overtime added successfully');
-    if (result && result.record) { overtimeData.push(result.record); applyFiltersAndRender(); }
-    loadOvertime();
+    overtimeData.push({ ...formData, id: Date.now() });
+    applyFiltersAndRender();
+    fetchJson('/api/overtime', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { toast.success('Overtime added successfully'); loadOvertime(); })
+      .catch(err => { toast.error(err.message || 'Create failed'); loadOvertime(); });
   }, {
     entity: 'overtime',
     autoSave: true,

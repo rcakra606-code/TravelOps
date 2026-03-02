@@ -494,25 +494,24 @@ async function saveCorporateFromModal() {
         data.service_fees = JSON.stringify(existing.service_fees || {});
         data.airlines = JSON.stringify(existing.airlines || []);
       }
-      await fetchJson(`/api/corporate_accounts/${editingCorporateId}`, {
+      closeCorporateModal();
+      fetchJson(`/api/corporate_accounts/${editingCorporateId}`, {
         method: 'PUT',
         body: JSON.stringify(data)
-      });
-      toast.success('Corporate account updated');
+      }).then(() => { toast.success('Corporate account updated'); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }); })
+        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); }); });
     } else {
       // New account - initialize empty nested data
       data.pic_bookers = '[]';
       data.service_fees = '{}';
       data.airlines = '[]';
-      await fetchJson('/api/corporate_accounts', {
+      closeCorporateModal();
+      fetchJson('/api/corporate_accounts', {
         method: 'POST',
         body: JSON.stringify(data)
-      });
-      toast.success('Corporate account added');
+      }).then(() => { toast.success('Corporate account added'); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }); })
+        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); }); });
     }
-    
-    closeCorporateModal();
-    loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }).catch(() => {});
   } catch (err) {
     console.error('Save corporate error:', err);
     toast.error('Failed to save corporate account: ' + (err.message || 'Unknown error'));

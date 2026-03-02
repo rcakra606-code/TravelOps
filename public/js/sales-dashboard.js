@@ -900,10 +900,12 @@ window.editSale = async function(id) {
       if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
     });
     
-    const result = await window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
-    window.toast.success('Sales updated successfully');
-    if (result && result.record) { const idx = salesDataForCRUD.findIndex(i => i.id === item.id); if (idx !== -1) salesDataForCRUD[idx] = result.record; renderDashboard(); }
-    loadSalesData().then(() => renderDashboard()).catch(() => {});
+    const idx = salesDataForCRUD.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(salesDataForCRUD[idx], formData);
+    renderDashboard();
+    window.fetchJson(`/api/sales/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Sales updated successfully'); loadSalesData().then(() => renderDashboard()); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadSalesData().then(() => renderDashboard()); });
   }, {
     entity: 'sales',
     validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }
@@ -969,10 +971,11 @@ if (el('addSaleBtn')) {
         if (formData[field]) formData[field] = window.parseFormattedNumber(formData[field]);
       });
       
-      const result = await window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-      window.toast.success('Sales added successfully');
-      if (result && result.record) { salesDataForCRUD.push(result.record); renderDashboard(); }
-      loadSalesData().then(() => renderDashboard()).catch(() => {});
+      salesDataForCRUD.push({ ...formData, id: Date.now() });
+      renderDashboard();
+      window.fetchJson('/api/sales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+        .then(() => { window.toast.success('Sales added successfully'); loadSalesData().then(() => renderDashboard()); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); loadSalesData().then(() => renderDashboard()); });
     }, {
       entity: 'sales',
       validation: { month: { required: true }, staff_name: { required: true }, sales_amount: { required: true }, profit_amount: { required: true } }

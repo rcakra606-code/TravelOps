@@ -201,10 +201,12 @@ window.editTelecom = async function(id) {
     if (formData.jumlah_deposit) {
       formData.jumlah_deposit = window.parseFormattedNumber(formData.jumlah_deposit);
     }
-    const result = await fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    window.toast.success('Telecom updated');
-    if (result && result.record) { const idx = telecomData.findIndex(i => i.id === item.id); if (idx !== -1) telecomData[idx] = result.record; applyFiltersAndRender(); }
-    loadTelecom();
+    const idx = telecomData.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(telecomData[idx], formData);
+    applyFiltersAndRender();
+    fetchJson(`/api/telecom/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Telecom updated'); loadTelecom(); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadTelecom(); });
   }, {
     entity: 'telecom',
     validation: { nama: { required: true }, no_telephone: { required: true }, tanggal_mulai: { required: true }, region_id: { required: true }, staff_name: { required: true }, deposit: { required: true } }
@@ -270,10 +272,11 @@ el('addTelecomBtn').addEventListener('click', () => {
     if (formData.jumlah_deposit) {
       formData.jumlah_deposit = window.parseFormattedNumber(formData.jumlah_deposit);
     }
-    const result = await fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-    window.toast.success('Telecom added');
-    if (result && result.record) { telecomData.push(result.record); applyFiltersAndRender(); }
-    loadTelecom();
+    telecomData.push({ ...formData, id: Date.now() });
+    applyFiltersAndRender();
+    fetchJson('/api/telecom', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Telecom added'); loadTelecom(); })
+      .catch(err => { window.toast.error(err.message || 'Create failed'); loadTelecom(); });
   }, {
     entity: 'telecom',
     validation: { nama: { required: true }, no_telephone: { required: true }, tanggal_mulai: { required: true }, region_id: { required: true }, staff_name: { required: true }, deposit: { required: true } }

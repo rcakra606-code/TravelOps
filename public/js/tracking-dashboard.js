@@ -425,22 +425,29 @@ class TrackingDashboard {
       const method = id ? 'PUT' : 'POST';
       const csrfToken = sessionStorage.getItem('csrfToken');
       
-      const res = await fetch(url, {
+      // Close modal immediately for instant UX
+      this.closeDeliveryModal();
+      
+      fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) },
         body: JSON.stringify(data)
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        window.showToast?.(id ? 'Pengiriman berhasil diperbarui!' : 'Pengiriman berhasil disimpan!', 'success');
-        window.logAudit?.(id ? 'update' : 'create', 'tracking_deliveries', id || result.id, data);
-        this.closeDeliveryModal();
+      }).then(async res => {
+        if (res.ok) {
+          const result = await res.json();
+          window.showToast?.(id ? 'Pengiriman berhasil diperbarui!' : 'Pengiriman berhasil disimpan!', 'success');
+          window.logAudit?.(id ? 'update' : 'create', 'tracking_deliveries', id || result.id, data);
+          this.loadData();
+        } else {
+          const error = await res.json();
+          window.showToast?.(error.message || 'Gagal menyimpan pengiriman', 'error');
+          this.loadData();
+        }
+      }).catch(error => {
+        console.error('Error saving delivery:', error);
+        window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');
         this.loadData();
-      } else {
-        const error = await res.json();
-        window.showToast?.(error.message || 'Gagal menyimpan pengiriman', 'error');
-      }
+      });
     } catch (error) {
       console.error('Error saving delivery:', error);
       window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');
@@ -496,22 +503,29 @@ class TrackingDashboard {
       const method = id ? 'PUT' : 'POST';
       const csrfToken = sessionStorage.getItem('csrfToken');
       
-      const res = await fetch(url, {
+      // Close modal immediately for instant UX
+      this.closeReceivingModal();
+      
+      fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}`, ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {}) },
         body: JSON.stringify(data)
-      });
-
-      if (res.ok) {
-        const result = await res.json();
-        window.showToast?.(id ? 'Penerimaan berhasil diperbarui!' : 'Penerimaan berhasil disimpan!', 'success');
-        window.logAudit?.(id ? 'update' : 'create', 'tracking_receivings', id || result.id, data);
-        this.closeReceivingModal();
+      }).then(async res => {
+        if (res.ok) {
+          const result = await res.json();
+          window.showToast?.(id ? 'Penerimaan berhasil diperbarui!' : 'Penerimaan berhasil disimpan!', 'success');
+          window.logAudit?.(id ? 'update' : 'create', 'tracking_receivings', id || result.id, data);
+          this.loadData();
+        } else {
+          const error = await res.json();
+          window.showToast?.(error.message || 'Gagal menyimpan penerimaan', 'error');
+          this.loadData();
+        }
+      }).catch(error => {
+        console.error('Error saving receiving:', error);
+        window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');
         this.loadData();
-      } else {
-        const error = await res.json();
-        window.showToast?.(error.message || 'Gagal menyimpan penerimaan', 'error');
-      }
+      });
     } catch (error) {
       console.error('Error saving receiving:', error);
       window.showToast?.('Terjadi kesalahan saat menyimpan', 'error');

@@ -596,22 +596,20 @@
     };
     
     try {
+      closeCashoutModal();
       if (id) {
-        await fetchJson(`/api/cashout/${id}`, {
+        fetchJson(`/api/cashout/${id}`, {
           method: 'PUT',
           body: JSON.stringify(data)
-        });
-        window.toast?.success('Record updated successfully');
+        }).then(() => { window.toast?.success('Record updated successfully'); loadData(); })
+          .catch(err => { window.toast?.error('Save failed: ' + err.message); loadData(); });
       } else {
-        await fetchJson('/api/cashout', {
+        fetchJson('/api/cashout', {
           method: 'POST',
           body: JSON.stringify(data)
-        });
-        window.toast?.success('Record created successfully');
+        }).then(() => { window.toast?.success('Record created successfully'); loadData(); })
+          .catch(err => { window.toast?.error('Save failed: ' + err.message); loadData(); });
       }
-      
-      closeCashoutModal();
-      loadData();
     } catch (err) {
       window.toast?.error('Save failed: ' + err.message);
     }

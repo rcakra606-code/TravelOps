@@ -273,13 +273,12 @@ async function editCruise(id) {
       formData.participant_names = formData.participant_names.join(', ');
     }
     
-    const result = await fetchJson(`/api/cruise/${item.id}`, {
-      method: 'PUT',
-      body: JSON.stringify(formData)
-    });
-    toast.success('Cruise booking updated successfully');
-    if (result && result.record) { const idx = cruiseData.findIndex(i => i.id === item.id); if (idx !== -1) cruiseData[idx] = result.record; applyFiltersAndRender(); }
-    loadCruises();
+    const idx = cruiseData.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(cruiseData[idx], formData);
+    applyFiltersAndRender();
+    fetchJson(`/api/cruise/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) })
+      .then(() => { toast.success('Cruise booking updated successfully'); loadCruises(); })
+      .catch(err => { toast.error(err.message || 'Update failed'); loadCruises(); });
   }, {
     entity: 'cruise',
     size: 'large',
@@ -422,14 +421,11 @@ el('addCruiseBtn').addEventListener('click', () => {
       formData.participant_names = formData.participant_names.join(', ');
     }
     
-    const result = await fetchJson('/api/cruise', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    toast.success('Cruise booking added successfully');
-    if (result && result.record) { cruiseData.push(result.record); applyFiltersAndRender(); }
-    loadCruises();
+    cruiseData.push({ ...formData, id: Date.now() });
+    applyFiltersAndRender();
+    fetchJson('/api/cruise', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { toast.success('Cruise booking added successfully'); loadCruises(); })
+      .catch(err => { toast.error(err.message || 'Create failed'); loadCruises(); });
   }, {
     entity: 'cruise',
     size: 'large',

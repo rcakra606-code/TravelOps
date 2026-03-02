@@ -932,7 +932,7 @@ window.openAddProductivityModal = function(productType) {
     
     window.toast?.success(`${product.name} record added successfully`);
     if (result && result.record) { productivityData.push(result.record); }
-    await loadData();
+    loadData();
   }, {
     entity: 'productivity',
     size: 'large',
@@ -1082,7 +1082,7 @@ window.editProductivity = async function(id) {
     
     window.toast?.success(`${product.name} record updated successfully`);
     if (result && result.record) { const idx = productivityData.findIndex(i => i.id === id); if (idx !== -1) productivityData[idx] = result.record; }
-    await loadData();
+    loadData();
   }, {
     entity: 'productivity',
     size: 'large',

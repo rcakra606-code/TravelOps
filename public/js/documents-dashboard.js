@@ -804,10 +804,12 @@ window.editDocument = async function(id) {
     { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
     { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
   ], item, async (formData) => {
-    const result = await window.fetchJson(`/api/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) });
-    window.toast.success('Document updated successfully');
-    if (result && result.record) { const idx = documentsDataForCRUD.findIndex(i => i.id === item.id); if (idx !== -1) documentsDataForCRUD[idx] = result.record; renderDashboard(); }
-    loadDocumentsData().then(() => renderDashboard()).catch(() => {});
+    const idx = documentsDataForCRUD.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(documentsDataForCRUD[idx], formData);
+    renderDashboard();
+    window.fetchJson(`/api/documents/${item.id}`, { method: 'PUT', body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Document updated successfully'); loadDocumentsData().then(() => renderDashboard()); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadDocumentsData().then(() => renderDashboard()); });
   }, {
     entity: 'documents',
     size: 'large',
@@ -866,10 +868,11 @@ if (el('addDocumentBtn')) {
       { type: 'text', name: 'tour_code', label: 'Tour Code', icon: '🎫', placeholder: 'TRV-001' },
       { type: 'textarea', name: 'notes', label: 'Notes', fullWidth: true, rows: 3, maxlength: 500 }
     ], async (formData) => {
-      const result = await window.fetchJson('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) });
-      window.toast.success('Document added successfully');
-      if (result && result.record) { documentsDataForCRUD.push(result.record); renderDashboard(); }
-      loadDocumentsData().then(() => renderDashboard()).catch(() => {});
+      documentsDataForCRUD.push({ ...formData, id: Date.now() });
+      renderDashboard();
+      window.fetchJson('/api/documents', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+        .then(() => { window.toast.success('Document added successfully'); loadDocumentsData().then(() => renderDashboard()); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); loadDocumentsData().then(() => renderDashboard()); });
     }, {
       entity: 'documents',
       size: 'large',

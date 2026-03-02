@@ -1489,14 +1489,12 @@ window.editTour = async function(id) {
       formData.jumlah_peserta = parseInt(formData.jumlah_peserta) || 1;
     }
     
-    const result = await window.fetchJson(`/api/tours/${item.id}`, { 
-      method: 'PUT', 
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData) 
-    });
-    window.toast.success('Tour updated successfully');
-    if (result && result.record) { const idx = toursDataForCRUD.findIndex(i => i.id === item.id); if (idx !== -1) toursDataForCRUD[idx] = result.record; renderDashboard(); }
-    loadToursData().then(() => renderDashboard()).catch(() => {});
+    const idx = toursDataForCRUD.findIndex(i => i.id === item.id);
+    if (idx !== -1) Object.assign(toursDataForCRUD[idx], formData);
+    renderDashboard();
+    window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+      .then(() => { window.toast.success('Tour updated successfully'); loadToursData().then(() => renderDashboard()); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); loadToursData().then(() => renderDashboard()); });
   }, {
     entity: 'tours',
     size: 'large',
@@ -1598,15 +1596,12 @@ if (el('addTourBtn')) {
       
       console.log('🔥 Cleaned FormData:', formData);
       
-      const result = await window.fetchJson('/api/tours', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify(formData) 
-      });
-      console.log('🔥 API call completed');
-      window.toast.success('Tour added successfully');
-      if (result && result.record) { toursDataForCRUD.push(result.record); renderDashboard(); }
-      loadToursData().then(() => renderDashboard()).catch(() => {});
+      toursDataForCRUD.push({ ...formData, id: Date.now() });
+      console.log('🔥 API call started');
+      renderDashboard();
+      window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
+        .then(() => { console.log('🔥 API call completed'); window.toast.success('Tour added successfully'); loadToursData().then(() => renderDashboard()); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); loadToursData().then(() => renderDashboard()); });
     }, {
       entity: 'tours',
       size: 'large',
