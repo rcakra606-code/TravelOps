@@ -985,35 +985,20 @@ window.TourWizard = (function() {
     // Show saving indicator
     if (window.toast) window.toast.info(isEdit ? 'Saving tour changes...' : 'Creating tour...');
     
-    // Fire API call and auto-refresh table when done
+    // Fire API call — when done, reload the entire page to guarantee fresh data
     const url = isEdit ? `/api/tours/v2/${savedTourId}` : '/api/tours/v2';
     const method = isEdit ? 'PUT' : 'POST';
     
-    // Use try/catch to guarantee we always trigger a refresh
-    try {
-      window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-        .then(function() {
-          console.log('✅ Tour save API success, reloading table...');
-          if (window.toast) window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
-          // Reload table from server
-          try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('loadToursData error:', e); }
-        })
-        .catch(function(err) {
-          console.error('❌ Tour save API error:', err);
-          if (window.toast) window.toast.error(err.message || 'Failed to save tour');
-          try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('loadToursData error:', e); }
-        });
-    } catch(syncErr) {
-      // fetchJson itself threw synchronously (e.g., CSRF issue) — fallback to page reload
-      console.error('❌ fetchJson threw synchronously:', syncErr);
-      setTimeout(function() { location.reload(); }, 1000);
-    }
-    
-    // GUARANTEED fallback: reload table data after 3 seconds no matter what
-    setTimeout(function() {
-      console.log('⏱️ Fallback table refresh triggered');
-      try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('Fallback loadToursData error:', e); }
-    }, 3000);
+    window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .then(function() {
+        if (window.toast) window.toast.success(isEdit ? 'Tour updated!' : 'Tour created!');
+        // Full page reload to guarantee all data is fresh
+        setTimeout(function() { location.reload(); }, 500);
+      })
+      .catch(function(err) {
+        if (window.toast) window.toast.error(err.message || 'Failed to save tour');
+        setTimeout(function() { location.reload(); }, 500);
+      });
   }
   
   // Close wizard

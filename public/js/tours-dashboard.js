@@ -1503,8 +1503,8 @@ window.editTour = async function(id) {
     renderToursTable();
     updateTabCounts();
     window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-      .then(() => { window.toast.success('Tour updated successfully'); loadToursData(); })
-      .catch(err => { window.toast.error(err.message || 'Update failed'); loadToursData(); });
+      .then(() => { window.toast.success('Tour updated!'); setTimeout(() => location.reload(), 500); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); setTimeout(() => location.reload(), 500); });
   }, {
     entity: 'tours',
     size: 'large',
@@ -1542,8 +1542,8 @@ window.deleteTour = async function(id) {
   
   // Fire API in background
   window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' })
-    .then(() => { window.toast.success('Tour deleted successfully'); loadToursData(); })
-    .catch(err => { window.toast.error(err.message || 'Failed to delete tour'); loadToursData(); });
+    .then(() => { window.toast.success('Tour deleted!'); setTimeout(() => location.reload(), 500); })
+    .catch(err => { window.toast.error(err.message || 'Failed to delete tour'); setTimeout(() => location.reload(), 500); });
 };
 
 if (el('addTourBtn')) {
@@ -1611,8 +1611,8 @@ if (el('addTourBtn')) {
       renderToursTable();
       updateTabCounts();
       window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-        .then(() => { console.log('🔥 API call completed'); window.toast.success('Tour added successfully'); loadToursData(); })
-        .catch(err => { window.toast.error(err.message || 'Create failed'); loadToursData(); });
+        .then(() => { window.toast.success('Tour added!'); setTimeout(() => location.reload(), 500); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); setTimeout(() => location.reload(), 500); });
     }, {
       entity: 'tours',
       size: 'large',
