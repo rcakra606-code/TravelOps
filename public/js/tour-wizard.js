@@ -992,12 +992,12 @@ window.TourWizard = (function() {
     window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       .then(function() {
         if (window.toast) window.toast.success(isEdit ? 'Tour updated!' : 'Tour created!');
-        // Full page reload to guarantee all data is fresh
-        setTimeout(function() { location.reload(); }, 500);
+        // Force fresh page load with cache-busting query param
+        setTimeout(function() { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500);
       })
       .catch(function(err) {
         if (window.toast) window.toast.error(err.message || 'Failed to save tour');
-        setTimeout(function() { location.reload(); }, 500);
+        setTimeout(function() { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500);
       });
   }
   

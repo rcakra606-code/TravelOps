@@ -1328,6 +1328,16 @@ async function loadToursData() {
 }
 
 function renderToursTable() {
+  console.log('📋 renderToursTable() called. toursDataForCRUD has', toursDataForCRUD.length, 'items');
+  if (toursDataForCRUD.length > 0) {
+    const sample = toursDataForCRUD[0];
+    console.log('📋 Sample tour:', { id: sample.id, tour_code: sample.tour_code, departure_date: sample.departure_date, is_archived: sample.is_archived, data_version: sample.data_version });
+    // Show how many pass each filter
+    const notArchived = toursDataForCRUD.filter(t => !isTourArchived(t));
+    const not2025 = toursDataForCRUD.filter(t => !isTour2025OrEarlier(t));
+    const both = toursDataForCRUD.filter(t => !isTourArchived(t) && !isTour2025OrEarlier(t));
+    console.log('📋 Filter breakdown: notArchived=' + notArchived.length + ', not2025OrEarlier=' + not2025.length + ', both=' + both.length);
+  }
   const tbody = el('toursTableBody');
   if (!tbody) return;
   
@@ -1503,8 +1513,8 @@ window.editTour = async function(id) {
     renderToursTable();
     updateTabCounts();
     window.fetchJson(`/api/tours/${item.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-      .then(() => { window.toast.success('Tour updated!'); setTimeout(() => location.reload(), 500); })
-      .catch(err => { window.toast.error(err.message || 'Update failed'); setTimeout(() => location.reload(), 500); });
+      .then(() => { window.toast.success('Tour updated!'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); })
+      .catch(err => { window.toast.error(err.message || 'Update failed'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); });
   }, {
     entity: 'tours',
     size: 'large',
@@ -1542,8 +1552,8 @@ window.deleteTour = async function(id) {
   
   // Fire API in background
   window.fetchJson(`/api/tours/${id}`, { method: 'DELETE' })
-    .then(() => { window.toast.success('Tour deleted!'); setTimeout(() => location.reload(), 500); })
-    .catch(err => { window.toast.error(err.message || 'Failed to delete tour'); setTimeout(() => location.reload(), 500); });
+    .then(() => { window.toast.success('Tour deleted!'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); })
+    .catch(err => { window.toast.error(err.message || 'Failed to delete tour'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); });
 };
 
 if (el('addTourBtn')) {
@@ -1611,8 +1621,8 @@ if (el('addTourBtn')) {
       renderToursTable();
       updateTabCounts();
       window.fetchJson('/api/tours', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(formData) })
-        .then(() => { window.toast.success('Tour added!'); setTimeout(() => location.reload(), 500); })
-        .catch(err => { window.toast.error(err.message || 'Create failed'); setTimeout(() => location.reload(), 500); });
+        .then(() => { window.toast.success('Tour added!'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); })
+        .catch(err => { window.toast.error(err.message || 'Create failed'); setTimeout(() => { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500); });
     }, {
       entity: 'tours',
       size: 'large',
