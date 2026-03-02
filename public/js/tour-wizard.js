@@ -979,38 +979,26 @@ window.TourWizard = (function() {
     const isEdit = wizardState.editMode;
     const savedTourId = wizardState.tourId;
     
-    // Build optimistic data for immediate table update (preserve display fields)
-    const optimisticData = { ...wizardState.tourData };
-    // Ensure lead_passenger is set from passengers for table display
-    if (wizardState.passengers.length > 0) {
-      optimisticData.lead_passenger = wizardState.passengers[0].name || optimisticData.lead_passenger || '';
-      optimisticData.all_passengers = wizardState.passengers.map(p => p.name).filter(Boolean).join(', ');
-      optimisticData.phone_number = wizardState.passengers[0].phone_number || '';
-      optimisticData.email = wizardState.passengers[0].email || '';
-    }
-    
-    // Close wizard immediately for instant responsiveness
+    // Close wizard immediately — no waiting for API
     closeWizard();
     
-    // Directly update tours table for instant feedback (no event indirection)
-    if (window.updateToursCRUD) {
-      window.updateToursCRUD(isEdit, savedTourId, optimisticData);
-    }
+    // Show saving indicator
+    window.toast.info(isEdit ? 'Saving tour changes...' : 'Creating tour...');
     
-    // Fire API in background — do NOT await
+    // Fire API call
     const url = isEdit ? `/api/tours/v2/${savedTourId}` : '/api/tours/v2';
     const method = isEdit ? 'PUT' : 'POST';
     
     window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       .then(() => {
         window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
-        // Sync authoritative data from server
-        if (window.syncToursFromServer) window.syncToursFromServer();
+        // Reload table with fresh server data
+        if (window.loadToursData) window.loadToursData();
       })
       .catch(err => {
         window.toast.error(err.message || 'Failed to save tour');
-        // Revert to server state
-        if (window.syncToursFromServer) window.syncToursFromServer();
+        // Reload to ensure consistent state
+        if (window.loadToursData) window.loadToursData();
       });
   }
   
