@@ -1305,21 +1305,25 @@ function isTourReadOnly(tour) {
 }
 
 async function loadToursData() {
+  console.log('📊 loadToursData() called — fetching from server...');
   const tbody = el('toursTableBody');
   if (tbody && tbody.rows.length === 1) {
     tbody.innerHTML = '<tr><td colspan="11" class="text-center">⏳ Loading tours data...</td></tr>';
   }
   try {
     toursDataForCRUD = await window.fetchJson('/api/tours') || [];
+    console.log('📊 Loaded', toursDataForCRUD.length, 'tours, rendering...');
     toursCurrentPage = 1; // Reset to first page
     renderToursTable();
     updateTabCounts();
     // Refresh active tab
     if (currentTab === 'my-tours') renderMyToursTab();
     else if (currentTab === 'archived-tours') renderArchivedTab();
+    // Also refresh dashboard charts/metrics so the whole page reflects new data
+    renderDashboard();
   } catch (err) {
     console.error('Failed to load tours:', err);
-    window.toast.error('Failed to load tours data');
+    if (window.toast) window.toast.error('Failed to load tours data');
   }
 }
 

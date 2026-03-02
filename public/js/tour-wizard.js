@@ -983,23 +983,37 @@ window.TourWizard = (function() {
     closeWizard();
     
     // Show saving indicator
-    window.toast.info(isEdit ? 'Saving tour changes...' : 'Creating tour...');
+    if (window.toast) window.toast.info(isEdit ? 'Saving tour changes...' : 'Creating tour...');
     
-    // Fire API call
+    // Fire API call and auto-refresh table when done
     const url = isEdit ? `/api/tours/v2/${savedTourId}` : '/api/tours/v2';
     const method = isEdit ? 'PUT' : 'POST';
     
-    window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
-      .then(() => {
-        window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
-        // Reload table with fresh server data
-        if (window.loadToursData) window.loadToursData();
-      })
-      .catch(err => {
-        window.toast.error(err.message || 'Failed to save tour');
-        // Reload to ensure consistent state
-        if (window.loadToursData) window.loadToursData();
-      });
+    // Use try/catch to guarantee we always trigger a refresh
+    try {
+      window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(function() {
+          console.log('✅ Tour save API success, reloading table...');
+          if (window.toast) window.toast.success(isEdit ? 'Tour updated successfully' : 'Tour created successfully');
+          // Reload table from server
+          try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('loadToursData error:', e); }
+        })
+        .catch(function(err) {
+          console.error('❌ Tour save API error:', err);
+          if (window.toast) window.toast.error(err.message || 'Failed to save tour');
+          try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('loadToursData error:', e); }
+        });
+    } catch(syncErr) {
+      // fetchJson itself threw synchronously (e.g., CSRF issue) — fallback to page reload
+      console.error('❌ fetchJson threw synchronously:', syncErr);
+      setTimeout(function() { location.reload(); }, 1000);
+    }
+    
+    // GUARANTEED fallback: reload table data after 3 seconds no matter what
+    setTimeout(function() {
+      console.log('⏱️ Fallback table refresh triggered');
+      try { if (window.loadToursData) window.loadToursData(); } catch(e) { console.error('Fallback loadToursData error:', e); }
+    }, 3000);
   }
   
   // Close wizard
