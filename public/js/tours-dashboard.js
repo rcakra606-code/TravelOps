@@ -1203,6 +1203,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
   
   await populateFilterDropdowns();
+  loadToursData();
   renderDashboard();
   
   // Initialize tabs
@@ -1740,6 +1741,4 @@ document.addEventListener('click', (e) => {
     }
   }
 });
-
-// Tours data loaded during renderDashboard() init — no extra call needed
 
