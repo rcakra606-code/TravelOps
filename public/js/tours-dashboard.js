@@ -819,7 +819,7 @@ async function renderDashboard() {
     });
     
     // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartParticipantsMonthly', 'chartParticipantsRegion', 'chartTopDestinations', 'chartToursPerStaff', 'chartDepartureTimeline', 'chartPackageTypes'];
+    const canvasIds = ['chartParticipantsMonthly', 'chartParticipantsRegion', 'chartToursPerStaff', 'chartPackageTypes'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -835,15 +835,6 @@ async function renderDashboard() {
     const totalTours = toursData.length;
     const avgParticipants = totalTours > 0 ? Math.round(totalParticipants / totalTours) : 0;
     
-    // Calculate upcoming departures (next 30 days)
-    const now = new Date();
-    const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
-    const upcomingCount = toursData.filter(t => {
-      if (!t.departure_date) return false;
-      const depDate = new Date(t.departure_date);
-      return depDate >= now && depDate <= thirtyDaysLater;
-    }).length;
-    
     // Calculate invoice statistics
     const invoicedCount = toursData.filter(t => t.invoice_number && t.invoice_number.trim() !== '').length;
     const notInvoicedCount = totalTours - invoicedCount;
@@ -852,7 +843,6 @@ async function renderDashboard() {
     el('totalParticipants').textContent = totalParticipants;
     el('totalTours').textContent = totalTours;
     el('avgParticipants').textContent = avgParticipants;
-    el('upcomingDepartures').textContent = upcomingCount;
     el('invoicedTours').textContent = invoicedCount;
     el('notInvoicedTours').textContent = notInvoicedCount;
     
@@ -924,35 +914,6 @@ async function renderDashboard() {
       });
     }
     
-    // Top 5 Regions (aggregate participants per region)
-    const topRegions = Object.entries(regionData)
-      .sort((a,b) => b[1] - a[1])
-      .slice(0,5);
-    const ctxDest = document.getElementById('chartTopDestinations')?.getContext('2d');
-    if (ctxDest && topRegions.length) {
-      charts.topRegions = new Chart(ctxDest, {
-        type: 'bar',
-        data: {
-          labels: topRegions.map(r => r[0]),
-          datasets: [{
-            label: 'Peserta',
-            data: topRegions.map(r => r[1]),
-            backgroundColor: '#10b981',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          ...commonOptions,
-          indexAxis: 'y',
-          scales: { x: { beginAtZero: true } },
-          plugins: {
-            ...commonOptions.plugins,
-            title: { display: true, text: 'Top 5 Regions', font: { size: 16, weight: '600' } }
-          }
-        }
-      });
-    }
-    
     // Tours per Staff
     const staffData = {};
     toursData.forEach(tour => {
@@ -978,42 +939,6 @@ async function renderDashboard() {
           ...commonOptions,
           scales: { y: { beginAtZero: true } }
         }
-      });
-    }
-    
-    // Departure Timeline (next 60 days)
-    const sixtyDaysLater = new Date(now.getTime() + 60 * 24 * 60 * 60 * 1000);
-    const upcoming60 = toursData.filter(t => {
-      if (!t.departure_date) return false;
-      const depDate = new Date(t.departure_date);
-      return depDate >= now && depDate <= sixtyDaysLater;
-    });
-    
-    // Group by week
-    const weeklyData = {};
-    upcoming60.forEach(tour => {
-      const depDate = new Date(tour.departure_date);
-      const weekNum = Math.floor((depDate - now) / (7 * 24 * 60 * 60 * 1000));
-      const weekLabel = `Week ${weekNum + 1}`;
-      weeklyData[weekLabel] = (weeklyData[weekLabel] || 0) + (parseInt(tour.jumlah_peserta) || 0);
-    });
-    
-    const ctxTimeline = document.getElementById('chartDepartureTimeline')?.getContext('2d');
-    if (ctxTimeline) {
-      charts.timeline = new Chart(ctxTimeline, {
-        type: 'line',
-        data: {
-          labels: Object.keys(weeklyData),
-          datasets: [{
-            label: 'Peserta',
-            data: Object.values(weeklyData),
-            borderColor: '#8b5cf6',
-            backgroundColor: 'rgba(139, 92, 246, 0.1)',
-            fill: true,
-            tension: 0.4
-          }]
-        },
-        options: commonOptions
       });
     }
     
@@ -1046,37 +971,6 @@ async function renderDashboard() {
           }
         }
       });
-    }
-    
-    // ⚠️ UPCOMING DEPARTURES TABLE (7 days warning)
-    const sevenDaysLater = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    const upcoming7Days = toursData.filter(t => {
-      if (!t.departure_date) return false;
-      const depDate = new Date(t.departure_date);
-      return depDate >= now && depDate <= sevenDaysLater;
-    }).sort((a, b) => new Date(a.departure_date) - new Date(b.departure_date));
-    
-    const tableBody = el('upcomingToursTable');
-    if (tableBody) {
-      if (upcoming7Days.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">Tidak ada keberangkatan dalam 7 hari ke depan</td></tr>';
-      } else {
-        tableBody.innerHTML = upcoming7Days.map(tour => {
-          const depDate = new Date(tour.departure_date);
-          const daysUntil = Math.ceil((depDate - now) / (24 * 60 * 60 * 1000));
-          const urgency = daysUntil <= 3 ? 'background-color: #fef2f2; color: #dc2626;' : daysUntil <= 5 ? 'background-color: #fef9c3; color: #ca8a04;' : '';
-          
-          return `
-            <tr style="${urgency}">
-              <td style="padding: 8px;">${tour.departure_date} (${daysUntil}d)</td>
-              <td style="padding: 8px;">${tour.tour_name || '—'}</td>
-              <td style="padding: 8px;">${tour.region_name || '—'}</td>
-              <td style="padding: 8px; text-align: right;">${tour.jumlah_peserta || 0}</td>
-              <td style="padding: 8px;">${tour.staff_name || '—'}</td>
-            </tr>
-          `;
-        }).join('');
-      }
     }
     
   } catch (err) {

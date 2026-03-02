@@ -194,12 +194,6 @@
         </div>
 
         <div class="metric-card">
-          <div class="metric-title">Upcoming Departures</div>
-          <div class="metric-value" id="upcomingDepartures">0</div>
-          <div class="metric-subtitle">Within 30 days</div>
-        </div>
-
-        <div class="metric-card">
           <div class="metric-title">Invoiced Tours</div>
           <div class="metric-value" id="invoicedTours">0</div>
           <div class="metric-subtitle">Already invoiced</div>
@@ -233,13 +227,6 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
         <div class="chart-container">
           <div class="chart-header">
-            <div class="chart-title">Top 5 Destinations</div>
-          </div>
-          <canvas id="chartTopDestinations" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-header">
             <div class="chart-title">Tours per Staff</div>
           </div>
           <canvas id="chartToursPerStaff" style="max-height: 300px;"></canvas>
@@ -250,39 +237,9 @@
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
         <div class="chart-container">
           <div class="chart-header">
-            <div class="chart-title">Departure Timeline (Next 60 Days)</div>
-          </div>
-          <canvas id="chartDepartureTimeline" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-header">
-            <div class="chart-title">Package Type Distribution</div>
+            <div class="chart-title">Tour Status Distribution</div>
           </div>
           <canvas id="chartPackageTypes" style="max-height: 300px;"></canvas>
-        </div>
-      </div>
-
-      <!-- Upcoming Departures Table -->
-      <div class="chart-container" style="margin-top: 20px;">
-        <div class="chart-header">
-          <div class="chart-title">⚠️ Upcoming Departures (Next 7 Days)</div>
-        </div>
-        <div style="padding: 16px;">
-          <table style="width: 100%; border-collapse: collapse;">
-            <thead>
-              <tr style="border-bottom: 2px solid #e5e7eb;">
-                <th style="padding: 8px; text-align: left;">Departure Date</th>
-                <th style="padding: 8px; text-align: left;">Tour Name</th>
-                <th style="padding: 8px; text-align: left;">Region</th>
-                <th style="padding: 8px; text-align: right;">Participants</th>
-                <th style="padding: 8px; text-align: left;">Staff</th>
-              </tr>
-            </thead>
-            <tbody id="upcomingToursTable">
-              <tr><td colspan="5" style="padding: 20px; text-align: center; color: #9ca3af;">Loading...</td></tr>
-            </tbody>
-          </table>
         </div>
       </div>
     </div>
