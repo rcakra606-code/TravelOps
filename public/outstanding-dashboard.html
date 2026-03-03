@@ -26,86 +26,84 @@
 <link rel="stylesheet" href="/css/dashboard-shared.css">
 <link rel="stylesheet" href="/css/accessibility.css">
 <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
+    <link rel="stylesheet" href="/css/sunset-theme.css">
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
-          <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html">?? Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html" class="active">?? Outstanding</a>
-          <a href="/cashout-dashboard.html">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html" class="active">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a href="/logout.html" id="logoutLink">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">�</div>
-      <div id="userRole">�</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
@@ -120,22 +118,22 @@
     <!-- Summary Cards -->
     <div class="dashboard-metrics" style="margin-bottom: 24px;">
       <div class="metric-card">
-        <div class="metric-title">?? Total Records</div>
+        <div class="metric-title">📋 Total Records</div>
         <div class="metric-value" id="totalRecords">0</div>
         <div class="metric-subtitle">Invoice count</div>
       </div>
       <div class="metric-card">
-        <div class="metric-title">?? Total Invoice</div>
+        <div class="metric-title">💰 Total Invoice</div>
         <div class="metric-value" id="totalInvoice">Rp 0</div>
         <div class="metric-subtitle">Invoice value</div>
       </div>
       <div class="metric-card">
-        <div class="metric-title">? Total Paid</div>
+        <div class="metric-title">✅ Total Paid</div>
         <div class="metric-value" id="totalFirstPayment">Rp 0</div>
         <div class="metric-subtitle">First payment</div>
       </div>
       <div class="metric-card">
-        <div class="metric-title">?? Total Discount</div>
+        <div class="metric-title">🔖 Total Discount</div>
         <div class="metric-value" id="totalDiscount">Rp 0</div>
         <div class="metric-subtitle">Discounts applied</div>
       </div>
@@ -147,7 +145,7 @@
         <input 
           type="text" 
           id="searchOutstanding" 
-          placeholder="?? Search invoice no, staff name..." 
+          placeholder="🔍 Search invoice no, staff name..." 
           style="flex: 1; min-width: 250px;"
         />
         <select id="filterYear" style="min-width: 120px;">
@@ -176,18 +174,18 @@
           <option value="outstanding">Has Outstanding</option>
           <option value="paid">Fully Paid</option>
         </select>
-        <button id="clearFilters" class="btn btn-secondary">?? Reset</button>
+        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
       </div>
     </div>
 
     <!-- Outstanding Records Table with CRUD -->
     <div class="card">
       <div class="section-header">
-        <h3>?? Outstanding Records</h3>
+        <h3>📋 Outstanding Records</h3>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-          <button id="downloadOutstandingTemplateBtn" class="btn btn-outline" title="Download CSV Template">?? Template</button>
-          <button id="importOutstandingBtn" class="btn btn-outline" title="Import from CSV">?? Import</button>
-          <button id="exportOutstandingBtn" class="btn btn-outline" title="Export to CSV">?? Export</button>
+          <button id="downloadOutstandingTemplateBtn" class="btn btn-outline" title="Download CSV Template">📥 Template</button>
+          <button id="importOutstandingBtn" class="btn btn-outline" title="Import from CSV">📤 Import</button>
+          <button id="exportOutstandingBtn" class="btn btn-outline" title="Export to CSV">📊 Export</button>
           <button id="addOutstandingBtn" class="btn btn-primary">+ Add Record</button>
           <input type="file" id="importOutstandingFileInput" accept=".csv" style="display:none;">
         </div>

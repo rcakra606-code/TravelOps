@@ -26,12 +26,10 @@
 <link rel="stylesheet" href="/css/dashboard-shared.css">
 <link rel="stylesheet" href="/css/accessibility.css">
 <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
+    <link rel="stylesheet" href="/css/sunset-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="/js/chart-theme.js"></script>
+    <script src="/js/chart-theme.js"></script>
 <style>
   /* Corporate Dashboard Specific Styles */
   
@@ -396,98 +394,98 @@
 </style>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
-          <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html">?? Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
       
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html" class="active">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html" class="active">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">?? Outstanding</a>
-          <a href="/cashout-dashboard.html">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a href="/logout.html" id="logoutLink">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">�</div>
-      <div id="userRole">�</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
   <main class="main">
     <div class="header">
-      <h1 class="title">?? Corporate Dashboard</h1>
+      <h1 class="title">🏢 Corporate Dashboard</h1>
       <p class="subtitle">Corporate account management and sales analysis</p>
     </div>
 
     <!-- Main Tabs -->
     <div class="corporate-tabs">
-      <button class="corporate-tab active" data-tab="dashboard">?? Dashboard</button>
-      <button class="corporate-tab" data-tab="accounts">?? Corporate Accounts</button>
-      <button class="corporate-tab" data-tab="flight-sales">?? Flight Sales</button>
-      <button class="corporate-tab" data-tab="hotel-sales">?? Hotel Sales</button>
-      <button class="corporate-tab" data-tab="tour-sales">?? Tour Sales</button>
-      <button class="corporate-tab" data-tab="other-sales">?? Other Sales</button>
-      <button class="corporate-tab" data-tab="sales-summary">?? Sales Summary</button>
+      <button class="corporate-tab active" data-tab="dashboard">📊 Dashboard</button>
+      <button class="corporate-tab" data-tab="accounts">🏢 Corporate Accounts</button>
+      <button class="corporate-tab" data-tab="flight-sales">✈️ Flight Sales</button>
+      <button class="corporate-tab" data-tab="hotel-sales">🏨 Hotel Sales</button>
+      <button class="corporate-tab" data-tab="tour-sales">🧳 Tour Sales</button>
+      <button class="corporate-tab" data-tab="other-sales">📦 Other Sales</button>
+      <button class="corporate-tab" data-tab="sales-summary">📈 Sales Summary</button>
     </div>
 
     <!-- Tab 1: Main Dashboard -->
@@ -505,12 +503,12 @@
         <div class="dashboard-card">
           <div class="card-label">Total Revenue (YTD)</div>
           <div class="card-value" id="totalRevenue">Rp 0</div>
-          <div class="card-trend positive" id="revenueTrend">? 0% vs last year</div>
+          <div class="card-trend positive" id="revenueTrend">↑ 0% vs last year</div>
         </div>
         <div class="dashboard-card">
           <div class="card-label">Total Profit (YTD)</div>
           <div class="card-value" id="totalProfit">Rp 0</div>
-          <div class="card-trend positive" id="profitTrend">? 0% vs last year</div>
+          <div class="card-trend positive" id="profitTrend">↑ 0% vs last year</div>
         </div>
       </div>
 
@@ -528,7 +526,7 @@
 
       <!-- Recent Activity -->
       <div class="corporate-form-section">
-        <h3>?? Recent Corporate Transactions</h3>
+        <h3>📋 Recent Corporate Transactions</h3>
         <div class="table-responsive">
           <table class="table" id="recentTransactionsTable">
             <thead>
@@ -552,7 +550,7 @@
     <div id="tab-accounts" class="tab-content">
       <!-- Corporate Selector Banner -->
       <div class="corporate-selector-banner" style="background: var(--bg-alt); padding: 16px; border-radius: 8px; margin-bottom: 20px; display: flex; align-items: center; gap: 16px; border: 1px solid var(--border-color);">
-        <label style="font-weight: 600; white-space: nowrap;">?? Select Corporate:</label>
+        <label style="font-weight: 600; white-space: nowrap;">📁 Select Corporate:</label>
         <select id="globalCorporateSelect" class="form-control" style="flex: 1; max-width: 400px;">
           <option value="">-- Select Corporate Account --</option>
         </select>
@@ -561,10 +559,10 @@
 
       <!-- Sub-tabs -->
       <div class="sub-tabs">
-        <button class="sub-tab active" data-subtab="list">?? Corporate List</button>
-        <button class="sub-tab" data-subtab="detail">?? Corporate Detail</button>
-        <button class="sub-tab" data-subtab="service-fee">?? Service Fees</button>
-        <button class="sub-tab" data-subtab="airlines">?? Airlines Accounts</button>
+        <button class="sub-tab active" data-subtab="list">📋 Corporate List</button>
+        <button class="sub-tab" data-subtab="detail">📝 Corporate Detail</button>
+        <button class="sub-tab" data-subtab="service-fee">💰 Service Fees</button>
+        <button class="sub-tab" data-subtab="airlines">✈️ Airlines Accounts</button>
       </div>
 
       <!-- Sub-content: Corporate List -->
@@ -598,7 +596,7 @@
       <div id="subtab-detail" class="sub-content">
         <form id="corporateDetailForm">
           <div class="corporate-form-section">
-            <h3>?? Corporate Information</h3>
+            <h3>🏢 Corporate Information</h3>
             <div class="form-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
               <div class="form-group">
                 <label>Corporate Account Code</label>
@@ -629,7 +627,7 @@
 
           <!-- PIC Bookers Section -->
           <div class="corporate-form-section">
-            <h3>?? PIC Bookers</h3>
+            <h3>👤 PIC Bookers</h3>
             <div class="pic-bookers-list" id="picBookersList">
               <!-- Dynamic rows added here -->
             </div>
@@ -638,7 +636,7 @@
 
           <!-- Remarks -->
           <div class="corporate-form-section">
-            <h3>?? Remarks</h3>
+            <h3>📝 Remarks</h3>
             <textarea name="remarks" rows="4" placeholder="Additional notes about this corporate account..."></textarea>
           </div>
 
@@ -662,7 +660,7 @@
 
         <!-- Flight Service Fee -->
         <div class="corporate-form-section">
-          <h3>?? Flight Service Fee</h3>
+          <h3>✈️ Flight Service Fee</h3>
           <table class="fee-table">
             <thead>
               <tr>
@@ -707,7 +705,7 @@
 
         <!-- Hotel Service Fee -->
         <div class="corporate-form-section">
-          <h3>?? Hotel Service Fee</h3>
+          <h3>🏨 Hotel Service Fee</h3>
           <table class="fee-table">
             <thead>
               <tr>
@@ -762,7 +760,7 @@
         </div>
 
         <div class="corporate-form-section">
-          <h3>?? Corporate Airlines Accounts</h3>
+          <h3>✈️ Corporate Airlines Accounts</h3>
           <div class="airlines-list" id="airlinesList">
             <!-- Dynamic rows added here -->
           </div>
@@ -778,7 +776,7 @@
     <!-- Tab 3: Flight Sales -->
     <div id="tab-flight-sales" class="tab-content">
       <div class="corporate-form-section" style="background: var(--bg-alt); border: 1px solid var(--primary); border-radius: 8px;">
-        <h3 style="color: var(--primary);">?? Add Flight Sales Data</h3>
+        <h3 style="color: var(--primary);">✈️ Add Flight Sales Data</h3>
         <form id="addFlightSalesForm" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
           <div class="form-group" style="margin: 0; min-width: 180px;">
             <label>Corporate *</label>
@@ -819,18 +817,18 @@
             <label>Description</label>
             <input type="text" id="flightSalesDesc" class="form-control" placeholder="e.g., Route / Airline">
           </div>
-          <button type="submit" class="btn btn-primary" style="height: 38px;">?? Add</button>
+          <button type="submit" class="btn btn-primary" style="height: 38px;">💾 Add</button>
         </form>
       </div>
       <!-- Flight Sales Filter -->
       <div class="corporate-form-section" style="margin-top: 16px;">
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
-          <h3 style="margin: 0;">?? Flight Sales Records</h3>
+          <h3 style="margin: 0;">✈️ Flight Sales Records</h3>
           <select id="flightFilterCorp" class="form-control" style="min-width: 180px;"><option value="">All Corporates</option></select>
           <select id="flightFilterYear" class="form-control" style="min-width: 100px;">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <button class="btn btn-secondary" id="refreshFlightSalesBtn">?? Refresh</button>
+          <button class="btn btn-secondary" id="refreshFlightSalesBtn">🔄 Refresh</button>
         </div>
         <div class="table-responsive">
           <table class="table">
@@ -846,7 +844,7 @@
     <!-- Tab 4: Hotel Sales -->
     <div id="tab-hotel-sales" class="tab-content">
       <div class="corporate-form-section" style="background: var(--bg-alt); border: 1px solid var(--primary); border-radius: 8px;">
-        <h3 style="color: var(--primary);">?? Add Hotel Sales Data</h3>
+        <h3 style="color: var(--primary);">🏨 Add Hotel Sales Data</h3>
         <form id="addHotelSalesForm" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
           <div class="form-group" style="margin: 0; min-width: 180px;">
             <label>Corporate *</label>
@@ -885,17 +883,17 @@
             <label>Description</label>
             <input type="text" id="hotelSalesDesc" class="form-control" placeholder="e.g., Hotel name / City">
           </div>
-          <button type="submit" class="btn btn-primary" style="height: 38px;">?? Add</button>
+          <button type="submit" class="btn btn-primary" style="height: 38px;">💾 Add</button>
         </form>
       </div>
       <div class="corporate-form-section" style="margin-top: 16px;">
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
-          <h3 style="margin: 0;">?? Hotel Sales Records</h3>
+          <h3 style="margin: 0;">🏨 Hotel Sales Records</h3>
           <select id="hotelFilterCorp" class="form-control" style="min-width: 180px;"><option value="">All Corporates</option></select>
           <select id="hotelFilterYear" class="form-control" style="min-width: 100px;">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <button class="btn btn-secondary" id="refreshHotelSalesBtn">?? Refresh</button>
+          <button class="btn btn-secondary" id="refreshHotelSalesBtn">🔄 Refresh</button>
         </div>
         <div class="table-responsive">
           <table class="table">
@@ -911,7 +909,7 @@
     <!-- Tab 5: Tour Sales -->
     <div id="tab-tour-sales" class="tab-content">
       <div class="corporate-form-section" style="background: var(--bg-alt); border: 1px solid var(--primary); border-radius: 8px;">
-        <h3 style="color: var(--primary);">?? Add Tour Sales Data</h3>
+        <h3 style="color: var(--primary);">🧳 Add Tour Sales Data</h3>
         <form id="addTourSalesForm" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
           <div class="form-group" style="margin: 0; min-width: 180px;">
             <label>Corporate *</label>
@@ -950,17 +948,17 @@
             <label>Description</label>
             <input type="text" id="tourSalesDesc" class="form-control" placeholder="e.g., Destination / Pax">
           </div>
-          <button type="submit" class="btn btn-primary" style="height: 38px;">?? Add</button>
+          <button type="submit" class="btn btn-primary" style="height: 38px;">💾 Add</button>
         </form>
       </div>
       <div class="corporate-form-section" style="margin-top: 16px;">
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
-          <h3 style="margin: 0;">?? Tour Sales Records</h3>
+          <h3 style="margin: 0;">🧳 Tour Sales Records</h3>
           <select id="tourFilterCorp" class="form-control" style="min-width: 180px;"><option value="">All Corporates</option></select>
           <select id="tourFilterYear" class="form-control" style="min-width: 100px;">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <button class="btn btn-secondary" id="refreshTourSalesBtn">?? Refresh</button>
+          <button class="btn btn-secondary" id="refreshTourSalesBtn">🔄 Refresh</button>
         </div>
         <div class="table-responsive">
           <table class="table">
@@ -976,7 +974,7 @@
     <!-- Tab 6: Other Sales -->
     <div id="tab-other-sales" class="tab-content">
       <div class="corporate-form-section" style="background: var(--bg-alt); border: 1px solid var(--primary); border-radius: 8px;">
-        <h3 style="color: var(--primary);">?? Add Other Sales Data</h3>
+        <h3 style="color: var(--primary);">📦 Add Other Sales Data</h3>
         <form id="addOtherSalesForm" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
           <div class="form-group" style="margin: 0; min-width: 180px;">
             <label>Corporate *</label>
@@ -1015,17 +1013,17 @@
             <label>Description</label>
             <input type="text" id="otherSalesDesc" class="form-control" placeholder="e.g., Visa / Insurance">
           </div>
-          <button type="submit" class="btn btn-primary" style="height: 38px;">?? Add</button>
+          <button type="submit" class="btn btn-primary" style="height: 38px;">💾 Add</button>
         </form>
       </div>
       <div class="corporate-form-section" style="margin-top: 16px;">
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
-          <h3 style="margin: 0;">?? Other Sales Records</h3>
+          <h3 style="margin: 0;">📦 Other Sales Records</h3>
           <select id="otherFilterCorp" class="form-control" style="min-width: 180px;"><option value="">All Corporates</option></select>
           <select id="otherFilterYear" class="form-control" style="min-width: 100px;">
             <option value="2026">2026</option><option value="2025">2025</option><option value="2024">2024</option>
           </select>
-          <button class="btn btn-secondary" id="refreshOtherSalesBtn">?? Refresh</button>
+          <button class="btn btn-secondary" id="refreshOtherSalesBtn">🔄 Refresh</button>
         </div>
         <div class="table-responsive">
           <table class="table">
@@ -1043,22 +1041,22 @@
       <!-- Summary Cards by Type -->
       <div class="dashboard-cards" style="margin-bottom: 20px;">
         <div class="dashboard-card">
-          <div class="card-label">?? Flight Sales (YTD)</div>
+          <div class="card-label">✈️ Flight Sales (YTD)</div>
           <div class="card-value" id="summaryFlightSales">Rp 0</div>
           <div class="card-trend" id="summaryFlightProfit">Profit: Rp 0</div>
         </div>
         <div class="dashboard-card">
-          <div class="card-label">?? Hotel Sales (YTD)</div>
+          <div class="card-label">🏨 Hotel Sales (YTD)</div>
           <div class="card-value" id="summaryHotelSales">Rp 0</div>
           <div class="card-trend" id="summaryHotelProfit">Profit: Rp 0</div>
         </div>
         <div class="dashboard-card">
-          <div class="card-label">?? Tour Sales (YTD)</div>
+          <div class="card-label">🧳 Tour Sales (YTD)</div>
           <div class="card-value" id="summaryTourSales">Rp 0</div>
           <div class="card-trend" id="summaryTourProfit">Profit: Rp 0</div>
         </div>
         <div class="dashboard-card">
-          <div class="card-label">?? Other Sales (YTD)</div>
+          <div class="card-label">📦 Other Sales (YTD)</div>
           <div class="card-value" id="summaryOtherSales">Rp 0</div>
           <div class="card-trend" id="summaryOtherProfit">Profit: Rp 0</div>
         </div>
@@ -1067,21 +1065,21 @@
       <!-- Type Breakdown Chart -->
       <div class="charts-row" style="margin-bottom: 20px;">
         <div class="chart-container">
-          <h3>?? Sales by Type</h3>
+          <h3>📊 Sales by Type</h3>
           <canvas id="salesByTypeChart" height="250"></canvas>
         </div>
         <div class="chart-container">
-          <h3>?? Monthly Trend (All Types)</h3>
+          <h3>📈 Monthly Trend (All Types)</h3>
           <canvas id="summaryTrendChart" height="250"></canvas>
         </div>
       </div>
 
       <!-- Month vs Month Comparison -->
-      <div class="corporate-form-section" style="background: linear-gradient(135deg, rgba(212,168,67,0.08), rgba(45,106,138,0.08)); border: 2px solid var(--primary); border-radius: 12px;">
-        <h3 style="color: var(--primary); margin-bottom: 16px;">?? Month vs Month Comparison</h3>
+      <div class="corporate-form-section" style="background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%); border: 2px solid var(--primary); border-radius: 12px;">
+        <h3 style="color: var(--primary); margin-bottom: 16px;">📅 Month vs Month Comparison</h3>
         <div style="display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap;">
-          <div style="padding: 16px; background: rgba(14,27,48,0.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <label style="font-weight: 600; color: #4361ee; margin-bottom: 8px; display: block;">?? Period 1</label>
+          <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <label style="font-weight: 600; color: #4361ee; margin-bottom: 8px; display: block;">📆 Period 1</label>
             <div style="display: flex; gap: 8px;">
               <select id="monthCompare1Month" class="form-control" style="min-width: 120px;">
                 <option value="1">January</option><option value="2">February</option><option value="3">March</option>
@@ -1095,8 +1093,8 @@
             </div>
           </div>
           <span style="font-size: 24px; font-weight: bold; color: var(--primary);">VS</span>
-          <div style="padding: 16px; background: rgba(14,27,48,0.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-            <label style="font-weight: 600; color: #6c757d; margin-bottom: 8px; display: block;">?? Period 2</label>
+          <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <label style="font-weight: 600; color: #6c757d; margin-bottom: 8px; display: block;">📆 Period 2</label>
             <div style="display: flex; gap: 8px;">
               <select id="monthCompare2Month" class="form-control" style="min-width: 120px;">
                 <option value="1">January</option><option value="2">February</option><option value="3">March</option>
@@ -1113,7 +1111,7 @@
             <label>Corporate</label>
             <select id="monthCompareCorp" class="form-control" style="min-width: 150px;"><option value="">All Corporates</option></select>
           </div>
-          <button class="btn btn-primary" id="compareMonthsBtn" style="height: 38px;">?? Compare</button>
+          <button class="btn btn-primary" id="compareMonthsBtn" style="height: 38px;">🔍 Compare</button>
         </div>
         <div id="monthComparisonResults" style="margin-top: 20px; display: none;">
           <div style="overflow-x: auto;">
@@ -1137,7 +1135,7 @@
 
       <!-- Full Year Comparison -->
       <div class="corporate-form-section" style="margin-top: 16px;">
-        <h3 style="margin-bottom: 12px;">?? Full Year Comparison</h3>
+        <h3 style="margin-bottom: 12px;">📊 Full Year Comparison</h3>
         <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
           <div class="form-group" style="margin: 0;">
             <label>Year</label>
@@ -1149,11 +1147,11 @@
             <label>Corporate</label>
             <select id="salesFilterCorp" class="form-control"><option value="">All Corporates</option></select>
           </div>
-          <button class="btn btn-primary" id="refreshSalesBtn" style="margin-top: 20px;">?? Refresh</button>
+          <button class="btn btn-primary" id="refreshSalesBtn" style="margin-top: 20px;">🔄 Refresh</button>
         </div>
       </div>
       <div class="corporate-form-section">
-        <h3>?? Sales & Profit Comparison by Month</h3>
+        <h3>📊 Sales & Profit Comparison by Month</h3>
         <div class="table-responsive" style="max-height: 600px; overflow: auto;">
           <table class="sales-comparison-table" id="salesComparisonTable">
             <thead>
@@ -1178,7 +1176,7 @@
         </div>
       </div>
       <div class="chart-container">
-        <h3>?? Year-over-Year Growth by Corporate</h3>
+        <h3>📈 Year-over-Year Growth by Corporate</h3>
         <canvas id="growthChart" height="300"></canvas>
       </div>
     </div>

@@ -31,10 +31,8 @@
 <link rel="stylesheet" href="/css/dashboard-shared.css">
 <link rel="stylesheet" href="/css/accessibility.css">
 <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
 <link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="/js/chart-theme.js"></script>
 <style>
@@ -486,72 +484,72 @@
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav" id="mainNav">
       <!-- Main Dashboard -->
-      <button data-section="summary" class="nav-main-item active">?? Dashboard</button>
+      <button data-section="summary" class="nav-main-item active">🏠 Dashboard</button>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
           <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
           <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
           <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html">?? Productivity</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
       
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
           <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
           <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">?? Outstanding</a>
-          <a href="/cashout-dashboard.html">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a id="logoutLink" href="/logout.html">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a id="logoutLink" href="/logout.html">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
       <div id="userName">�</div>
@@ -572,7 +570,7 @@
   <!-- === WELCOME BANNER === -->
   <div class="db-welcome">
     <div class="db-welcome-text">
-      <h1 class="db-welcome-title">Welcome to TravelOps! ??</h1>
+      <h1 class="db-welcome-title">Welcome to TravelOps! 👋</h1>
       <p class="db-welcome-sub" id="welcomeMessage">Manage your travel business with ease</p>
     </div>
     <div class="db-welcome-actions">
@@ -587,7 +585,7 @@
 
   <!-- === FILTER BAR (Charts & Metrics Filtering) === -->
   <div class="db-filter-bar">
-    <label>?? Filter:</label>
+    <label>📊 Filter:</label>
     <select id="filterPeriod">
       <option value="all">All Time</option>
       <option value="month">By Month</option>
@@ -607,7 +605,7 @@
   <!-- === ROW 1: TOP KPI CARDS (like Dabang "Today's Sales" row) === -->
   <div class="db-kpi-row">
     <div class="db-kpi-card db-kpi-sales">
-      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #d4a843, #b8922e);">??</div>
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #d4a843, #b8922e);">💰</div>
       <div class="db-kpi-info">
         <div class="db-kpi-value" id="totalSales">Rp 0</div>
         <div class="db-kpi-label">Monthly Sales</div>
@@ -616,7 +614,7 @@
       <span class="db-kpi-change" id="salesChange" style="display:none;"></span>
     </div>
     <div class="db-kpi-card db-kpi-profit">
-      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #2d6a8a, #1a3a5c);">??</div>
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #2d6a8a, #1a3a5c);">📊</div>
       <div class="db-kpi-info">
         <div class="db-kpi-value" id="totalProfit">Rp 0</div>
         <div class="db-kpi-label">Monthly Profit</div>
@@ -625,7 +623,7 @@
       <span class="db-kpi-change" id="profitChange" style="display:none;"></span>
     </div>
     <div class="db-kpi-card db-kpi-tours">
-      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #d4944c, #b8922e);">??</div>
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #d4944c, #b8922e);">🧳</div>
       <div class="db-kpi-info">
         <div class="db-kpi-value" id="upcomingToursCount">0</div>
         <div class="db-kpi-label">Upcoming Tours</div>
@@ -633,7 +631,7 @@
       </div>
     </div>
     <div class="db-kpi-card db-kpi-docs">
-      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #1a3a5c, #0b1e3d);">??</div>
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #1a3a5c, #0b1e3d);">📄</div>
       <div class="db-kpi-info">
         <div class="db-kpi-value" id="pendingDocsCount">0</div>
         <div class="db-kpi-label">Pending Documents</div>
@@ -646,7 +644,7 @@
   <div class="db-grid-2col">
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? Sales Trend</h3>
+        <h3>📈 Sales Trend</h3>
         <span class="db-panel-badge">This Year</span>
       </div>
       <div class="db-chart-wrap" style="height: 280px;">
@@ -655,7 +653,7 @@
     </div>
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? Sales vs Target</h3>
+        <h3>💰 Sales vs Target</h3>
         <span class="db-panel-badge">This Month</span>
       </div>
       <div class="db-chart-wrap" style="height: 280px;">
@@ -668,7 +666,7 @@
   <div class="db-grid-3col">
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? Profit Performance</h3>
+        <h3>📊 Profit Performance</h3>
       </div>
       <div class="db-chart-wrap" style="height: 260px;">
         <canvas id="chartProfitTarget"></canvas>
@@ -676,7 +674,7 @@
     </div>
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? YTD Achievement <span class="db-panel-badge" id="ytdYear">(2026)</span></h3>
+        <h3>🎯 YTD Achievement <span class="db-panel-badge" id="ytdYear">(2026)</span></h3>
       </div>
       <div class="db-ytd-content">
         <div class="db-ytd-metric">
@@ -692,7 +690,7 @@
             <span class="db-ytd-pct" id="ytdSalesAchievement">0%</span>
           </div>
           <div class="db-ytd-row db-ytd-row-sub" style="margin-top:4px;">
-            <span style="font-size:11px;color:#9ca3af;">?? Transactions YTD</span>
+            <span style="font-size:11px;color:#9ca3af;">📋 Transactions YTD</span>
             <span style="font-size:12px;font-weight:600;" id="ytdTransactionCount">0</span>
           </div>
         </div>
@@ -713,29 +711,29 @@
     </div>
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>??? Module Overview</h3>
+        <h3>🗂️ Module Overview</h3>
       </div>
       <div class="db-module-grid">
         <a href="/outstanding-dashboard.html" class="db-mod-card">
-          <span class="db-mod-icon">??</span>
+          <span class="db-mod-icon">📋</span>
           <span class="db-mod-val" id="outstandingCount">0</span>
           <span class="db-mod-label">Outstanding</span>
           <span class="db-mod-sub" id="outstandingAmount">Rp 0</span>
         </a>
         <a href="/hotel-dashboard.html" class="db-mod-card">
-          <span class="db-mod-icon">??</span>
+          <span class="db-mod-icon">🏨</span>
           <span class="db-mod-val" id="hotelBookingsCount">0</span>
           <span class="db-mod-label">Hotel Bookings</span>
           <span class="db-mod-sub">This month</span>
         </a>
         <a href="/cruise-dashboard.html" class="db-mod-card">
-          <span class="db-mod-icon">??</span>
+          <span class="db-mod-icon">🏨</span>
           <span class="db-mod-val" id="upcomingCruiseCount">0</span>
           <span class="db-mod-label">Upcoming Cruise</span>
           <span class="db-mod-sub">Next 30 days</span>
         </a>
         <a href="/telecom-dashboard.html" class="db-mod-card">
-          <span class="db-mod-icon">??</span>
+          <span class="db-mod-icon">🚢</span>
           <span class="db-mod-val" id="telecomRentalsCount">0</span>
           <span class="db-mod-label">Telecom Rentals</span>
           <span class="db-mod-sub">This month</span>
@@ -748,7 +746,7 @@
   <div class="db-grid-2col">
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? Staff Leaderboard</h3>
+        <h3>🏆 Staff Leaderboard</h3>
         <span class="db-panel-badge">This Month</span>
       </div>
       <div class="db-table-wrap">
@@ -771,7 +769,7 @@
     </div>
     <div class="db-panel">
       <div class="db-panel-header">
-        <h3>?? Upcoming Departures</h3>
+        <h3>✈️ Upcoming Departures</h3>
         <span class="db-panel-badge">Next 30 Days</span>
       </div>
       <div class="db-table-wrap">
@@ -798,19 +796,19 @@
   <!-- === ROW 5: QUICK NAVIGATION (compact) === -->
   <div class="db-panel" style="margin-top: 4px;">
     <div class="db-panel-header">
-      <h3>?? Quick Navigation</h3>
+      <h3>🚀 Quick Navigation</h3>
     </div>
     <div class="db-quicknav">
-      <a href="/sales-targets-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4a843,#b8922e);">??</span><span>Sales</span></a>
-      <a href="/tours-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#1a3a5c);">??</span><span>Tours</span></a>
-      <a href="/documents-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4944c,#b8922e);">??</span><span>Docs</span></a>
-      <a href="/hotel-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#1a3a5c,#0b1e3d);">??</span><span>Hotel</span></a>
-      <a href="/cruise-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#d4a843);">??</span><span>Cruise</span></a>
-      <a href="/telecom-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4a843,#d4944c);">??</span><span>Telecom</span></a>
-      <a href="/tracking-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#1a3a5c,#2d6a8a);">??</span><span>Tracking</span></a>
-      <a href="/corporate-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#b8922e,#d4944c);">??</span><span>Corporate</span></a>
-      <a href="/productivity-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#0b1e3d,#2d6a8a);">??</span><span>Productivity</span></a>
-      <a href="/ticket-recap-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#d4944c);">??</span><span>Tickets</span></a>
+      <a href="/sales-targets-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4a843,#b8922e);">💰</span><span>Sales</span></a>
+      <a href="/tours-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#1a3a5c);">🧳</span><span>Tours</span></a>
+      <a href="/documents-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4944c,#b8922e);">📄</span><span>Docs</span></a>
+      <a href="/hotel-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#1a3a5c,#0b1e3d);">🏨</span><span>Hotel</span></a>
+      <a href="/cruise-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#d4a843);">🚢</span><span>Cruise</span></a>
+      <a href="/telecom-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4a843,#d4944c);">📞</span><span>Telecom</span></a>
+      <a href="/tracking-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#1a3a5c,#2d6a8a);">📦</span><span>Tracking</span></a>
+      <a href="/corporate-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#b8922e,#d4944c);">🏢</span><span>Corporate</span></a>
+      <a href="/productivity-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#0b1e3d,#2d6a8a);">📈</span><span>Productivity</span></a>
+      <a href="/ticket-recap-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#2d6a8a,#d4944c);">✈️</span><span>Tickets</span></a>
     </div>
   </div>
 
@@ -822,7 +820,7 @@
         <h3>Sales</h3>
         <div>
           <button id="addSalesBtn" class="btn primary">+ Add Sales</button>
-          <button data-filter-entity="sales" class="btn">?? Filter</button>
+          <button data-filter-entity="sales" class="btn">🔍 Filter</button>
           <button id="exportSales" class="btn">Export CSV</button>
           <button id="downloadSalesTemplate" class="btn">Download Template</button>
           <input id="importSalesFile" type="file" accept=".csv" class="hidden"/>
@@ -855,7 +853,7 @@
         <h3>Tours</h3>
         <div>
           <button id="addTourBtn" class="btn primary">+ Add Tour</button>
-          <button data-filter-entity="tours" class="btn">?? Filter</button>
+          <button data-filter-entity="tours" class="btn">🔍 Filter</button>
           <button id="exportTours" class="btn">Export CSV</button>
           <button id="downloadToursTemplate" class="btn">Download Template</button>
           <input id="importToursFile" type="file" accept=".csv" class="hidden"/>
@@ -895,7 +893,7 @@
         <h3>Documents</h3>
         <div>
           <button id="addDocBtn" class="btn primary">+ Add Document</button>
-          <button data-filter-entity="documents" class="btn">?? Filter</button>
+          <button data-filter-entity="documents" class="btn">🔍 Filter</button>
           <button id="exportDocs" class="btn">Export CSV</button>
           <button id="downloadDocsTemplate" class="btn">Download Template</button>
           <input id="importDocsFile" type="file" accept=".csv" class="hidden"/>
@@ -927,7 +925,7 @@
         <h3>Targets</h3>
         <div>
           <button id="addTargetBtn" class="btn primary">+ Add Target</button>
-          <button data-filter-entity="targets" class="btn">?? Filter</button>
+          <button data-filter-entity="targets" class="btn">🔍 Filter</button>
           <button id="exportTargets" class="btn">Export CSV</button>
           <button id="downloadTargetsTemplate" class="btn">Download Template</button>
           <input id="importTargetsFile" type="file" accept=".csv" class="hidden"/>
@@ -981,7 +979,7 @@
         <h3>Telecom</h3>
         <div>
           <button id="addTelecomBtn" class="btn primary">+ Add Telecom</button>
-          <button data-filter-entity="telecom" class="btn">?? Filter</button>
+          <button data-filter-entity="telecom" class="btn">🔍 Filter</button>
           <button id="exportTelecom" class="btn">Export CSV</button>
         </div>
       </div>
@@ -1019,7 +1017,7 @@
         <h3>Hotel Bookings</h3>
         <div>
           <button id="addHotelBookingBtn" class="btn primary">+ Add Booking</button>
-          <button data-filter-entity="hotel_bookings" class="btn">?? Filter</button>
+          <button data-filter-entity="hotel_bookings" class="btn">🔍 Filter</button>
           <button id="exportHotelBookings" class="btn">Export CSV</button>
         </div>
       </div>
@@ -1106,7 +1104,7 @@
               <input type="password" name="password_confirm" required minlength="8" pattern="(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}" placeholder="Re-type new password">
             </div>
             <button class="btn btn-primary" type="submit">
-              <span>??</span> Change Password
+              <span>🔒</span> Change Password
             </button>
           </form>
         </div>
@@ -1133,7 +1131,7 @@
         <!-- Email Notification Testing (Admin Only) -->
         <div class="card" id="emailTestingPanel" style="display: none;">
           <h3 style="margin-top: 0; color: #2563eb; display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 24px;">??</span>
+            <span style="font-size: 24px;">📧</span>
             Email Notification System
           </h3>
           
@@ -1149,7 +1147,7 @@
             <!-- Test Email Card -->
             <div style="background: #f9fafb; padding: 20px; border-radius: 12px; border: 1px solid #e5e7eb;">
               <h4 style="margin-top: 0; color: #1f2937; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-                <span>??</span> Test Email
+                <span>✉️</span> Test Email
               </h4>
               <p style="color: #6b7280; font-size: 0.9rem; margin-bottom: 16px;">
                 Send a test email to verify SMTP configuration
@@ -1194,7 +1192,7 @@
             <!-- Reminder Stats Card -->
             <div style="background: #ecfdf5; padding: 20px; border-radius: 12px; border: 1px solid #10b981;">
               <h4 style="margin-top: 0; color: #065f46; font-size: 16px; display: flex; align-items: center; gap: 8px;">
-                <span>??</span> Statistics
+                <span>📊</span> Statistics
               </h4>
               <p style="color: #047857; font-size: 0.9rem; margin-bottom: 16px;">
                 View sent reminder statistics

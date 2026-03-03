@@ -962,6 +962,7 @@ function renderAnalyticsTab() {
     const m = window._tourMetrics;
     if (!m) return;
 
+    const regionData = window._tourRegionData || {};
     const { totalParticipants, totalTours, avgParticipants, invoicedCount, notInvoicedCount, toursData } = m;
     const invoiceRate = totalTours > 0 ? Math.round((invoicedCount / totalTours) * 100) : 0;
 

@@ -26,12 +26,10 @@
 <link rel="stylesheet" href="/css/dashboard-shared.css">
 <link rel="stylesheet" href="/css/accessibility.css">
 <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
+    <link rel="stylesheet" href="/css/sunset-theme.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="/js/chart-theme.js"></script>
+    <script src="/js/chart-theme.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -433,80 +431,80 @@
 </style>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
-          <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html" class="active">?? Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html" class="active">📈 Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">?? Outstanding</a>
-          <a href="/cashout-dashboard.html">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a href="/logout.html" id="logoutLink">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">�</div>
-      <div id="userRole">�</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
@@ -519,7 +517,7 @@
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <!-- Period Filters -->
         <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-alt); padding: 6px 12px; border-radius: 8px;">
-          <span style="font-size: 13px; color: var(--text-secondary);">?? Period:</span>
+          <span style="font-size: 13px; color: var(--text-secondary);">📅 Period:</span>
           <select id="quickFilterYear" class="quick-filter" style="padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-light); background: var(--card); font-size: 13px; min-width: 80px;">
             <!-- Populated by JS -->
           </select>
@@ -544,47 +542,47 @@
           <option value="all">All Staff</option>
           <!-- Populated by JS -->
         </select>
-        <button id="importBtn" class="btn" style="background: #10b981; color: white;">?? Import</button>
+        <button id="importBtn" class="btn" style="background: #10b981; color: white;">⬆️ Import</button>
         <div class="export-dropdown" style="position: relative;">
-          <button id="exportBtn" class="btn" style="display: flex; align-items: center; gap: 4px;">?? Export <span style="font-size: 10px;">?</span></button>
+          <button id="exportBtn" class="btn" style="display: flex; align-items: center; gap: 4px;">⬇️ Export <span style="font-size: 10px;">▼</span></button>
           <div id="exportMenu" class="export-menu" style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 100; min-width: 160px; margin-top: 4px;">
             <button class="export-option" data-format="csv" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
-              ?? Export CSV
+              📄 Export CSV
             </button>
             <button class="export-option" data-format="xlsx" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
-              ?? Export Excel
+              📊 Export Excel
             </button>
             <button class="export-option" data-format="pdf" style="width: 100%; padding: 10px 16px; border: none; background: none; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-primary); transition: background 0.2s;">
-              ?? Export PDF
+              📑 Export PDF
             </button>
           </div>
         </div>
-        <button id="printBtn" class="btn" title="Print (Ctrl+P)">??? Print</button>
-        <button id="downloadTemplateBtn" class="btn" style="background: #6366f1; color: white;">?? Template</button>
+        <button id="printBtn" class="btn" title="Print (Ctrl+P)">🖨️ Print</button>
+        <button id="downloadTemplateBtn" class="btn" style="background: #6366f1; color: white;">📄 Template</button>
       </div>
     </div>
 
     <!-- Product Type Tabs -->
     <div class="card">
       <div class="productivity-tabs" id="productTabs">
-        <button class="tab-btn active" data-tab="overview">?? Overview</button>
-        <button class="tab-btn" data-tab="comparison">?? Comparison</button>
-        <button class="tab-btn" data-tab="flight">?? Flight</button>
-        <button class="tab-btn" data-tab="hotel">?? Hotel</button>
-        <button class="tab-btn" data-tab="tour">?? Tour</button>
-        <button class="tab-btn" data-tab="package">?? Package</button>
-        <button class="tab-btn" data-tab="cruise">?? Cruise</button>
-        <button class="tab-btn" data-tab="admission">?? Admission</button>
-        <button class="tab-btn" data-tab="passport">?? Passport</button>
-        <button class="tab-btn" data-tab="visa">?? Visa</button>
-        <button class="tab-btn" data-tab="insurance">??? Insurance</button>
-        <button class="tab-btn" data-tab="train">?? Train</button>
-        <button class="tab-btn" data-tab="other">?? Other</button>
+        <button class="tab-btn active" data-tab="overview">📊 Overview</button>
+        <button class="tab-btn" data-tab="comparison">📈 Comparison</button>
+        <button class="tab-btn" data-tab="flight">✈️ Flight</button>
+        <button class="tab-btn" data-tab="hotel">🏨 Hotel</button>
+        <button class="tab-btn" data-tab="tour">🧳 Tour</button>
+        <button class="tab-btn" data-tab="package">📦 Package</button>
+        <button class="tab-btn" data-tab="cruise">🚢 Cruise</button>
+        <button class="tab-btn" data-tab="admission">🎫 Admission</button>
+        <button class="tab-btn" data-tab="passport">🛂 Passport</button>
+        <button class="tab-btn" data-tab="visa">📋 Visa</button>
+        <button class="tab-btn" data-tab="insurance">🛡️ Insurance</button>
+        <button class="tab-btn" data-tab="train">🚆 Train</button>
+        <button class="tab-btn" data-tab="other">📝 Other</button>
       </div>
 
       <!-- Overview Tab -->
       <div class="tab-content active" id="tab-overview">
-        <h3 style="margin-bottom: 16px;">?? Overall Performance Summary</h3>
+        <h3 style="margin-bottom: 16px;">📊 Overall Performance Summary</h3>
         
         <!-- Summary Metrics -->
         <div class="metrics-grid">
@@ -609,28 +607,28 @@
         <!-- Charts -->
         <div class="charts-row">
           <div class="chart-box">
-            <h4>?? Sales by Product Category</h4>
+            <h4>📈 Sales by Product Category</h4>
             <canvas id="chartSalesByProduct" style="max-height: 300px;"></canvas>
           </div>
           <div class="chart-box">
-            <h4>?? Profit Margin by Category</h4>
+            <h4>💰 Profit Margin by Category</h4>
             <canvas id="chartProfitByProduct" style="max-height: 300px;"></canvas>
           </div>
         </div>
 
         <div class="charts-row">
           <div class="chart-box">
-            <h4>?? Monthly Sales Trend</h4>
+            <h4>📅 Monthly Sales Trend</h4>
             <canvas id="chartMonthlyTrend" style="max-height: 300px;"></canvas>
           </div>
           <div class="chart-box">
-            <h4>?? Top Performers</h4>
+            <h4>👥 Top Performers</h4>
             <canvas id="chartTopPerformers" style="max-height: 300px;"></canvas>
           </div>
         </div>
 
         <!-- Product Summary Table -->
-        <h4 style="margin: 24px 0 16px;">?? Product Category Summary</h4>
+        <h4 style="margin: 24px 0 16px;">📋 Product Category Summary</h4>
         <div style="overflow-x: auto;">
           <table class="data-table" style="width: 100%;">
             <thead>
@@ -655,7 +653,7 @@
         <div class="comparison-container">
           <div class="comparison-header">
             <div>
-              <h3 style="margin: 0 0 8px 0;">?? Period Comparison Analysis</h3>
+              <h3 style="margin: 0 0 8px 0;">📈 Period Comparison Analysis</h3>
               <p style="margin: 0; color: var(--text-secondary); font-size: 13px;">Compare performance across different time periods</p>
             </div>
             <div class="comparison-controls">
@@ -689,21 +687,21 @@
           
           <!-- Period Selector -->
           <div class="period-selector" id="periodSelector">
-            <button class="period-btn active" data-period="month">?? Monthly</button>
-            <button class="period-btn" data-period="month-yoy">?? Month YoY</button>
-            <button class="period-btn" data-period="custom">?? Custom Month vs Month</button>
-            <button class="period-btn" data-period="quarter">?? Quarterly</button>
-            <button class="period-btn" data-period="semester">?? Semester</button>
-            <button class="period-btn" data-period="ytd">?? Year to Date</button>
+            <button class="period-btn active" data-period="month">📅 Monthly</button>
+            <button class="period-btn" data-period="month-yoy">📆 Month YoY</button>
+            <button class="period-btn" data-period="custom">📆 Custom Month vs Month</button>
+            <button class="period-btn" data-period="quarter">📊 Quarterly</button>
+            <button class="period-btn" data-period="semester">📈 Semester</button>
+            <button class="period-btn" data-period="ytd">🎯 Year to Date</button>
           </div>
           
           <!-- Custom Month vs Month Section -->
           <div id="customMonthSection" style="display: none; margin: 20px 0; padding: 20px; background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%); border: 2px solid var(--primary); border-radius: 12px;">
-            <h4 style="color: var(--primary); margin: 0 0 16px 0;">?? Custom Month vs Month Comparison</h4>
+            <h4 style="color: var(--primary); margin: 0 0 16px 0;">📅 Custom Month vs Month Comparison</h4>
             <div style="display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap;">
               <!-- Period 1 -->
-              <div style="padding: 16px; background: rgba(14,27,48,0.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <label style="font-weight: 600; color: #4361ee; margin-bottom: 8px; display: block;">?? Period 1</label>
+              <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <label style="font-weight: 600; color: #4361ee; margin-bottom: 8px; display: block;">📆 Period 1</label>
                 <div style="display: flex; gap: 8px;">
                   <select id="customMonth1" class="form-control" style="min-width: 120px;">
                     <option value="1">January</option>
@@ -731,8 +729,8 @@
               <span style="font-size: 24px; font-weight: bold; color: var(--primary);">VS</span>
               
               <!-- Period 2 -->
-              <div style="padding: 16px; background: rgba(14,27,48,0.95); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                <label style="font-weight: 600; color: #6c757d; margin-bottom: 8px; display: block;">?? Period 2</label>
+              <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                <label style="font-weight: 600; color: #6c757d; margin-bottom: 8px; display: block;">📆 Period 2</label>
                 <div style="display: flex; gap: 8px;">
                   <select id="customMonth2" class="form-control" style="min-width: 120px;">
                     <option value="1">January</option>
@@ -757,7 +755,7 @@
                 </div>
               </div>
               
-              <button class="btn btn-primary" id="customCompareBtn" style="height: 38px;">?? Compare</button>
+              <button class="btn btn-primary" id="customCompareBtn" style="height: 38px;">🔍 Compare</button>
             </div>
             
             <!-- Custom Comparison Results -->
@@ -787,7 +785,7 @@
           
           <!-- Summary Section -->
           <div class="comparison-summary" id="comparisonSummary">
-            <h4>?? Comparison Summary</h4>
+            <h4>📊 Comparison Summary</h4>
             <div class="summary-grid" id="summaryGrid">
               <!-- Populated dynamically -->
             </div>
@@ -801,18 +799,18 @@
           <!-- Comparison Charts -->
           <div class="comparison-chart-container">
             <div class="comparison-chart-box">
-              <h4>?? Sales Comparison</h4>
+              <h4>📈 Sales Comparison</h4>
               <canvas id="chartComparison" style="max-height: 300px;"></canvas>
             </div>
             <div class="comparison-chart-box">
-              <h4>?? Profit Margin Trend</h4>
+              <h4>💰 Profit Margin Trend</h4>
               <canvas id="chartMarginTrend" style="max-height: 300px;"></canvas>
             </div>
           </div>
           
           <!-- Detailed Comparison Table -->
           <div class="comparison-table-container">
-            <h4 style="margin: 0 0 16px 0;">?? Detailed Breakdown</h4>
+            <h4 style="margin: 0 0 16px 0;">📋 Detailed Breakdown</h4>
             <table class="comparison-table data-table" id="comparisonTable">
               <thead id="comparisonTableHead">
                 <!-- Populated dynamically -->
@@ -862,12 +860,12 @@
 <div class="modal" id="importModal" style="display:none;">
   <div class="modal-card" style="max-width: 600px;">
     <div class="modal-header">
-      <h3>?? Import Productivity Data</h3>
+      <h3>⬆️ Import Productivity Data</h3>
       <button class="modal-close" onclick="closeImportModal()">&times;</button>
     </div>
     <div class="modal-body">
       <div style="margin-bottom: 20px; padding: 16px; background: #f0f9ff; border-radius: 8px; border-left: 4px solid #3b82f6;">
-        <h4 style="margin: 0 0 8px 0; color: #1e40af;">?? Import Instructions</h4>
+        <h4 style="margin: 0 0 8px 0; color: #1e40af;">📋 Import Instructions</h4>
         <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: #1e40af;">
           <li>Download the template first using the "Template" button</li>
           <li>Fill in your data following the template format</li>
@@ -878,13 +876,13 @@
       
       <div style="border: 2px dashed #d1d5db; border-radius: 12px; padding: 40px; text-align: center; background: #f9fafb; cursor: pointer;" id="dropZone">
         <input type="file" id="importFile" accept=".csv" style="display: none;">
-        <div style="font-size: 48px; margin-bottom: 12px;">??</div>
+        <div style="font-size: 48px; margin-bottom: 12px;">📁</div>
         <p style="margin: 0 0 8px 0; font-weight: 600; color: #374151;">Drag & drop your CSV file here</p>
         <p style="margin: 0; color: #6b7280; font-size: 13px;">or click to browse</p>
       </div>
       
       <div id="importPreview" style="display: none; margin-top: 20px;">
-        <h4 style="margin: 0 0 12px 0;">?? Preview (first 5 rows)</h4>
+        <h4 style="margin: 0 0 12px 0;">📊 Preview (first 5 rows)</h4>
         <div style="overflow-x: auto; max-height: 200px;">
           <table id="previewTable" class="table" style="font-size: 12px;">
             <thead id="previewHeader"></thead>
@@ -899,7 +897,7 @@
     <div class="modal-footer" style="display: flex; gap: 10px; justify-content: flex-end;">
       <button class="btn" onclick="closeImportModal()">Cancel</button>
       <button class="btn" id="confirmImportBtn" style="background: #10b981; color: white;" disabled>
-        ?? Import Data
+        ⬆️ Import Data
       </button>
     </div>
   </div>

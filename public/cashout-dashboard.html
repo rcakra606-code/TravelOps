@@ -26,10 +26,8 @@
 <link rel="stylesheet" href="/css/dashboard-shared.css">
   <link rel="stylesheet" href="/css/accessibility.css">
 <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
-<link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
+    <link rel="stylesheet" href="/css/sunset-theme.css">
   <style>
     .stats-grid {
       display: grid;
@@ -116,80 +114,80 @@
   </style>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
-          <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html">?? Productivity</a>
+          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">?? Outstanding</a>
-          <a href="/cashout-dashboard.html" class="active">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html" class="active">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a href="/logout.html" id="logoutLink">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">�</div>
-      <div id="userRole">�</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
@@ -200,9 +198,9 @@
         <div class="small">Manage cash out requests and settlements</div>
       </div>
       <div class="header-actions">
-        <input type="text" class="search-box" id="searchInput" placeholder="?? Search...">
-        <button id="filterBtn" class="btn btn-secondary">?? Filter</button>
-        <button id="exportBtn" class="btn btn-secondary">?? Export</button>
+        <input type="text" class="search-box" id="searchInput" placeholder="🔍 Search...">
+        <button id="filterBtn" class="btn btn-secondary">🔍 Filter</button>
+        <button id="exportBtn" class="btn btn-secondary">📤 Export</button>
         <button id="addCashoutBtn" class="btn btn-primary">+ New Cash Out</button>
       </div>
     </div>
@@ -234,7 +232,7 @@
     <!-- Data Table -->
     <div class="card">
       <div class="section-header">
-        <h3 style="margin:0;">?? Cash Out Records</h3>
+        <h3 style="margin:0;">📋 Cash Out Records</h3>
         <span id="recordCount" style="color:var(--text-secondary);font-size:13px;">0 records</span>
       </div>
       <div style="overflow-x: auto;">
@@ -317,10 +315,10 @@
           <div class="form-group">
             <label>Status</label>
             <select name="status" id="status">
-              <option value="pending">? Pending</option>
-              <option value="approved">? Approved</option>
-              <option value="completed">?? Completed</option>
-              <option value="rejected">? Rejected</option>
+              <option value="pending">⏳ Pending</option>
+              <option value="approved">✅ Approved</option>
+              <option value="completed">🎉 Completed</option>
+              <option value="rejected">❌ Rejected</option>
             </select>
           </div>
           
@@ -332,7 +330,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" id="modalCancelBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary" id="saveBtn">?? Save</button>
+        <button type="submit" class="btn btn-primary" id="saveBtn">💾 Save</button>
       </div>
     </form>
   </div>
@@ -399,7 +397,7 @@
       
       // Get current user
       currentUser = await fetchJson('/api/me');
-      el('userName').textContent = currentUser.name || currentUser.username || '�';
+      el('userName').textContent = currentUser.name || currentUser.username || '—';
       el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[currentUser.type] || currentUser.type;
       
       // Show admin link
@@ -474,7 +472,7 @@
       el('cashoutTableBody').innerHTML = `
         <tr>
           <td colspan="10" style="text-align:center;padding:60px;color:var(--text-secondary);">
-            <div style="font-size:48px;margin-bottom:16px;">??</div>
+            <div style="font-size:48px;margin-bottom:16px;">📭</div>
             <div>No cash out records found</div>
             <div style="font-size:13px;margin-top:8px;">Click "+ New Cash Out" to create one</div>
           </td>
@@ -485,7 +483,7 @@
     
     el('cashoutTableBody').innerHTML = filtered.map(c => {
       const statusClass = c.status || 'pending';
-      const statusIcon = { pending: '?', approved: '?', completed: '??', rejected: '?' }[statusClass] || '?';
+      const statusIcon = { pending: '⏳', approved: '✅', completed: '🎉', rejected: '❌' }[statusClass] || '⏳';
       const statusText = statusClass.charAt(0).toUpperCase() + statusClass.slice(1);
       
       return `
@@ -500,8 +498,8 @@
           <td>${c.settlement_date || '-'}</td>
           <td><span class="status-badge ${statusClass}">${statusIcon} ${statusText}</span></td>
           <td>
-            <button class="action-btn edit" onclick="editCashout(${c.id})">?? Edit</button>
-            ${currentUser?.type === 'admin' ? `<button class="action-btn delete" onclick="deleteCashout(${c.id})" style="margin-left:4px;">???</button>` : ''}
+            <button class="action-btn edit" onclick="editCashout(${c.id})">✏️ Edit</button>
+            ${currentUser?.type === 'admin' ? `<button class="action-btn delete" onclick="deleteCashout(${c.id})" style="margin-left:4px;">🗑️</button>` : ''}
           </td>
         </tr>
       `;

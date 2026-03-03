@@ -26,15 +26,13 @@
   <link rel="stylesheet" href="/css/dashboard-shared.css">
   <link rel="stylesheet" href="/css/accessibility.css">
   <link rel="stylesheet" href="/css/professional-polish.css">
-<link rel="stylesheet" href="/css/seasonal-theme.css">
   <link rel="stylesheet" href="/css/futuristic-theme.css">
-<link rel="stylesheet" href="/css/sunset-theme.css">
-<script src="/js/seasonal-theme.js" defer></script>
+    <link rel="stylesheet" href="/css/sunset-theme.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="/js/chart-theme.js"></script>
+    <script src="/js/chart-theme.js"></script>
   <style>
     .report-header {
-      background: linear-gradient(135deg, #1a3a5c 0%, #0b1e3d 50%, #d4a843 100%);
+      background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%);
       padding: 24px;
       border-radius: 12px;
       color: white;
@@ -81,37 +79,37 @@
       font-size: 14px;
     }
     .sales-table thead {
-      background: rgba(212,168,67,0.20);
+      background: #ffeb3b;
     }
     .sales-table th {
       padding: 12px 8px;
       text-align: center;
       font-weight: 700;
-      color: #e8ecf2;
-      border: 1px solid rgba(255,255,255,0.08);
+      color: #000;
+      border: 1px solid #ccc;
       white-space: nowrap;
     }
     .sales-table td {
       padding: 10px 8px;
       text-align: right;
-      border: 1px solid rgba(255,255,255,0.06);
-      background: rgba(255,255,255,0.03);
+      border: 1px solid #ddd;
+      background: #fffde7;
     }
     .sales-table td:first-child {
       text-align: left;
       font-weight: 600;
-      background: rgba(212,168,67,0.06);
+      background: #fff9c4;
     }
     .sales-table tr:last-child td {
-      background: rgba(212,168,67,0.20);
+      background: #ffeb3b;
       font-weight: 700;
     }
     .percentage-cell {
       font-weight: 600;
     }
-    .percentage-low { background: #f87171 !important; color: white; }
-    .percentage-medium { background: #ffca28 !important; color: #e8ecf2; }
-    .percentage-high { background: #4ade80 !important; color: white; }
+    .percentage-low { background: #ef5350 !important; color: white; }
+    .percentage-medium { background: #ffca28 !important; color: #000; }
+    .percentage-high { background: #66bb6a !important; color: white; }
     .margin-cell {
       font-weight: 600;
     }
@@ -168,103 +166,103 @@
       cursor: pointer;
       font-size: 12px;
     }
-    .edit-btn { background: #2d6a8a; color: white; }
+    .edit-btn { background: #2196f3; color: white; }
     .delete-btn { background: #f44336; color: white; }
     .total-row td {
-      background: rgba(212,168,67,0.20) !important;
+      background: #ffeb3b !important;
       font-weight: 700 !important;
-      color: #d4a843 !important;
+      color: #000 !important;
     }
   </style>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">?? TravelOps</div>
+    <div class="brand">🚀 TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📦</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">?? Tours</a>
-          <a href="/documents-dashboard.html">?? Documents</a>
-          <a href="/hotel-dashboard.html">?? Hotel</a>
-          <a href="/cruise-dashboard.html">?? Cruise</a>
-          <a href="/telecom-dashboard.html">?? Telecom</a>
-          <a href="/tracking-dashboard.html">?? Tracking</a>
-          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
+          <a href="/tours-dashboard.html">🧳 Tours</a>
+          <a href="/documents-dashboard.html">📄 Documents</a>
+          <a href="/hotel-dashboard.html">🏨 Hotel</a>
+          <a href="/cruise-dashboard.html">🚢 Cruise</a>
+          <a href="/telecom-dashboard.html">📞 Telecom</a>
+          <a href="/tracking-dashboard.html">📦 Tracking</a>
+          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">??</span>
+          <span class="group-icon">📊</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html" class="active">?? Sales & Target</a>
-          <a href="/overtime-dashboard.html">? Overtime</a>
-          <a href="/productivity-dashboard.html">?? Productivity</a>
+          <a href="/sales-targets-dashboard.html" class="active">💰 Sales & Target</a>
+          <a href="/overtime-dashboard.html">⏰ Overtime</a>
+          <a href="/productivity-dashboard.html">📈 Productivity</a>
         </div>
       </div>
       
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">??</span>
+          <span class="group-icon">🏢</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">??</span>
+          <span class="group-icon">⚙️</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">?</span>
+          <span class="group-arrow">▼</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">?? Outstanding</a>
-          <a href="/cashout-dashboard.html">?? Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
+          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
+          <a href="/cashout-dashboard.html">💸 Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">?? Profile</a>
-      <a href="/logout.html" id="logoutLink">?? Logout</a>
+      <a href="/profile.html">👤 Profile</a>
+      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">�</div>
-      <div id="userRole">�</div>
+      <div id="userName">—</div>
+      <div id="userRole">—</div>
     </div>
   </aside>
 
   <main class="main">
     <!-- Report Header -->
     <div class="report-header">
-      <h1>?? REPORT SALES CABANG <span id="branchName">KELAPA GADING</span></h1>
+      <h1>📊 REPORT SALES CABANG <span id="branchName">KELAPA GADING</span></h1>
       <p>Sales Performance & Target Achievement Report</p>
     </div>
 
     <!-- Period Selector -->
     <div class="period-selector">
-      <label>?? PERIODE:</label>
+      <label>📅 PERIODE:</label>
       <select id="periodMonth">
         <option value="1">January</option>
         <option value="2">February</option>
@@ -284,18 +282,18 @@
         <option value="2025">2025</option>
         <option value="2024">2024</option>
       </select>
-      <button id="loadDataBtn" class="btn btn-primary">?? Load Data</button>
+      <button id="loadDataBtn" class="btn btn-primary">🔄 Load Data</button>
     </div>
 
     <!-- Quick Sales Input Section (Admin/Semi-Admin Only) -->
     <div id="salesInputSection" class="card" style="display: none; margin-bottom: 24px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
         <div style="display: flex; align-items: center; gap: 16px;">
-          <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">?? Quick Sales Input</h3>
-          <span id="inputPeriodBadge" style="background: linear-gradient(135deg, #d4a843, #b8922e); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">?? February 2026</span>
+          <h3 style="margin: 0; font-size: 18px; color: var(--text-primary);">📝 Quick Sales Input</h3>
+          <span id="inputPeriodBadge" style="background: linear-gradient(135deg, #00bcd4, #0097a7); color: white; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 600;">📅 February 2026</span>
         </div>
         <button id="toggleInputBtn" onclick="toggleInputForm()" class="btn btn-secondary" style="font-size: 12px;">
-          <span id="toggleText">? Expand</span>
+          <span id="toggleText">▼ Expand</span>
         </button>
       </div>
       <div id="salesInputForm" style="display: none;">
@@ -323,7 +321,7 @@
             <input type="number" id="quickAchievementProfit" required min="0" placeholder="26,614,382" style="padding: 10px; border-radius: 8px; border: 1px solid var(--border-light); width: 100%; background: var(--card); color: var(--text-primary);">
           </div>
           <div style="display: flex; gap: 8px;">
-            <button type="submit" class="add-btn" style="flex: 1;">? Add</button>
+            <button type="submit" class="add-btn" style="flex: 1;">➕ Add</button>
             <button type="button" id="quickClearBtn" onclick="clearQuickForm()" class="btn btn-secondary" style="padding: 10px 16px;">Clear</button>
           </div>
         </form>
@@ -359,25 +357,25 @@
     <div class="charts-grid">
       <!-- Sales Achievement vs Target Chart -->
       <div class="chart-card">
-        <h3>?? Sales Achievement vs Target (Monthly)</h3>
+        <h3>📈 Sales Achievement vs Target (Monthly)</h3>
         <canvas id="salesChart"></canvas>
       </div>
 
       <!-- Profit Achievement vs Target Chart -->
       <div class="chart-card">
-        <h3>?? Profit Achievement vs Target (Monthly)</h3>
+        <h3>💰 Profit Achievement vs Target (Monthly)</h3>
         <canvas id="profitChart"></canvas>
       </div>
 
       <!-- Margin Chart -->
       <div class="chart-card">
-        <h3>?? Margin % (Monthly)</h3>
+        <h3>📊 Margin % (Monthly)</h3>
         <canvas id="marginChart"></canvas>
       </div>
 
       <!-- Best Staff of the Month -->
       <div class="chart-card">
-        <h3>?? Best Staff of the Month</h3>
+        <h3>🏆 Best Staff of the Month</h3>
         <div class="staff-filter">
           <select id="bestStaffMonth" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border-light);">
             <option value="1">January</option>
@@ -495,7 +493,7 @@
     const year = parseInt(el('periodYear').value);
     const badge = el('inputPeriodBadge');
     if (badge) {
-      badge.textContent = `?? ${getMonthName(month)} ${year}`;
+      badge.textContent = `📅 ${getMonthName(month)} ${year}`;
     }
   }
   
@@ -651,10 +649,10 @@
       totalAchievementProfit += achievementProfit;
       
       const actionsCell = (isAdmin || isSemiAdmin) ? `
-        <td style="text-align: center; background: rgba(212,168,67,0.06);">
+        <td style="text-align: center; background: #fff9c4;">
           <div class="action-btns">
-            <button class="edit-btn" onclick="quickEditRecord(${d.id})">??</button>
-            <button class="delete-btn" onclick="deleteRecord(${d.id})">???</button>
+            <button class="edit-btn" onclick="quickEditRecord(${d.id})">✏️</button>
+            <button class="delete-btn" onclick="deleteRecord(${d.id})">🗑️</button>
           </div>
         </td>
       ` : '';
@@ -679,7 +677,7 @@
     const totalPercentProfit = totalTargetProfit > 0 ? (totalAchievementProfit / totalTargetProfit * 100) : 0;
     const totalMargin = totalAchievementSales > 0 ? (totalAchievementProfit / totalAchievementSales * 100) : 0;
     
-    const totalActionsCell = (isAdmin || isSemiAdmin) ? '<td style="background: rgba(212,168,67,0.20);"></td>' : '';
+    const totalActionsCell = (isAdmin || isSemiAdmin) ? '<td style="background: #ffeb3b;"></td>' : '';
     
     rows.push(`
       <tr class="total-row">
@@ -765,16 +763,16 @@
           {
             label: 'Target (B)',
             data: targets,
-            backgroundColor: 'rgba(45, 106, 138, 0.8)',
-            borderColor: '#2d6a8a',
+            backgroundColor: 'rgba(33, 150, 243, 0.7)',
+            borderColor: '#2196f3',
             borderWidth: 1,
             borderRadius: 4
           },
           {
             label: 'Achievement (B)',
             data: achievements,
-            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(74, 222, 128, 0.8)' : 'rgba(248, 113, 113, 0.8)'),
-            borderColor: achievements.map((a, i) => a >= targets[i] ? '#4ade80' : '#f87171'),
+            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(102, 187, 106, 0.8)' : 'rgba(239, 83, 80, 0.8)'),
+            borderColor: achievements.map((a, i) => a >= targets[i] ? '#66bb6a' : '#ef5350'),
             borderWidth: 1,
             borderRadius: 4
           }
@@ -832,16 +830,16 @@
           {
             label: 'Target (M)',
             data: targets,
-            backgroundColor: 'rgba(212, 168, 67, 0.8)',
-            borderColor: '#d4a843',
+            backgroundColor: 'rgba(156, 39, 176, 0.7)',
+            borderColor: '#9c27b0',
             borderWidth: 1,
             borderRadius: 4
           },
           {
             label: 'Achievement (M)',
             data: achievements,
-            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(74, 222, 128, 0.8)' : 'rgba(212, 148, 76, 0.8)'),
-            borderColor: achievements.map((a, i) => a >= targets[i] ? '#4ade80' : '#d4944c'),
+            backgroundColor: achievements.map((a, i) => a >= targets[i] ? 'rgba(102, 187, 106, 0.8)' : 'rgba(255, 152, 0, 0.8)'),
+            borderColor: achievements.map((a, i) => a >= targets[i] ? '#66bb6a' : '#ff9800'),
             borderWidth: 1,
             borderRadius: 4
           }
@@ -901,13 +899,13 @@
         datasets: [{
           label: 'Margin %',
           data: margins,
-          borderColor: '#67b8db',
-          backgroundColor: 'rgba(103, 184, 219, 0.15)',
+          borderColor: '#00bcd4',
+          backgroundColor: 'rgba(0, 188, 212, 0.15)',
           fill: true,
           tension: 0.4,
           pointRadius: 6,
-          pointBackgroundColor: margins.map(v => v >= 4 ? '#4ade80' : v >= 3 ? '#ffca28' : '#f87171'),
-          pointBorderColor: '#1a3a5c',
+          pointBackgroundColor: margins.map(v => v >= 4 ? '#66bb6a' : v >= 3 ? '#ffca28' : '#ef5350'),
+          pointBorderColor: '#fff',
           pointBorderWidth: 2
         }]
       },
@@ -988,16 +986,16 @@
           label: 'Achievement %',
           data: percentages,
           backgroundColor: percentages.map((v, i) => {
-            if (i === 0) return 'rgba(212, 168, 67, 0.9)'; // Gold for #1
-            if (i === 1) return 'rgba(141, 160, 190, 0.9)'; // Silver for #2
-            if (i === 2) return 'rgba(180, 120, 60, 0.9)'; // Bronze for #3
-            return v >= 80 ? 'rgba(74, 222, 128, 0.7)' : v >= 50 ? 'rgba(251, 191, 36, 0.7)' : 'rgba(248, 113, 113, 0.7)';
+            if (i === 0) return 'rgba(255, 193, 7, 0.9)'; // Gold for #1
+            if (i === 1) return 'rgba(189, 189, 189, 0.9)'; // Silver for #2
+            if (i === 2) return 'rgba(205, 127, 50, 0.9)'; // Bronze for #3
+            return v >= 80 ? 'rgba(102, 187, 106, 0.7)' : v >= 50 ? 'rgba(255, 202, 40, 0.7)' : 'rgba(239, 83, 80, 0.7)';
           }),
           borderColor: percentages.map((v, i) => {
-            if (i === 0) return '#d4a843';
-            if (i === 1) return '#8da0be';
-            if (i === 2) return '#b47840';
-            return v >= 80 ? '#4ade80' : v >= 50 ? '#ffca28' : '#f87171';
+            if (i === 0) return '#ffc107';
+            if (i === 1) return '#9e9e9e';
+            if (i === 2) return '#cd7f32';
+            return v >= 80 ? '#66bb6a' : v >= 50 ? '#ffca28' : '#ef5350';
           }),
           borderWidth: 2,
           borderRadius: 6
@@ -1094,10 +1092,10 @@
     const text = el('toggleText');
     if (form.style.display === 'none') {
       form.style.display = 'block';
-      text.textContent = '? Collapse';
+      text.textContent = '▲ Collapse';
     } else {
       form.style.display = 'none';
-      text.textContent = '? Expand';
+      text.textContent = '▼ Expand';
     }
   };
   
@@ -1111,7 +1109,7 @@
     el('quickEditId').value = '';
     // Reset submit button text
     const submitBtn = el('quickInputForm').querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '? Add';
+    submitBtn.innerHTML = '➕ Add';
   };
   
   // Quick edit - populate quick form with record data
@@ -1134,7 +1132,7 @@
     
     // Update submit button text
     const submitBtn = el('quickInputForm').querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '?? Update';
+    submitBtn.innerHTML = '💾 Update';
     
     // Scroll to form
     el('salesInputSection').scrollIntoView({ behavior: 'smooth', block: 'start' });
