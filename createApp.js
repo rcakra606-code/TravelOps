@@ -2491,6 +2491,33 @@ export async function createApp() {
     }
   });
 
+  // Profile update (own profile only)
+  app.put('/api/users/profile', authMiddleware(), async (req, res) => {
+    try {
+      const { name, email } = req.body;
+      const username = req.user.username;
+
+      // Validate
+      if (!name || !name.trim()) return res.status(400).json({ error: 'Name is required' });
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ error: 'Invalid email format' });
+      }
+
+      const user = await db.get('SELECT id FROM users WHERE username=?', [username]);
+      if (!user) return res.status(404).json({ error: 'User not found' });
+
+      await db.run('UPDATE users SET name=?, email=? WHERE id=?', [name.trim(), (email || '').trim(), user.id]);
+      await logActivity(username, 'UPDATE_PROFILE', 'users', user.id, `Profile updated by ${username}`);
+
+      // Return updated user data so frontend can refresh localStorage
+      const updated = await db.get('SELECT id, username, name, email, type FROM users WHERE id=?', [user.id]);
+      res.json({ ok: true, user: updated });
+    } catch (err) {
+      logger.error({ err }, 'Profile update failed');
+      res.status(500).json({ error: 'Failed to update profile' });
+    }
+  });
+
   app.post('/api/users/reset-password', authMiddleware(), async (req,res)=>{
     const { username, password } = req.body; 
     if (req.user.username !== username && req.user.type !== 'admin') return res.status(403).json({ error:'Unauthorized' }); 
