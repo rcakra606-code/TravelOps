@@ -12,7 +12,7 @@ const el = id => document.getElementById(id);
 let refreshInterval = null;
 
 /* === TAB MANAGEMENT === */
-let currentTab = 'tour-data';
+let currentTab = 'analytics';
 
 function initTabs() {
   const tabButtons = document.querySelectorAll('#toursDashboardTabs .tab-btn');
@@ -55,7 +55,7 @@ function switchTab(tabName) {
 
   // Update URL without reload
   const url = new URL(window.location);
-  if (tabName === 'tour-data') {
+  if (tabName === 'analytics') {
     url.searchParams.delete('tab');
   } else {
     url.searchParams.set('tab', tabName);
@@ -843,11 +843,6 @@ async function renderDashboard(preloadedTours) {
     // Update metrics (stored for analytics tab)
     window._tourMetrics = { totalParticipants, totalTours, avgParticipants, invoicedCount, notInvoicedCount, toursData };
     
-    // Render analytics if that tab is currently visible
-    if (currentTab === 'analytics') {
-      renderAnalyticsTab();
-    }
-    
     // Participants per Month (data only — chart moved to Analytics tab)
     const monthlyData = {};
     toursData.forEach(tour => {
@@ -887,6 +882,11 @@ async function renderDashboard(preloadedTours) {
       statusData[status] = (statusData[status] || 0) + 1;
     });
     window._tourStatusData = statusData;
+
+    // Render analytics if that tab is currently visible
+    if (currentTab === 'analytics') {
+      renderAnalyticsTab();
+    }
     
   } catch (err) {
     console.error('Error rendering dashboard:', err);
@@ -896,6 +896,96 @@ async function renderDashboard(preloadedTours) {
 
 /* === ANALYTICS TAB RENDERING === */
 const analyticsCharts = {};
+let analyticsMap = null;
+
+// Region-to-coordinates mapping for the map (center point + color)
+const REGION_GEO = {
+  'domestik':  { lat: -2.5, lng: 118, color: '#ef4444', label: 'Domestik (Indonesia)' },
+  'china':     { lat: 35.8, lng: 104.1, color: '#f59e0b', label: 'China' },
+  'apj':       { lat: 15, lng: 100, color: '#3b82f6', label: 'Asia Pacific & Japan' },
+  'eamea':     { lat: 48, lng: 20, color: '#8b5cf6', label: 'Europe, Africa, Middle East' },
+  'japan':     { lat: 36.2, lng: 138.2, color: '#ec4899', label: 'Japan' },
+  'korea':     { lat: 35.9, lng: 127.7, color: '#14b8a6', label: 'Korea' },
+  'australia': { lat: -25.2, lng: 133.7, color: '#f97316', label: 'Australia' },
+  'europe':    { lat: 50, lng: 10, color: '#6366f1', label: 'Europe' },
+  'americas':  { lat: 37, lng: -95, color: '#0ea5e9', label: 'Americas' },
+  'middle east': { lat: 25, lng: 45, color: '#a855f7', label: 'Middle East' },
+  'africa':    { lat: 0, lng: 25, color: '#84cc16', label: 'Africa' },
+};
+
+function matchRegionGeo(regionName) {
+  if (!regionName) return null;
+  const key = regionName.toLowerCase().trim();
+  if (REGION_GEO[key]) return { ...REGION_GEO[key], name: regionName };
+  // Fuzzy match
+  for (const [k, v] of Object.entries(REGION_GEO)) {
+    if (key.includes(k) || k.includes(key)) return { ...v, name: regionName };
+  }
+  // Default fallback - place near equator
+  return { lat: 0 + Math.random() * 10, lng: 90 + Math.random() * 20, color: '#64748b', label: regionName, name: regionName };
+}
+
+function renderAnalyticsMap(toursData) {
+  const mapEl = document.getElementById('taMap');
+  if (!mapEl || typeof L === 'undefined') return;
+
+  // Destroy previous map
+  if (analyticsMap) {
+    analyticsMap.remove();
+    analyticsMap = null;
+  }
+
+  analyticsMap = L.map('taMap', { scrollWheelZoom: true, zoomControl: true }).setView([5, 100], 3);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    maxZoom: 18
+  }).addTo(analyticsMap);
+
+  // Build region stats from tour data
+  const regionMap = Object.fromEntries((regionsData || []).map(r => [String(r.id), r.region_name]));
+  const regionStats = {};
+  (toursData || []).forEach(t => {
+    const rname = regionMap[String(t.region_id)];
+    if (!rname) return;
+    if (!regionStats[rname]) regionStats[rname] = { tours: 0, pax: 0 };
+    regionStats[rname].tours++;
+    regionStats[rname].pax += parseInt(t.jumlah_peserta) || 0;
+  });
+
+  const legendEl = el('taMapLegend');
+  let legendHtml = '';
+  const maxPax = Math.max(...Object.values(regionStats).map(s => s.pax), 1);
+
+  Object.entries(regionStats).forEach(([name, stats]) => {
+    const geo = matchRegionGeo(name);
+    if (!geo) return;
+    const radius = Math.max(12, Math.min(40, (stats.pax / maxPax) * 40));
+    
+    const circle = L.circleMarker([geo.lat, geo.lng], {
+      radius,
+      fillColor: geo.color,
+      color: '#fff',
+      weight: 2,
+      opacity: 1,
+      fillOpacity: 0.7
+    }).addTo(analyticsMap);
+
+    circle.bindPopup(`
+      <div class="ta-map-popup-title">${name}</div>
+      <div class="ta-map-popup-stat"><strong>${stats.tours}</strong> tours</div>
+      <div class="ta-map-popup-stat"><strong>${stats.pax}</strong> participants</div>
+    `);
+
+    circle.bindTooltip(name, { permanent: false, direction: 'top', offset: [0, -radius] });
+
+    legendHtml += `<span><span class="ta-map-dot" style="background:${geo.color}"></span>${name} (${stats.tours})</span>`;
+  });
+
+  if (legendEl) legendEl.innerHTML = legendHtml;
+
+  // Fix map sizing after tab becomes visible
+  setTimeout(() => { analyticsMap.invalidateSize(); }, 200);
+}
 
 function renderAnalyticsTab() {
   try {
@@ -918,6 +1008,9 @@ function renderAnalyticsTab() {
     if (tourBadge) { tourBadge.textContent = totalTours + ' total'; tourBadge.className = 'ta-card-badge blue'; }
     const paxBadge = el('taPaxBadge');
     if (paxBadge) { paxBadge.textContent = totalParticipants + ' pax'; paxBadge.className = 'ta-card-badge green'; }
+
+    // --- Leaflet Map: Tour Distribution ---
+    renderAnalyticsMap(toursData);
 
     // Destroy previous analytics charts
     Object.keys(analyticsCharts).forEach(k => {
