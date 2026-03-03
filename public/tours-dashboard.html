@@ -111,12 +111,13 @@
   .ta-countries-items li:last-child { border-bottom: none; }
   .ta-countries-items .cname { color: var(--text-primary); font-weight: 500; }
   .ta-countries-items .cval { font-weight: 700; color: var(--text-primary); min-width: 40px; text-align: right; }
-  .ta-svg-map-wrap { display: flex; align-items: center; justify-content: center; padding: 16px; background: var(--bg-subtle, #f8fafc); border-left: 1px solid var(--border-light, #eee); border-radius: 0 14px 14px 0; overflow: hidden; }
-  .ta-svg-map-wrap svg { width: 100%; height: auto; max-height: 320px; }
-  .ta-svg-map-wrap svg path { fill: #d4e5f7; stroke: #fff; stroke-width: .4; transition: fill .3s; }
-  .ta-svg-map-wrap svg path.active { fill: #4aa3df; }
-  .ta-svg-map-wrap svg path.hot { fill: #1a7cc1; }
-  @media (max-width: 700px) { .ta-countries-card { grid-template-columns: 1fr; } .ta-svg-map-wrap { border-left: none; border-top: 1px solid var(--border-light, #eee); border-radius: 0 0 14px 14px; min-height: 200px; } }
+  .ta-svg-map-wrap { display: flex; align-items: center; justify-content: center; padding: 0; background: transparent; border-left: 1px solid var(--border-light, #eee); border-radius: 0 14px 14px 0; overflow: hidden; }
+  .ta-svg-map-wrap svg.world-map { width: 100%; height: auto; max-height: 380px; border-radius: 0 12px 12px 0; }
+  .ta-svg-map-wrap .land { fill: #c1d9ed; stroke: #fff; stroke-width: 0.6; transition: fill .4s, filter .4s; cursor: default; }
+  .ta-svg-map-wrap .land.active { fill: #4aa3df; filter: url(#landGlow); }
+  .ta-svg-map-wrap .land.hot { fill: #1a7cc1; filter: url(#landGlow); }
+  .ta-svg-map-wrap .markers circle { pointer-events: all; cursor: default; }
+  @media (max-width: 700px) { .ta-countries-card { grid-template-columns: 1fr; } .ta-svg-map-wrap { border-left: none; border-top: 1px solid var(--border-light, #eee); border-radius: 0 0 14px 14px; min-height: 220px; } .ta-svg-map-wrap svg.world-map { border-radius: 0 0 12px 12px; } }
 
   .ta-divider { border: none; border-top: 1px solid var(--border-light, #eee); margin: 24px 0; }
 

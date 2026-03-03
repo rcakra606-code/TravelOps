@@ -492,10 +492,12 @@ input:read-only, input[readonly] {
 .ta-card-badge.red { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
 .ta-card-badge.blue { background: rgba(45,106,138,0.18) !important; color: #67b8db !important; }
 .ta-card-badge.amber { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
-.ta-svg-map-wrap { background: rgba(255,255,255,0.03) !important; border-left: 1px solid rgba(255,255,255,0.06) !important; }
-.ta-svg-map-wrap svg path { fill: #1a3a5c !important; stroke: rgba(255,255,255,0.15) !important; }
-.ta-svg-map-wrap svg path.active { fill: #2d6a8a !important; }
-.ta-svg-map-wrap svg path.hot { fill: #d4a843 !important; }
+.ta-svg-map-wrap { background: transparent !important; border-left: 1px solid rgba(255,255,255,0.06) !important; padding: 0 !important; }
+.ta-svg-map-wrap svg.world-map { border-radius: 0 12px 12px 0 !important; }
+.ta-svg-map-wrap .land { fill: #1a3a5c !important; stroke: rgba(141,160,190,0.2) !important; stroke-width: 0.7 !important; }
+.ta-svg-map-wrap .land.active { fill: #2d6a8a !important; filter: url(#landGlow) !important; }
+.ta-svg-map-wrap .land.hot { fill: #d4a843 !important; filter: url(#landGlow) !important; }
+.ta-svg-map-wrap .land:hover { fill: #346f92 !important; }
 .ta-countries-items li { border-bottom: 1px solid rgba(255,255,255,0.05) !important; }
 .ta-countries-items .cname { color: #e8ecf2 !important; }
 .ta-countries-items .cval { color: #d4a843 !important; }
