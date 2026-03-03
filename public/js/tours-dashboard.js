@@ -896,95 +896,65 @@ async function renderDashboard(preloadedTours) {
 
 /* === ANALYTICS TAB RENDERING === */
 const analyticsCharts = {};
-let analyticsMap = null;
 
-// Region-to-coordinates mapping for the map (center point + color)
-const REGION_GEO = {
-  'domestik':  { lat: -2.5, lng: 118, color: '#ef4444', label: 'Domestik (Indonesia)' },
-  'china':     { lat: 35.8, lng: 104.1, color: '#f59e0b', label: 'China' },
-  'apj':       { lat: 15, lng: 100, color: '#3b82f6', label: 'Asia Pacific & Japan' },
-  'eamea':     { lat: 48, lng: 20, color: '#8b5cf6', label: 'Europe, Africa, Middle East' },
-  'japan':     { lat: 36.2, lng: 138.2, color: '#ec4899', label: 'Japan' },
-  'korea':     { lat: 35.9, lng: 127.7, color: '#14b8a6', label: 'Korea' },
-  'australia': { lat: -25.2, lng: 133.7, color: '#f97316', label: 'Australia' },
-  'europe':    { lat: 50, lng: 10, color: '#6366f1', label: 'Europe' },
-  'americas':  { lat: 37, lng: -95, color: '#0ea5e9', label: 'Americas' },
-  'middle east': { lat: 25, lng: 45, color: '#a855f7', label: 'Middle East' },
-  'africa':    { lat: 0, lng: 25, color: '#84cc16', label: 'Africa' },
+// Simplified SVG world map paths (continent outlines)
+const SVG_WORLD_PATHS = {
+  'North America': 'M48,55 L52,42 L60,38 L75,35 L85,30 L95,35 L110,32 L120,38 L125,45 L128,55 L132,62 L128,70 L120,75 L110,78 L100,82 L90,80 L80,78 L70,75 L60,78 L55,72 L50,65 Z',
+  'South America': 'M100,82 L108,88 L115,95 L118,105 L120,115 L118,130 L115,140 L110,148 L105,155 L100,158 L95,155 L92,148 L88,138 L86,128 L85,118 L86,108 L88,98 L92,90 L96,85 Z',
+  'Europe': 'M195,30 L200,25 L210,22 L220,25 L230,28 L240,30 L245,35 L242,42 L238,48 L230,50 L222,52 L215,50 L210,48 L205,45 L200,42 L195,38 Z',
+  'Africa': 'M195,55 L200,52 L210,50 L220,52 L228,55 L232,62 L235,72 L238,82 L236,92 L232,102 L228,112 L222,118 L215,120 L208,118 L202,112 L198,102 L195,92 L192,82 L190,72 L192,62 Z',
+  'Asia': 'M240,22 L250,18 L270,15 L290,18 L310,22 L330,28 L340,35 L345,42 L342,50 L338,58 L330,62 L320,65 L310,62 L300,58 L290,55 L280,52 L270,50 L260,48 L250,45 L245,40 L242,32 Z',
+  'Southeast Asia': 'M300,60 L310,58 L320,62 L328,68 L335,75 L338,82 L335,88 L328,92 L320,90 L312,88 L305,82 L300,75 L298,68 Z',
+  'Oceania': 'M310,100 L320,95 L335,92 L348,95 L358,100 L362,108 L360,115 L355,120 L345,122 L335,120 L325,118 L318,112 L312,108 Z'
 };
 
-function matchRegionGeo(regionName) {
-  if (!regionName) return null;
-  const key = regionName.toLowerCase().trim();
-  if (REGION_GEO[key]) return { ...REGION_GEO[key], name: regionName };
-  // Fuzzy match
-  for (const [k, v] of Object.entries(REGION_GEO)) {
-    if (key.includes(k) || k.includes(key)) return { ...v, name: regionName };
-  }
-  // Default fallback - place near equator
-  return { lat: 0 + Math.random() * 10, lng: 90 + Math.random() * 20, color: '#64748b', label: regionName, name: regionName };
-}
+// Map region names to continent keys for highlighting
+const REGION_CONTINENT_MAP = {
+  'domestik': ['Southeast Asia'],
+  'china': ['Asia'],
+  'apj': ['Asia', 'Southeast Asia', 'Oceania'],
+  'eamea': ['Europe', 'Africa'],
+  'japan': ['Asia'],
+  'korea': ['Asia'],
+  'australia': ['Oceania'],
+  'europe': ['Europe'],
+  'americas': ['North America', 'South America'],
+  'middle east': ['Asia'],
+  'africa': ['Africa']
+};
 
-function renderAnalyticsMap(toursData) {
-  const mapEl = document.getElementById('taMap');
-  if (!mapEl || typeof L === 'undefined') return;
+function renderSvgMap(regionData) {
+  const mapEl = document.getElementById('taSvgMap');
+  if (!mapEl) return;
 
-  // Destroy previous map
-  if (analyticsMap) {
-    analyticsMap.remove();
-    analyticsMap = null;
-  }
+  // Figure out which continents are active
+  const activeContinents = new Set();
+  const hotContinents = new Set();
+  const vals = Object.values(regionData);
+  const maxVal = Math.max(...vals, 1);
 
-  analyticsMap = L.map('taMap', { scrollWheelZoom: true, zoomControl: true }).setView([5, 100], 3);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
-    maxZoom: 18
-  }).addTo(analyticsMap);
-
-  // Build region stats from tour data
-  const regionMap = Object.fromEntries((regionsData || []).map(r => [String(r.id), r.region_name]));
-  const regionStats = {};
-  (toursData || []).forEach(t => {
-    const rname = regionMap[String(t.region_id)];
-    if (!rname) return;
-    if (!regionStats[rname]) regionStats[rname] = { tours: 0, pax: 0 };
-    regionStats[rname].tours++;
-    regionStats[rname].pax += parseInt(t.jumlah_peserta) || 0;
+  Object.entries(regionData).forEach(([name]) => {
+    const key = name.toLowerCase().trim();
+    // Try exact match or fuzzy
+    for (const [regionKey, continents] of Object.entries(REGION_CONTINENT_MAP)) {
+      if (key === regionKey || key.includes(regionKey) || regionKey.includes(key)) {
+        continents.forEach(c => {
+          activeContinents.add(c);
+          if (regionData[name] / maxVal > 0.5) hotContinents.add(c);
+        });
+      }
+    }
   });
 
-  const legendEl = el('taMapLegend');
-  let legendHtml = '';
-  const maxPax = Math.max(...Object.values(regionStats).map(s => s.pax), 1);
-
-  Object.entries(regionStats).forEach(([name, stats]) => {
-    const geo = matchRegionGeo(name);
-    if (!geo) return;
-    const radius = Math.max(12, Math.min(40, (stats.pax / maxPax) * 40));
-    
-    const circle = L.circleMarker([geo.lat, geo.lng], {
-      radius,
-      fillColor: geo.color,
-      color: '#fff',
-      weight: 2,
-      opacity: 1,
-      fillOpacity: 0.7
-    }).addTo(analyticsMap);
-
-    circle.bindPopup(`
-      <div class="ta-map-popup-title">${name}</div>
-      <div class="ta-map-popup-stat"><strong>${stats.tours}</strong> tours</div>
-      <div class="ta-map-popup-stat"><strong>${stats.pax}</strong> participants</div>
-    `);
-
-    circle.bindTooltip(name, { permanent: false, direction: 'top', offset: [0, -radius] });
-
-    legendHtml += `<span><span class="ta-map-dot" style="background:${geo.color}"></span>${name} (${stats.tours})</span>`;
+  let pathsHtml = '';
+  Object.entries(SVG_WORLD_PATHS).forEach(([continent, d]) => {
+    let cls = '';
+    if (hotContinents.has(continent)) cls = 'hot';
+    else if (activeContinents.has(continent)) cls = 'active';
+    pathsHtml += `<path d="${d}" class="${cls}"><title>${continent}</title></path>`;
   });
 
-  if (legendEl) legendEl.innerHTML = legendHtml;
-
-  // Fix map sizing after tab becomes visible
-  setTimeout(() => { analyticsMap.invalidateSize(); }, 200);
+  mapEl.innerHTML = `<svg viewBox="0 0 400 170" xmlns="http://www.w3.org/2000/svg">${pathsHtml}</svg>`;
 }
 
 function renderAnalyticsTab() {
@@ -1009,10 +979,25 @@ function renderAnalyticsTab() {
     const paxBadge = el('taPaxBadge');
     if (paxBadge) { paxBadge.textContent = totalParticipants + ' pax'; paxBadge.className = 'ta-card-badge green'; }
 
-    // --- Leaflet Map: Tour Distribution ---
-    renderAnalyticsMap(toursData);
+    // --- SVG Map: highlight active regions ---
+    renderSvgMap(regionData);
 
-    // Destroy previous analytics charts
+    // --- Region list (countries-style with totals) ---
+    const regionList = el('taRegionList');
+    const totalEl = el('taCountriesTotal');
+    if (regionList) {
+      const totalPax = Object.values(regionData).reduce((s, v) => s + v, 0);
+      if (totalEl) totalEl.innerHTML = `<strong>${totalPax.toLocaleString()}</strong> &ndash; All participants`;
+      regionList.innerHTML = Object.entries(regionData)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, val]) => `<li><span class="cname">${name}</span><span class="cval">${val.toLocaleString()}</span></li>`)
+        .join('');
+    }
+
+    // --- Also set the big pax number in the separate KPI panel ---
+    const paxBigEl = el('taPaxBig');
+    if (paxBigEl) paxBigEl.textContent = totalParticipants.toLocaleString();
+
     Object.keys(analyticsCharts).forEach(k => {
       if (analyticsCharts[k] && typeof analyticsCharts[k].destroy === 'function') {
         try { analyticsCharts[k].destroy(); } catch (e) {}
@@ -1030,22 +1015,6 @@ function renderAnalyticsTab() {
       plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
         tooltip: { backgroundColor: 'rgba(17,24,39,.95)', padding: 10 } }
     };
-
-    // --- Region list with bars ---
-    const regionData = window._tourRegionData || {};
-    const regionList = el('taRegionList');
-    if (regionList) {
-      const maxVal = Math.max(...Object.values(regionData), 1);
-      regionList.innerHTML = Object.entries(regionData)
-        .sort((a, b) => b[1] - a[1])
-        .map(([name, val]) => `<li>
-          <span class="ta-list-name">${name}</span>
-          <div class="ta-list-bar">
-            <div class="ta-list-track"><div class="ta-list-fill" style="width:${Math.round(val/maxVal*100)}%"></div></div>
-          </div>
-          <span class="ta-list-value">${val}</span>
-        </li>`).join('');
-    }
 
     // --- Top departure months list ---
     const monthly = window._tourMonthlyData || {};
