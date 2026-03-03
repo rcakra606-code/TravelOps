@@ -897,139 +897,142 @@ async function renderDashboard(preloadedTours) {
 /* === ANALYTICS TAB RENDERING === */
 const analyticsCharts = {};
 
-// Realistic SVG world map continent paths (equirectangular projection, viewBox 0 0 1000 500)
-const SVG_WORLD_PATHS = {
-  'North America': 'M65,70 C50,62 35,68 28,78 L22,95 C20,102 25,108 32,108 L45,105 C55,98 65,88 78,82 C88,78 95,82 105,88 C115,82 128,76 142,68 L158,60 C172,52 188,46 205,42 C225,38 248,36 270,36 C292,38 312,42 330,50 C342,55 350,62 355,72 L358,85 C358,92 356,100 350,108 C344,116 336,124 326,132 C316,140 306,148 296,155 C288,160 282,166 278,172 C275,178 274,182 275,186 C270,190 262,190 254,192 C244,195 236,194 228,198 C220,204 216,210 218,216 C222,222 230,226 242,230 C254,234 264,238 270,244 L272,250 C268,254 258,248 245,238 C232,228 220,216 210,206 C198,194 188,182 180,170 C172,158 168,144 164,132 C158,120 150,112 138,106 C126,100 112,96 98,92 C84,88 72,84 62,80 Z',
-  'Greenland': 'M350,28 C358,22 370,18 382,16 C394,15 404,18 410,24 C414,30 414,40 410,50 L404,60 C398,66 390,70 380,72 C370,72 362,68 356,62 C350,56 348,48 348,40 Z',
-  'South America': 'M272,250 C282,244 296,238 312,234 C328,230 344,232 358,240 C372,248 384,260 392,274 C398,288 400,302 398,316 C394,332 386,346 376,358 C366,368 356,376 346,382 C338,386 330,392 324,400 C318,408 314,414 310,418 C306,418 302,412 298,404 C294,392 290,378 288,364 C286,350 284,336 282,322 C280,308 278,294 276,280 C275,268 274,258 272,250 Z',
-  'Europe': 'M480,150 C484,156 490,152 496,144 C502,134 500,124 496,114 C492,104 490,96 494,88 C500,80 510,76 524,74 C538,74 550,70 562,72 C572,76 580,82 582,90 C582,98 576,104 570,108 C564,112 562,118 566,126 C570,134 564,140 556,146 C550,150 555,152 566,148 C578,144 590,136 598,126 L604,120 C610,126 608,136 600,146 C592,154 580,160 566,162 C550,164 534,162 518,158 C506,156 496,154 488,152 Z',
-  'Africa': 'M466,206 C474,198 488,194 504,196 C520,198 536,200 552,200 C568,198 582,196 596,200 C610,206 622,216 632,230 C640,244 644,260 644,276 C642,294 636,310 626,324 C616,336 604,346 592,352 C580,358 570,360 562,358 C552,354 544,346 536,336 C528,324 524,310 520,296 C516,280 512,264 506,250 C500,236 492,224 482,216 C474,210 468,206 466,206 Z',
-  'Asia': 'M604,120 C614,112 630,102 650,94 C672,86 698,80 726,76 C756,74 786,74 814,76 C840,80 862,86 880,96 C894,106 900,118 896,130 C892,140 882,148 870,154 C856,160 842,166 828,172 C814,178 800,184 788,192 C776,200 766,210 758,222 C750,234 744,246 740,256 C734,248 728,236 722,224 C716,212 710,202 700,194 C688,186 674,180 660,176 C646,172 632,166 622,158 C614,150 608,140 605,130 Z',
-  'India': 'M700,194 C708,196 718,200 726,208 C734,216 740,226 744,238 C746,248 744,256 740,256 C734,252 728,244 722,234 C716,224 712,214 708,204 C706,200 704,196 700,194 Z',
-  'Southeast Asia': 'M788,192 C796,196 806,206 812,220 C818,234 820,248 816,258 C810,266 802,268 792,264 C784,258 778,248 774,238 C770,228 770,218 772,210 C775,202 780,196 788,192 Z',
-  'Japan': 'M876,118 C882,112 890,110 896,114 C900,120 898,128 894,136 C890,142 884,144 878,140 C874,136 873,128 876,118 Z',
-  'Oceania': 'M822,326 C834,318 852,312 872,314 C892,318 908,326 920,338 C928,348 930,360 924,370 C916,378 904,382 890,380 C874,378 860,372 848,364 C838,356 830,346 826,338 Z',
-  'New Zealand': 'M942,380 C946,374 952,372 956,376 C958,382 956,390 952,396 C948,400 944,398 942,394 C940,390 940,384 942,380 Z'
-};
-
-// Map region names to continent keys for highlighting
+// Map region names to continent keys (kept for future use)
 const REGION_CONTINENT_MAP = {
-  'domestik': ['Southeast Asia', 'India'],
+  'domestik': ['Southeast Asia'],
   'china': ['Asia'],
-  'apj': ['Asia', 'Southeast Asia', 'Oceania', 'Japan', 'India', 'New Zealand'],
+  'apj': ['Asia', 'Southeast Asia', 'Oceania'],
   'eamea': ['Europe', 'Africa'],
-  'japan': ['Japan', 'Asia'],
+  'japan': ['Asia'],
   'korea': ['Asia'],
   'australia': ['Oceania'],
   'europe': ['Europe'],
-  'americas': ['North America', 'South America', 'Greenland'],
+  'americas': ['North America', 'South America'],
   'middle east': ['Asia'],
   'africa': ['Africa'],
-  'india': ['India', 'Asia']
+  'india': ['Asia']
 };
 
-// Center coordinates for region markers on the map
-const REGION_CENTERS = {
-  'domestik': { x: 792, y: 230 },
-  'china': { x: 810, y: 155 },
-  'apj': { x: 860, y: 300 },
-  'eamea': { x: 540, y: 140 },
-  'japan': { x: 886, y: 128 },
-  'korea': { x: 862, y: 145 },
-  'australia': { x: 876, y: 348 },
-  'europe': { x: 535, y: 128 },
-  'americas': { x: 200, y: 140 },
-  'middle east': { x: 655, y: 200 },
-  'africa': { x: 554, y: 280 },
-  'india': { x: 720, y: 224 }
+// Marker positions on 1280x712 equirectangular PNG map
+const REGION_MARKERS = {
+  'domestik':    { x: 855, y: 402, label: 'Indonesia' },
+  'china':       { x: 828, y: 248, label: 'China' },
+  'apj':         { x: 895, y: 415, label: 'APJ' },
+  'eamea':       { x: 620, y: 225, label: 'EAMEA' },
+  'japan':       { x: 908, y: 240, label: 'Japan' },
+  'korea':       { x: 882, y: 252, label: 'Korea' },
+  'australia':   { x: 912, y: 480, label: 'Australia' },
+  'europe':      { x: 580, y: 198, label: 'Europe' },
+  'americas':    { x: 268, y: 248, label: 'Americas' },
+  'middle east': { x: 688, y: 282, label: 'Middle East' },
+  'africa':      { x: 618, y: 378, label: 'Africa' },
+  'india':       { x: 758, y: 318, label: 'India' }
 };
 
 function renderSvgMap(regionData) {
   const mapEl = document.getElementById('taSvgMap');
   if (!mapEl) return;
 
-  const activeContinents = new Set();
-  const hotContinents = new Set();
   const vals = Object.values(regionData);
   const maxVal = Math.max(...vals, 1);
   const activeMarkers = [];
 
   Object.entries(regionData).forEach(([name, val]) => {
     const key = name.toLowerCase().trim();
-    for (const [regionKey, continents] of Object.entries(REGION_CONTINENT_MAP)) {
-      if (key === regionKey || key.includes(regionKey) || regionKey.includes(key)) {
-        continents.forEach(c => {
-          activeContinents.add(c);
-          if (val / maxVal > 0.5) hotContinents.add(c);
-        });
-      }
-    }
-    for (const [rk, center] of Object.entries(REGION_CENTERS)) {
+    for (const [rk, marker] of Object.entries(REGION_MARKERS)) {
       if (key === rk || key.includes(rk) || rk.includes(key)) {
-        activeMarkers.push({ ...center, val, name, intensity: val / maxVal });
+        activeMarkers.push({ ...marker, val, name, intensity: val / maxVal });
       }
     }
   });
 
-  // Build full SVG with ocean, graticule, continents, and markers
-  let svg = `<svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" class="world-map">`;
+  const W = 1280, H = 712;
+  let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="world-map">`;
 
-  // Defs: gradients and glow filters
+  // Defs: ocean gradient, land tint filter, marker glow
   svg += `<defs>
     <linearGradient id="oceanGrad" x1="0" y1="0" x2="0.3" y2="1">
-      <stop offset="0%" stop-color="#091b30"/>
-      <stop offset="50%" stop-color="#0e2844"/>
-      <stop offset="100%" stop-color="#122a4a"/>
+      <stop offset="0%" stop-color="#071829"/>
+      <stop offset="50%" stop-color="#0c223c"/>
+      <stop offset="100%" stop-color="#0f2a48"/>
     </linearGradient>
-    <filter id="landGlow" x="-10%" y="-10%" width="120%" height="120%">
-      <feGaussianBlur stdDeviation="3" result="blur"/>
+    <filter id="landTint" color-interpolation-filters="sRGB">
+      <feColorMatrix type="matrix" values="0 0 0 0.12 0
+                                           0 0 0 0.30 0
+                                           0 0 0 0.45 0
+                                           0 0 0 1.2  0"/>
+    </filter>
+    <filter id="markerGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="markerGlow" x="-50%" y="-50%" width="200%" height="200%">
-      <feGaussianBlur stdDeviation="5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <filter id="labelShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.7"/>
     </filter>
   </defs>`;
 
   // Ocean background
-  svg += `<rect width="1000" height="500" fill="url(#oceanGrad)" rx="10"/>`;
+  svg += `<rect width="${W}" height="${H}" fill="url(#oceanGrad)" rx="8"/>`;
 
-  // Graticule grid lines
-  svg += `<g class="graticule" opacity="0.06" stroke="#8da0be" fill="none" stroke-width="0.5">`;
-  for (let lat = -60; lat <= 80; lat += 30) {
-    const y = Math.round((90 - lat) / 180 * 500);
-    svg += `<line x1="0" y1="${y}" x2="1000" y2="${y}"/>`;
+  // Graticule grid (geographical reference lines)
+  svg += `<g class="graticule" opacity="0.07" stroke="#6889aa" fill="none" stroke-width="0.5">`;
+  // Horizontal lines (latitude)
+  for (let i = 1; i < 6; i++) {
+    const y = Math.round(H * i / 6);
+    svg += `<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`;
   }
-  for (let lon = -150; lon <= 180; lon += 30) {
-    const x = Math.round((lon + 180) / 360 * 1000);
-    svg += `<line x1="${x}" y1="0" x2="${x}" y2="500"/>`;
+  // Vertical lines (longitude)
+  for (let i = 1; i < 12; i++) {
+    const x = Math.round(W * i / 12);
+    svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`;
   }
-  // Equator slightly brighter
-  svg += `<line x1="0" y1="250" x2="1000" y2="250" opacity="0.12"/>`;
+  // Equator (brighter)
+  svg += `<line x1="0" y1="${Math.round(H * 0.5)}" x2="${W}" y2="${Math.round(H * 0.5)}" opacity="0.14" stroke-width="0.8"/>`;
   svg += `</g>`;
 
-  // Continent land masses
-  svg += `<g class="continents">`;
-  Object.entries(SVG_WORLD_PATHS).forEach(([continent, d]) => {
-    let cls = 'land';
-    if (hotContinents.has(continent)) cls += ' hot';
-    else if (activeContinents.has(continent)) cls += ' active';
-    svg += `<path d="${d}" class="${cls}"><title>${continent}</title></path>`;
-  });
-  svg += `</g>`;
+  // Real world map PNG — filter tints black landmasses to dark teal-blue
+  svg += `<image href="/images/world-map.png" x="0" y="0" width="${W}" height="${H}" filter="url(#landTint)" preserveAspectRatio="xMidYMid meet"/>`;
 
-  // Animated region markers
+  // Connection lines between active markers
+  if (activeMarkers.length > 1) {
+    svg += `<g class="connections" opacity="0.15" stroke="#d4a843" stroke-width="0.8" fill="none">`;
+    for (let i = 0; i < activeMarkers.length; i++) {
+      for (let j = i + 1; j < activeMarkers.length; j++) {
+        const a = activeMarkers[i], b = activeMarkers[j];
+        const cx = (a.x + b.x) / 2, cy = Math.min(a.y, b.y) - 30;
+        svg += `<path d="M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}" stroke-dasharray="4,4">
+          <animate attributeName="stroke-dashoffset" values="8;0" dur="3s" repeatCount="indefinite"/>
+        </path>`;
+      }
+    }
+    svg += `</g>`;
+  }
+
+  // Animated region markers with labels
   if (activeMarkers.length > 0) {
-    svg += `<g class="markers" filter="url(#markerGlow)">`;
-    activeMarkers.forEach(m => {
-      const r = 5 + m.intensity * 7;
-      const opacity = 0.65 + m.intensity * 0.35;
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 1.8}" fill="#d4a843" opacity="${opacity * 0.2}"/>`;
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r}" fill="#d4a843" opacity="${opacity}">
-        <title>${m.name}: ${m.val.toLocaleString()}</title>
-        <animate attributeName="r" values="${r};${r + 3};${r}" dur="2.5s" repeatCount="indefinite"/>
+    svg += `<g class="markers">`;
+    activeMarkers.forEach((m, i) => {
+      const r = 8 + m.intensity * 10;
+      const opacity = 0.6 + m.intensity * 0.4;
+      const delay = (i * 0.4).toFixed(1);
+
+      // Outer pulse ring
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 2.5}" fill="#d4a843" opacity="0">
+        <animate attributeName="r" values="${r};${r * 2.5};${r * 2.5}" dur="2.5s" begin="${delay}s" repeatCount="indefinite"/>
+        <animate attributeName="opacity" values="0.3;0;0" dur="2.5s" begin="${delay}s" repeatCount="indefinite"/>
       </circle>`;
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="2.5" fill="#fff" opacity="0.9"/>`;
+      // Glow halo
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 1.5}" fill="#d4a843" opacity="${opacity * 0.15}" filter="url(#markerGlow)"/>`;
+      // Main dot
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r}" fill="#d4a843" opacity="${opacity}" class="marker-dot">
+        <title>${m.name}: ${m.val.toLocaleString()} pax</title>
+      </circle>`;
+      // Center white dot
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="3" fill="#fff" opacity="0.9"/>`;
+      // Label
+      svg += `<text x="${m.x}" y="${m.y - r - 8}" text-anchor="middle" fill="#e8ecf2" font-size="13" font-weight="600" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.label || m.name}</text>`;
+      // Value label
+      svg += `<text x="${m.x}" y="${m.y - r - 22}" text-anchor="middle" fill="#d4a843" font-size="11" font-weight="700" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.val.toLocaleString()}</text>`;
     });
     svg += `</g>`;
   }
