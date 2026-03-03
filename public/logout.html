@@ -4,370 +4,202 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Logout | TravelOps</title>
-  <link rel="stylesheet" href="/css/app-v2.css">
-  <link rel="stylesheet" href="/css/seasonal-theme.css">
-  <link rel="stylesheet" href="/css/futuristic-theme.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <script src="/js/seasonal-theme.js" defer></script>
   <style>
-    :root {
-      --gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      --gradient-alt: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
-      --gradient-warm: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      margin: 0;
-      min-height: 100vh;
+      margin: 0; min-height: 100vh;
       font-family: 'Inter', sans-serif;
-      background: var(--season-bg-dark, linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: hidden;
-      position: relative;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+      background: linear-gradient(180deg, #0b1e3d 0%, #1a3a5c 30%, #2d6a8a 50%, #d4944c 75%, #1a1a2e 100%);
     }
 
-    /* Animated Gradient Orbs */
-    .bg-orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.5;
-      animation: float 20s ease-in-out infinite;
+    .bg-photo {
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=80') center/cover no-repeat,
+        linear-gradient(180deg, #0b1e3d 0%, #1a3a5c 30%, #2d6a8a 50%, #d4944c 75%, #1a1a2e 100%);
+      filter: brightness(0.6);
     }
 
-    .bg-orb-1 {
-      width: 500px;
-      height: 500px;
-      background: var(--season-orb-1, var(--gradient));
-      top: -150px;
-      right: -150px;
-      animation-delay: 0s;
-    }
-
-    .bg-orb-2 {
-      width: 400px;
-      height: 400px;
-      background: var(--season-orb-2, var(--gradient-alt));
-      bottom: -100px;
-      left: -100px;
-      animation-delay: 5s;
-    }
-
-    .bg-orb-3 {
-      width: 300px;
-      height: 300px;
-      background: var(--season-orb-3, var(--gradient-warm));
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      animation-delay: 10s;
-      opacity: 0.3;
-    }
-
-    @keyframes float {
-      0%, 100% { transform: translate(0, 0) scale(1); }
-      25% { transform: translate(30px, -30px) scale(1.05); }
-      50% { transform: translate(50px, 50px) scale(1); }
-      75% { transform: translate(-30px, 30px) scale(0.95); }
-    }
-
-    /* Grid pattern overlay */
-    .grid-pattern {
-      position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
-      background-size: 50px 50px;
-      pointer-events: none;
-    }
-
-    /* Floating particles */
-    .particles {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      pointer-events: none;
-    }
-
-    .particle {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 50%;
-      animation: float-particle 20s infinite;
-    }
-
-    .particle:nth-child(1) { left: 10%; animation-delay: 0s; width: 8px; height: 8px; }
-    .particle:nth-child(2) { left: 20%; animation-delay: 2s; }
-    .particle:nth-child(3) { left: 30%; animation-delay: 4s; width: 10px; height: 10px; }
-    .particle:nth-child(4) { left: 40%; animation-delay: 1s; }
-    .particle:nth-child(5) { left: 50%; animation-delay: 3s; width: 7px; height: 7px; }
-    .particle:nth-child(6) { left: 60%; animation-delay: 5s; }
-    .particle:nth-child(7) { left: 70%; animation-delay: 2.5s; width: 9px; height: 9px; }
-    .particle:nth-child(8) { left: 80%; animation-delay: 4.5s; }
-    .particle:nth-child(9) { left: 90%; animation-delay: 1.5s; }
-    .particle:nth-child(10) { left: 15%; animation-delay: 6s; width: 5px; height: 5px; }
-
-    @keyframes float-particle {
-      0% {
-        transform: translateY(100vh) scale(0);
-        opacity: 0;
-      }
-      10% {
-        opacity: 1;
-      }
-      90% {
-        opacity: 1;
-      }
-      100% {
-        transform: translateY(-100vh) scale(1);
-        opacity: 0;
-      }
-    }
-
-    .logout-container {
-      position: relative;
-      z-index: 1;
+    .logout-title {
+      position: relative; z-index: 2;
       text-align: center;
-      animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      color: #fff;
+      font-size: 2.4rem;
+      font-weight: 300;
+      letter-spacing: 8px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+      animation: fadeDown 0.7s ease-out;
     }
 
-    @keyframes fadeInScale {
-      from {
-        opacity: 0;
-        transform: scale(0.8) translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-      }
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-24px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .logout-card {
-      background: rgba(255, 255, 255, 0.1);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 28px;
-      padding: 60px 50px;
-      box-shadow: 
-        0 25px 50px -12px rgba(0, 0, 0, 0.4),
-        0 0 0 1px rgba(255, 255, 255, 0.1),
-        inset 0 1px 0 rgba(255, 255, 255, 0.2);
-      max-width: 420px;
-      margin: 20px;
+      position: relative; z-index: 2;
+      width: 460px; max-width: 92vw;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 6px;
+      padding: 44px 40px 36px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+      text-align: center;
+      animation: cardUp 0.8s cubic-bezier(0.16,1,0.3,1);
     }
 
-    .icon-container {
-      width: 120px;
-      height: 120px;
-      background: var(--season-gradient, var(--gradient));
-      border-radius: 32px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3.5rem;
-      margin-bottom: 28px;
-      box-shadow: 
-        0 20px 40px rgba(102, 126, 234, 0.4),
-        0 0 0 4px rgba(102, 126, 234, 0.1);
+    @keyframes cardUp {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .wave-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, #d4a843, #b8922e);
+      border-radius: 50%;
+      font-size: 2.4rem;
+      margin-bottom: 22px;
+      box-shadow: 0 8px 24px rgba(212,168,67,0.35);
       animation: wave 2s ease-in-out infinite;
-      position: relative;
-    }
-
-    .icon-container::after {
-      content: '';
-      position: absolute;
-      inset: -4px;
-      border-radius: 36px;
-      background: var(--season-gradient, var(--gradient));
-      opacity: 0.3;
-      z-index: -1;
-      animation: glow 2s ease-in-out infinite;
     }
 
     @keyframes wave {
-      0%, 100% { transform: rotate(0deg) scale(1); }
-      25% { transform: rotate(-8deg) scale(1.02); }
-      75% { transform: rotate(8deg) scale(1.02); }
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(-10deg); }
+      75% { transform: rotate(10deg); }
     }
 
-    @keyframes glow {
-      0%, 100% { opacity: 0.3; transform: scale(1); }
-      50% { opacity: 0.5; transform: scale(1.1); }
+    .card-heading {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 10px;
+      letter-spacing: 0.3px;
     }
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: 800;
-      margin-bottom: 12px;
-      color: white;
-      text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-      animation: slideUp 0.6s ease 0.2s both;
-      letter-spacing: -0.5px;
+    .card-message {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.78);
+      line-height: 1.65;
+      margin-bottom: 28px;
+      font-weight: 500;
+    }
+
+    .timer-bar {
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 4px;
+      padding: 14px 20px;
+      margin-bottom: 24px;
+      animation: slideUp 0.6s ease 0.5s both;
     }
 
     @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .message {
-      font-size: 1.1rem;
-      font-weight: 500;
-      margin-bottom: 36px;
-      color: rgba(255, 255, 255, 0.85);
-      animation: slideUp 0.6s ease 0.4s both;
-      line-height: 1.6;
-    }
-
-    .timer-container {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 14px;
-      font-size: 1rem;
-      color: rgba(255, 255, 255, 0.8);
-      animation: slideUp 0.6s ease 0.6s both;
-      background: rgba(255, 255, 255, 0.1);
-      padding: 16px 24px;
-      border-radius: 16px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      from { opacity: 0; transform: translateY(14px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .spinner {
-      width: 22px;
-      height: 22px;
-      border: 3px solid rgba(255, 255, 255, 0.2);
-      border-top-color: white;
+      width: 18px; height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.2);
+      border-top-color: #d4a843;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
-    .countdown {
-      font-weight: 700;
-      font-size: 1.2rem;
-      color: white;
-      background: var(--gradient);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .login-link {
-      display: inline-block;
-      margin-top: 24px;
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 0.95rem;
-      text-decoration: none;
-      transition: all 0.3s ease;
-      animation: slideUp 0.6s ease 0.8s both;
-    }
-
-    .login-link:hover {
-      color: white;
-    }
-
-    .login-link span {
-      color: #a5b4fc;
-      font-weight: 600;
-    }
-
-    .login-link:hover span {
-      text-decoration: underline;
-    }
-
-    .footer {
-      position: absolute;
-      bottom: 30px;
-      left: 0;
-      right: 0;
-      text-align: center;
-      color: rgba(255, 255, 255, 0.5);
-      font-size: 0.85rem;
+    .timer-text {
+      color: rgba(255,255,255,0.8);
+      font-size: 0.88rem;
       font-weight: 500;
-      animation: fadeIn 1s ease 1s both;
     }
 
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
+    .timer-text .countdown {
+      font-weight: 700;
+      color: #d4a843;
+    }
+
+    .login-now-btn {
+      display: inline-block;
+      padding: 12px 36px;
+      background: linear-gradient(135deg, #d4a843, #b8922e);
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      letter-spacing: 0.5px;
+      text-decoration: none;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .login-now-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(212,168,67,0.4);
+    }
+    .login-now-btn:active { transform: translateY(0); }
+    .login-now-btn::before {
+      content: '';
+      position: absolute; top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent);
+      transition: left 0.5s;
+    }
+    .login-now-btn:hover::before { left: 100%; }
+
+    .logout-footer {
+      position: relative; z-index: 2;
+      margin-top: 40px;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.78rem;
+      text-align: center;
+      letter-spacing: 0.3px;
     }
 
     @media (max-width: 480px) {
-      .logout-card {
-        padding: 40px 30px;
-        border-radius: 20px;
-      }
-      h1 { font-size: 2rem; }
-      .message { font-size: 1rem; }
-      .icon-container { 
-        width: 100px; 
-        height: 100px; 
-        font-size: 3rem;
-        border-radius: 24px;
-      }
-      .bg-orb-1 { width: 300px; height: 300px; }
-      .bg-orb-2 { width: 250px; height: 250px; }
+      .logout-title { font-size: 1.6rem; letter-spacing: 4px; }
+      .logout-card { padding: 36px 24px 28px; }
+      .wave-icon { width: 64px; height: 64px; font-size: 2rem; }
+      .card-heading { font-size: 1.35rem; }
     }
   </style>
 </head>
 <body>
-  <!-- Animated Background Orbs -->
-  <div class="bg-orb bg-orb-1"></div>
-  <div class="bg-orb bg-orb-2"></div>
-  <div class="bg-orb bg-orb-3"></div>
-  <div class="grid-pattern"></div>
+  <div class="bg-photo"></div>
 
-  <div class="particles">
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-    <div class="particle"></div>
-  </div>
+  <h1 class="logout-title">TravelOps</h1>
 
-  <div class="logout-container">
-    <div class="logout-card">
-      <div class="icon-container">👋</div>
-      <h1>See You Soon!</h1>
-      <p class="message">Thank you for using TravelOps.<br>You have been logged out successfully.</p>
-      <div class="timer-container">
-        <div class="spinner"></div>
-        <span id="redirectMessage">Redirecting to login page in <span class="countdown" id="countdown">5</span> seconds...</span>
-      </div>
-      <a href="/login.html" class="login-link">Or click here to <span>login now</span></a>
+  <div class="logout-card">
+    <div class="wave-icon">👋</div>
+    <div class="card-heading">See You Soon!</div>
+    <p class="card-message">Thank you for using TravelOps.<br>You have been logged out successfully.</p>
+
+    <div class="timer-bar">
+      <div class="spinner"></div>
+      <span class="timer-text" id="redirectMessage">Redirecting in <span class="countdown" id="countdown">5</span> seconds…</span>
     </div>
+
+    <a href="/login.html" class="login-now-btn">Login Now</a>
   </div>
 
-  <div class="footer">
-    © 2026 TravelOps - Travel Management System
+  <div class="logout-footer">
+    &copy; 2026 TravelOps. All Rights Reserved | Tour Sales Management System
   </div>
 
   <script>
@@ -379,27 +211,22 @@
     localStorage.removeItem('travelops-theme');
     sessionStorage.clear();
 
-    // Countdown timer with messages
+    // Countdown timer
     let seconds = 5;
-    const countdownEl = document.getElementById('countdown');
     const messageEl = document.getElementById('redirectMessage');
-    
-    const messages = [
-      'Redirecting to login page in <span class="countdown">5</span> seconds...',
-      'Redirecting to login page in <span class="countdown">4</span> seconds...',
-      'Redirecting to login page in <span class="countdown">3</span> seconds...',
-      'Almost there... <span class="countdown">2</span>',
-      'Redirecting now... <span class="countdown">1</span>',
-      '🚀 Taking you to login...'
+
+    const msgs = [
+      'Redirecting in <span class="countdown">5</span> seconds…',
+      'Redirecting in <span class="countdown">4</span> seconds…',
+      'Redirecting in <span class="countdown">3</span> seconds…',
+      'Almost there… <span class="countdown">2</span>',
+      'Redirecting now… <span class="countdown">1</span>',
+      '🚀 Taking you to login…'
     ];
-    
+
     const timer = setInterval(() => {
       seconds--;
-      
-      if (seconds >= 0) {
-        messageEl.innerHTML = messages[5 - seconds];
-      }
-      
+      if (seconds >= 0) messageEl.innerHTML = msgs[5 - seconds];
       if (seconds <= 0) {
         clearInterval(timer);
         window.location.href = '/login.html';
