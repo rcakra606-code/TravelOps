@@ -68,6 +68,47 @@
   .at-summary-item { background: var(--card); padding: 16px 24px; border-radius: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); flex: 1; min-width: 150px; text-align: center; }
   .at-summary-value { font-size: 28px; font-weight: 700; color: var(--text-secondary); }
   .at-summary-label { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+
+  /* ====== Analytics Tab Styles ====== */
+  .ta-grid { display: grid; gap: 20px; margin-bottom: 24px; }
+  .ta-grid-2 { grid-template-columns: repeat(2, 1fr); }
+  .ta-grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .ta-grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .ta-grid-2-1 { grid-template-columns: 2fr 1fr; }
+
+  .ta-card { background: var(--card, #fff); border-radius: 14px; padding: 22px; box-shadow: 0 1px 4px rgba(0,0,0,.08); position: relative; overflow: hidden; }
+  .ta-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .ta-card-title { font-size: 13px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .5px; }
+  .ta-card-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+  .ta-card-badge.green { background: #dcfce7; color: #166534; }
+  .ta-card-badge.red { background: #fee2e2; color: #991b1b; }
+  .ta-card-badge.blue { background: #dbeafe; color: #1e40af; }
+  .ta-card-badge.amber { background: #fef3c7; color: #92400e; }
+
+  .ta-big-number { font-size: 36px; font-weight: 700; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+  .ta-sub-text { font-size: 12px; color: var(--text-secondary); }
+
+  .ta-list { list-style: none; padding: 0; margin: 10px 0 0; max-height: 240px; overflow-y: auto; }
+  .ta-list li { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border-light, #f0f0f0); font-size: 13px; }
+  .ta-list li:last-child { border-bottom: none; }
+  .ta-list-name { color: var(--text-primary); font-weight: 500; }
+  .ta-list-value { font-weight: 700; color: var(--primary, #3b82f6); }
+  .ta-list-bar { display: flex; align-items: center; gap: 10px; flex: 1; margin-left: 12px; }
+  .ta-list-track { flex: 1; height: 6px; background: var(--bg-alt, #f1f5f9); border-radius: 3px; overflow: hidden; }
+  .ta-list-fill { height: 100%; border-radius: 3px; background: var(--primary, #3b82f6); transition: width .5s ease; }
+
+  .ta-chart-wrap { position: relative; height: 220px; }
+  .ta-chart-wrap canvas { width: 100% !important; height: 100% !important; }
+
+  .ta-divider { border: none; border-top: 1px solid var(--border-light, #eee); margin: 24px 0; }
+
+  @media (max-width: 900px) {
+    .ta-grid-2, .ta-grid-3, .ta-grid-4, .ta-grid-2-1 { grid-template-columns: 1fr; }
+  }
+  @media (min-width: 901px) and (max-width: 1200px) {
+    .ta-grid-3 { grid-template-columns: repeat(2, 1fr); }
+    .ta-grid-4 { grid-template-columns: repeat(2, 1fr); }
+  }
 </style>
 <script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -161,83 +202,13 @@
     <!-- Dashboard Tabs -->
     <div class="dashboard-tabs" id="toursDashboardTabs">
       <button class="tab-btn active" data-tab="tour-data">🧳 Tour Data <span class="tab-count" id="tabCountTourData"></span></button>
+      <button class="tab-btn" data-tab="analytics">📊 Analytics</button>
       <button class="tab-btn" data-tab="my-tours">📋 My Tours <span class="tab-count" id="tabCountMyTours"></span></button>
       <button class="tab-btn" data-tab="archived-tours">📦 Archived Tours <span class="tab-count" id="tabCountArchived"></span></button>
     </div>
 
     <!-- TAB: Tour Data (Active Tours) -->
     <div id="tabTourData" class="tab-content">
-    <div class="card">
-      <div class="section-header">
-        <h3>Tours Analytics</h3>
-      </div>
-      
-      <!-- Metrics Row -->
-      <div class="dashboard-metrics">
-        <div class="metric-card">
-          <div class="metric-title">Total Participants</div>
-          <div class="metric-value" id="totalParticipants">0</div>
-          <div class="metric-subtitle">All tours</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Total Tours</div>
-          <div class="metric-value" id="totalTours">0</div>
-          <div class="metric-subtitle">Recorded tours</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Avg Participants</div>
-          <div class="metric-value" id="avgParticipants">0</div>
-          <div class="metric-subtitle">Per tour</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Invoiced Tours</div>
-          <div class="metric-value" id="invoicedTours">0</div>
-          <div class="metric-subtitle">Already invoiced</div>
-        </div>
-
-        <div class="metric-card">
-          <div class="metric-title">Not Invoiced</div>
-          <div class="metric-value" id="notInvoicedTours">0</div>
-          <div class="metric-subtitle">Pending invoice</div>
-        </div>
-      </div>
-
-      <!-- Charts Row 1 -->
-      <div class="charts-row" style="margin-top: 24px;">
-        <div class="chart-container">
-          <div class="chart-header">
-            <div class="chart-title">Participants per Month</div>
-          </div>
-          <canvas id="chartParticipantsMonthly" style="max-height: 300px;"></canvas>
-        </div>
-
-        <div class="chart-container">
-          <div class="chart-header">
-            <div class="chart-title">Participants per Region</div>
-          </div>
-          <canvas id="chartParticipantsRegion" style="max-height: 300px;"></canvas>
-        </div>
-      </div>
-
-      <!-- Charts Row 2 -->
-      <div class="charts-row" style="margin-top: 20px;">
-        <div class="chart-container">
-          <div class="chart-header">
-            <div class="chart-title">Tours per Staff</div>
-          </div>
-          <canvas id="chartToursPerStaff" style="max-height: 300px;"></canvas>
-        </div>
-        <div class="chart-container">
-          <div class="chart-header">
-            <div class="chart-title">Tour Status Distribution</div>
-          </div>
-          <canvas id="chartPackageTypes" style="max-height: 300px;"></canvas>
-        </div>
-      </div>
-    </div>
 
     <!-- Search and Filter Bar -->
     <div class="card" style="margin-top: 20px; margin-bottom: 16px;">
@@ -336,6 +307,110 @@
       <div id="toursPagination" style="margin-top: 20px;"></div>
     </div>
     </div><!-- /tabTourData -->
+
+    <!-- TAB: Analytics -->
+    <div id="tabAnalytics" class="tab-content" style="display:none;">
+
+      <!-- Row 1: KPI Cards -->
+      <div class="ta-grid ta-grid-4">
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Total Tours</span>
+            <span class="ta-card-badge green" id="taToursBadge">+0%</span>
+          </div>
+          <div class="ta-big-number" id="taTotalTours">0</div>
+          <div class="ta-sub-text">Active tours recorded</div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Total Participants</span>
+            <span class="ta-card-badge blue" id="taPaxBadge">+0%</span>
+          </div>
+          <div class="ta-big-number" id="taTotalPax">0</div>
+          <div class="ta-sub-text">Across all tours</div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Avg Pax / Tour</span>
+          </div>
+          <div class="ta-big-number" id="taAvgPax">0</div>
+          <div class="ta-sub-text">Average participants</div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Invoice Rate</span>
+            <span class="ta-card-badge amber" id="taInvoiceBadge">0%</span>
+          </div>
+          <div class="ta-big-number" id="taInvoiceRate">0%</div>
+          <div class="ta-sub-text">Invoiced vs total</div>
+        </div>
+      </div>
+
+      <!-- Row 2: Regions list + Participants per Month bar -->
+      <div class="ta-grid ta-grid-2">
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Regions</span>
+          </div>
+          <ul class="ta-list" id="taRegionList"></ul>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Participants per Month</span>
+          </div>
+          <div class="ta-chart-wrap">
+            <canvas id="taChartMonthly"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 3: Tours per Staff bar + Tour Status doughnut -->
+      <div class="ta-grid ta-grid-2">
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Tours per Staff</span>
+          </div>
+          <div class="ta-chart-wrap">
+            <canvas id="taChartStaff"></canvas>
+          </div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Tour Status</span>
+          </div>
+          <div class="ta-chart-wrap">
+            <canvas id="taChartStatus"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Row 4: Invoice breakdown doughnut + Participants by Region doughnut + Top months list -->
+      <div class="ta-grid ta-grid-3">
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Invoice Breakdown</span>
+          </div>
+          <div class="ta-chart-wrap">
+            <canvas id="taChartInvoice"></canvas>
+          </div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Participants by Region</span>
+          </div>
+          <div class="ta-chart-wrap">
+            <canvas id="taChartRegion"></canvas>
+          </div>
+        </div>
+        <div class="ta-card">
+          <div class="ta-card-header">
+            <span class="ta-card-title">Top Departure Months</span>
+          </div>
+          <ul class="ta-list" id="taTopMonths"></ul>
+        </div>
+      </div>
+
+    </div><!-- /tabAnalytics -->
 
     <!-- TAB: My Tours -->
     <div id="tabMyTours" class="tab-content" style="display:none;">

@@ -25,7 +25,7 @@ function initTabs() {
   // Check URL parameter for initial tab
   const urlParams = new URLSearchParams(window.location.search);
   const tabParam = urlParams.get('tab');
-  if (tabParam && ['tour-data', 'my-tours', 'archived-tours'].includes(tabParam)) {
+  if (tabParam && ['tour-data', 'analytics', 'my-tours', 'archived-tours'].includes(tabParam)) {
     switchTab(tabParam);
   }
 }
@@ -40,11 +40,14 @@ function switchTab(tabName) {
 
   // Show/hide tab content
   document.getElementById('tabTourData').style.display = tabName === 'tour-data' ? '' : 'none';
+  document.getElementById('tabAnalytics').style.display = tabName === 'analytics' ? '' : 'none';
   document.getElementById('tabMyTours').style.display = tabName === 'my-tours' ? '' : 'none';
   document.getElementById('tabArchivedTours').style.display = tabName === 'archived-tours' ? '' : 'none';
 
   // Load tab-specific data
-  if (tabName === 'my-tours' && toursDataForCRUD.length > 0) {
+  if (tabName === 'analytics' && toursDataForCRUD.length > 0) {
+    renderAnalyticsTab();
+  } else if (tabName === 'my-tours' && toursDataForCRUD.length > 0) {
     renderMyToursTab();
   } else if (tabName === 'archived-tours' && toursDataForCRUD.length > 0) {
     renderArchivedTab();
@@ -817,7 +820,7 @@ async function renderDashboard(preloadedTours) {
     });
     
     // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartParticipantsMonthly', 'chartParticipantsRegion', 'chartToursPerStaff', 'chartPackageTypes'];
+    const canvasIds = ['taChartMonthly', 'taChartStaff', 'taChartStatus', 'taChartInvoice', 'taChartRegion'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -837,27 +840,15 @@ async function renderDashboard(preloadedTours) {
     const invoicedCount = toursData.filter(t => t.invoice_number && t.invoice_number.trim() !== '').length;
     const notInvoicedCount = totalTours - invoicedCount;
     
-    // Update metrics
-    el('totalParticipants').textContent = totalParticipants;
-    el('totalTours').textContent = totalTours;
-    el('avgParticipants').textContent = avgParticipants;
-    el('invoicedTours').textContent = invoicedCount;
-    el('notInvoicedTours').textContent = notInvoicedCount;
+    // Update metrics (stored for analytics tab)
+    window._tourMetrics = { totalParticipants, totalTours, avgParticipants, invoicedCount, notInvoicedCount, toursData };
     
-    // Chart options
-    const commonOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { position: 'top' },
-        tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
-          padding: 12
-        }
-      }
-    };
+    // Render analytics if that tab is currently visible
+    if (currentTab === 'analytics') {
+      renderAnalyticsTab();
+    }
     
-    // Participants per Month
+    // Participants per Month (data only — chart moved to Analytics tab)
     const monthlyData = {};
     toursData.forEach(tour => {
       if (tour.departure_date) {
@@ -867,25 +858,7 @@ async function renderDashboard(preloadedTours) {
     });
     
     const sortedMonths = Object.keys(monthlyData).sort();
-    const ctxMonthly = document.getElementById('chartParticipantsMonthly')?.getContext('2d');
-    if (ctxMonthly) {
-      charts.monthly = new Chart(ctxMonthly, {
-        type: 'bar',
-        data: {
-          labels: sortedMonths,
-          datasets: [{
-            label: 'Peserta',
-            data: sortedMonths.map(m => monthlyData[m]),
-            backgroundColor: '#3b82f6',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          ...commonOptions,
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
+    window._tourMonthlyData = { sortedMonths, monthlyData };
     
     // Participants per Region (derive name from regions list using region_id)
     const regionMap = Object.fromEntries((regionsData || []).map(r => [String(r.id), r.region_name]));
@@ -896,21 +869,7 @@ async function renderDashboard(preloadedTours) {
         regionData[rname] = (regionData[rname] || 0) + (parseInt(tour.jumlah_peserta) || 0);
       }
     });
-    
-    const ctxRegion = document.getElementById('chartParticipantsRegion')?.getContext('2d');
-    if (ctxRegion && Object.keys(regionData).length) {
-      charts.region = new Chart(ctxRegion, {
-        type: 'pie',
-        data: {
-          labels: Object.keys(regionData),
-          datasets: [{
-            data: Object.values(regionData),
-            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899']
-          }]
-        },
-        options: commonOptions
-      });
-    }
+    window._tourRegionData = regionData;
     
     // Tours per Staff
     const staffData = {};
@@ -919,26 +878,7 @@ async function renderDashboard(preloadedTours) {
         staffData[tour.staff_name] = (staffData[tour.staff_name] || 0) + 1;
       }
     });
-    
-    const ctxStaff = document.getElementById('chartToursPerStaff')?.getContext('2d');
-    if (ctxStaff) {
-      charts.staff = new Chart(ctxStaff, {
-        type: 'bar',
-        data: {
-          labels: Object.keys(staffData),
-          datasets: [{
-            label: 'Tours',
-            data: Object.values(staffData),
-            backgroundColor: '#f59e0b',
-            borderRadius: 8
-          }]
-        },
-        options: {
-          ...commonOptions,
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
+    window._tourStaffData = staffData;
     
     // Tour Status Distribution
     const statusData = {};
@@ -946,34 +886,170 @@ async function renderDashboard(preloadedTours) {
       const status = tour.status || 'Pending';
       statusData[status] = (statusData[status] || 0) + 1;
     });
-    
-    const ctxPackage = document.getElementById('chartPackageTypes')?.getContext('2d');
-    if (ctxPackage && Object.keys(statusData).length) {
-      charts.status = new Chart(ctxPackage, {
-        type: 'doughnut',
-        data: {
-          labels: Object.keys(statusData),
-          datasets: [{
-            data: Object.values(statusData),
-            backgroundColor: ['#fbbf24', '#3b82f6', '#10b981', '#ef4444'],
-            borderWidth: 2,
-            borderColor: '#fff'
-          }]
-        },
-        options: {
-          ...commonOptions,
-          plugins: {
-            ...commonOptions.plugins,
-            title: { display: true, text: 'Tour Status Distribution', font: { size: 16, weight: '600' } },
-            legend: { position: 'bottom' }
-          }
-        }
-      });
-    }
+    window._tourStatusData = statusData;
     
   } catch (err) {
     console.error('Error rendering dashboard:', err);
     toast.error('Error loading dashboard: ' + err.message);
+  }
+}
+
+/* === ANALYTICS TAB RENDERING === */
+const analyticsCharts = {};
+
+function renderAnalyticsTab() {
+  try {
+    const m = window._tourMetrics;
+    if (!m) return;
+
+    const { totalParticipants, totalTours, avgParticipants, invoicedCount, notInvoicedCount, toursData } = m;
+    const invoiceRate = totalTours > 0 ? Math.round((invoicedCount / totalTours) * 100) : 0;
+
+    // KPI cards
+    const setTxt = (id, v) => { const e = el(id); if (e) e.textContent = v; };
+    setTxt('taTotalTours', totalTours);
+    setTxt('taTotalPax', totalParticipants.toLocaleString());
+    setTxt('taAvgPax', avgParticipants);
+    setTxt('taInvoiceRate', invoiceRate + '%');
+    setTxt('taInvoiceBadge', invoiceRate + '%');
+
+    // Badges (compare with simple heuristic – green if >50% invoiced)
+    const tourBadge = el('taToursBadge');
+    if (tourBadge) { tourBadge.textContent = totalTours + ' total'; tourBadge.className = 'ta-card-badge blue'; }
+    const paxBadge = el('taPaxBadge');
+    if (paxBadge) { paxBadge.textContent = totalParticipants + ' pax'; paxBadge.className = 'ta-card-badge green'; }
+
+    // Destroy previous analytics charts
+    Object.keys(analyticsCharts).forEach(k => {
+      if (analyticsCharts[k] && typeof analyticsCharts[k].destroy === 'function') {
+        try { analyticsCharts[k].destroy(); } catch (e) {}
+      }
+      delete analyticsCharts[k];
+    });
+    ['taChartMonthly','taChartStaff','taChartStatus','taChartInvoice','taChartRegion'].forEach(id => {
+      const c = document.getElementById(id);
+      if (c) { const ch = Chart.getChart(c); if (ch) ch.destroy(); }
+    });
+
+    const chartOpts = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
+        tooltip: { backgroundColor: 'rgba(17,24,39,.95)', padding: 10 } }
+    };
+
+    // --- Region list with bars ---
+    const regionData = window._tourRegionData || {};
+    const regionList = el('taRegionList');
+    if (regionList) {
+      const maxVal = Math.max(...Object.values(regionData), 1);
+      regionList.innerHTML = Object.entries(regionData)
+        .sort((a, b) => b[1] - a[1])
+        .map(([name, val]) => `<li>
+          <span class="ta-list-name">${name}</span>
+          <div class="ta-list-bar">
+            <div class="ta-list-track"><div class="ta-list-fill" style="width:${Math.round(val/maxVal*100)}%"></div></div>
+          </div>
+          <span class="ta-list-value">${val}</span>
+        </li>`).join('');
+    }
+
+    // --- Top departure months list ---
+    const monthly = window._tourMonthlyData || {};
+    const topMonthsList = el('taTopMonths');
+    if (topMonthsList && monthly.sortedMonths) {
+      const entries = monthly.sortedMonths.map(m => [m, monthly.monthlyData[m]]).sort((a,b) => b[1]-a[1]).slice(0, 8);
+      const maxM = Math.max(...entries.map(e => e[1]), 1);
+      topMonthsList.innerHTML = entries.map(([mn, val]) => {
+        const label = new Date(mn + '-01').toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+        return `<li>
+          <span class="ta-list-name">${label}</span>
+          <div class="ta-list-bar">
+            <div class="ta-list-track"><div class="ta-list-fill" style="width:${Math.round(val/maxM*100)}%; background:#f59e0b;"></div></div>
+          </div>
+          <span class="ta-list-value">${val}</span>
+        </li>`;
+      }).join('');
+    }
+
+    // --- Participants per Month bar chart ---
+    if (monthly.sortedMonths) {
+      const ctx = document.getElementById('taChartMonthly')?.getContext('2d');
+      if (ctx) {
+        analyticsCharts.monthly = new Chart(ctx, {
+          type: 'bar',
+          data: {
+            labels: monthly.sortedMonths.map(m => {
+              const d = new Date(m + '-01');
+              return d.toLocaleDateString('en-US', { month: 'short' });
+            }),
+            datasets: [{ label: 'Participants', data: monthly.sortedMonths.map(m => monthly.monthlyData[m]),
+              backgroundColor: '#3b82f6', borderRadius: 6 }]
+          },
+          options: { ...chartOpts, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' } }, x: { grid: { display: false } } } }
+        });
+      }
+    }
+
+    // --- Tours per Staff bar chart ---
+    const staffData = window._tourStaffData || {};
+    const ctxStaff = document.getElementById('taChartStaff')?.getContext('2d');
+    if (ctxStaff && Object.keys(staffData).length) {
+      analyticsCharts.staff = new Chart(ctxStaff, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(staffData),
+          datasets: [{ label: 'Tours', data: Object.values(staffData), backgroundColor: '#f59e0b', borderRadius: 6 }]
+        },
+        options: { ...chartOpts, indexAxis: 'y', scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' } }, y: { grid: { display: false } } } }
+      });
+    }
+
+    // --- Tour Status doughnut ---
+    const statusData = window._tourStatusData || {};
+    const ctxStatus = document.getElementById('taChartStatus')?.getContext('2d');
+    if (ctxStatus && Object.keys(statusData).length) {
+      analyticsCharts.status = new Chart(ctxStatus, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(statusData),
+          datasets: [{ data: Object.values(statusData),
+            backgroundColor: ['#fbbf24','#3b82f6','#10b981','#ef4444','#8b5cf6'], borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: { ...chartOpts, cutout: '60%' }
+      });
+    }
+
+    // --- Invoice breakdown doughnut ---
+    const ctxInvoice = document.getElementById('taChartInvoice')?.getContext('2d');
+    if (ctxInvoice) {
+      analyticsCharts.invoice = new Chart(ctxInvoice, {
+        type: 'doughnut',
+        data: {
+          labels: ['Invoiced', 'Not Invoiced'],
+          datasets: [{ data: [invoicedCount, notInvoicedCount],
+            backgroundColor: ['#10b981','#ef4444'], borderWidth: 2, borderColor: '#fff' }]
+        },
+        options: { ...chartOpts, cutout: '60%' }
+      });
+    }
+
+    // --- Participants by Region pie ---
+    const ctxRegion = document.getElementById('taChartRegion')?.getContext('2d');
+    if (ctxRegion && Object.keys(regionData).length) {
+      analyticsCharts.region = new Chart(ctxRegion, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(regionData),
+          datasets: [{ data: Object.values(regionData),
+            backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316'] }]
+        },
+        options: chartOpts
+      });
+    }
+
+  } catch (err) {
+    console.error('Error rendering analytics tab:', err);
   }
 }
 
