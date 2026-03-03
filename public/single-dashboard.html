@@ -35,6 +35,392 @@
 <link rel="stylesheet" href="/css/futuristic-theme.css">
 <script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ============================================
+   DABANG-INSPIRED MAIN DASHBOARD STYLES
+   ============================================ */
+
+/* Welcome Banner */
+.db-welcome {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  margin-bottom: 20px;
+  color: #fff;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.db-welcome-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+}
+.db-welcome-sub {
+  margin: 0;
+  opacity: 0.85;
+  font-size: 14px;
+}
+.db-welcome-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.db-comparison-btns {
+  display: flex;
+  background: rgba(255,255,255,0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.db-cmp-btn {
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.8);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.db-cmp-btn:hover {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+}
+.db-cmp-btn.active {
+  background: rgba(255,255,255,0.3);
+  color: #fff;
+  font-weight: 600;
+}
+.db-period-label {
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+/* KPI Cards Row */
+.db-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.db-kpi-card {
+  background: var(--card, #fff);
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid var(--border-light, #e5e7eb);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.db-kpi-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+.db-kpi-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  flex-shrink: 0;
+}
+.db-kpi-info {
+  flex: 1;
+  min-width: 0;
+}
+.db-kpi-value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.db-kpi-label {
+  font-size: 12px;
+  color: var(--text-secondary, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+.db-kpi-sub {
+  font-size: 12px;
+  color: var(--text-secondary, #9ca3af);
+  margin-top: 2px;
+}
+.db-kpi-change {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+}
+.db-kpi-change.positive {
+  background: #ecfdf5;
+  color: #059669;
+}
+.db-kpi-change.negative {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+/* Grid Layouts */
+.db-grid-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.db-grid-3col {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+/* Panels */
+.db-panel {
+  background: var(--card, #fff);
+  border-radius: 14px;
+  padding: 20px;
+  border: 1px solid var(--border-light, #e5e7eb);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.db-panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.db-panel-header h3 {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #1f2937);
+  margin: 0;
+}
+.db-panel-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--bg-alt, #f3f4f6);
+  color: var(--text-secondary, #6b7280);
+  font-weight: 500;
+}
+.db-chart-wrap {
+  position: relative;
+}
+.db-table-wrap {
+  overflow-x: auto;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+/* Leaderboard Table */
+.db-leader-table,
+.db-depart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.db-leader-table th,
+.db-depart-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary, #6b7280);
+  border-bottom: 2px solid var(--border-light, #e5e7eb);
+  background: var(--bg-alt, #f9fafb);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.db-leader-table td,
+.db-depart-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border-light, #f3f4f6);
+  color: var(--text-primary, #374151);
+}
+.db-leader-table tbody tr:hover,
+.db-depart-table tbody tr:hover {
+  background: var(--bg-alt, #f9fafb);
+}
+
+/* YTD Achievement */
+.db-ytd-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.db-ytd-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.db-ytd-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.db-ytd-row-sub {
+  font-size: 12px;
+  color: var(--text-secondary, #9ca3af);
+}
+.db-ytd-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #374151);
+}
+.db-ytd-val {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+}
+.db-ytd-pct {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary, #4361ee);
+}
+.db-progress-track {
+  height: 10px;
+  background: var(--bg-alt, #e5e7eb);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.db-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.6s ease;
+  min-width: 2px;
+}
+.db-progress-blue {
+  background: linear-gradient(90deg, #667eea, #4361ee);
+}
+.db-progress-green {
+  background: linear-gradient(90deg, #43e97b, #38f9d7);
+}
+
+/* Module Overview Grid */
+.db-module-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.db-mod-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 14px 8px;
+  border-radius: 12px;
+  background: var(--bg-alt, #f9fafb);
+  border: 1px solid var(--border-light, #e5e7eb);
+  text-decoration: none;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+.db-mod-card:hover {
+  background: var(--card, #fff);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+  border-color: var(--primary, #4361ee);
+}
+.db-mod-icon {
+  font-size: 20px;
+  margin-bottom: 4px;
+}
+.db-mod-val {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #1f2937);
+  line-height: 1.2;
+}
+.db-mod-label {
+  font-size: 11px;
+  color: var(--text-secondary, #6b7280);
+  text-align: center;
+  margin-top: 2px;
+}
+.db-mod-sub {
+  font-size: 10px;
+  color: var(--text-tertiary, #9ca3af);
+  margin-top: 2px;
+}
+
+/* Quick Navigation Row */
+.db-quicknav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.db-qn-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-light, #e5e7eb);
+  background: var(--card, #fff);
+  text-decoration: none;
+  color: var(--text-primary, #374151);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+.db-qn-item:hover {
+  border-color: var(--primary, #4361ee);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+  transform: translateY(-1px);
+}
+.db-qn-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  flex-shrink: 0;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .db-kpi-row { grid-template-columns: repeat(2, 1fr); }
+  .db-grid-3col { grid-template-columns: 1fr; }
+  .db-grid-2col { grid-template-columns: 1fr; }
+}
+@media (max-width: 640px) {
+  .db-kpi-row { grid-template-columns: 1fr; }
+  .db-welcome { flex-direction: column; text-align: center; }
+  .db-module-grid { grid-template-columns: 1fr 1fr; }
+  .db-quicknav { justify-content: center; }
+  .db-kpi-value { font-size: 18px; }
+}
+
+/* Dark mode support */
+[data-theme="dark"] .db-welcome {
+  background: linear-gradient(135deg, #4338ca 0%, #581c87 100%);
+}
+[data-theme="dark"] .db-kpi-change.positive {
+  background: rgba(5, 150, 105, 0.15);
+}
+[data-theme="dark"] .db-kpi-change.negative {
+  background: rgba(220, 38, 38, 0.15);
+}
+</style>
 </head>
 <body>
 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
@@ -122,60 +508,230 @@
       </div>
     </div>
 
-   <section id="summary" class="card section active">
-  <!-- === WELCOME MESSAGE === -->
-  <div class="welcome-banner">
-    <h1 class="welcome-title">Welcome to TravelOps! 👋</h1>
-    <p class="welcome-subtitle" id="welcomeMessage">Manage your travel business with ease</p>
-  </div>
+   <section id="summary" class="section active" style="padding: 0;">
 
-  <!-- === QUICK NAVIGATION === -->
-  <div class="quick-nav-section">
-    <h3 class="quick-nav-heading">🚀 Quick Navigation</h3>
-    <div class="quick-nav-grid">
-      <a href="/sales-targets-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">💰</div>
-          <div class="quick-nav-label">Sales</div>
-        </div>
-      </a>
-      
-      <a href="/tours-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">🧳</div>
-          <div class="quick-nav-label">Tours</div>
-        </div>
-      </a>
-      
-      <a href="/documents-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">📄</div>
-          <div class="quick-nav-label">Documents</div>
-        </div>
-      </a>
-      
-      <a href="/productivity-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">📈</div>
-          <div class="quick-nav-label">Productivity</div>
-        </div>
-      </a>
-      
-      <a href="/hotel-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">🏨</div>
-          <div class="quick-nav-label">Hotel</div>
-        </div>
-      </a>
-      
-      <a href="/cruise-dashboard.html" class="quick-nav-link">
-        <div class="quick-nav-card">
-          <div class="quick-nav-icon">🚢</div>
-          <div class="quick-nav-label">Cruise</div>
-        </div>
-      </a>
+  <!-- === WELCOME BANNER === -->
+  <div class="db-welcome">
+    <div class="db-welcome-text">
+      <h1 class="db-welcome-title">Welcome to TravelOps! 👋</h1>
+      <p class="db-welcome-sub" id="welcomeMessage">Manage your travel business with ease</p>
+    </div>
+    <div class="db-welcome-actions">
+      <div class="db-comparison-btns">
+        <button class="db-cmp-btn comparison-btn active" id="compareNone" data-compare="">Current</button>
+        <button class="db-cmp-btn comparison-btn" id="compareMonth" data-compare="month">vs Last Month</button>
+        <button class="db-cmp-btn comparison-btn" id="compareYear" data-compare="year">vs Last Year</button>
+      </div>
+      <span class="db-period-label" id="comparisonLabel"></span>
     </div>
   </div>
+
+  <!-- === ROW 1: TOP KPI CARDS (like Dabang "Today's Sales" row) === -->
+  <div class="db-kpi-row">
+    <div class="db-kpi-card db-kpi-sales">
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">💰</div>
+      <div class="db-kpi-info">
+        <div class="db-kpi-value" id="totalSales">Rp 0</div>
+        <div class="db-kpi-label">Monthly Sales</div>
+        <div class="db-kpi-sub" id="salesAchievement">Achv: 0%</div>
+      </div>
+      <span class="db-kpi-change" id="salesChange" style="display:none;"></span>
+    </div>
+    <div class="db-kpi-card db-kpi-profit">
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">📊</div>
+      <div class="db-kpi-info">
+        <div class="db-kpi-value" id="totalProfit">Rp 0</div>
+        <div class="db-kpi-label">Monthly Profit</div>
+        <div class="db-kpi-sub" id="profitAchievement">Achv: 0%</div>
+      </div>
+      <span class="db-kpi-change" id="profitChange" style="display:none;"></span>
+    </div>
+    <div class="db-kpi-card db-kpi-tours">
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">🧳</div>
+      <div class="db-kpi-info">
+        <div class="db-kpi-value" id="upcomingToursCount">0</div>
+        <div class="db-kpi-label">Upcoming Tours</div>
+        <div class="db-kpi-sub">Next 30 days</div>
+      </div>
+    </div>
+    <div class="db-kpi-card db-kpi-docs">
+      <div class="db-kpi-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">📄</div>
+      <div class="db-kpi-info">
+        <div class="db-kpi-value" id="pendingDocsCount">0</div>
+        <div class="db-kpi-label">Pending Documents</div>
+        <div class="db-kpi-sub">Requires attention</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- === ROW 2: SALES TREND + MONTHLY TARGET (like "Visitor Insights" + "Total Revenue") === -->
+  <div class="db-grid-2col">
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>📈 Sales Trend</h3>
+        <span class="db-panel-badge">This Year</span>
+      </div>
+      <div class="db-chart-wrap" style="height: 280px;">
+        <canvas id="chartSalesMonthly"></canvas>
+      </div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>💰 Sales vs Target</h3>
+        <span class="db-panel-badge">This Month</span>
+      </div>
+      <div class="db-chart-wrap" style="height: 280px;">
+        <canvas id="chartSalesTarget"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- === ROW 3: THREE PANELS (like "Total Revenue" / "Customer Satisfaction" / "Target vs Reality") === -->
+  <div class="db-grid-3col">
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>📊 Profit Performance</h3>
+      </div>
+      <div class="db-chart-wrap" style="height: 260px;">
+        <canvas id="chartProfitTarget"></canvas>
+      </div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>🎯 YTD Achievement <span class="db-panel-badge" id="ytdYear">(2026)</span></h3>
+      </div>
+      <div class="db-ytd-content">
+        <div class="db-ytd-metric">
+          <div class="db-ytd-row">
+            <span class="db-ytd-label">Sales YTD</span>
+            <span class="db-ytd-val" id="ytdSales">Rp 0</span>
+          </div>
+          <div class="db-progress-track">
+            <div class="db-progress-fill db-progress-blue" id="ytdSalesBar" style="width: 0%;"></div>
+          </div>
+          <div class="db-ytd-row db-ytd-row-sub">
+            <span>Target: <strong id="ytdTargetSales">Rp 0</strong></span>
+            <span class="db-ytd-pct" id="ytdSalesAchievement">0%</span>
+          </div>
+        </div>
+        <div class="db-ytd-metric">
+          <div class="db-ytd-row">
+            <span class="db-ytd-label">Profit YTD</span>
+            <span class="db-ytd-val" id="ytdProfit">Rp 0</span>
+          </div>
+          <div class="db-progress-track">
+            <div class="db-progress-fill db-progress-green" id="ytdProfitBar" style="width: 0%;"></div>
+          </div>
+          <div class="db-ytd-row db-ytd-row-sub">
+            <span>Target: <strong id="ytdTargetProfit">Rp 0</strong></span>
+            <span class="db-ytd-pct" id="ytdProfitAchievement">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>🗂️ Module Overview</h3>
+      </div>
+      <div class="db-module-grid">
+        <a href="/outstanding-dashboard.html" class="db-mod-card">
+          <span class="db-mod-icon">📋</span>
+          <span class="db-mod-val" id="outstandingCount">0</span>
+          <span class="db-mod-label">Outstanding</span>
+          <span class="db-mod-sub" id="outstandingAmount">Rp 0</span>
+        </a>
+        <a href="/hotel-dashboard.html" class="db-mod-card">
+          <span class="db-mod-icon">🏨</span>
+          <span class="db-mod-val" id="hotelBookingsCount">0</span>
+          <span class="db-mod-label">Hotel Bookings</span>
+          <span class="db-mod-sub">This month</span>
+        </a>
+        <a href="/cruise-dashboard.html" class="db-mod-card">
+          <span class="db-mod-icon">🚢</span>
+          <span class="db-mod-val" id="upcomingCruiseCount">0</span>
+          <span class="db-mod-label">Upcoming Cruise</span>
+          <span class="db-mod-sub">Next 30 days</span>
+        </a>
+        <a href="/telecom-dashboard.html" class="db-mod-card">
+          <span class="db-mod-icon">📞</span>
+          <span class="db-mod-val" id="telecomRentalsCount">0</span>
+          <span class="db-mod-label">Telecom Rentals</span>
+          <span class="db-mod-sub">This month</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- === ROW 4: STAFF LEADERBOARD + UPCOMING TOURS (like "Top Products" + table) === -->
+  <div class="db-grid-2col">
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>🏆 Staff Leaderboard</h3>
+        <span class="db-panel-badge">This Month</span>
+      </div>
+      <div class="db-table-wrap">
+        <table class="db-leader-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Staff</th>
+              <th style="text-align:right;">Sales</th>
+              <th style="text-align:right;">Profit</th>
+              <th style="text-align:center;">Txns</th>
+              <th style="text-align:right;">Avg/Txn</th>
+            </tr>
+          </thead>
+          <tbody id="staffLeaderboardTable">
+            <tr><td colspan="6" style="text-align:center;padding:20px;color:#9ca3af;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="db-panel">
+      <div class="db-panel-header">
+        <h3>✈️ Upcoming Departures</h3>
+        <span class="db-panel-badge">Next 30 Days</span>
+      </div>
+      <div class="db-table-wrap">
+        <table class="db-depart-table">
+          <thead>
+            <tr>
+              <th>Departure</th>
+              <th>Booking</th>
+              <th>Lead Pax</th>
+              <th>Region</th>
+              <th>Pax</th>
+              <th>Staff</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="upcomingToursTable">
+            <tr><td colspan="7" style="text-align:center;padding:20px;color:#9ca3af;">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- === ROW 5: QUICK NAVIGATION (compact) === -->
+  <div class="db-panel" style="margin-top: 4px;">
+    <div class="db-panel-header">
+      <h3>🚀 Quick Navigation</h3>
+    </div>
+    <div class="db-quicknav">
+      <a href="/sales-targets-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#667eea,#764ba2);">💰</span><span>Sales</span></a>
+      <a href="/tours-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#4facfe,#00f2fe);">🧳</span><span>Tours</span></a>
+      <a href="/documents-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#43e97b,#38f9d7);">📄</span><span>Docs</span></a>
+      <a href="/hotel-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#fa709a,#fee140);">🏨</span><span>Hotel</span></a>
+      <a href="/cruise-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#a18cd1,#fbc2eb);">🚢</span><span>Cruise</span></a>
+      <a href="/telecom-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#ffecd2,#fcb69f);">📞</span><span>Telecom</span></a>
+      <a href="/tracking-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#a1c4fd,#c2e9fb);">📦</span><span>Tracking</span></a>
+      <a href="/corporate-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#d4fc79,#96e6a1);">🏢</span><span>Corporate</span></a>
+      <a href="/productivity-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#f093fb,#f5576c);">📈</span><span>Productivity</span></a>
+      <a href="/ticket-recap-dashboard.html" class="db-qn-item"><span class="db-qn-icon" style="background:linear-gradient(135deg,#5ee7df,#b490ca);">✈️</span><span>Tickets</span></a>
+    </div>
+  </div>
+
 </section>
 
     <!-- Sales -->

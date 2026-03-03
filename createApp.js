@@ -58,7 +58,7 @@ const TABLE_COLUMNS = {
   tracking_deliveries: ['send_date', 'passport_count', 'invoice_no', 'booking_code', 'courier', 'tracking_no', 'recipient', 'address', 'details', 'status', 'tracking_data', 'created_by', 'created_at', 'updated_at'],
   tracking_receivings: ['receive_date', 'passport_count', 'sender', 'tracking_no', 'details', 'created_by', 'created_at', 'updated_at'],
   corporate_accounts: ['account_code', 'corporate_name', 'address', 'office_email', 'credit_limit', 'contract_link', 'remarks', 'status', 'pic_bookers', 'service_fees', 'airlines', 'created_by', 'created_at', 'updated_at', 'updated_by'],
-  corporate_sales: ['corporate_id', 'year', 'month', 'type', 'amount', 'profit', 'created_by', 'created_at']
+  corporate_sales: ['corporate_id', 'year', 'month', 'type', 'amount', 'profit', 'description', 'reference_number', 'created_by', 'created_at']
 };
 
 // Validate column names against whitelist to prevent SQL injection

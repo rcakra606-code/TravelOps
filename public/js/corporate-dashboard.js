@@ -1,6 +1,7 @@
 /* =========================================================
    CORPORATE DASHBOARD SCRIPT
-   Corporate account management and sales analysis
+   Corporate account management and separated sales tabs
+   Tabs: Dashboard, Corporate Accounts, Flight/Hotel/Tour/Other Sales, Sales Summary
    Persists data to backend API (corporate_accounts + corporate_sales tables)
    ========================================================= */
 
@@ -26,7 +27,7 @@ const user = getUser();
 // Data stores
 let corporateAccounts = [];
 let charts = {};
-let editingCorporateId = null; // now stores DB id, not array index
+let editingCorporateId = null; // stores DB id
 
 // Display user info
 el('userName').textContent = user.name || user.username || '—';
@@ -57,15 +58,15 @@ function formatPercent(value) {
   return (num >= 0 ? '+' : '') + num.toFixed(1) + '%';
 }
 
-// Helper: find corporate account by DB id
 function findCorpById(id) {
   return corporateAccounts.find(c => c.id == id);
 }
 
-// Helper: find array index by DB id
 function findCorpIndexById(id) {
   return corporateAccounts.findIndex(c => c.id == id);
 }
+
+const SALES_TYPES = ['Flight', 'Hotel', 'Tour', 'Other'];
 
 /* === TAB MANAGEMENT === */
 function initTabs() {
@@ -73,33 +74,28 @@ function initTabs() {
   document.querySelectorAll('.corporate-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const tabId = tab.dataset.tab;
-      
-      // Update tab buttons
+
       document.querySelectorAll('.corporate-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      
-      // Update tab content
+
       document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
       el(`tab-${tabId}`).classList.add('active');
-      
-      // Load data for specific tabs
-      if (tabId === 'sales') {
-        loadSalesComparison();
-        populateMonthCompareDropdown();
-      }
+
+      // Load data for specific tabs on switch
+      if (tabId === 'flight-sales') loadTypeSalesTab('Flight');
+      else if (tabId === 'hotel-sales') loadTypeSalesTab('Hotel');
+      else if (tabId === 'tour-sales') loadTypeSalesTab('Tour');
+      else if (tabId === 'other-sales') loadTypeSalesTab('Other');
+      else if (tabId === 'sales-summary') loadSalesSummary();
     });
   });
-  
-  // Sub-tabs
+
+  // Sub-tabs (within Corporate Accounts)
   document.querySelectorAll('.sub-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       const subtabId = tab.dataset.subtab;
-      
-      // Update sub-tab buttons
       document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      
-      // Update sub-tab content
       document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
       el(`subtab-${subtabId}`).classList.add('active');
     });
@@ -122,19 +118,15 @@ async function loadCorporateData() {
   }
 }
 
-/* === DASHBOARD SUMMARY === */
+/* === DASHBOARD SUMMARY (Tab 1) === */
 async function loadDashboardSummary() {
-  // Update cards
   el('totalAccounts').textContent = corporateAccounts.length;
   el('activeContracts').textContent = corporateAccounts.filter(c => c.status === 'active').length;
-  
-  // Calculate YTD revenue and profit
+
   const currentYear = new Date().getFullYear();
-  let totalRevenue = 0;
-  let totalProfit = 0;
-  let lastYearRevenue = 0;
-  let lastYearProfit = 0;
-  
+  let totalRevenue = 0, totalProfit = 0;
+  let lastYearRevenue = 0, lastYearProfit = 0;
+
   corporateAccounts.forEach(corp => {
     if (corp.sales) {
       corp.sales.forEach(sale => {
@@ -148,23 +140,21 @@ async function loadDashboardSummary() {
       });
     }
   });
-  
+
   el('totalRevenue').textContent = formatCompactCurrency(totalRevenue);
   el('totalProfit').textContent = formatCompactCurrency(totalProfit);
-  
-  // Calculate trends
+
   const revenueTrendValue = lastYearRevenue > 0 ? ((totalRevenue - lastYearRevenue) / lastYearRevenue * 100) : 0;
   const profitTrendValue = lastYearProfit > 0 ? ((totalProfit - lastYearProfit) / lastYearProfit * 100) : 0;
-  
+
   const revenueTrendEl = el('revenueTrend');
   revenueTrendEl.textContent = `${revenueTrendValue >= 0 ? '↑' : '↓'} ${Math.abs(revenueTrendValue).toFixed(1)}% vs last year`;
   revenueTrendEl.className = `card-trend ${revenueTrendValue >= 0 ? 'positive' : 'negative'}`;
-  
+
   const profitTrendEl = el('profitTrend');
   profitTrendEl.textContent = `${profitTrendValue >= 0 ? '↑' : '↓'} ${Math.abs(profitTrendValue).toFixed(1)}% vs last year`;
   profitTrendEl.className = `card-trend ${profitTrendValue >= 0 ? 'positive' : 'negative'}`;
-  
-  // Render charts
+
   renderRevenueChart();
   renderTopAccountsChart();
   renderRecentTransactions();
@@ -173,69 +163,39 @@ async function loadDashboardSummary() {
 function renderRevenueChart() {
   const ctx = el('revenueChart')?.getContext('2d');
   if (!ctx) return;
-  
   if (charts.revenue) charts.revenue.destroy();
-  
+
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentYear = new Date().getFullYear();
   const lastYear = currentYear - 1;
-  
-  // Calculate monthly data
   const currentYearData = new Array(12).fill(0);
   const lastYearData = new Array(12).fill(0);
-  
+
   corporateAccounts.forEach(corp => {
     if (corp.sales) {
       corp.sales.forEach(sale => {
         const month = parseInt(sale.month) - 1;
         if (month >= 0 && month < 12) {
-          if (parseInt(sale.year) === currentYear) {
-            currentYearData[month] += parseFloat(sale.amount) || 0;
-          } else if (parseInt(sale.year) === lastYear) {
-            lastYearData[month] += parseFloat(sale.amount) || 0;
-          }
+          if (parseInt(sale.year) === currentYear) currentYearData[month] += parseFloat(sale.amount) || 0;
+          else if (parseInt(sale.year) === lastYear) lastYearData[month] += parseFloat(sale.amount) || 0;
         }
       });
     }
   });
-  
+
   charts.revenue = new Chart(ctx, {
     type: 'line',
     data: {
       labels: months,
       datasets: [
-        {
-          label: `${currentYear}`,
-          data: currentYearData,
-          borderColor: '#4361ee',
-          backgroundColor: 'rgba(67, 97, 238, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: `${lastYear}`,
-          data: lastYearData,
-          borderColor: '#adb5bd',
-          backgroundColor: 'rgba(173, 181, 189, 0.1)',
-          fill: true,
-          tension: 0.4,
-          borderDash: [5, 5]
-        }
+        { label: `${currentYear}`, data: currentYearData, borderColor: '#4361ee', backgroundColor: 'rgba(67, 97, 238, 0.1)', fill: true, tension: 0.4 },
+        { label: `${lastYear}`, data: lastYearData, borderColor: '#adb5bd', backgroundColor: 'rgba(173, 181, 189, 0.1)', fill: true, tension: 0.4, borderDash: [5, 5] }
       ]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: value => formatCompactCurrency(value)
-          }
-        }
-      }
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => formatCompactCurrency(v) } } }
     }
   });
 }
@@ -243,48 +203,25 @@ function renderRevenueChart() {
 function renderTopAccountsChart() {
   const ctx = el('topAccountsChart')?.getContext('2d');
   if (!ctx) return;
-  
   if (charts.topAccounts) charts.topAccounts.destroy();
-  
+
   const currentYear = new Date().getFullYear();
-  
-  // Calculate total sales per corporate for current year
   const corpTotals = corporateAccounts.map(corp => {
     let total = 0;
-    if (corp.sales) {
-      corp.sales.forEach(sale => {
-        if (parseInt(sale.year) === currentYear) {
-          total += parseFloat(sale.amount) || 0;
-        }
-      });
-    }
+    if (corp.sales) corp.sales.forEach(sale => { if (parseInt(sale.year) === currentYear) total += parseFloat(sale.amount) || 0; });
     return { name: corp.corporate_name || corp.account_code, total };
   }).sort((a, b) => b.total - a.total).slice(0, 5);
-  
+
   charts.topAccounts = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: corpTotals.map(c => c.name),
-      datasets: [{
-        label: 'Revenue',
-        data: corpTotals.map(c => c.total),
-        backgroundColor: ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#06d6a0']
-      }]
+      datasets: [{ label: 'Revenue', data: corpTotals.map(c => c.total), backgroundColor: ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#06d6a0'] }]
     },
     options: {
-      indexAxis: 'y',
-      responsive: true,
-      plugins: {
-        legend: { display: false }
-      },
-      scales: {
-        x: {
-          beginAtZero: true,
-          ticks: {
-            callback: value => formatCompactCurrency(value)
-          }
-        }
-      }
+      indexAxis: 'y', responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { x: { beginAtZero: true, ticks: { callback: v => formatCompactCurrency(v) } } }
     }
   });
 }
@@ -292,8 +229,7 @@ function renderTopAccountsChart() {
 function renderRecentTransactions() {
   const tbody = el('recentTransactionsBody');
   if (!tbody) return;
-  
-  // Collect all transactions and sort by date
+
   const transactions = [];
   corporateAccounts.forEach(corp => {
     if (corp.sales) {
@@ -308,14 +244,14 @@ function renderRecentTransactions() {
       });
     }
   });
-  
+
   transactions.sort((a, b) => b.date.localeCompare(a.date));
-  
+
   if (transactions.length === 0) {
     tbody.innerHTML = '<tr><td colspan="5" class="text-center">No transactions yet</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = transactions.slice(0, 10).map(t => `
     <tr>
       <td>${t.date}</td>
@@ -327,16 +263,16 @@ function renderRecentTransactions() {
   `).join('');
 }
 
-/* === CORPORATE LIST === */
+/* === CORPORATE LIST (Tab 2) === */
 function renderCorporateList() {
   const tbody = el('corporateListBody');
   if (!tbody) return;
-  
+
   if (corporateAccounts.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" class="text-center">No corporate accounts yet</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = corporateAccounts.map(corp => `
     <tr>
       <td>${corp.account_code || '—'}</td>
@@ -352,25 +288,31 @@ function renderCorporateList() {
   `).join('');
 }
 
-let selectedCorporateId = null; // DB id
+let selectedCorporateId = null;
 
 function updateCorporateSelects() {
-  const selects = [el('serviceFeeCorpSelect'), el('airlinesCorpSelect'), el('salesFilterCorp'), el('globalCorporateSelect'), el('salesCorporateSelect')];
-  
-  selects.forEach(select => {
+  // All corporate selects across the page
+  const selectIds = [
+    'serviceFeeCorpSelect', 'airlinesCorpSelect', 'salesFilterCorp', 'globalCorporateSelect',
+    'flightSalesCorpSelect', 'hotelSalesCorpSelect', 'tourSalesCorpSelect', 'otherSalesCorpSelect',
+    'flightFilterCorp', 'hotelFilterCorp', 'tourFilterCorp', 'otherFilterCorp', 'monthCompareCorp'
+  ];
+
+  selectIds.forEach(sid => {
+    const select = el(sid);
     if (!select) return;
     const currentValue = select.value;
     const firstOption = select.querySelector('option:first-child');
     select.innerHTML = '';
     if (firstOption) select.appendChild(firstOption.cloneNode(true));
-    
+
     corporateAccounts.forEach(corp => {
       const option = document.createElement('option');
-      option.value = corp.id; // Use DB id
+      option.value = corp.id;
       option.textContent = `${corp.account_code} - ${corp.corporate_name}`;
       select.appendChild(option);
     });
-    
+
     select.value = currentValue;
   });
 }
@@ -378,18 +320,10 @@ function updateCorporateSelects() {
 /* === GLOBAL CORPORATE SELECTOR === */
 function selectCorporate(corpId) {
   selectedCorporateId = corpId;
-  
-  // Update all sub-tab selectors
-  if (el('serviceFeeCorpSelect')) {
-    el('serviceFeeCorpSelect').value = corpId;
-    loadServiceFees(corpId);
-  }
-  if (el('airlinesCorpSelect')) {
-    el('airlinesCorpSelect').value = corpId;
-    loadAirlines(corpId);
-  }
-  
-  // Update info display
+
+  if (el('serviceFeeCorpSelect')) { el('serviceFeeCorpSelect').value = corpId; loadServiceFees(corpId); }
+  if (el('airlinesCorpSelect')) { el('airlinesCorpSelect').value = corpId; loadAirlines(corpId); }
+
   const corp = findCorpById(corpId);
   const infoEl = el('selectedCorporateInfo');
   if (infoEl && corp) {
@@ -397,20 +331,17 @@ function selectCorporate(corpId) {
   } else if (infoEl) {
     infoEl.textContent = '';
   }
-  
-  // Load corporate detail if on detail tab
-  if (corp) {
-    loadCorporateDetailForm(corpId);
-  }
+
+  if (corp) loadCorporateDetailForm(corpId);
 }
 
 function loadCorporateDetailForm(corpId) {
   const corp = findCorpById(corpId);
   if (!corp) return;
-  
+
   const form = el('corporateDetailForm');
   if (!form) return;
-  
+
   form.account_code.value = corp.account_code || '';
   form.corporate_name.value = corp.corporate_name || '';
   form.address.value = corp.address || '';
@@ -418,20 +349,14 @@ function loadCorporateDetailForm(corpId) {
   form.credit_limit.value = corp.credit_limit || 0;
   form.contract_link.value = corp.contract_link || '';
   form.remarks.value = corp.remarks || '';
-  
-  // Store the DB id on the form for saving
   form.dataset.corpId = corp.id;
-  
-  // Load PIC Bookers
+
   const picList = el('picBookersList');
   if (picList) {
     picList.innerHTML = '';
     const bookers = Array.isArray(corp.pic_bookers) ? corp.pic_bookers : [];
-    if (bookers.length > 0) {
-      bookers.forEach(pic => addPicBookerRow(pic));
-    } else {
-      addPicBookerRow();
-    }
+    if (bookers.length > 0) bookers.forEach(pic => addPicBookerRow(pic));
+    else addPicBookerRow();
   }
 }
 
@@ -441,7 +366,7 @@ function openCorporateModal(editId = null) {
   const modal = el('corporateModal');
   const form = el('quickCorporateForm');
   const title = el('corporateModalTitle');
-  
+
   if (editId !== null) {
     const corp = findCorpById(editId);
     if (corp) {
@@ -459,7 +384,7 @@ function openCorporateModal(editId = null) {
     title.textContent = 'Add Corporate Account';
     form.reset();
   }
-  
+
   modal.classList.add('active');
 }
 
@@ -470,7 +395,7 @@ function closeCorporateModal() {
 
 async function saveCorporateFromModal() {
   const form = el('quickCorporateForm');
-  
+
   const data = {
     account_code: form.account_code.value.trim(),
     corporate_name: form.corporate_name.value.trim(),
@@ -479,15 +404,14 @@ async function saveCorporateFromModal() {
     credit_limit: parseFloat(form.credit_limit.value) || 0,
     status: 'active'
   };
-  
+
   if (!data.account_code || !data.corporate_name) {
     toast.error('Account code and corporate name are required');
     return;
   }
-  
+
   try {
     if (editingCorporateId !== null) {
-      // Preserve existing nested JSON data
       const existing = findCorpById(editingCorporateId);
       if (existing) {
         data.pic_bookers = JSON.stringify(existing.pic_bookers || []);
@@ -495,22 +419,17 @@ async function saveCorporateFromModal() {
         data.airlines = JSON.stringify(existing.airlines || []);
       }
       closeCorporateModal();
-      fetchJson(`/api/corporate_accounts/${editingCorporateId}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      }).then(() => { toast.success('Corporate account updated'); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }); })
-        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); }); });
+      fetchJson(`/api/corporate_accounts/${editingCorporateId}`, { method: 'PUT', body: JSON.stringify(data) })
+        .then(() => { toast.success('Corporate account updated'); refreshAll(); })
+        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); refreshAll(); });
     } else {
-      // New account - initialize empty nested data
       data.pic_bookers = '[]';
       data.service_fees = '{}';
       data.airlines = '[]';
       closeCorporateModal();
-      fetchJson('/api/corporate_accounts', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      }).then(() => { toast.success('Corporate account added'); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }); })
-        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); }); });
+      fetchJson('/api/corporate_accounts', { method: 'POST', body: JSON.stringify(data) })
+        .then(() => { toast.success('Corporate account added'); refreshAll(); })
+        .catch(err => { toast.error('Failed to save: ' + (err.message || 'Unknown error')); refreshAll(); });
     }
   } catch (err) {
     console.error('Save corporate error:', err);
@@ -518,18 +437,12 @@ async function saveCorporateFromModal() {
   }
 }
 
-// Global functions for inline onclick handlers
+// Global functions for inline onclick
 window.editCorporate = function(corpId) {
-  // Set global selector
-  if (el('globalCorporateSelect')) {
-    el('globalCorporateSelect').value = corpId;
-  }
+  if (el('globalCorporateSelect')) el('globalCorporateSelect').value = corpId;
   selectCorporate(corpId);
-  
-  // Switch to detail subtab
   document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
   document.querySelector('.sub-tab[data-subtab="detail"]')?.classList.add('active');
-  
   document.querySelectorAll('.sub-content').forEach(c => c.classList.remove('active'));
   el('subtab-detail')?.classList.add('active');
 };
@@ -542,7 +455,7 @@ window.deleteCorporate = async function(corpId) {
       updateCorporateSelects();
       await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'DELETE' });
       toast.success('Corporate account deleted');
-      loadCorporateData().then(() => { renderCorporateList(); updateCorporateSelects(); loadDashboardSummary(); }).catch(() => {});
+      refreshAll();
     } catch (err) {
       console.error('Delete corporate error:', err);
       toast.error('Failed to delete corporate account: ' + (err.message || 'Unknown error'));
@@ -554,26 +467,14 @@ window.deleteCorporate = async function(corpId) {
 function addPicBookerRow(data = {}) {
   const list = el('picBookersList');
   if (!list) return;
-  
+
   const row = document.createElement('div');
   row.className = 'pic-booker-row';
   row.innerHTML = `
-    <div>
-      <label>Name</label>
-      <input type="text" name="pic_name" value="${data.name || ''}" placeholder="PIC Name">
-    </div>
-    <div>
-      <label>Phone</label>
-      <input type="text" name="pic_phone" value="${data.phone || ''}" placeholder="Phone Number">
-    </div>
-    <div>
-      <label>Office Email</label>
-      <input type="email" name="pic_office_email" value="${data.office_email || ''}" placeholder="office@company.com">
-    </div>
-    <div>
-      <label>Personal Email</label>
-      <input type="email" name="pic_personal_email" value="${data.personal_email || ''}" placeholder="personal@email.com">
-    </div>
+    <div><label>Name</label><input type="text" name="pic_name" value="${data.name || ''}" placeholder="PIC Name"></div>
+    <div><label>Phone</label><input type="text" name="pic_phone" value="${data.phone || ''}" placeholder="Phone Number"></div>
+    <div><label>Office Email</label><input type="email" name="pic_office_email" value="${data.office_email || ''}" placeholder="office@company.com"></div>
+    <div><label>Personal Email</label><input type="email" name="pic_personal_email" value="${data.personal_email || ''}" placeholder="personal@email.com"></div>
     <button type="button" class="btn-remove-pic" onclick="this.parentElement.remove()">✕</button>
   `;
   list.appendChild(row);
@@ -583,26 +484,17 @@ function addPicBookerRow(data = {}) {
 function addAirlineRow(data = {}) {
   const list = el('airlinesList');
   if (!list) return;
-  
+
   const row = document.createElement('div');
   row.className = 'airline-row';
   row.innerHTML = `
-    <div>
-      <label>Airlines</label>
-      <input type="text" name="airline_name" value="${data.airline || ''}" placeholder="e.g., Garuda Indonesia">
-    </div>
-    <div>
-      <label>Pricing Type</label>
-      <select name="airline_pricing">
-        <option value="nett" ${data.pricing === 'nett' ? 'selected' : ''}>Nett</option>
-        <option value="published" ${data.pricing === 'published' ? 'selected' : ''}>Published</option>
-        <option value="corporate" ${data.pricing === 'corporate' ? 'selected' : ''}>Corporate</option>
-      </select>
-    </div>
-    <div>
-      <label>Contract Link</label>
-      <input type="url" name="airline_contract" value="${data.contract_link || ''}" placeholder="https://drive.google.com/...">
-    </div>
+    <div><label>Airlines</label><input type="text" name="airline_name" value="${data.airline || ''}" placeholder="e.g., Garuda Indonesia"></div>
+    <div><label>Pricing Type</label><select name="airline_pricing">
+      <option value="nett" ${data.pricing === 'nett' ? 'selected' : ''}>Nett</option>
+      <option value="published" ${data.pricing === 'published' ? 'selected' : ''}>Published</option>
+      <option value="corporate" ${data.pricing === 'corporate' ? 'selected' : ''}>Corporate</option>
+    </select></div>
+    <div><label>Contract Link</label><input type="url" name="airline_contract" value="${data.contract_link || ''}" placeholder="https://drive.google.com/..."></div>
     <button type="button" class="btn-remove-pic" onclick="this.parentElement.remove()">✕</button>
   `;
   list.appendChild(row);
@@ -612,17 +504,15 @@ function addAirlineRow(data = {}) {
 function loadServiceFees(corpId) {
   const corp = findCorpById(corpId);
   if (!corp) return;
-  
+
   const fees = corp.service_fees || {};
-  
-  // Populate form fields
   const feeFields = [
     'flight_intl', 'flight_dom', 'reissue_intl', 'reissue_dom',
     'refund_intl', 'refund_dom', 'void_fee', 'revalidate_fee',
     'hotel_intl', 'hotel_dom', 'hotel_reschedule_intl', 'hotel_reschedule_dom',
     'hotel_refund_intl', 'hotel_refund_dom', 'train_fee'
   ];
-  
+
   feeFields.forEach(field => {
     const input = document.querySelector(`input[name="${field}"]`);
     const typeSelect = document.querySelector(`select[name="${field}_type"]`);
@@ -634,18 +524,15 @@ function loadServiceFees(corpId) {
 async function saveServiceFees() {
   const corpId = el('serviceFeeCorpSelect').value;
   const corp = findCorpById(corpId);
-  if (!corp) {
-    toast.error('Please select a corporate first');
-    return;
-  }
-  
+  if (!corp) { toast.error('Please select a corporate first'); return; }
+
   const feeFields = [
     'flight_intl', 'flight_dom', 'reissue_intl', 'reissue_dom',
     'refund_intl', 'refund_dom', 'void_fee', 'revalidate_fee',
     'hotel_intl', 'hotel_dom', 'hotel_reschedule_intl', 'hotel_reschedule_dom',
     'hotel_refund_intl', 'hotel_refund_dom', 'train_fee'
   ];
-  
+
   const fees = {};
   feeFields.forEach(field => {
     const input = document.querySelector(`input[name="${field}"]`);
@@ -653,13 +540,9 @@ async function saveServiceFees() {
     if (input) fees[field] = parseFloat(input.value) || 0;
     if (typeSelect) fees[`${field}_type`] = typeSelect.value;
   });
-  
+
   try {
-    await fetchJson(`/api/corporate_accounts/${corpId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ service_fees: JSON.stringify(fees) })
-    });
-    // Update local cache
+    await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'PUT', body: JSON.stringify({ service_fees: JSON.stringify(fees) }) });
     corp.service_fees = fees;
     toast.success('Service fees saved');
   } catch (err) {
@@ -673,46 +556,31 @@ function loadAirlines(corpId) {
   const list = el('airlinesList');
   if (!list) return;
   list.innerHTML = '';
-  
+
   const corp = findCorpById(corpId);
   if (!corp) return;
-  
+
   const airlines = Array.isArray(corp.airlines) ? corp.airlines : [];
-  
   airlines.forEach(airline => addAirlineRow(airline));
-  
-  if (airlines.length === 0) {
-    addAirlineRow();
-  }
+  if (airlines.length === 0) addAirlineRow();
 }
 
 async function saveAirlines() {
   const corpId = el('airlinesCorpSelect').value;
   const corp = findCorpById(corpId);
-  if (!corp) {
-    toast.error('Please select a corporate first');
-    return;
-  }
-  
+  if (!corp) { toast.error('Please select a corporate first'); return; }
+
   const rows = document.querySelectorAll('#airlinesList .airline-row');
   const airlines = [];
-  
   rows.forEach(row => {
     const airline = row.querySelector('input[name="airline_name"]').value.trim();
     const pricing = row.querySelector('select[name="airline_pricing"]').value;
     const contract_link = row.querySelector('input[name="airline_contract"]').value.trim();
-    
-    if (airline) {
-      airlines.push({ airline, pricing, contract_link });
-    }
+    if (airline) airlines.push({ airline, pricing, contract_link });
   });
-  
+
   try {
-    await fetchJson(`/api/corporate_accounts/${corpId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ airlines: JSON.stringify(airlines) })
-    });
-    // Update local cache
+    await fetchJson(`/api/corporate_accounts/${corpId}`, { method: 'PUT', body: JSON.stringify({ airlines: JSON.stringify(airlines) }) });
     corp.airlines = airlines;
     toast.success('Airlines saved');
   } catch (err) {
@@ -721,36 +589,280 @@ async function saveAirlines() {
   }
 }
 
-/* === SALES COMPARISON === */
+/* =============================================================
+   SEPARATED SALES TABS (Flight, Hotel, Tour, Other)
+   Each tab: Add form + filtered table with delete capability
+   ============================================================= */
+
+// Config for each type tab
+const TYPE_CONFIG = {
+  Flight: { prefix: 'flight', emoji: '✈️', bodyId: 'flightSalesBody', filterCorpId: 'flightFilterCorp', filterYearId: 'flightFilterYear' },
+  Hotel:  { prefix: 'hotel',  emoji: '🏨', bodyId: 'hotelSalesBody',  filterCorpId: 'hotelFilterCorp',  filterYearId: 'hotelFilterYear' },
+  Tour:   { prefix: 'tour',   emoji: '🧳', bodyId: 'tourSalesBody',   filterCorpId: 'tourFilterCorp',   filterYearId: 'tourFilterYear' },
+  Other:  { prefix: 'other',  emoji: '📦', bodyId: 'otherSalesBody',  filterCorpId: 'otherFilterCorp',  filterYearId: 'otherFilterYear' }
+};
+
+function loadTypeSalesTab(type) {
+  const cfg = TYPE_CONFIG[type];
+  if (!cfg) return;
+
+  const filterCorpId = el(cfg.filterCorpId)?.value || '';
+  const filterYear = parseInt(el(cfg.filterYearId)?.value) || new Date().getFullYear();
+  const tbody = el(cfg.bodyId);
+  if (!tbody) return;
+
+  // Collect sales of this type from all corporates
+  const rows = [];
+  corporateAccounts.forEach(corp => {
+    if (filterCorpId && String(corp.id) !== String(filterCorpId)) return;
+    if (corp.sales) {
+      corp.sales.forEach(sale => {
+        if (sale.type === type && parseInt(sale.year) === filterYear) {
+          rows.push({
+            id: sale.id,
+            date: `${sale.year}-${String(sale.month).padStart(2, '0')}`,
+            corporate: corp.corporate_name || corp.account_code,
+            reference: sale.reference_number || '—',
+            description: sale.description || '—',
+            amount: parseFloat(sale.amount) || 0,
+            profit: parseFloat(sale.profit) || 0
+          });
+        }
+      });
+    }
+  });
+
+  rows.sort((a, b) => b.date.localeCompare(a.date));
+
+  if (rows.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center">No ${type.toLowerCase()} sales data for ${filterYear}</td></tr>`;
+    return;
+  }
+
+  // Calculate totals
+  let totalAmount = 0, totalProfit = 0;
+  rows.forEach(r => { totalAmount += r.amount; totalProfit += r.profit; });
+
+  tbody.innerHTML = rows.map(r => `
+    <tr>
+      <td>${r.date}</td>
+      <td>${r.corporate}</td>
+      <td>${r.reference}</td>
+      <td>${r.description}</td>
+      <td>${formatCurrency(r.amount)}</td>
+      <td>${formatCurrency(r.profit)}</td>
+      <td><button class="btn btn-sm btn-danger" onclick="deleteSalesRecord(${r.id}, '${type}')">🗑️</button></td>
+    </tr>
+  `).join('') + `
+    <tr style="font-weight: bold; background: var(--bg-alt, #f5f5f5);">
+      <td colspan="4">Total (${rows.length} records)</td>
+      <td>${formatCurrency(totalAmount)}</td>
+      <td>${formatCurrency(totalProfit)}</td>
+      <td></td>
+    </tr>
+  `;
+}
+
+// Add sales for a specific type tab
+async function addTypeSalesData(type, e) {
+  e.preventDefault();
+  const cfg = TYPE_CONFIG[type];
+  if (!cfg) return;
+
+  const corpSelect = el(`${cfg.prefix}SalesCorpSelect`);
+  const corpId = corpSelect?.value;
+  const corp = findCorpById(corpId);
+  if (!corp) { toast.error('Please select a corporate'); return; }
+
+  const year = parseInt(el(`${cfg.prefix}SalesYear`).value);
+  const month = parseInt(el(`${cfg.prefix}SalesMonth`).value);
+  const amount = parseFloat(el(`${cfg.prefix}SalesAmount`).value) || 0;
+  const profit = parseFloat(el(`${cfg.prefix}SalesProfit`).value) || 0;
+  const reference_number = el(`${cfg.prefix}SalesRef`)?.value.trim() || '';
+  const description = el(`${cfg.prefix}SalesDesc`)?.value.trim() || '';
+
+  if (!amount) { toast.error('Please enter sales amount'); return; }
+
+  try {
+    await fetchJson('/api/corporate_sales', {
+      method: 'POST',
+      body: JSON.stringify({
+        corporate_id: parseInt(corpId),
+        year, month,
+        type,
+        amount, profit,
+        reference_number,
+        description
+      })
+    });
+
+    toast.success(`${type} sales data added`);
+
+    // Reset amount/profit/ref/desc fields
+    el(`${cfg.prefix}SalesAmount`).value = '';
+    el(`${cfg.prefix}SalesProfit`).value = '';
+    if (el(`${cfg.prefix}SalesRef`)) el(`${cfg.prefix}SalesRef`).value = '';
+    if (el(`${cfg.prefix}SalesDesc`)) el(`${cfg.prefix}SalesDesc`).value = '';
+
+    await loadCorporateData();
+    loadTypeSalesTab(type);
+    loadDashboardSummary();
+  } catch (err) {
+    console.error(`Add ${type} sales error:`, err);
+    toast.error(`Failed to add ${type} sales: ` + (err.message || 'Unknown error'));
+  }
+}
+
+// Delete an individual sales record
+window.deleteSalesRecord = async function(saleId, type) {
+  if (!confirm('Delete this sales record?')) return;
+
+  try {
+    await fetchJson(`/api/corporate_sales/${saleId}`, { method: 'DELETE' });
+    toast.success('Sales record deleted');
+    await loadCorporateData();
+    if (type) loadTypeSalesTab(type);
+    loadDashboardSummary();
+  } catch (err) {
+    console.error('Delete sale error:', err);
+    toast.error('Failed to delete sales record: ' + (err.message || 'Unknown error'));
+  }
+};
+
+/* =============================================================
+   SALES SUMMARY TAB (Tab 7) - Aggregates all types
+   ============================================================= */
+
+function loadSalesSummary() {
+  const currentYear = new Date().getFullYear();
+
+  // Summary cards per type
+  SALES_TYPES.forEach(type => {
+    let totalSales = 0, totalProfit = 0;
+    corporateAccounts.forEach(corp => {
+      if (corp.sales) {
+        corp.sales.forEach(sale => {
+          if (sale.type === type && parseInt(sale.year) === currentYear) {
+            totalSales += parseFloat(sale.amount) || 0;
+            totalProfit += parseFloat(sale.profit) || 0;
+          }
+        });
+      }
+    });
+
+    const salesEl = el(`summary${type}Sales`);
+    const profitEl = el(`summary${type}Profit`);
+    if (salesEl) salesEl.textContent = formatCompactCurrency(totalSales);
+    if (profitEl) profitEl.textContent = `Profit: ${formatCompactCurrency(totalProfit)}`;
+    if (profitEl) profitEl.className = 'card-trend ' + (totalProfit >= 0 ? 'positive' : 'negative');
+  });
+
+  // Charts
+  renderSalesByTypeChart();
+  renderSummaryTrendChart();
+
+  // Full Year comparison & Month vs Month
+  loadSalesComparison();
+  populateMonthCompareDropdown();
+}
+
+function renderSalesByTypeChart() {
+  const ctx = el('salesByTypeChart')?.getContext('2d');
+  if (!ctx) return;
+  if (charts.salesByType) charts.salesByType.destroy();
+
+  const currentYear = new Date().getFullYear();
+  const typeColors = { Flight: '#4361ee', Hotel: '#7209b7', Tour: '#06d6a0', Other: '#f72585' };
+
+  const data = SALES_TYPES.map(type => {
+    let total = 0;
+    corporateAccounts.forEach(corp => {
+      if (corp.sales) corp.sales.forEach(sale => {
+        if (sale.type === type && parseInt(sale.year) === currentYear) total += parseFloat(sale.amount) || 0;
+      });
+    });
+    return total;
+  });
+
+  charts.salesByType = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: SALES_TYPES.map(t => `${TYPE_CONFIG[t].emoji} ${t}`),
+      datasets: [{ data, backgroundColor: SALES_TYPES.map(t => typeColors[t]) }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: ctx => `${ctx.label}: ${formatCurrency(ctx.raw)}` } }
+      }
+    }
+  });
+}
+
+function renderSummaryTrendChart() {
+  const ctx = el('summaryTrendChart')?.getContext('2d');
+  if (!ctx) return;
+  if (charts.summaryTrend) charts.summaryTrend.destroy();
+
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const currentYear = new Date().getFullYear();
+  const typeColors = { Flight: '#4361ee', Hotel: '#7209b7', Tour: '#06d6a0', Other: '#f72585' };
+
+  const datasets = SALES_TYPES.map(type => {
+    const monthlyData = new Array(12).fill(0);
+    corporateAccounts.forEach(corp => {
+      if (corp.sales) corp.sales.forEach(sale => {
+        if (sale.type === type && parseInt(sale.year) === currentYear) {
+          const m = parseInt(sale.month) - 1;
+          if (m >= 0 && m < 12) monthlyData[m] += parseFloat(sale.amount) || 0;
+        }
+      });
+    });
+    return {
+      label: `${TYPE_CONFIG[type].emoji} ${type}`,
+      data: monthlyData,
+      borderColor: typeColors[type],
+      backgroundColor: typeColors[type] + '20',
+      fill: false,
+      tension: 0.4
+    };
+  });
+
+  charts.summaryTrend = new Chart(ctx, {
+    type: 'line',
+    data: { labels: months, datasets },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => formatCompactCurrency(v) } } }
+    }
+  });
+}
+
+/* === FULL YEAR COMPARISON (in Sales Summary tab) === */
 function loadSalesComparison() {
   const tbody = el('salesComparisonBody');
   if (!tbody) return;
-  
-  const year = parseInt(el('salesCompareYear').value) || new Date().getFullYear();
-  const filterCorpId = el('salesFilterCorp').value;
-  
+
+  const year = parseInt(el('salesCompareYear')?.value) || new Date().getFullYear();
+  const filterCorpId = el('salesFilterCorp')?.value;
+
   let accountsToShow = corporateAccounts;
-  if (filterCorpId !== '') {
+  if (filterCorpId) {
     const found = findCorpById(filterCorpId);
     accountsToShow = found ? [found] : [];
   }
-  
+
   if (accountsToShow.length === 0) {
     tbody.innerHTML = '<tr><td colspan="28" class="text-center">No data available</td></tr>';
     return;
   }
-  
+
   const rows = accountsToShow.map(corp => {
-    const monthlyData = {};
-    const lastYearData = {};
-    
-    // Initialize months
-    for (let m = 1; m <= 12; m++) {
-      monthlyData[m] = { sales: 0, profit: 0 };
-      lastYearData[m] = { sales: 0, profit: 0 };
-    }
-    
-    // Populate from sales data
+    const monthlyData = {}, lastYearData = {};
+    for (let m = 1; m <= 12; m++) { monthlyData[m] = { sales: 0, profit: 0 }; lastYearData[m] = { sales: 0, profit: 0 }; }
+
     if (corp.sales) {
       corp.sales.forEach(sale => {
         const month = parseInt(sale.month);
@@ -763,20 +875,16 @@ function loadSalesComparison() {
         }
       });
     }
-    
-    // Calculate totals
-    let totalSales = 0, totalProfit = 0;
-    let lastTotalSales = 0, lastTotalProfit = 0;
-    
+
+    let totalSales = 0, totalProfit = 0, lastTotalSales = 0;
     for (let m = 1; m <= 12; m++) {
       totalSales += monthlyData[m].sales;
       totalProfit += monthlyData[m].profit;
       lastTotalSales += lastYearData[m].sales;
-      lastTotalProfit += lastYearData[m].profit;
     }
-    
+
     const growth = lastTotalSales > 0 ? ((totalSales - lastTotalSales) / lastTotalSales * 100) : 0;
-    
+
     let cells = `<td>${corp.corporate_name || corp.account_code}</td>`;
     for (let m = 1; m <= 12; m++) {
       cells += `<td>${formatCompactCurrency(monthlyData[m].sales)}</td>`;
@@ -785,224 +893,116 @@ function loadSalesComparison() {
     cells += `<td><strong>${formatCompactCurrency(totalSales)}</strong></td>`;
     cells += `<td><strong>${formatCompactCurrency(totalProfit)}</strong></td>`;
     cells += `<td class="${growth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(growth)}</td>`;
-    
     return `<tr>${cells}</tr>`;
   });
-  
+
   tbody.innerHTML = rows.join('');
-  
   renderGrowthChart(accountsToShow, year);
 }
 
 function renderGrowthChart(accounts, year) {
   const ctx = el('growthChart')?.getContext('2d');
   if (!ctx) return;
-  
   if (charts.growth) charts.growth.destroy();
-  
+
   const data = accounts.map(corp => {
     let currentTotal = 0, lastTotal = 0;
-    
     if (corp.sales) {
       corp.sales.forEach(sale => {
-        if (parseInt(sale.year) === year) {
-          currentTotal += parseFloat(sale.amount) || 0;
-        } else if (parseInt(sale.year) === year - 1) {
-          lastTotal += parseFloat(sale.amount) || 0;
-        }
+        if (parseInt(sale.year) === year) currentTotal += parseFloat(sale.amount) || 0;
+        else if (parseInt(sale.year) === year - 1) lastTotal += parseFloat(sale.amount) || 0;
       });
     }
-    
     const growth = lastTotal > 0 ? ((currentTotal - lastTotal) / lastTotal * 100) : 0;
-    return {
-      name: corp.corporate_name || corp.account_code,
-      growth,
-      current: currentTotal,
-      last: lastTotal
-    };
+    return { name: corp.corporate_name || corp.account_code, growth, current: currentTotal, last: lastTotal };
   });
-  
+
   charts.growth = new Chart(ctx, {
     type: 'bar',
     data: {
       labels: data.map(d => d.name),
       datasets: [
-        {
-          label: `${year}`,
-          data: data.map(d => d.current),
-          backgroundColor: '#4361ee'
-        },
-        {
-          label: `${year - 1}`,
-          data: data.map(d => d.last),
-          backgroundColor: '#adb5bd'
-        }
+        { label: `${year}`, data: data.map(d => d.current), backgroundColor: '#4361ee' },
+        { label: `${year - 1}`, data: data.map(d => d.last), backgroundColor: '#adb5bd' }
       ]
     },
     options: {
       responsive: true,
-      plugins: {
-        legend: { position: 'top' }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: value => formatCompactCurrency(value)
-          }
-        }
-      }
+      plugins: { legend: { position: 'top' } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => formatCompactCurrency(v) } } }
     }
   });
 }
 
-/* === SALES MANAGEMENT === */
-async function addSalesData(e) {
-  e.preventDefault();
-  
-  const corpId = el('salesCorporateSelect').value;
-  const corp = findCorpById(corpId);
-  if (!corp) {
-    toast.error('Please select a corporate');
-    return;
-  }
-  
-  const year = parseInt(el('salesYear').value);
-  const month = parseInt(el('salesMonth').value);
-  const type = el('salesType').value;
-  const amount = parseFloat(el('salesAmount').value) || 0;
-  const profit = parseFloat(el('salesProfit').value) || 0;
-  
-  if (!amount) {
-    toast.error('Please enter sales amount');
-    return;
-  }
-  
-  try {
-    await fetchJson('/api/corporate_sales', {
-      method: 'POST',
-      body: JSON.stringify({
-        corporate_id: parseInt(corpId),
-        year,
-        month,
-        type,
-        amount,
-        profit
-      })
-    });
-    
-    toast.success('Sales data added successfully');
-    
-    // Reset form
-    el('salesAmount').value = '';
-    el('salesProfit').value = '';
-    
-    // Reload data and refresh displays
-    await loadCorporateData();
-    loadSalesComparison();
-    loadDashboardSummary();
-  } catch (err) {
-    console.error('Add sales error:', err);
-    toast.error('Failed to add sales data: ' + (err.message || 'Unknown error'));
-  }
-}
-
-/* === MONTH VS MONTH COMPARISON === */
+/* === MONTH vs MONTH COMPARISON === */
 function compareMonths() {
   const month1 = parseInt(el('monthCompare1Month').value);
   const year1 = parseInt(el('monthCompare1Year').value);
   const month2 = parseInt(el('monthCompare2Month').value);
   const year2 = parseInt(el('monthCompare2Year').value);
   const filterCorpId = el('monthCompareCorp').value;
-  
+
   const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const period1Label = `${monthNames[month1]} ${year1}`;
   const period2Label = `${monthNames[month2]} ${year2}`;
-  
-  // Update headers
+
   el('period1Header').textContent = `${period1Label} Sales`;
   el('period1ProfitHeader').textContent = `${period1Label} Profit`;
   el('period2Header').textContent = `${period2Label} Sales`;
   el('period2ProfitHeader').textContent = `${period2Label} Profit`;
-  
+
   let accountsToShow = corporateAccounts;
-  if (filterCorpId !== '') {
+  if (filterCorpId) {
     const found = findCorpById(filterCorpId);
     accountsToShow = found ? [found] : [];
   }
-  
+
   if (accountsToShow.length === 0) {
     el('monthComparisonBody').innerHTML = '<tr><td colspan="8" class="text-center">No data available</td></tr>';
     el('monthComparisonFooter').innerHTML = '';
     el('monthComparisonResults').style.display = 'block';
     return;
   }
-  
-  let grandTotal1Sales = 0, grandTotal1Profit = 0;
-  let grandTotal2Sales = 0, grandTotal2Profit = 0;
-  
+
+  let g1S = 0, g1P = 0, g2S = 0, g2P = 0;
+
   const rows = accountsToShow.map(corp => {
-    let period1Sales = 0, period1Profit = 0;
-    let period2Sales = 0, period2Profit = 0;
-    
+    let p1S = 0, p1P = 0, p2S = 0, p2P = 0;
     if (corp.sales) {
       corp.sales.forEach(sale => {
-        const saleMonth = parseInt(sale.month);
-        const saleYear = parseInt(sale.year);
-        
-        if (saleMonth === month1 && saleYear === year1) {
-          period1Sales += parseFloat(sale.amount) || 0;
-          period1Profit += parseFloat(sale.profit) || 0;
-        }
-        if (saleMonth === month2 && saleYear === year2) {
-          period2Sales += parseFloat(sale.amount) || 0;
-          period2Profit += parseFloat(sale.profit) || 0;
-        }
+        const sm = parseInt(sale.month), sy = parseInt(sale.year);
+        if (sm === month1 && sy === year1) { p1S += parseFloat(sale.amount) || 0; p1P += parseFloat(sale.profit) || 0; }
+        if (sm === month2 && sy === year2) { p2S += parseFloat(sale.amount) || 0; p2P += parseFloat(sale.profit) || 0; }
       });
     }
-    
-    grandTotal1Sales += period1Sales;
-    grandTotal1Profit += period1Profit;
-    grandTotal2Sales += period2Sales;
-    grandTotal2Profit += period2Profit;
-    
-    const salesDiff = period1Sales - period2Sales;
-    const profitDiff = period1Profit - period2Profit;
-    const growth = period2Sales > 0 ? ((period1Sales - period2Sales) / period2Sales * 100) : (period1Sales > 0 ? 100 : 0);
-    
-    return `
-      <tr>
-        <td>${corp.corporate_name || corp.account_code}</td>
-        <td>${formatCompactCurrency(period1Sales)}</td>
-        <td>${formatCompactCurrency(period1Profit)}</td>
-        <td>${formatCompactCurrency(period2Sales)}</td>
-        <td>${formatCompactCurrency(period2Profit)}</td>
-        <td class="${salesDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${salesDiff >= 0 ? '+' : ''}${formatCompactCurrency(salesDiff)}</td>
-        <td class="${profitDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${profitDiff >= 0 ? '+' : ''}${formatCompactCurrency(profitDiff)}</td>
-        <td class="${growth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(growth)}</td>
-      </tr>
-    `;
+    g1S += p1S; g1P += p1P; g2S += p2S; g2P += p2P;
+
+    const sDiff = p1S - p2S, pDiff = p1P - p2P;
+    const growth = p2S > 0 ? ((p1S - p2S) / p2S * 100) : (p1S > 0 ? 100 : 0);
+
+    return `<tr>
+      <td>${corp.corporate_name || corp.account_code}</td>
+      <td>${formatCompactCurrency(p1S)}</td><td>${formatCompactCurrency(p1P)}</td>
+      <td>${formatCompactCurrency(p2S)}</td><td>${formatCompactCurrency(p2P)}</td>
+      <td class="${sDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${sDiff >= 0 ? '+' : ''}${formatCompactCurrency(sDiff)}</td>
+      <td class="${pDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${pDiff >= 0 ? '+' : ''}${formatCompactCurrency(pDiff)}</td>
+      <td class="${growth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(growth)}</td>
+    </tr>`;
   });
-  
-  // Calculate totals
-  const totalSalesDiff = grandTotal1Sales - grandTotal2Sales;
-  const totalProfitDiff = grandTotal1Profit - grandTotal2Profit;
-  const totalGrowth = grandTotal2Sales > 0 ? ((grandTotal1Sales - grandTotal2Sales) / grandTotal2Sales * 100) : (grandTotal1Sales > 0 ? 100 : 0);
-  
+
+  const tSD = g1S - g2S, tPD = g1P - g2P;
+  const tG = g2S > 0 ? ((g1S - g2S) / g2S * 100) : (g1S > 0 ? 100 : 0);
+
   el('monthComparisonBody').innerHTML = rows.join('');
-  el('monthComparisonFooter').innerHTML = `
-    <tr>
-      <td>TOTAL</td>
-      <td>${formatCompactCurrency(grandTotal1Sales)}</td>
-      <td>${formatCompactCurrency(grandTotal1Profit)}</td>
-      <td>${formatCompactCurrency(grandTotal2Sales)}</td>
-      <td>${formatCompactCurrency(grandTotal2Profit)}</td>
-      <td class="${totalSalesDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${totalSalesDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalSalesDiff)}</td>
-      <td class="${totalProfitDiff >= 0 ? 'growth-positive' : 'growth-negative'}">${totalProfitDiff >= 0 ? '+' : ''}${formatCompactCurrency(totalProfitDiff)}</td>
-      <td class="${totalGrowth >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(totalGrowth)}</td>
-    </tr>
-  `;
-  
+  el('monthComparisonFooter').innerHTML = `<tr>
+    <td>TOTAL</td>
+    <td>${formatCompactCurrency(g1S)}</td><td>${formatCompactCurrency(g1P)}</td>
+    <td>${formatCompactCurrency(g2S)}</td><td>${formatCompactCurrency(g2P)}</td>
+    <td class="${tSD >= 0 ? 'growth-positive' : 'growth-negative'}">${tSD >= 0 ? '+' : ''}${formatCompactCurrency(tSD)}</td>
+    <td class="${tPD >= 0 ? 'growth-positive' : 'growth-negative'}">${tPD >= 0 ? '+' : ''}${formatCompactCurrency(tPD)}</td>
+    <td class="${tG >= 0 ? 'growth-positive' : 'growth-negative'}">${formatPercent(tG)}</td>
+  </tr>`;
+
   el('monthComparisonResults').style.display = 'block';
   toast.success(`Comparing ${period1Label} vs ${period2Label}`);
 }
@@ -1010,7 +1010,7 @@ function compareMonths() {
 function populateMonthCompareDropdown() {
   const select = el('monthCompareCorp');
   if (!select) return;
-  
+
   select.innerHTML = '<option value="">All Corporates</option>';
   corporateAccounts.forEach(corp => {
     const option = document.createElement('option');
@@ -1018,109 +1018,84 @@ function populateMonthCompareDropdown() {
     option.textContent = corp.corporate_name || corp.account_code;
     select.appendChild(option);
   });
-  
-  // Set default values based on current month
+
   const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-  
-  if (el('monthCompare1Month')) el('monthCompare1Month').value = currentMonth;
-  if (el('monthCompare1Year')) el('monthCompare1Year').value = currentYear;
-  if (el('monthCompare2Month')) el('monthCompare2Month').value = currentMonth;
-  if (el('monthCompare2Year')) el('monthCompare2Year').value = currentYear - 1;
+  if (el('monthCompare1Month')) el('monthCompare1Month').value = now.getMonth() + 1;
+  if (el('monthCompare1Year')) el('monthCompare1Year').value = now.getFullYear();
+  if (el('monthCompare2Month')) el('monthCompare2Month').value = now.getMonth() + 1;
+  if (el('monthCompare2Year')) el('monthCompare2Year').value = now.getFullYear() - 1;
 }
 
 /* === EVENT LISTENERS === */
 function initEventListeners() {
-  // Add Corporate button
+  // Add Corporate
   el('addCorporateBtn')?.addEventListener('click', () => openCorporateModal());
-  
-  // Modal buttons
+
+  // Modal
   el('closeCorporateModal')?.addEventListener('click', closeCorporateModal);
   el('cancelCorporateModal')?.addEventListener('click', closeCorporateModal);
   el('saveCorporateModal')?.addEventListener('click', saveCorporateFromModal);
-  
-  // Modal overlay click
   el('corporateModal')?.querySelector('.modal-overlay')?.addEventListener('click', closeCorporateModal);
-  
-  // Add PIC Booker
+
+  // PIC / Airline
   el('addPicBtn')?.addEventListener('click', () => addPicBookerRow());
-  
-  // Add Airline
   el('addAirlineBtn')?.addEventListener('click', () => addAirlineRow());
-  
+
   // Global corporate selector
-  el('globalCorporateSelect')?.addEventListener('change', (e) => {
-    selectCorporate(e.target.value);
-  });
-  
-  // Service fee corporate select
+  el('globalCorporateSelect')?.addEventListener('change', (e) => selectCorporate(e.target.value));
+
+  // Service fee selector
   el('serviceFeeCorpSelect')?.addEventListener('change', (e) => {
     const id = e.target.value;
-    // Sync with global selector
-    if (el('globalCorporateSelect')) {
-      el('globalCorporateSelect').value = id;
-      selectCorporate(id);
-    }
+    if (el('globalCorporateSelect')) { el('globalCorporateSelect').value = id; selectCorporate(id); }
     loadServiceFees(id);
   });
-  
-  // Save service fees
   el('saveServiceFeeBtn')?.addEventListener('click', saveServiceFees);
-  
-  // Airlines corporate select
+
+  // Airlines selector
   el('airlinesCorpSelect')?.addEventListener('change', (e) => {
     const id = e.target.value;
-    // Sync with global selector
-    if (el('globalCorporateSelect')) {
-      el('globalCorporateSelect').value = id;
-      selectCorporate(id);
-    }
+    if (el('globalCorporateSelect')) { el('globalCorporateSelect').value = id; selectCorporate(id); }
     loadAirlines(id);
   });
-  
-  // Save airlines
   el('saveAirlinesBtn')?.addEventListener('click', saveAirlines);
-  
-  // Sales comparison refresh
+
+  // Sales Summary tab controls
   el('refreshSalesBtn')?.addEventListener('click', loadSalesComparison);
   el('salesCompareYear')?.addEventListener('change', loadSalesComparison);
   el('salesFilterCorp')?.addEventListener('change', loadSalesComparison);
-  
-  // Month vs month comparison
   el('compareMonthsBtn')?.addEventListener('click', compareMonths);
-  
-  // Add sales form
-  el('addSalesForm')?.addEventListener('submit', addSalesData);
-  
+
+  // Type-specific sales tab forms & filters
+  for (const type of SALES_TYPES) {
+    const cfg = TYPE_CONFIG[type];
+
+    // Add sales form
+    el(`add${type}SalesForm`)?.addEventListener('submit', (e) => addTypeSalesData(type, e));
+
+    // Filter refresh
+    el(`refresh${type}SalesBtn`)?.addEventListener('click', () => loadTypeSalesTab(type));
+    el(cfg.filterCorpId)?.addEventListener('change', () => loadTypeSalesTab(type));
+    el(cfg.filterYearId)?.addEventListener('change', () => loadTypeSalesTab(type));
+  }
+
   // Corporate detail form
-  el('corporateDetailForm')?.addEventListener('submit', (e) => {
-    e.preventDefault();
-    saveCorporateDetail();
-  });
-  
-  el('cancelDetailBtn')?.addEventListener('click', () => {
-    // Switch back to list subtab
-    document.querySelector('.sub-tab[data-subtab="list"]')?.click();
-  });
+  el('corporateDetailForm')?.addEventListener('submit', (e) => { e.preventDefault(); saveCorporateDetail(); });
+  el('cancelDetailBtn')?.addEventListener('click', () => document.querySelector('.sub-tab[data-subtab="list"]')?.click());
 }
 
 async function saveCorporateDetail() {
   const form = el('corporateDetailForm');
-  
-  // Collect PIC bookers
+
   const picBookers = [];
   document.querySelectorAll('#picBookersList .pic-booker-row').forEach(row => {
     const name = row.querySelector('input[name="pic_name"]').value.trim();
     const phone = row.querySelector('input[name="pic_phone"]').value.trim();
     const office_email = row.querySelector('input[name="pic_office_email"]').value.trim();
     const personal_email = row.querySelector('input[name="pic_personal_email"]').value.trim();
-    
-    if (name) {
-      picBookers.push({ name, phone, office_email, personal_email });
-    }
+    if (name) picBookers.push({ name, phone, office_email, personal_email });
   });
-  
+
   const data = {
     account_code: form.account_code.value.trim(),
     corporate_name: form.corporate_name.value.trim(),
@@ -1132,52 +1107,44 @@ async function saveCorporateDetail() {
     pic_bookers: JSON.stringify(picBookers),
     status: 'active'
   };
-  
+
   if (!data.account_code || !data.corporate_name) {
     toast.error('Account code and corporate name are required');
     return;
   }
-  
+
   try {
-    // Check if we're editing an existing account (by form data-corp-id or by matching account_code)
     const corpIdFromForm = form.dataset.corpId;
     const existingById = corpIdFromForm ? findCorpById(corpIdFromForm) : null;
     const existingByCode = !existingById ? corporateAccounts.find(c => c.account_code === data.account_code) : null;
     const existing = existingById || existingByCode;
-    
+
     if (existing) {
-      // Preserve existing nested data that isn't being edited here
       data.service_fees = JSON.stringify(existing.service_fees || {});
       data.airlines = JSON.stringify(existing.airlines || []);
-      
-      await fetchJson(`/api/corporate_accounts/${existing.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(data)
-      });
+      await fetchJson(`/api/corporate_accounts/${existing.id}`, { method: 'PUT', body: JSON.stringify(data) });
       toast.success('Corporate account updated');
     } else {
-      // New account
       data.service_fees = '{}';
       data.airlines = '[]';
-      
-      await fetchJson('/api/corporate_accounts', {
-        method: 'POST',
-        body: JSON.stringify(data)
-      });
+      await fetchJson('/api/corporate_accounts', { method: 'POST', body: JSON.stringify(data) });
       toast.success('Corporate account added');
     }
-    
-    await loadCorporateData();
-    renderCorporateList();
-    updateCorporateSelects();
-    loadDashboardSummary();
-    
-    // Switch to list view
+
+    await refreshAll();
     document.querySelector('.sub-tab[data-subtab="list"]')?.click();
   } catch (err) {
     console.error('Save corporate detail error:', err);
     toast.error('Failed to save corporate account: ' + (err.message || 'Unknown error'));
   }
+}
+
+/* === REFRESH HELPER === */
+async function refreshAll() {
+  await loadCorporateData();
+  renderCorporateList();
+  updateCorporateSelects();
+  loadDashboardSummary();
 }
 
 /* === INITIALIZE === */
@@ -1188,11 +1155,9 @@ async function init() {
   loadDashboardSummary();
   renderCorporateList();
   updateCorporateSelects();
-  
-  // Add initial PIC booker row
+
+  // Add initial rows
   addPicBookerRow();
-  
-  // Add initial airline row
   addAirlineRow();
 }
 

@@ -1009,14 +1009,14 @@ async function loadDashboardSummary() {
       if (salesChangeEl && summary.comparison.salesChange !== null) {
         const salesChange = parseFloat(summary.comparison.salesChange);
         salesChangeEl.style.display = 'inline-block';
-        salesChangeEl.className = `metric-change ${salesChange >= 0 ? 'positive' : 'negative'}`;
+        salesChangeEl.className = `db-kpi-change ${salesChange >= 0 ? 'positive' : 'negative'}`;
         salesChangeEl.textContent = `${salesChange >= 0 ? '↑' : '↓'} ${Math.abs(salesChange)}%`;
       }
       
       if (profitChangeEl && summary.comparison.profitChange !== null) {
         const profitChange = parseFloat(summary.comparison.profitChange);
         profitChangeEl.style.display = 'inline-block';
-        profitChangeEl.className = `metric-change ${profitChange >= 0 ? 'positive' : 'negative'}`;
+        profitChangeEl.className = `db-kpi-change ${profitChange >= 0 ? 'positive' : 'negative'}`;
         profitChangeEl.textContent = `${profitChange >= 0 ? '↑' : '↓'} ${Math.abs(profitChange)}%`;
       }
     } else {

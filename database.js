@@ -429,7 +429,7 @@ async function createSchema(db) {
     updated_by TEXT
   )`);
 
-  // Corporate Sales - monthly sales data per corporate account
+  // Corporate Sales - monthly sales data per corporate account (separated by type)
   await db.run(`CREATE TABLE IF NOT EXISTS corporate_sales (
     id ${idCol},
     corporate_id INTEGER NOT NULL,
@@ -438,6 +438,8 @@ async function createSchema(db) {
     type TEXT DEFAULT 'General',
     amount ${num()} DEFAULT 0,
     profit ${num()} DEFAULT 0,
+    description TEXT,
+    reference_number TEXT,
     created_by TEXT,
     created_at ${ts} ${createdDefault}
   )`);
@@ -611,6 +613,10 @@ async function createSchema(db) {
   await ensureColumn('users', 'failed_attempts', 'INTEGER DEFAULT 0');
   await ensureColumn('users', 'locked_until', 'TEXT');
 
+  // Corporate Sales: additional columns for separated sales tabs
+  await ensureColumn('corporate_sales', 'description', 'TEXT');
+  await ensureColumn('corporate_sales', 'reference_number', 'TEXT');
+
   // ===================================================================
   // PERFORMANCE INDEXES - Add indexes on frequently queried columns
   // ===================================================================
@@ -705,6 +711,7 @@ async function createSchema(db) {
   await ensureIndex('corporate_accounts', 'idx_corp_acc_status', 'status');
   await ensureIndex('corporate_sales', 'idx_corp_sales_corp', 'corporate_id');
   await ensureIndex('corporate_sales', 'idx_corp_sales_period', 'year, month');
+  await ensureIndex('corporate_sales', 'idx_corp_sales_type', 'type');
 
   // ===================================================================
   // AUDIT LOG COLUMNS - Add created_at, created_by, updated_at, updated_by
