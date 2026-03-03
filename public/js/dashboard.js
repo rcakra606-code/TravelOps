@@ -710,7 +710,7 @@ async function renderCharts() {
     });
     
     // Clear Chart.js instances from canvas elements
-    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesMonthly', 'chartSalesRegion', 'chartToursRegion', 'chartParticipants', 'chartUpcomingTours', 'chartTargetAchievement'];
+    const canvasIds = ['chartSalesTarget', 'chartProfitTarget', 'chartSalesMonthly'];
     canvasIds.forEach(id => {
       const canvas = document.getElementById(id);
       if (canvas) {
@@ -976,6 +976,7 @@ async function loadDashboardSummary() {
     if (el('totalSales')) el('totalSales').textContent = formatCurrency(summary.sales.current);
     if (el('totalProfit')) el('totalProfit').textContent = formatCurrency(summary.profit.current);
     if (el('salesAchievement')) el('salesAchievement').textContent = `Achv: ${summary.sales.achievement}%`;
+    if (el('salesCount')) el('salesCount').textContent = summary.sales.count || 0;
     if (el('profitAchievement')) el('profitAchievement').textContent = `Achv: ${summary.profit.achievement}%`;
     if (el('upcomingToursCount')) el('upcomingToursCount').textContent = summary.modules.upcomingTours;
     
@@ -995,6 +996,7 @@ async function loadDashboardSummary() {
     if (el('ytdTargetProfit')) el('ytdTargetProfit').textContent = formatCurrency(summary.ytd.targetProfit);
     if (el('ytdSalesAchievement')) el('ytdSalesAchievement').textContent = `${summary.ytd.salesAchievement}%`;
     if (el('ytdProfitAchievement')) el('ytdProfitAchievement').textContent = `${summary.ytd.profitAchievement}%`;
+    if (el('ytdTransactionCount')) el('ytdTransactionCount').textContent = summary.ytd.transactionCount || 0;
     if (el('ytdSalesBar')) el('ytdSalesBar').style.width = `${Math.min(parseFloat(summary.ytd.salesAchievement), 100)}%`;
     if (el('ytdProfitBar')) el('ytdProfitBar').style.width = `${Math.min(parseFloat(summary.ytd.profitAchievement), 100)}%`;
     

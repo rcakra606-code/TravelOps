@@ -410,6 +410,53 @@
   .db-kpi-value { font-size: 18px; }
 }
 
+/* Filter bar */
+.db-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  background: var(--card-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  margin: 0 0 8px 0;
+}
+.db-filter-bar label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary, #374151);
+  white-space: nowrap;
+}
+.db-filter-bar select,
+.db-filter-bar input {
+  padding: 6px 10px;
+  border: 1px solid var(--border-light, #e5e7eb);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--bg-primary, #f9fafb);
+  color: var(--text-primary, #374151);
+  min-width: 120px;
+}
+.db-filter-bar .db-filter-apply {
+  padding: 6px 16px;
+  background: var(--primary, #4361ee);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.db-filter-bar .db-filter-apply:hover {
+  background: var(--primary-dark, #3a56d4);
+}
+@media (max-width: 640px) {
+  .db-filter-bar { flex-direction: column; align-items: stretch; }
+  .db-filter-bar select, .db-filter-bar input { width: 100%; }
+}
+
 /* Dark mode support */
 [data-theme="dark"] .db-welcome {
   background: linear-gradient(135deg, #4338ca 0%, #581c87 100%);
@@ -419,6 +466,16 @@
 }
 [data-theme="dark"] .db-kpi-change.negative {
   background: rgba(220, 38, 38, 0.15);
+}
+[data-theme="dark"] .db-filter-bar {
+  background: var(--card-bg, #1f2937);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+[data-theme="dark"] .db-filter-bar select,
+[data-theme="dark"] .db-filter-bar input {
+  background: var(--bg-primary, #111827);
+  border-color: var(--border-light, #374151);
+  color: var(--text-primary, #e5e7eb);
 }
 </style>
 </head>
@@ -526,6 +583,25 @@
     </div>
   </div>
 
+  <!-- === FILTER BAR (Charts & Metrics Filtering) === -->
+  <div class="db-filter-bar">
+    <label>📊 Filter:</label>
+    <select id="filterPeriod">
+      <option value="all">All Time</option>
+      <option value="month">By Month</option>
+      <option value="year">By Year</option>
+    </select>
+    <input type="month" id="filterMonth" style="display:none;" />
+    <input type="number" id="filterYear" placeholder="Year" min="2020" max="2030" style="display:none;width:100px;" />
+    <select id="filterStaff">
+      <option value="all">All Staff</option>
+    </select>
+    <select id="filterRegion">
+      <option value="all">All Regions</option>
+    </select>
+    <button class="db-filter-apply" id="applyFilters">Apply</button>
+  </div>
+
   <!-- === ROW 1: TOP KPI CARDS (like Dabang "Today's Sales" row) === -->
   <div class="db-kpi-row">
     <div class="db-kpi-card db-kpi-sales">
@@ -533,7 +609,7 @@
       <div class="db-kpi-info">
         <div class="db-kpi-value" id="totalSales">Rp 0</div>
         <div class="db-kpi-label">Monthly Sales</div>
-        <div class="db-kpi-sub" id="salesAchievement">Achv: 0%</div>
+        <div class="db-kpi-sub"><span id="salesAchievement">Achv: 0%</span> · <span id="salesCount">0</span> txns</div>
       </div>
       <span class="db-kpi-change" id="salesChange" style="display:none;"></span>
     </div>
@@ -612,6 +688,10 @@
           <div class="db-ytd-row db-ytd-row-sub">
             <span>Target: <strong id="ytdTargetSales">Rp 0</strong></span>
             <span class="db-ytd-pct" id="ytdSalesAchievement">0%</span>
+          </div>
+          <div class="db-ytd-row db-ytd-row-sub" style="margin-top:4px;">
+            <span style="font-size:11px;color:#9ca3af;">📋 Transactions YTD</span>
+            <span style="font-size:12px;font-weight:600;" id="ytdTransactionCount">0</span>
           </div>
         </div>
         <div class="db-ytd-metric">
