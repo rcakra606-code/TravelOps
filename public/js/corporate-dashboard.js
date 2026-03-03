@@ -188,8 +188,8 @@ function renderRevenueChart() {
     data: {
       labels: months,
       datasets: [
-        { label: `${currentYear}`, data: currentYearData, borderColor: '#4361ee', backgroundColor: 'rgba(67, 97, 238, 0.1)', fill: true, tension: 0.4 },
-        { label: `${lastYear}`, data: lastYearData, borderColor: '#adb5bd', backgroundColor: 'rgba(173, 181, 189, 0.1)', fill: true, tension: 0.4, borderDash: [5, 5] }
+        { label: `${currentYear}`, data: currentYearData, borderColor: '#d4a843', backgroundColor: 'rgba(212, 168, 67, 0.15)', fill: true, tension: 0.4 },
+        { label: `${lastYear}`, data: lastYearData, borderColor: '#6b83a5', backgroundColor: 'rgba(107, 131, 165, 0.15)', fill: true, tension: 0.4, borderDash: [5, 5] }
       ]
     },
     options: {
@@ -216,7 +216,7 @@ function renderTopAccountsChart() {
     type: 'bar',
     data: {
       labels: corpTotals.map(c => c.name),
-      datasets: [{ label: 'Revenue', data: corpTotals.map(c => c.total), backgroundColor: ['#4361ee', '#7209b7', '#f72585', '#4cc9f0', '#06d6a0'] }]
+      datasets: [{ label: 'Revenue', data: corpTotals.map(c => c.total), backgroundColor: ['#d4a843', '#2d6a8a', '#d4944c', '#67b8db', '#4ade80'] }]
     },
     options: {
       indexAxis: 'y', responsive: true,
@@ -772,7 +772,7 @@ function renderSalesByTypeChart() {
   if (charts.salesByType) charts.salesByType.destroy();
 
   const currentYear = new Date().getFullYear();
-  const typeColors = { Flight: '#4361ee', Hotel: '#7209b7', Tour: '#06d6a0', Other: '#f72585' };
+  const typeColors = { Flight: '#d4a843', Hotel: '#2d6a8a', Tour: '#4ade80', Other: '#d4944c' };
 
   const data = SALES_TYPES.map(type => {
     let total = 0;
@@ -807,7 +807,7 @@ function renderSummaryTrendChart() {
 
   const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentYear = new Date().getFullYear();
-  const typeColors = { Flight: '#4361ee', Hotel: '#7209b7', Tour: '#06d6a0', Other: '#f72585' };
+  const typeColors = { Flight: '#d4a843', Hotel: '#2d6a8a', Tour: '#4ade80', Other: '#d4944c' };
 
   const datasets = SALES_TYPES.map(type => {
     const monthlyData = new Array(12).fill(0);
@@ -922,8 +922,8 @@ function renderGrowthChart(accounts, year) {
     data: {
       labels: data.map(d => d.name),
       datasets: [
-        { label: `${year}`, data: data.map(d => d.current), backgroundColor: '#4361ee' },
-        { label: `${year - 1}`, data: data.map(d => d.last), backgroundColor: '#adb5bd' }
+        { label: `${year}`, data: data.map(d => d.current), backgroundColor: '#d4a843' },
+        { label: `${year - 1}`, data: data.map(d => d.last), backgroundColor: '#6b83a5' }
       ]
     },
     options: {

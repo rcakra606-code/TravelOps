@@ -21,14 +21,14 @@ class ChartEnhancer {
         labels: data.labels || data.map((_, i) => i),
         datasets: [{
           data: data.values || data,
-          borderColor: options.color || '#3b82f6',
-          backgroundColor: options.fillColor || 'rgba(59, 130, 246, 0.1)',
+          borderColor: options.color || '#d4a843',
+          backgroundColor: options.fillColor || 'rgba(212, 168, 67, 0.15)',
           borderWidth: 2,
           fill: true,
           tension: 0.4,
           pointRadius: 0,
           pointHoverRadius: 4,
-          pointHoverBackgroundColor: options.color || '#3b82f6'
+          pointHoverBackgroundColor: options.color || '#d4a843'
         }]
       },
       options: {
@@ -106,8 +106,8 @@ class ChartEnhancer {
         datasets: [{
           data: [percentage, 100 - percentage],
           backgroundColor: [
-            options.color || '#3b82f6',
-            options.bgColor || '#e5e7eb'
+            options.color || '#d4a843',
+            options.bgColor || 'rgba(255,255,255,0.10)'
           ],
           borderWidth: 0
         }]
@@ -137,7 +137,7 @@ class ChartEnhancer {
         const fontSize = (height / 114).toFixed(2);
         ctx.font = `bold ${fontSize}em sans-serif`;
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = options.textColor || '#111827';
+        ctx.fillStyle = options.textColor || '#e8ecf2';
         const text = centerText;
         const textX = Math.round((width - ctx.measureText(text).width) / 2);
         const textY = height / 2;

@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -29,6 +29,7 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
+<link rel="stylesheet" href="/css/sunset-theme.css">
 <style>
   /* My Tours Tab Styles */
   .mt-summary-row { display: flex; gap: 20px; margin-bottom: 24px; flex-wrap: wrap; }
@@ -130,82 +131,83 @@
 </style>
 <script src="/js/seasonal-theme.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/js/chart-theme.js"></script>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">🚀 TravelOps</div>
+    <div class="brand">?? TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">📦</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html" class="active">🧳 Tours</a>
-          <a href="/documents-dashboard.html">📄 Documents</a>
-          <a href="/hotel-dashboard.html">🏨 Hotel</a>
-          <a href="/cruise-dashboard.html">🚢 Cruise</a>
-          <a href="/telecom-dashboard.html">📞 Telecom</a>
-          <a href="/tracking-dashboard.html">📦 Tracking</a>
-          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+          <a href="/tours-dashboard.html" class="active">?? Tours</a>
+          <a href="/documents-dashboard.html">?? Documents</a>
+          <a href="/hotel-dashboard.html">?? Hotel</a>
+          <a href="/cruise-dashboard.html">?? Cruise</a>
+          <a href="/telecom-dashboard.html">?? Telecom</a>
+          <a href="/tracking-dashboard.html">?? Tracking</a>
+          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">📊</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
-          <a href="/overtime-dashboard.html">⏰ Overtime</a>
-          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
+          <a href="/overtime-dashboard.html">? Overtime</a>
+          <a href="/productivity-dashboard.html">?? Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">🏢</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">⚙️</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
-          <a href="/cashout-dashboard.html">💸 Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/outstanding-dashboard.html">?? Outstanding</a>
+          <a href="/cashout-dashboard.html">?? Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">👤 Profile</a>
-      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+      <a href="/profile.html">?? Profile</a>
+      <a href="/logout.html" id="logoutLink">?? Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">—</div>
-      <div id="userRole">—</div>
+      <div id="userName">�</div>
+      <div id="userRole">�</div>
     </div>
   </aside>
 
@@ -219,10 +221,10 @@
 
     <!-- Dashboard Tabs -->
     <div class="dashboard-tabs" id="toursDashboardTabs">
-      <button class="tab-btn active" data-tab="analytics">📊 Analytics</button>
-      <button class="tab-btn" data-tab="tour-data">🧳 Tour Data <span class="tab-count" id="tabCountTourData"></span></button>
-      <button class="tab-btn" data-tab="my-tours">📋 My Tours <span class="tab-count" id="tabCountMyTours"></span></button>
-      <button class="tab-btn" data-tab="archived-tours">📦 Archived Tours <span class="tab-count" id="tabCountArchived"></span></button>
+      <button class="tab-btn active" data-tab="analytics">?? Analytics</button>
+      <button class="tab-btn" data-tab="tour-data">?? Tour Data <span class="tab-count" id="tabCountTourData"></span></button>
+      <button class="tab-btn" data-tab="my-tours">?? My Tours <span class="tab-count" id="tabCountMyTours"></span></button>
+      <button class="tab-btn" data-tab="archived-tours">?? Archived Tours <span class="tab-count" id="tabCountArchived"></span></button>
     </div>
 
     <!-- TAB: Analytics (default) -->
@@ -269,7 +271,7 @@
           <div class="ta-countries-card">
             <div class="ta-countries-list" style="padding:20px;">
               <div class="ta-card-header" style="margin-bottom:8px;">
-                <span class="ta-card-title">🌍 REGIONS</span>
+                <span class="ta-card-title">?? REGIONS</span>
               </div>
               <div class="ta-countries-total" id="taCountriesTotal"></div>
               <ul class="ta-countries-items" id="taRegionList"></ul>
@@ -357,7 +359,7 @@
         <input 
           type="text" 
           id="searchInput" 
-          placeholder="🔍 Search tour code, destination, lead pax..." 
+          placeholder="?? Search tour code, destination, lead pax..." 
           class="filter-search-input"
         />
         <select id="filterYear" class="filter-select">
@@ -396,15 +398,15 @@
         <select id="filterStaff" class="filter-select">
           <option value="">All Staff</option>
         </select>
-        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
-        <button id="exportToursCSV" class="btn btn-outline">📊 Export</button>
+        <button id="clearFilters" class="btn btn-secondary">?? Reset</button>
+        <button id="exportToursCSV" class="btn btn-outline">?? Export</button>
       </div>
     </div>
 
     <!-- Tours Data Table with CRUD -->
     <div class="card">
       <div class="section-header">
-        <h3>📋 Tours Records</h3>
+        <h3>?? Tours Records</h3>
         <div style="display: flex; gap: 10px; align-items: center;">
           <label style="display: flex; align-items: center; gap: 5px; font-size: 14px;">
             Show
@@ -417,7 +419,7 @@
             entries
           </label>
           <button id="addTourBtn" class="btn btn-primary" title="Keyboard shortcut: Alt+N">+ Add Tour</button>
-          <button id="archiveTours2025Btn" class="btn btn-secondary" style="display:none;" title="Archive all 2025 tours">📦 Archive 2025</button>
+          <button id="archiveTours2025Btn" class="btn btn-secondary" style="display:none;" title="Archive all 2025 tours">?? Archive 2025</button>
         </div>
       </div>
       
@@ -474,17 +476,17 @@
       <!-- Sales by Invoice Status -->
       <div class="mt-stats-grid" style="margin-bottom: 24px;">
         <div class="mt-stat-card" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);">
-          <h4 style="color: #166534;">✅ Invoiced Sales</h4>
+          <h4 style="color: #166534;">? Invoiced Sales</h4>
           <div class="mt-big-number" id="mtSalesInvoiced" style="color: #16a34a;">Rp 0</div>
           <div style="font-size: 13px; color: #166534; margin-top: 8px;"><span id="mtToursInvoicedCount">0</span> tours with invoice</div>
         </div>
         <div class="mt-stat-card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
-          <h4 style="color: #92400e;">⏳ Not Invoiced Yet</h4>
+          <h4 style="color: #92400e;">? Not Invoiced Yet</h4>
           <div class="mt-big-number" id="mtSalesNotInvoiced" style="color: #d97706;">Rp 0</div>
           <div style="font-size: 13px; color: #92400e; margin-top: 8px;"><span id="mtToursNotInvoicedCount">0</span> tours pending invoice</div>
         </div>
         <div class="mt-stat-card" style="background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);">
-          <h4 style="color: #1e40af;">📊 Invoice Coverage</h4>
+          <h4 style="color: #1e40af;">?? Invoice Coverage</h4>
           <div class="mt-big-number" id="mtInvoiceCoverage" style="color: #2563eb;">0%</div>
           <div style="font-size: 13px; color: #1e40af; margin-top: 8px;">of total sales value invoiced</div>
         </div>
@@ -493,32 +495,32 @@
       <!-- Statistics Cards -->
       <div class="mt-stats-grid">
         <div class="mt-stat-card">
-          <h4>🚶 Passengers by Tour Status</h4>
+          <h4>?? Passengers by Tour Status</h4>
           <div class="mt-stat-items">
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtPaxPending">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtPaxPending">0</span></div>
             <div class="mt-progress-bar"><div class="mt-progress-fill pending" id="mtProgressPending" style="width:0%"></div></div>
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtPaxCompleted">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtPaxCompleted">0</span></div>
             <div class="mt-progress-bar"><div class="mt-progress-fill completed" id="mtProgressCompleted" style="width:0%"></div></div>
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>❌</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtPaxCancelled">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtPaxCancelled">0</span></div>
             <div class="mt-progress-bar"><div class="mt-progress-fill cancelled" id="mtProgressCancelled" style="width:0%"></div></div>
           </div>
         </div>
         <div class="mt-stat-card">
-          <h4>📝 Invoice Status</h4>
+          <h4>?? Invoice Status</h4>
           <div class="mt-stat-items">
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Invoiced Tours</div><span class="mt-stat-badge invoiced" id="mtToursInvoiced">0</span></div>
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Not Invoiced</div><span class="mt-stat-badge not-invoiced" id="mtToursNotInvoiced">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Invoiced Tours</div><span class="mt-stat-badge invoiced" id="mtToursInvoiced">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Not Invoiced</div><span class="mt-stat-badge not-invoiced" id="mtToursNotInvoiced">0</span></div>
             <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border-light);">
               <div class="mt-stat-row"><div class="mt-stat-label" style="font-weight: 600;">Invoice Rate</div><span class="mt-big-number" id="mtInvoiceRate" style="color: var(--primary);">0%</span></div>
             </div>
           </div>
         </div>
         <div class="mt-stat-card">
-          <h4>🗂️ Tours by Status</h4>
+          <h4>??? Tours by Status</h4>
           <div class="mt-stat-items">
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>⏳</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtToursPending">0</span></div>
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>✅</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtToursCompleted">0</span></div>
-            <div class="mt-stat-row"><div class="mt-stat-label"><span>❌</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtToursCancelled">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Belum Jalan</div><span class="mt-stat-badge pending" id="mtToursPending">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Sudah Jalan</div><span class="mt-stat-badge completed" id="mtToursCompleted">0</span></div>
+            <div class="mt-stat-row"><div class="mt-stat-label"><span>?</span> Tidak Jalan</div><span class="mt-stat-badge cancelled" id="mtToursCancelled">0</span></div>
           </div>
         </div>
       </div>
@@ -526,9 +528,9 @@
       <!-- Search and Filter -->
       <div class="card" style="margin-top: 20px; margin-bottom: 16px;">
         <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-          <input type="text" id="mtSearchInput" placeholder="🔍 Search tour code, passenger, booking code..." style="flex: 1; min-width: 250px;" />
+          <input type="text" id="mtSearchInput" placeholder="?? Search tour code, passenger, booking code..." style="flex: 1; min-width: 250px;" />
           <div id="mtStaffFilterGroup" style="display:none; align-items: center; gap: 4px;">
-            <label style="font-size: 12px; color: var(--text-secondary); margin-right: 4px;">👤 User:</label>
+            <label style="font-size: 12px; color: var(--text-secondary); margin-right: 4px;">?? User:</label>
             <select id="mtFilterStaff" style="min-width: 140px;"><option value="">All Users</option></select>
           </div>
           <select id="mtFilterYear" style="min-width: 120px;"><option value="">All Years</option></select>
@@ -541,14 +543,14 @@
           </select>
           <select id="mtFilterStatus" style="min-width: 140px;">
             <option value="">All Status</option>
-            <option value="belum jalan">⏳ Belum Jalan</option>
-            <option value="sudah jalan">✅ Sudah Jalan</option>
-            <option value="tidak jalan">❌ Tidak Jalan</option>
+            <option value="belum jalan">? Belum Jalan</option>
+            <option value="sudah jalan">? Sudah Jalan</option>
+            <option value="tidak jalan">? Tidak Jalan</option>
           </select>
           <select id="mtFilterInvoice" style="min-width: 140px;">
             <option value="">All Invoice Status</option>
-            <option value="invoiced">✅ Invoiced</option>
-            <option value="not-invoiced">⏳ Not Invoiced</option>
+            <option value="invoiced">? Invoiced</option>
+            <option value="not-invoiced">? Not Invoiced</option>
           </select>
         </div>
       </div>
@@ -556,7 +558,7 @@
       <!-- My Tours Table -->
       <div class="card">
         <div class="section-header">
-          <h3>📋 My Tour Records</h3>
+          <h3>?? My Tour Records</h3>
         </div>
         <div style="overflow-x: auto;">
           <table class="table">
@@ -605,7 +607,7 @@
       <!-- Search and Filter -->
       <div class="card" style="margin-top: 0; margin-bottom: 16px;">
         <div style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-          <input type="text" id="atSearchInput" placeholder="🔍 Search archived tours..." style="flex: 1; min-width: 250px;" />
+          <input type="text" id="atSearchInput" placeholder="?? Search archived tours..." style="flex: 1; min-width: 250px;" />
           <select id="atFilterRegion" style="min-width: 140px;"><option value="">All Regions</option></select>
           <select id="atFilterStaff" style="min-width: 140px;"><option value="">All Staff</option></select>
         </div>
@@ -614,8 +616,8 @@
       <!-- Archived Tours Table -->
       <div class="card">
         <div class="section-header">
-          <h3>📦 Archived Tours (2025 & Earlier)</h3>
-          <button id="archiveTours2025BtnTab" class="btn btn-secondary" style="display:none;" title="Archive remaining 2025 tours">📦 Archive 2025</button>
+          <h3>?? Archived Tours (2025 & Earlier)</h3>
+          <button id="archiveTours2025BtnTab" class="btn btn-secondary" style="display:none;" title="Archive remaining 2025 tours">?? Archive 2025</button>
         </div>
         <div style="overflow-x: auto;">
           <table class="table">
@@ -642,7 +644,7 @@
       </div>
 
       <div class="card" style="margin-top: 16px; padding: 16px; background: var(--bg-subtle); border-radius: 8px; text-align: center; color: var(--text-secondary);">
-        <strong>📋 Read Only</strong> — Archived tours from 2025 and earlier cannot be edited or deleted. They are preserved for historical records.
+        <strong>?? Read Only</strong> � Archived tours from 2025 and earlier cannot be edited or deleted. They are preserved for historical records.
       </div>
     </div><!-- /tabArchivedTours -->
 

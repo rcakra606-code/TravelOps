@@ -352,8 +352,8 @@ async function renderDashboard() {
           datasets: [{
             label: 'Documents',
             data: sortedMonths.map(m => monthlyData[m]),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: '#d4a843',
+            backgroundColor: 'rgba(212, 168, 67, 0.15)',
             fill: true,
             tension: 0.4
           }]
@@ -371,7 +371,7 @@ async function renderDashboard() {
           labels: ['Normal', 'Kilat'],
           datasets: [{
             data: [normalDocs, kilatDocs],
-            backgroundColor: ['#10b981', '#f59e0b']
+            backgroundColor: ['#4ade80', '#d4a843']
           }]
         },
         options: commonOptions
@@ -395,7 +395,7 @@ async function renderDashboard() {
           datasets: [{
             label: 'Documents',
             data: Object.values(staffData),
-            backgroundColor: '#8b5cf6',
+            backgroundColor: '#2d6a8a',
             borderRadius: 8
           }]
         },
@@ -431,7 +431,7 @@ async function renderDashboard() {
           datasets: [{
             label: 'Documents',
             data: Object.values(timeBuckets),
-            backgroundColor: '#ec4899',
+            backgroundColor: '#d4944c',
             borderRadius: 8
           }]
         },
@@ -469,16 +469,16 @@ async function renderDashboard() {
             {
               label: 'Normal',
               data: allMonths.map(m => monthlyNormal[m] || 0),
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: '#4ade80',
+              backgroundColor: 'rgba(74, 222, 128, 0.15)',
               fill: true,
               tension: 0.4
             },
             {
               label: 'Kilat',
               data: allMonths.map(m => monthlyKilat[m] || 0),
-              borderColor: '#f59e0b',
-              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              borderColor: '#d4a843',
+              backgroundColor: 'rgba(212, 168, 67, 0.15)',
               fill: true,
               tension: 0.4
             }
@@ -496,7 +496,7 @@ async function renderDashboard() {
     const tableBody = el('pendingDocsTable');
     if (tableBody) {
       if (pendingDocs.length === 0) {
-        tableBody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #9ca3af;">Semua dokumen sudah dikirim</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" style="padding: 20px; text-align: center; color: #8da0be;">Semua dokumen sudah dikirim</td></tr>';
       } else {
         tableBody.innerHTML = pendingDocs.map(doc => {
           const receiveDate = new Date(doc.receive_date);

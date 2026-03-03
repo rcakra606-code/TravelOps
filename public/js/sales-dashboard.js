@@ -403,7 +403,7 @@ async function renderDashboard() {
           datasets: [{
             label: 'Sales (Rp)',
             data: [totalSales, targetSales],
-            backgroundColor: ['#10b981', '#d1d5db'],
+            backgroundColor: ['#4ade80', 'rgba(255,255,255,0.12)'],
             borderRadius: 8
           }]
         },
@@ -421,7 +421,7 @@ async function renderDashboard() {
           datasets: [{
             label: 'Profit (Rp)',
             data: [totalProfit, targetProfit],
-            backgroundColor: ['#3b82f6', '#d1d5db'],
+            backgroundColor: ['#2d6a8a', 'rgba(255,255,255,0.12)'],
             borderRadius: 8
           }]
         },
@@ -469,13 +469,13 @@ async function renderDashboard() {
                 {
                   label: 'Actual Sales (Rp)',
                   data: sortedMonths.map(m => monthlySales[m]),
-                  backgroundColor: '#10b981',
+                  backgroundColor: '#4ade80',
                   borderRadius: 6
                 },
                 {
                   label: 'Target Sales (Rp)',
                   data: sortedMonths.map(m => monthlyTargets[m] || 0),
-                  backgroundColor: '#f59e0b',
+                  backgroundColor: '#d4a843',
                   borderRadius: 6
                 }
               ]
@@ -527,13 +527,13 @@ async function renderDashboard() {
                 {
                   label: 'Actual Profit (Rp)',
                   data: sortedMonths.map(m => monthlyProfit[m]),
-                  backgroundColor: '#3b82f6',
+                  backgroundColor: '#2d6a8a',
                   borderRadius: 6
                 },
                 {
                   label: 'Target Profit (Rp)',
                   data: sortedMonths.map(m => monthlyProfitTargets[m] || 0),
-                  backgroundColor: '#f59e0b',
+                  backgroundColor: '#d4a843',
                   borderRadius: 6
                 }
               ]
@@ -585,8 +585,8 @@ async function renderDashboard() {
             {
               label: 'Sales (Rp)',
               data: sortedMonths.map(m => monthlySales[m]),
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: '#4ade80',
+              backgroundColor: 'rgba(74, 222, 128, 0.15)',
               fill: true,
               tension: 0.4,
               borderWidth: 2
@@ -598,7 +598,7 @@ async function renderDashboard() {
             datasets.push({
               label: 'Target (Rp)',
               data: sortedMonths.map(m => monthlyTargets[m] || null),
-              borderColor: '#f59e0b',
+              borderColor: '#d4a843',
               backgroundColor: 'transparent',
               borderDash: [5, 5],
               fill: false,
@@ -680,8 +680,8 @@ async function renderDashboard() {
             {
               label: 'Profit (Rp)',
               data: sortedMonths.map(m => monthlyProfit[m]),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderColor: '#2d6a8a',
+              backgroundColor: 'rgba(45, 106, 138, 0.15)',
               fill: true,
               tension: 0.4,
               borderWidth: 2
@@ -693,7 +693,7 @@ async function renderDashboard() {
             datasets.push({
               label: 'Target (Rp)',
               data: sortedMonths.map(m => monthlyProfitTargets[m] || null),
-              borderColor: '#f59e0b',
+              borderColor: '#d4a843',
               backgroundColor: 'transparent',
               borderDash: [5, 5],
               fill: false,
@@ -737,7 +737,7 @@ async function renderDashboard() {
             datasets: [{
               label: 'Sales (Rp)',
               data: sortedStaff.map(s => s[1]),
-              backgroundColor: '#8b5cf6',
+              backgroundColor: '#2d6a8a',
               borderRadius: 8
             }]
           },
@@ -932,7 +932,7 @@ window.deleteSale = async function(id) {
       message: `Are you sure you want to delete "${displayName}"? This action cannot be undone.`,
       confirmText: 'Delete',
       cancelText: 'Cancel',
-      confirmColor: '#dc2626',
+      confirmColor: '#f87171',
       icon: '🗑️'
     });
   } else {

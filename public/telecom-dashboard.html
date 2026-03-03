@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,84 +28,86 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
+<link rel="stylesheet" href="/css/sunset-theme.css">
 <script src="/js/seasonal-theme.js" defer></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="/js/chart-theme.js"></script>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">🚀 TravelOps</div>
+    <div class="brand">?? TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">📦</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">🧳 Tours</a>
-          <a href="/documents-dashboard.html">📄 Documents</a>
-          <a href="/hotel-dashboard.html">🏨 Hotel</a>
-          <a href="/cruise-dashboard.html">🚢 Cruise</a>
-          <a href="/telecom-dashboard.html" class="active">📞 Telecom</a>
-          <a href="/tracking-dashboard.html">📦 Tracking</a>
-          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+          <a href="/tours-dashboard.html">?? Tours</a>
+          <a href="/documents-dashboard.html">?? Documents</a>
+          <a href="/hotel-dashboard.html">?? Hotel</a>
+          <a href="/cruise-dashboard.html">?? Cruise</a>
+          <a href="/telecom-dashboard.html" class="active">?? Telecom</a>
+          <a href="/tracking-dashboard.html">?? Tracking</a>
+          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">📊</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
-          <a href="/overtime-dashboard.html">⏰ Overtime</a>
-          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
+          <a href="/overtime-dashboard.html">? Overtime</a>
+          <a href="/productivity-dashboard.html">?? Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">🏢</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">⚙️</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
-          <a href="/cashout-dashboard.html">💸 Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/outstanding-dashboard.html">?? Outstanding</a>
+          <a href="/cashout-dashboard.html">?? Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html">👤 Profile</a>
-      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+      <a href="/profile.html">?? Profile</a>
+      <a href="/logout.html" id="logoutLink">?? Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">—</div>
-      <div id="userRole">—</div>
+      <div id="userName">�</div>
+      <div id="userRole">�</div>
     </div>
   </aside>
 
@@ -121,7 +123,7 @@
     <div class="card">
       <div class="section-header">
         <h3>Telecom Analytics</h3>
-        <button id="telecomFilterBtn" class="btn">🔍 Filter</button>
+        <button id="telecomFilterBtn" class="btn">?? Filter</button>
       </div>
       
       <!-- Metrics Row -->
@@ -159,7 +161,7 @@
         <input 
           type="text" 
           id="searchInput" 
-          placeholder="🔍 Search name, phone, product type..." 
+          placeholder="?? Search name, phone, product type..." 
           style="flex: 1; min-width: 250px;"
         />
         <select id="filterYear" style="min-width: 120px;">
@@ -182,19 +184,19 @@
         </select>
         <select id="filterDeposit" style="min-width: 140px;">
           <option value="">All Deposit Status</option>
-          <option value="deposited">✅ Deposited</option>
-          <option value="not-deposited">⏳ Not Deposited</option>
+          <option value="deposited">? Deposited</option>
+          <option value="not-deposited">? Not Deposited</option>
         </select>
-        <button id="clearFilters" class="btn btn-secondary">🔄 Reset</button>
+        <button id="clearFilters" class="btn btn-secondary">?? Reset</button>
       </div>
     </div>
 
     <!-- Telecom Data Table with CRUD -->
     <div class="card" style="margin-top: 20px;">
       <div class="section-header">
-        <h3>📋 Telecom Records</h3>
+        <h3>?? Telecom Records</h3>
         <div style="display: flex; gap: 10px;">
-          <button id="exportTelecomBtn" class="btn btn-outline">📊 Export</button>
+          <button id="exportTelecomBtn" class="btn btn-outline">?? Export</button>
           <button id="addTelecomBtn" class="btn btn-primary">+ Add Record</button>
         </div>
       </div>

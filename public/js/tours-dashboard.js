@@ -1012,8 +1012,8 @@ function renderAnalyticsTab() {
     const chartOpts = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 } } },
-        tooltip: { backgroundColor: 'rgba(17,24,39,.95)', padding: 10 } }
+      plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, padding: 10, font: { size: 11 }, color: '#8da0be' } },
+        tooltip: { backgroundColor: 'rgba(14,27,48,.95)', titleColor: '#d4a843', bodyColor: '#e8ecf2', borderColor: 'rgba(212,168,67,.20)', borderWidth: 1, padding: 10 } }
     };
 
     // --- Top departure months list ---
@@ -1027,7 +1027,7 @@ function renderAnalyticsTab() {
         return `<li>
           <span class="ta-list-name">${label}</span>
           <div class="ta-list-bar">
-            <div class="ta-list-track"><div class="ta-list-fill" style="width:${Math.round(val/maxM*100)}%; background:#f59e0b;"></div></div>
+            <div class="ta-list-track"><div class="ta-list-fill" style="width:${Math.round(val/maxM*100)}%; background:#d4a843;"></div></div>
           </div>
           <span class="ta-list-value">${val}</span>
         </li>`;
@@ -1046,9 +1046,9 @@ function renderAnalyticsTab() {
               return d.toLocaleDateString('en-US', { month: 'short' });
             }),
             datasets: [{ label: 'Participants', data: monthly.sortedMonths.map(m => monthly.monthlyData[m]),
-              backgroundColor: '#3b82f6', borderRadius: 6 }]
+              backgroundColor: '#d4a843', borderRadius: 6 }]
           },
-          options: { ...chartOpts, scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' } }, x: { grid: { display: false } } } }
+          options: { ...chartOpts, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8da0be' } }, x: { grid: { display: false }, ticks: { color: '#8da0be' } } } }
         });
       }
     }
@@ -1061,9 +1061,9 @@ function renderAnalyticsTab() {
         type: 'bar',
         data: {
           labels: Object.keys(staffData),
-          datasets: [{ label: 'Tours', data: Object.values(staffData), backgroundColor: '#f59e0b', borderRadius: 6 }]
+          datasets: [{ label: 'Tours', data: Object.values(staffData), backgroundColor: '#2d6a8a', borderRadius: 6 }]
         },
-        options: { ...chartOpts, indexAxis: 'y', scales: { x: { beginAtZero: true, grid: { color: 'rgba(0,0,0,.05)' } }, y: { grid: { display: false } } } }
+        options: { ...chartOpts, indexAxis: 'y', scales: { x: { beginAtZero: true, grid: { color: 'rgba(255,255,255,.06)' }, ticks: { color: '#8da0be' } }, y: { grid: { display: false }, ticks: { color: '#8da0be' } } } }
       });
     }
 
@@ -1076,7 +1076,7 @@ function renderAnalyticsTab() {
         data: {
           labels: Object.keys(statusData),
           datasets: [{ data: Object.values(statusData),
-            backgroundColor: ['#fbbf24','#3b82f6','#10b981','#ef4444','#8b5cf6'], borderWidth: 2, borderColor: '#fff' }]
+            backgroundColor: ['#d4a843','#2d6a8a','#10b981','#ef4444','#8b5cf6'], borderWidth: 2, borderColor: 'rgba(14,27,48,.8)' }]
         },
         options: { ...chartOpts, cutout: '60%' }
       });
@@ -1090,7 +1090,7 @@ function renderAnalyticsTab() {
         data: {
           labels: ['Invoiced', 'Not Invoiced'],
           datasets: [{ data: [invoicedCount, notInvoicedCount],
-            backgroundColor: ['#10b981','#ef4444'], borderWidth: 2, borderColor: '#fff' }]
+            backgroundColor: ['#10b981','#ef4444'], borderWidth: 2, borderColor: 'rgba(14,27,48,.8)' }]
         },
         options: { ...chartOpts, cutout: '60%' }
       });
@@ -1104,7 +1104,7 @@ function renderAnalyticsTab() {
         data: {
           labels: Object.keys(regionData),
           datasets: [{ data: Object.values(regionData),
-            backgroundColor: ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#14b8a6','#f97316'] }]
+            backgroundColor: ['#d4a843','#2d6a8a','#b8922e','#ef4444','#8b5cf6','#d4944c','#14b8a6','#1a3a5c'] }]
         },
         options: chartOpts
       });

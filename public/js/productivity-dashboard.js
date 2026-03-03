@@ -698,8 +698,8 @@ function renderOverviewCharts() {
   charts = {};
   
   const chartColors = [
-    '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#84cc16', '#f97316', '#6366f1', '#14b8a6'
+    '#d4a843', '#2d6a8a', '#d4944c', '#4ade80', '#67b8db',
+    '#a78bfa', '#f87171', '#2dd4bf', '#fbbf24', '#818cf8', '#e879f9'
   ];
   
   // Sales by Product Category (Bar Chart)
@@ -752,7 +752,7 @@ function renderOverviewCharts() {
           data: PRODUCT_TYPES.map(p => marginByProduct[p.id]),
           backgroundColor: PRODUCT_TYPES.map(p => {
             const m = marginByProduct[p.id];
-            return m >= 20 ? '#10b981' : m >= 10 ? '#f59e0b' : '#ef4444';
+            return m >= 20 ? '#4ade80' : m >= 10 ? '#d4a843' : '#f87171';
           }),
           borderRadius: 8
         }]
@@ -785,8 +785,8 @@ function renderOverviewCharts() {
         datasets: [{
           label: 'Total Sales',
           data: sortedMonths.map(m => monthlyData[m]),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          borderColor: '#d4a843',
+          backgroundColor: 'rgba(212, 168, 67, 0.15)',
           fill: true,
           tension: 0.4
         }]
@@ -821,7 +821,7 @@ function renderOverviewCharts() {
         datasets: [{
           label: 'Total Sales',
           data: topStaff.map(s => s[1]),
-          backgroundColor: '#8b5cf6',
+          backgroundColor: '#2d6a8a',
           borderRadius: 8
         }]
       },
@@ -901,7 +901,7 @@ window.openAddProductivityModal = function(productType) {
           message: `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
           confirmText: 'Save Anyway',
           cancelText: 'Cancel',
-          confirmColor: '#f59e0b',
+          confirmColor: '#d4a843',
           icon: '⚠️'
         });
       } else {
@@ -1051,7 +1051,7 @@ window.editProductivity = async function(id) {
           message: `${warnings.join('<br>')}<br><br>Do you want to save anyway?`,
           confirmText: 'Save Anyway',
           cancelText: 'Cancel',
-          confirmColor: '#f59e0b',
+          confirmColor: '#d4a843',
           icon: '⚠️'
         });
       } else {
@@ -1728,7 +1728,7 @@ dropZone?.addEventListener('click', () => importFile?.click());
 
 dropZone?.addEventListener('dragover', (e) => {
   e.preventDefault();
-  dropZone.style.borderColor = '#3b82f6';
+  dropZone.style.borderColor = '#d4a843';
   dropZone.style.background = '#eff6ff';
 });
 
@@ -2826,7 +2826,7 @@ function renderComparisonCharts(period, year, staff, product) {
               label: `${getMonthName(comparisonState.compareMonth)} Sales by Year`,
               data: salesData,
               backgroundColor: yearsToCompare.map((y, i) => 
-                y === year ? 'rgba(59, 130, 246, 0.8)' : `rgba(156, 163, 175, ${0.3 + (i * 0.15)})`
+                y === year ? 'rgba(212, 168, 67, 0.8)' : `rgba(107, 131, 165, ${0.3 + (i * 0.15)})`
               ),
               borderRadius: 6
             }
@@ -2856,11 +2856,11 @@ function renderComparisonCharts(period, year, staff, product) {
             {
               label: `${getMonthName(comparisonState.compareMonth)} Margin by Year`,
               data: marginData,
-              borderColor: '#10b981',
-              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              borderColor: '#4ade80',
+            backgroundColor: 'rgba(74, 222, 128, 0.15)',
               fill: true,
               tension: 0.4,
-              pointBackgroundColor: yearsToCompare.map(y => y === year ? '#10b981' : '#9ca3af'),
+              pointBackgroundColor: yearsToCompare.map(y => y === year ? '#4ade80' : '#6b83a5'),
               pointRadius: 6
             }
           ]
@@ -2932,7 +2932,7 @@ function renderComparisonCharts(period, year, staff, product) {
           {
             label: `${year - 1} Sales`,
             data: prevYearSalesData,
-            backgroundColor: 'rgba(156, 163, 175, 0.5)',
+            backgroundColor: 'rgba(107, 131, 165, 0.5)',
             borderRadius: 6
           }
         ]
@@ -2961,16 +2961,16 @@ function renderComparisonCharts(period, year, staff, product) {
           {
             label: `${year} Margin`,
             data: marginData,
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderColor: '#4ade80',
+            backgroundColor: 'rgba(74, 222, 128, 0.15)',
             fill: true,
             tension: 0.4
           },
           {
             label: `${year - 1} Margin`,
             data: prevYearMarginData,
-            borderColor: '#9ca3af',
-            backgroundColor: 'rgba(156, 163, 175, 0.1)',
+            borderColor: '#6b83a5',
+            backgroundColor: 'rgba(107, 131, 165, 0.15)',
             fill: true,
             tension: 0.4,
             borderDash: [5, 5]
@@ -3042,7 +3042,7 @@ function renderComparisonTable(period, year, staff, product) {
       
       return `
         <tr${y === year ? ' style="background: rgba(59, 130, 246, 0.08);"' : ''}>
-          <td><strong>${monthName} ${y}</strong>${y === year ? ' <span style="color: #3b82f6; font-size: 11px;">(Current)</span>' : ''}</td>
+          <td><strong>${monthName} ${y}</strong>${y === year ? ' <span style="color: #d4a843; font-size: 11px;">(Current)</span>' : ''}</td>
           <td class="text-right">${formatCurrency(currentTotals.retailSales)}</td>
           <td class="text-right">${formatCurrency(currentTotals.corporateSales)}</td>
           <td class="text-right"><strong>${formatCurrency(currentTotals.totalSales)}</strong></td>

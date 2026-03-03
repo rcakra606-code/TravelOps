@@ -772,18 +772,18 @@ async function renderCharts() {
         upcomingTable.innerHTML = upcomingTours.map(tour => {
           const depDate = new Date(tour.departure_date);
           const daysUntil = Math.ceil((depDate - now) / (24 * 60 * 60 * 1000));
-          const urgency = daysUntil <= 7 ? 'background-color: #fef2f2;' : daysUntil <= 14 ? 'background-color: #fef9c3;' : '';
+          const urgency = daysUntil <= 7 ? 'background-color: rgba(220,38,38,0.10);' : daysUntil <= 14 ? 'background-color: rgba(217,119,6,0.10);' : '';
           const regionName = regionMap[String(tour.region_id)] || '-';
           const statusColor = {
-            'Pending': '#fbbf24',
-            'Confirmed': '#3b82f6',
+            'Pending': '#d4a843',
+            'Confirmed': '#2d6a8a',
             'Completed': '#10b981',
             'Cancelled': '#ef4444'
-          }[tour.status] || '#6b7280';
+          }[tour.status] || '#6b83a5';
           
           return `
             <tr style=\"${urgency}\">
-              <td style=\"padding: 8px;\">${tour.departure_date} <span style=\"color: #6b7280;\">(${daysUntil} hari)</span></td>
+              <td style=\"padding: 8px;\">${tour.departure_date} <span style=\"color: #8da0be;\">(${daysUntil} hari)</span></td>
               <td style=\"padding: 8px;\">${tour.booking_code || '-'}</td>
               <td style=\"padding: 8px;\">${tour.lead_passenger || '-'}</td>
               <td style=\"padding: 8px;\">${regionName}</td>
@@ -805,6 +805,7 @@ async function renderCharts() {
           position: 'top',
           labels: {
             padding: 20,
+            color: '#8da0be',
             font: {
               family: 'Inter',
               size: 12
@@ -812,7 +813,11 @@ async function renderCharts() {
           }
         },
         tooltip: {
-          backgroundColor: 'rgba(17, 24, 39, 0.95)',
+          backgroundColor: 'rgba(14, 27, 48, 0.95)',
+          titleColor: '#d4a843',
+          bodyColor: '#e8ecf2',
+          borderColor: 'rgba(212, 168, 67, 0.20)',
+          borderWidth: 1,
           titleFont: {
             family: 'Inter',
             size: 13
@@ -835,7 +840,7 @@ async function renderCharts() {
         labels: ['Sales', 'Target Sales'],
         datasets: [{
           data: [totalSales, targetSales],
-          backgroundColor: ['#2563eb', '#93c5fd'],
+          backgroundColor: ['#d4a843', '#2d6a8a'],
           borderRadius: 6,
           borderWidth: 0
         }]
@@ -847,9 +852,10 @@ async function renderCharts() {
             beginAtZero: true,
             grid: {
               borderDash: [2, 4],
-              color: 'rgba(0, 0, 0, 0.06)'
+              color: 'rgba(255, 255, 255, 0.06)'
             },
             ticks: {
+              color: '#8da0be',
               callback: value => 'Rp ' + value.toLocaleString('id-ID')
             }
           }
@@ -859,6 +865,7 @@ async function renderCharts() {
           title: {
             display: true,
             text: 'Sales Performance',
+            color: '#d4a843',
             font: {
               size: 16,
               weight: '600'
@@ -876,7 +883,7 @@ async function renderCharts() {
         labels: ['Profit', 'Target Profit'],
         datasets: [{
           data: [totalProfit, targetProfit],
-          backgroundColor: ['#16a34a', '#86efac'],
+          backgroundColor: ['#10b981', '#2d6a8a'],
           borderRadius: 6,
           borderWidth: 0
         }]
@@ -888,9 +895,10 @@ async function renderCharts() {
             beginAtZero: true,
             grid: {
               borderDash: [2, 4],
-              color: 'rgba(0, 0, 0, 0.06)'
+              color: 'rgba(255, 255, 255, 0.06)'
             },
             ticks: {
+              color: '#8da0be',
               callback: value => 'Rp ' + value.toLocaleString('id-ID')
             }
           }
@@ -918,8 +926,8 @@ async function renderCharts() {
           datasets: [{
             label: 'Sales (Rp)',
             data: sortedMonths.map(m => monthlyData[m]),
-            borderColor: '#10b981',
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+            borderColor: '#d4a843',
+            backgroundColor: 'rgba(212, 168, 67, 0.15)',
             fill: true,
             tension: 0.4,
             borderWidth: 2
@@ -932,9 +940,10 @@ async function renderCharts() {
               beginAtZero: true,
               grid: {
                 borderDash: [2, 4],
-                color: 'rgba(0, 0, 0, 0.06)'
+                color: 'rgba(255, 255, 255, 0.06)'
               },
               ticks: {
+                color: '#8da0be',
                 callback: value => 'Rp ' + value.toLocaleString('id-ID')
               }
             }
@@ -1419,17 +1428,17 @@ function showEmailResult(success, message, details = null) {
     if (details.steps && Array.isArray(details.steps)) {
       // Special formatting for setup instructions
       detailsHtml = `
-        <div style="margin-top: 12px; padding: 12px; background: white; border-radius: 6px; border-left: 3px solid #f59e0b;">
+        <div style="margin-top: 12px; padding: 12px; background: rgba(14,27,48,0.95); border-radius: 6px; border-left: 3px solid #f59e0b;">
           <strong style="color: #92400e;">💡 ${details.issue || 'Setup Required'}</strong>
           <p style="margin: 8px 0; color: #78350f; font-size: 0.9rem;">${details.solution || ''}</p>
-          <div style="margin-top: 8px; font-size: 0.85rem; color: #6b7280;">
+          <div style="margin-top: 8px; font-size: 0.85rem; color: #8da0be;">
             ${details.steps.map(step => `<div style="margin: 4px 0;">${step}</div>`).join('')}
           </div>
         </div>
       `;
     } else {
       // JSON formatting for other details
-      detailsHtml = `<pre style="margin-top: 8px; font-size: 0.85rem; color: #6b7280; background: white; padding: 12px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(details, null, 2)}</pre>`;
+      detailsHtml = `<pre style="margin-top: 8px; font-size: 0.85rem; color: #8da0be; background: rgba(14,27,48,0.95); padding: 12px; border-radius: 4px; overflow-x: auto;">${JSON.stringify(details, null, 2)}</pre>`;
     }
   }
   
@@ -1627,22 +1636,22 @@ async function viewReminderStats() {
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px;">
         <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
           <div style="font-size:22px;font-weight:700;color:var(--primary,#4f46e5);">${summary.totalSent || 0}</div>
-          <div style="font-size:12px;color:#6b7280;">Total Sent</div>
+          <div style="font-size:12px;color:#8da0be;">Total Sent</div>
         </div>
         <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
           <div style="font-size:22px;font-weight:700;color:var(--success,#16a34a);">${summary.sentThisWeek || 0}</div>
-          <div style="font-size:12px;color:#6b7280;">This Week</div>
+          <div style="font-size:12px;color:#8da0be;">This Week</div>
         </div>
         <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
           <div style="font-size:22px;font-weight:700;color:var(--info,#0ea5e9);">${summary.upcomingTours || 0}</div>
-          <div style="font-size:12px;color:#6b7280;">Upcoming Tours</div>
+          <div style="font-size:12px;color:#8da0be;">Upcoming Tours</div>
         </div>
         <div style="text-align:center;padding:14px;background:var(--bg-alt,#f3f4f6);border-radius:8px;">
           <div style="font-size:22px;font-weight:700;color:var(--warning,#d97706);">${summary.pendingReminders || 0}</div>
-          <div style="font-size:12px;color:#6b7280;">Pending</div>
+          <div style="font-size:12px;color:#8da0be;">Pending</div>
         </div>
       </div>
-      <div style="display:flex;gap:16px;font-size:12px;color:#6b7280;margin-bottom:8px;flex-wrap:wrap;">
+      <div style="display:flex;gap:16px;font-size:12px;color:#8da0be;margin-bottom:8px;flex-wrap:wrap;">
         <span>🗺️ Tours: ${summary.toursSent || 0}</span>
         <span>🚢 Cruises: ${summary.cruisesSent || 0}</span>
         <span>🔙 Returns: ${summary.returnsSent || 0}</span>

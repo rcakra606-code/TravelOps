@@ -360,8 +360,8 @@ class YearOverYearAnalytics {
           {
             label: `${year1}`,
             data: currentData.map(v => v / 1000000), // Convert to millions
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            borderColor: '#d4a843',
+            backgroundColor: 'rgba(212, 168, 67, 0.15)',
             borderWidth: 3,
             fill: true,
             tension: 0.4
@@ -369,8 +369,8 @@ class YearOverYearAnalytics {
           {
             label: `${year2}`,
             data: previousData.map(v => v / 1000000),
-            borderColor: '#9ca3af',
-            backgroundColor: 'rgba(156, 163, 175, 0.1)',
+            borderColor: '#6b83a5',
+            backgroundColor: 'rgba(107, 131, 165, 0.15)',
             borderWidth: 2,
             borderDash: [5, 5],
             fill: true,

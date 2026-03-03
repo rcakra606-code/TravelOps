@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -28,9 +28,10 @@
 <link rel="stylesheet" href="/css/professional-polish.css">
 <link rel="stylesheet" href="/css/seasonal-theme.css">
 <link rel="stylesheet" href="/css/futuristic-theme.css">
+<link rel="stylesheet" href="/css/sunset-theme.css">
 <script src="/js/seasonal-theme.js" defer></script>
   <style>
-    /* === PROFILE PAGE — Baloot Cloud Inspired === */
+    /* === PROFILE PAGE � Baloot Cloud Inspired === */
     .pf-page { max-width: 960px; margin: 0 auto; padding: 24px 20px; }
 
     /* --- Section card --- */
@@ -186,95 +187,95 @@
     /* Loading overlay */
     .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; }
     .loading-overlay.active { display: flex; }
-    .loading-spinner { background: white; padding: 30px 40px; border-radius: 12px; text-align: center; }
+    .loading-spinner { background: rgba(14,27,48,0.95); padding: 30px 40px; border-radius: 12px; text-align: center; }
     .loading-text { margin-top: 12px; color: #374151; font-weight: 500; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .spinner { width: 40px; height: 40px; border: 4px solid #e5e7eb; border-top-color: #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto; }
   </style>
 </head>
 <body>
-<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">☰</button>
+<button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">?</button>
 <div class="mobile-overlay" id="mobileOverlay"></div>
 
 <div class="app">
   <aside class="sidebar">
-    <div class="brand">🚀 TravelOps</div>
+    <div class="brand">?? TravelOps</div>
     <div class="nav">
       <!-- Main Dashboard -->
-      <a href="/single-dashboard.html" class="nav-main-item">🏠 Main Dashboard</a>
+      <a href="/single-dashboard.html" class="nav-main-item">?? Main Dashboard</a>
       
       <!-- Product Input Group -->
       <div class="nav-group" id="groupProductInput">
         <button class="nav-group-header" data-group="product-input">
-          <span class="group-icon">📦</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Product Input</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/tours-dashboard.html">🧳 Tours</a>
-          <a href="/documents-dashboard.html">📄 Documents</a>
-          <a href="/hotel-dashboard.html">🏨 Hotel</a>
-          <a href="/cruise-dashboard.html">🚢 Cruise</a>
-          <a href="/telecom-dashboard.html">📞 Telecom</a>
-          <a href="/tracking-dashboard.html">📦 Tracking</a>
-          <a href="/ticket-recap-dashboard.html">✈️ Ticket Recap</a>
+          <a href="/tours-dashboard.html">?? Tours</a>
+          <a href="/documents-dashboard.html">?? Documents</a>
+          <a href="/hotel-dashboard.html">?? Hotel</a>
+          <a href="/cruise-dashboard.html">?? Cruise</a>
+          <a href="/telecom-dashboard.html">?? Telecom</a>
+          <a href="/tracking-dashboard.html">?? Tracking</a>
+          <a href="/ticket-recap-dashboard.html">?? Ticket Recap</a>
         </div>
       </div>
       
       <!-- Productivity Group -->
       <div class="nav-group" id="groupProductivity">
         <button class="nav-group-header" data-group="productivity">
-          <span class="group-icon">📊</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Productivity</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/sales-targets-dashboard.html">💰 Sales & Target</a>
-          <a href="/overtime-dashboard.html">⏰ Overtime</a>
-          <a href="/productivity-dashboard.html">📈 Productivity</a>
+          <a href="/sales-targets-dashboard.html">?? Sales & Target</a>
+          <a href="/overtime-dashboard.html">? Overtime</a>
+          <a href="/productivity-dashboard.html">?? Productivity</a>
         </div>
       </div>
 
       <!-- Corporate Group -->
       <div class="nav-group" id="groupCorporate">
         <button class="nav-group-header" data-group="corporate">
-          <span class="group-icon">🏢</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Corporate</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/corporate-dashboard.html">📊 Corporate Dashboard</a>
+          <a href="/corporate-dashboard.html">?? Corporate Dashboard</a>
         </div>
       </div>
       
       <!-- Administration Group -->
       <div class="nav-group" id="groupAdmin">
         <button class="nav-group-header" data-group="administration">
-          <span class="group-icon">⚙️</span>
+          <span class="group-icon">??</span>
           <span class="group-title">Administration</span>
-          <span class="group-arrow">▼</span>
+          <span class="group-arrow">?</span>
         </button>
         <div class="nav-group-items">
-          <a href="/outstanding-dashboard.html">📋 Outstanding</a>
-          <a href="/cashout-dashboard.html">💸 Cash Out</a>
-          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">⚙️ Admin Settings</a>
+          <a href="/outstanding-dashboard.html">?? Outstanding</a>
+          <a href="/cashout-dashboard.html">?? Cash Out</a>
+          <a href="/admin-settings.html" id="adminSettingsLink" style="display:none;">?? Admin Settings</a>
         </div>
       </div>
       
       <hr class="nav-divider">
-      <a href="/profile.html" class="active">👤 Profile</a>
-      <a href="/logout.html" id="logoutLink">🚪 Logout</a>
+      <a href="/profile.html" class="active">?? Profile</a>
+      <a href="/logout.html" id="logoutLink">?? Logout</a>
     </div>
     <div class="userbox" style="margin-top:18px">
-      <div id="userName">—</div>
-      <div id="userRole">—</div>
+      <div id="userName">�</div>
+      <div id="userRole">�</div>
     </div>
   </aside>
 
   <main class="main">
     <div class="header">
       <div>
-        <h2>👤 My Profile</h2>
+        <h2>?? My Profile</h2>
         <div class="small" style="color:var(--text-secondary,#6b7280);">Manage your account settings and preferences</div>
       </div>
     </div>
@@ -291,7 +292,7 @@
           <div class="pf-avatar-area">
             <div class="pf-avatar-circle" id="profileInitials">?</div>
             <div class="pf-avatar-actions">
-              <button title="Change initials color" id="avatarColorBtn">🎨</button>
+              <button title="Change initials color" id="avatarColorBtn">??</button>
             </div>
           </div>
         </div>
@@ -318,7 +319,7 @@
               <label>Email</label>
               <input type="email" id="detailEmail" placeholder="your@email.com" />
               <div class="pf-badge verified" id="emailBadge">
-                <span class="dot">✓</span> <span id="emailBadgeText">Email Provided</span>
+                <span class="dot">?</span> <span id="emailBadgeText">Email Provided</span>
               </div>
             </div>
             <div class="pf-field">
@@ -344,27 +345,27 @@
                 <label>Current Password</label>
                 <div class="pf-pw-wrap">
                   <input type="password" name="current_password" id="currentPw" required placeholder="Enter current password" />
-                  <button type="button" class="pf-pw-toggle" data-target="currentPw">👁️</button>
+                  <button type="button" class="pf-pw-toggle" data-target="currentPw">???</button>
                 </div>
               </div>
               <div class="pf-field">
                 <label>New Password</label>
                 <div class="pf-pw-wrap">
                   <input type="password" name="password" id="newPw" required minlength="8" placeholder="Minimum 8 characters" />
-                  <button type="button" class="pf-pw-toggle" data-target="newPw">👁️</button>
+                  <button type="button" class="pf-pw-toggle" data-target="newPw">???</button>
                 </div>
                 <div class="pf-pw-rules" id="pwRules">
-                  <span class="pf-pw-rule" data-rule="length"><span class="rule-icon">×</span> 8 Characters</span>
-                  <span class="pf-pw-rule" data-rule="case"><span class="rule-icon">×</span> Capital & Small</span>
-                  <span class="pf-pw-rule" data-rule="number"><span class="rule-icon">×</span> Numbers</span>
-                  <span class="pf-pw-rule" data-rule="symbol"><span class="rule-icon">×</span> Symbols</span>
+                  <span class="pf-pw-rule" data-rule="length"><span class="rule-icon">�</span> 8 Characters</span>
+                  <span class="pf-pw-rule" data-rule="case"><span class="rule-icon">�</span> Capital & Small</span>
+                  <span class="pf-pw-rule" data-rule="number"><span class="rule-icon">�</span> Numbers</span>
+                  <span class="pf-pw-rule" data-rule="symbol"><span class="rule-icon">�</span> Symbols</span>
                 </div>
               </div>
               <div class="pf-field">
                 <label>Confirm Password</label>
                 <div class="pf-pw-wrap">
                   <input type="password" name="password_confirm" id="confirmPw" required minlength="8" placeholder="Re-type new password" />
-                  <button type="button" class="pf-pw-toggle" data-target="confirmPw">👁️</button>
+                  <button type="button" class="pf-pw-toggle" data-target="confirmPw">???</button>
                 </div>
               </div>
             </form>
@@ -376,7 +377,7 @@
       <div class="pf-card" id="profileStats">
         <div class="pf-row">
           <div class="pf-section-label">
-            <h3>📊 Activity Statistics</h3>
+            <h3>?? Activity Statistics</h3>
             <p>Your performance summary</p>
           </div>
           <div class="pf-stats-row">
@@ -493,9 +494,9 @@
     }
 
     // Sidebar
-    if (el('userName')) el('userName').textContent = user.name || user.username || '—';
+    if (el('userName')) el('userName').textContent = user.name || user.username || '�';
     if (el('userRole')) {
-      el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '—';
+      el('userRole').textContent = { admin: 'Administrator', 'semi-admin': 'Semi Admin', basic: 'Staff' }[user.type] || user.type || '�';
     }
     if ((user.type === 'admin' || user.type === 'semi-admin') && el('adminSettingsLink')) {
       el('adminSettingsLink').style.display = 'block';
@@ -510,7 +511,7 @@
     if (!badge || !text) return;
     if (email && email.trim()) {
       badge.className = 'pf-badge verified';
-      badge.querySelector('.dot').textContent = '✓';
+      badge.querySelector('.dot').textContent = '?';
       text.textContent = 'Email Provided';
     } else {
       badge.className = 'pf-badge not-verified';
@@ -541,7 +542,7 @@
         Object.assign(stored, result.user);
         localStorage.setItem('user', JSON.stringify(stored));
         // Refresh sidebar
-        if (el('userName')) el('userName').textContent = stored.name || stored.username || '—';
+        if (el('userName')) el('userName').textContent = stored.name || stored.username || '�';
         // Refresh initials
         const initials = stored.name
           ? stored.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
@@ -599,10 +600,10 @@
       const r = el.dataset.rule;
       if (rules[r]) {
         el.classList.add('pass'); el.classList.remove('fail');
-        el.querySelector('.rule-icon').textContent = '✓';
+        el.querySelector('.rule-icon').textContent = '?';
       } else {
         el.classList.remove('pass'); el.classList.add('fail');
-        el.querySelector('.rule-icon').textContent = '×';
+        el.querySelector('.rule-icon').textContent = '�';
       }
     });
     return Object.values(rules).every(Boolean);
@@ -617,7 +618,7 @@
         if (input) {
           const isPass = input.type === 'password';
           input.type = isPass ? 'text' : 'password';
-          btn.textContent = isPass ? '🙈' : '👁️';
+          btn.textContent = isPass ? '??' : '???';
         }
       });
     });
@@ -660,7 +661,7 @@
         // Reset strength indicators
         document.querySelectorAll('.pf-pw-rule').forEach(el => {
           el.classList.remove('pass'); el.classList.add('fail');
-          el.querySelector('.rule-icon').textContent = '×';
+          el.querySelector('.rule-icon').textContent = '�';
         });
       } catch (err) {
         hideLoading();
