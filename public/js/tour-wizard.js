@@ -638,7 +638,7 @@ window.TourWizard = (function() {
     }
   }
   
-  // Check for duplicate tour_code or booking_code
+  // Check for duplicate booking_code
   let duplicateCheckTimeout = null;
   async function checkDuplicate(field, value) {
     if (!value || !value.trim()) return;
@@ -786,8 +786,8 @@ window.TourWizard = (function() {
         wizardState.tourData.jumlah_peserta = count;
       }
       
-      // Duplicate check on tour_code or booking_code (debounced)
-      if ((name === 'tour_code' || name === 'booking_code') && e.type === 'change') {
+      // Duplicate check on booking_code only (tour_code allows duplicates)
+      if (name === 'booking_code' && e.type === 'change') {
         clearTimeout(duplicateCheckTimeout);
         duplicateCheckTimeout = setTimeout(() => checkDuplicate(name, value), 300);
       }

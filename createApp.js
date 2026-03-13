@@ -1643,12 +1643,6 @@ export async function createApp() {
         if (existing) return res.status(400).json({ error: `Booking code "${tour.booking_code}" already exists`, field: 'booking_code' });
       }
       
-      // Check for duplicate tour_code
-      if (tour.tour_code) {
-        const existingTour = await db.get('SELECT id FROM tours WHERE tour_code=?', [tour.tour_code]);
-        if (existingTour) return res.status(400).json({ error: `Tour code "${tour.tour_code}" already exists`, field: 'tour_code' });
-      }
-      
       // Validate region
       if (tour.region_id) {
         const r = await db.get('SELECT id FROM regions WHERE id=?', [tour.region_id]);
@@ -1748,12 +1742,6 @@ export async function createApp() {
       if (tour.booking_code) {
         const dupBooking = await db.get('SELECT id FROM tours WHERE booking_code=? AND id!=?', [tour.booking_code, tourId]);
         if (dupBooking) return res.status(400).json({ error: `Booking code "${tour.booking_code}" already exists`, field: 'booking_code' });
-      }
-      
-      // Check for duplicate tour_code (excluding this tour)
-      if (tour.tour_code) {
-        const dupTour = await db.get('SELECT id FROM tours WHERE tour_code=? AND id!=?', [tour.tour_code, tourId]);
-        if (dupTour) return res.status(400).json({ error: `Tour code "${tour.tour_code}" already exists`, field: 'tour_code' });
       }
       
       // Build clean tour object with only allowed fields
@@ -1882,10 +1870,10 @@ export async function createApp() {
     }
   });
 
-  // Check for duplicate tour_code or booking_code (for frontend pre-validation)
+  // Check for duplicate booking_code (for frontend pre-validation)
   app.get('/api/tours/check-duplicate', authMiddleware(), async (req, res) => {
     try {
-      const { tour_code, booking_code, exclude_id } = req.query;
+      const { booking_code, exclude_id } = req.query;
       const duplicates = {};
       
       if (booking_code) {
@@ -1895,15 +1883,6 @@ export async function createApp() {
         const params = exclude_id ? [booking_code, exclude_id] : [booking_code];
         const existing = await db.get(sql, params);
         if (existing) duplicates.booking_code = { exists: true, tour_code: existing.tour_code, id: existing.id };
-      }
-      
-      if (tour_code) {
-        const sql = exclude_id
-          ? 'SELECT id, booking_code FROM tours WHERE tour_code=? AND id!=?'
-          : 'SELECT id, booking_code FROM tours WHERE tour_code=?';
-        const params = exclude_id ? [tour_code, exclude_id] : [tour_code];
-        const existing = await db.get(sql, params);
-        if (existing) duplicates.tour_code = { exists: true, booking_code: existing.booking_code, id: existing.id };
       }
       
       res.json({ duplicates, hasDuplicates: Object.keys(duplicates).length > 0 });
