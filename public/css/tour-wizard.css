@@ -199,31 +199,34 @@
 
 .wizard-form-grid label {
   display: block;
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-sm, 0.85rem);
+  font-weight: 600;
   color: var(--text-secondary, #6b7280);
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2, 8px);
+  letter-spacing: 0.3px;
 }
 
 .wizard-form-grid input,
 .wizard-form-grid select,
 .wizard-form-grid textarea {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: 8px;
-  font-size: 14px;
-  background: var(--bg-card, #fff);
+  padding: var(--space-3, 12px) var(--space-4, 16px);
+  border: 1px solid var(--border-medium, #cbd5e1);
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--text-base, 0.95rem);
+  background: var(--gray-50, #f8fafc);
   color: var(--text-primary, #111827);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition: var(--transition-medium, 200ms ease);
+  font-family: var(--font-family, 'Inter', sans-serif);
 }
 
 .wizard-form-grid input:focus,
 .wizard-form-grid select:focus,
 .wizard-form-grid textarea:focus {
   outline: none;
-  border-color: var(--primary, #3b82f6);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary, #2563eb);
+  background: var(--card, #fff);
+  box-shadow: var(--elevate-focus, 0 0 0 4px rgba(37, 99, 235, 0.25));
 }
 
 .wizard-form-grid input:disabled,
@@ -282,26 +285,29 @@
 
 .passenger-form label {
   display: block;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-sm, 0.85rem);
+  font-weight: 600;
   color: var(--text-secondary, #6b7280);
   margin-bottom: 4px;
+  letter-spacing: 0.3px;
 }
 
 .passenger-form input {
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid var(--border-medium, #e5e7eb);
-  border-radius: 6px;
+  border: 1px solid var(--border-medium, #cbd5e1);
+  border-radius: var(--radius-md, 10px);
   font-size: 13px;
-  background: var(--bg-card, #fff);
+  background: var(--gray-50, #f8fafc);
   color: var(--text-primary, #111827);
+  font-family: var(--font-family, 'Inter', sans-serif);
 }
 
 .passenger-form input:focus {
   outline: none;
-  border-color: var(--primary, #3b82f6);
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  border-color: var(--primary, #2563eb);
+  background: var(--card, #fff);
+  box-shadow: var(--elevate-focus, 0 0 0 4px rgba(37, 99, 235, 0.25));
 }
 
 .passenger-subtotal {
@@ -766,7 +772,7 @@
 
 /* =========================================================
    DUPLICATE WARNING
-   Shows inline warning on booking_code / tour_code fields
+   Shows inline warning on booking_code field
    ========================================================= */
 
 .duplicate-warning {
