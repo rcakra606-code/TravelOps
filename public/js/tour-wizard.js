@@ -992,12 +992,16 @@ window.TourWizard = (function() {
     window.fetchJson(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
       .then(function() {
         if (window.toast) window.toast.success(isEdit ? 'Tour updated!' : 'Tour created!');
-        // Force fresh page load with cache-busting query param
-        setTimeout(function() { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500);
+        // Dispatch event for tours-dashboard.js listener
+        window.dispatchEvent(new CustomEvent('tourWizardSaved'));
+        // Also call directly as fallback for instant refresh
+        if (typeof window.loadToursData === 'function') {
+          window.loadToursData();
+        }
       })
       .catch(function(err) {
         if (window.toast) window.toast.error(err.message || 'Failed to save tour');
-        setTimeout(function() { window.location.href = window.location.pathname + '?_t=' + Date.now(); }, 500);
+        // Do NOT redirect on error — keep user on page so they can retry
       });
   }
   
