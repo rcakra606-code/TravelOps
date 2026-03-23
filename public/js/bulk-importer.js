@@ -654,12 +654,12 @@ class BulkImporter {
         font-size: 12px;
       }
       .column-tag.required {
-        background: #fee2e2;
-        color: #dc2626;
+        background: rgba(220,38,38,0.18);
+        color: #f87171;
       }
       .column-tag.optional {
-        background: #f3f4f6;
-        color: #6b7280;
+        background: rgba(255,255,255,0.06);
+        color: #8da0be;
       }
       .upload-area {
         border: 2px dashed var(--border-light, #e5e7eb);
@@ -731,9 +731,9 @@ class BulkImporter {
         border-radius: 10px;
         min-width: 80px;
       }
-      .summary-stats .stat.success { background: #d1fae5; }
-      .summary-stats .stat.error { background: #fee2e2; }
-      .summary-stats .stat.warning { background: #fef3c7; }
+      .summary-stats .stat.success { background: rgba(22,163,74,0.18); }
+      .summary-stats .stat.error { background: rgba(220,38,38,0.18); }
+      .summary-stats .stat.warning { background: rgba(217,119,6,0.18); }
       .stat-icon { font-size: 24px; margin-bottom: 4px; }
       .stat-value { font-size: 20px; font-weight: 700; }
       .stat-label { font-size: 12px; color: var(--text-secondary); }
@@ -761,8 +761,8 @@ class BulkImporter {
         padding: 10px 12px;
         border-top: 1px solid var(--border-light, #e5e7eb);
       }
-      .validation-table .row-error { background: #fef2f2; }
-      .validation-table .row-warning { background: #fffbeb; }
+      .validation-table .row-error { background: rgba(220,38,38,0.08); }
+      .validation-table .row-warning { background: rgba(217,119,6,0.08); }
       .status-badge {
         width: 20px;
         height: 20px;
@@ -777,7 +777,7 @@ class BulkImporter {
       .status-badge.error { background: #ef4444; }
       .status-badge.warning { background: #f59e0b; }
       .issues-cell {
-        color: #dc2626;
+        color: #f87171;
         font-size: 12px;
         max-width: 200px;
       }

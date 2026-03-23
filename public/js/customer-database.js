@@ -1065,13 +1065,13 @@ class CustomerDatabase {
       }
 
       .badge.vip {
-        background: #fef3c7;
-        color: #d97706;
+        background: rgba(217,119,6,0.18);
+        color: #fbbf24;
       }
 
       .badge.repeat {
-        background: #dbeafe;
-        color: #2563eb;
+        background: rgba(45,106,138,0.18);
+        color: #67b8db;
       }
 
       .contact-info {
@@ -1089,9 +1089,9 @@ class CustomerDatabase {
         text-transform: capitalize;
       }
 
-      .status-badge.active { background: #dcfce7; color: #16a34a; }
-      .status-badge.inactive { background: #fee2e2; color: #dc2626; }
-      .status-badge.vip { background: #fef3c7; color: #d97706; }
+      .status-badge.active { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .status-badge.inactive { background: rgba(220,38,38,0.18); color: #f87171; }
+      .status-badge.vip { background: rgba(217,119,6,0.18); color: #fbbf24; }
 
       .actions-cell {
         display: flex;

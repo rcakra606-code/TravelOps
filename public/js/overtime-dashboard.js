@@ -591,7 +591,7 @@ if (window.TableEnhancer) {
   // Enable expandable rows for detail view
   tableEnhancer.initExpandable({
     getDetails: (rowData) => `
-      <div style="padding: 16px; background: #f9fafb; border-radius: 8px;">
+      <div style="padding: 16px; background: rgba(255,255,255,0.04); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
         <h4>Overtime Details</h4>
         <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
           <div><strong>Staff:</strong> ${rowData.staff_name}</div>

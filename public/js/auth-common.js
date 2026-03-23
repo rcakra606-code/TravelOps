@@ -242,23 +242,23 @@ function showTokenExpiryWarning() {
       .token-warning-card { animation: slideUp 0.4s ease; }
       @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       .activity-badge { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-      .activity-active { background: #dcfce7; color: #166534; }
-      .activity-idle { background: #fef3c7; color: #92400e; }
+      .activity-active { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .activity-idle { background: rgba(217,119,6,0.18); color: #fbbf24; }
       .extend-btn { transition: all 0.2s; }
       .extend-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(37, 99, 235, 0.35); }
       .timer-ring { position: relative; width: 100px; height: 100px; }
       .timer-ring svg { transform: rotate(-90deg); }
       .timer-ring circle { fill: none; stroke-width: 8; }
-      .timer-ring .bg { stroke: #e5e7eb; }
+      .timer-ring .bg { stroke: rgba(255,255,255,0.10); }
       .timer-ring .progress { stroke: #ef4444; stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
       .timer-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; font-weight: 700; color: #dc2626; }
     </style>
-    <div class="token-warning-card" style="background: white; padding: 32px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.25);">
+    <div class="token-warning-card" style="background: rgba(14,27,48,0.96); padding: 32px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.50); border: 1px solid rgba(255,255,255,0.10);">
       <div style="margin-bottom: 20px;">
         <span style="font-size: 48px;">🔐</span>
       </div>
       
-      <h3 style="margin: 0 0 8px 0; color: #111827; font-size: 22px; font-weight: 700;">Session Expiring Soon</h3>
+      <h3 style="margin: 0 0 8px 0; color: #e8ecf2; font-size: 22px; font-weight: 700;">Session Expiring Soon</h3>
       
       <div style="margin: 12px 0;">
         <span class="activity-badge ${isActive ? 'activity-active' : 'activity-idle'}">
@@ -267,7 +267,7 @@ function showTokenExpiryWarning() {
         </span>
       </div>
       
-      <p style="margin: 16px 0; color: #6b7280; font-size: 14px; line-height: 1.5;">
+      <p style="margin: 16px 0; color: #8da0be; font-size: 14px; line-height: 1.5;">
         Your login session will expire in:
       </p>
       
@@ -280,7 +280,7 @@ function showTokenExpiryWarning() {
         <div class="timer-text" id="tokenExpiryCountdown">${remainingSecs}s</div>
       </div>
       
-      <p style="margin: 16px 0 24px 0; color: #374151; font-size: 13px;">
+      <p style="margin: 16px 0 24px 0; color: #c5d0df; font-size: 13px;">
         Click below to extend your session by <strong>${TOKEN_EXTEND_DURATION} minutes</strong>
       </p>
       
@@ -288,7 +288,7 @@ function showTokenExpiryWarning() {
         <button id="tokenExtendBtn" class="extend-btn" style="background: linear-gradient(135deg, #2563eb, #1d4ed8); color: white; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 600; flex: 1;">
           ⏱️ Extend ${TOKEN_EXTEND_DURATION} Minutes
         </button>
-        <button id="tokenLogoutBtn" style="background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 14px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 500;">
+        <button id="tokenLogoutBtn" style="background: rgba(255,255,255,0.06); color: #c5d0df; border: 1px solid rgba(255,255,255,0.12); padding: 14px 20px; border-radius: 10px; font-size: 15px; cursor: pointer; font-weight: 500;">
           Logout
         </button>
       </div>
@@ -472,15 +472,15 @@ function handleSessionExpired(message = 'Your session has expired. Please login 
       @keyframes sessionSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes sessionSpin { to { transform: rotate(360deg); } }
     </style>
-    <div style="background: white; padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: sessionSlideUp 0.4s ease;">
+    <div style="background: rgba(14,27,48,0.96); padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.50); border: 1px solid rgba(255,255,255,0.10); animation: sessionSlideUp 0.4s ease;">
       <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-      <h3 style="margin: 0 0 12px 0; color: #111827; font-size: 22px; font-weight: 700;">Session Expired</h3>
-      <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 14px; line-height: 1.6;">${message}</p>
-      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #f3f4f6; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
-        <div style="width: 20px; height: 20px; border: 3px solid #d1d5db; border-top-color: #2563eb; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
-        <span style="color: #374151; font-size: 14px;">Redirecting to login in <strong id="sessionExpiredCountdown" style="color: #2563eb;">${countdown}</strong> seconds...</span>
+      <h3 style="margin: 0 0 12px 0; color: #e8ecf2; font-size: 22px; font-weight: 700;">Session Expired</h3>
+      <p style="margin: 0 0 20px 0; color: #8da0be; font-size: 14px; line-height: 1.6;">${message}</p>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(255,255,255,0.06); padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.12); border-top-color: #2563eb; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
+        <span style="color: #c5d0df; font-size: 14px;">Redirecting to login in <strong id="sessionExpiredCountdown" style="color: #d4a843;">${countdown}</strong> seconds...</span>
       </div>
-      <a href="/login.html" style="color: #2563eb; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
+      <a href="/login.html" style="color: #d4a843; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
     </div>
   `;
   
@@ -531,21 +531,21 @@ function handleSessionInvalidated() {
       @keyframes sessionSlideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       @keyframes sessionSpin { to { transform: rotate(360deg); } }
     </style>
-    <div style="background: white; padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.3); animation: sessionSlideUp 0.4s ease;">
+    <div style="background: rgba(14,27,48,0.96); padding: 40px; border-radius: 16px; max-width: 420px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.50); border: 1px solid rgba(255,255,255,0.10); animation: sessionSlideUp 0.4s ease;">
       <div style="font-size: 48px; margin-bottom: 16px;">🔒</div>
-      <h3 style="margin: 0 0 12px 0; color: #dc2626; font-size: 22px; font-weight: 700;">Session Terminated</h3>
-      <p style="margin: 0 0 8px 0; color: #374151; font-size: 14px; line-height: 1.6;">
+      <h3 style="margin: 0 0 12px 0; color: #f87171; font-size: 22px; font-weight: 700;">Session Terminated</h3>
+      <p style="margin: 0 0 8px 0; color: #c5d0df; font-size: 14px; line-height: 1.6;">
         Your account has been logged in from another device.<br>
         For security, this session has been terminated.
       </p>
-      <p style="margin: 0 0 20px 0; color: #6b7280; font-size: 13px;">
+      <p style="margin: 0 0 20px 0; color: #8da0be; font-size: 13px;">
         If this wasn't you, please change your password immediately.
       </p>
-      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #fef2f2; padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
-        <div style="width: 20px; height: 20px; border: 3px solid #fecaca; border-top-color: #dc2626; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
-        <span style="color: #374151; font-size: 14px;">Redirecting to login in <strong id="sessionInvalidCountdown" style="color: #dc2626;">${countdown}</strong> seconds...</span>
+      <div style="display: flex; align-items: center; justify-content: center; gap: 12px; background: rgba(220,38,38,0.12); padding: 14px 20px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="width: 20px; height: 20px; border: 3px solid rgba(220,38,38,0.30); border-top-color: #dc2626; border-radius: 50%; animation: sessionSpin 0.8s linear infinite;"></div>
+        <span style="color: #c5d0df; font-size: 14px;">Redirecting to login in <strong id="sessionInvalidCountdown" style="color: #f87171;">${countdown}</strong> seconds...</span>
       </div>
-      <a href="/login.html" style="color: #2563eb; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
+      <a href="/login.html" style="color: #d4a843; font-size: 13px; text-decoration: none; font-weight: 600;">Click here to login now →</a>
     </div>
   `;
   
@@ -605,10 +605,10 @@ function showSessionWarning() {
   let remainingSecs = Math.ceil(remainingMs / 1000);
   
   warningOverlay.innerHTML = `
-    <div style="background: white; padding: 32px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+    <div style="background: rgba(14,27,48,0.96); padding: 32px; border-radius: 12px; max-width: 400px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.50); border: 1px solid rgba(255,255,255,0.10);">
       <div style="font-size: 48px; margin-bottom: 16px;">⏰</div>
-      <h3 style="margin: 0 0 12px 0; color: #111827; font-size: 20px;">Session Timeout Warning</h3>
-      <p style="margin: 0 0 8px 0; color: #6b7280; font-size: 15px;">You will be logged out due to inactivity in:</p>
+      <h3 style="margin: 0 0 12px 0; color: #e8ecf2; font-size: 20px;">Session Timeout Warning</h3>
+      <p style="margin: 0 0 8px 0; color: #8da0be; font-size: 15px;">You will be logged out due to inactivity in:</p>
       <div id="sessionCountdown" style="font-size: 36px; font-weight: bold; color: #dc2626; margin: 16px 0;">${remainingSecs}s</div>
       <button id="sessionStayBtn" style="background: #2563eb; color: white; border: none; padding: 12px 32px; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: 600;">
         Stay Logged In

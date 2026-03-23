@@ -249,7 +249,7 @@ class PasswordStrengthIndicator {
         .strength-bar-container {
           flex: 1;
           height: 6px;
-          background: #e5e7eb;
+          background: rgba(255,255,255,0.08);
           border-radius: 3px;
           overflow: hidden;
         }

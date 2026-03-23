@@ -1056,13 +1056,13 @@ class AdvancedReporting {
       }
 
       .change-indicator.positive {
-        background: #dcfce7;
-        color: #16a34a;
+        background: rgba(22,163,74,0.18);
+        color: #4ade80;
       }
 
       .change-indicator.negative {
-        background: #fee2e2;
-        color: #dc2626;
+        background: rgba(220,38,38,0.18);
+        color: #f87171;
       }
 
       .forecast-cards {
@@ -1122,11 +1122,11 @@ class AdvancedReporting {
       }
 
       .summary-section.profit.positive .summary-total {
-        color: #16a34a;
+        color: #4ade80;
       }
 
       .summary-section.profit.negative .summary-total {
-        color: #dc2626;
+        color: #f87171;
       }
 
       .summary-breakdown {

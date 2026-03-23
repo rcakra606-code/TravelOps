@@ -680,9 +680,9 @@ class StaffManagement {
         text-transform: capitalize;
       }
 
-      .staff-status-badge.active { background: #dcfce7; color: #16a34a; }
-      .staff-status-badge.moderate { background: #fef3c7; color: #d97706; }
-      .staff-status-badge.inactive { background: #fee2e2; color: #dc2626; }
+      .staff-status-badge.active { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .staff-status-badge.moderate { background: rgba(217,119,6,0.18); color: #fbbf24; }
+      .staff-status-badge.inactive { background: rgba(220,38,38,0.18); color: #f87171; }
 
       /* Workload */
       .workload-header {
@@ -749,9 +749,9 @@ class StaffManagement {
       .workload-alert {
         margin-top: 16px;
         padding: 12px 16px;
-        background: #fef3c7;
+        background: rgba(217,119,6,0.12);
         border-radius: 8px;
-        color: #92400e;
+        color: #fbbf24;
       }
 
       /* Schedule */
@@ -822,8 +822,8 @@ class StaffManagement {
       }
 
       .achieved-count {
-        background: #dcfce7;
-        color: #16a34a;
+        background: rgba(22,163,74,0.18);
+        color: #4ade80;
         padding: 4px 12px;
         border-radius: 20px;
         font-weight: 600;

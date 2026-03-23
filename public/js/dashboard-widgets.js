@@ -680,13 +680,13 @@ class DashboardWidgets {
         border-color: var(--primary, #3b82f6);
       }
       .widget-option.active {
-        background: #d1fae5;
-        border-color: #10b981;
+        background: rgba(22,163,74,0.18);
+        border-color: rgba(22,163,74,0.30);
       }
       .option-icon { font-size: 24px; }
       .option-title { flex: 1; font-weight: 500; }
       .option-status { font-size: 12px; color: var(--text-secondary); }
-      .widget-option.active .option-status { color: #059669; }
+      .widget-option.active .option-status { color: #4ade80; }
       .selector-close {
         width: 100%;
         padding: 12px;
@@ -741,10 +741,10 @@ class DashboardWidgets {
         font-size: 12px;
         font-weight: 600;
       }
-      .countdown-badge.urgent { background: #fee2e2; color: #dc2626; }
-      .countdown-badge.soon { background: #fef3c7; color: #d97706; }
-      .countdown-badge.normal { background: #d1fae5; color: #059669; }
-      .status-badge.pending { background: #fef3c7; color: #d97706; padding: 4px 10px; border-radius: 20px; font-size: 11px; }
+      .countdown-badge.urgent { background: rgba(220,38,38,0.18); color: #f87171; }
+      .countdown-badge.soon { background: rgba(217,119,6,0.18); color: #fbbf24; }
+      .countdown-badge.normal { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .status-badge.pending { background: rgba(217,119,6,0.18); color: #fbbf24; padding: 4px 10px; border-radius: 20px; font-size: 11px; }
       
       @media (max-width: 768px) {
         .widgets-grid {

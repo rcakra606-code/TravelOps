@@ -180,11 +180,11 @@ class FormDirtyState {
         align-items: center;
         gap: 6px;
         padding: 8px 14px;
-        background: linear-gradient(135deg, #fef3c7, #fde68a);
-        border: 1px solid #f59e0b;
+        background: rgba(217,119,6,0.12);
+        border: 1px solid rgba(217,119,6,0.25);
         border-radius: 8px;
         font-size: 13px;
-        color: #92400e;
+        color: #fbbf24;
         margin-bottom: 16px;
         animation: fadeIn 0.3s ease;
       `;

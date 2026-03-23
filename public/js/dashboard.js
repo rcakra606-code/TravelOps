@@ -535,7 +535,7 @@ if (modalForm && !staticSubmitHandlerAttached) {
       errorDiv.className = 'error-message';
       errorDiv.style.padding = '12px';
       errorDiv.style.marginBottom = '16px';
-      errorDiv.style.background = '#fee2e2';
+      errorDiv.style.background = 'rgba(220,38,38,0.15)';
       errorDiv.style.borderRadius = '8px';
       errorDiv.textContent = err.message || 'An error occurred';
       if (modalBody) modalBody.insertBefore(errorDiv, modalBody.firstChild);
@@ -1110,11 +1110,11 @@ function renderProfile() {
                      user.type === 'semiadmin' ? 'Semi Admin' : 'Basic User';
     el('profileRole').textContent = roleText;
     el('profileRole').style.background = 
-      user.type === 'admin' ? '#dbeafe' : 
-      user.type === 'semiadmin' ? '#fef3c7' : '#e0e7ff';
+      user.type === 'admin' ? 'rgba(45,106,138,0.18)' : 
+      user.type === 'semiadmin' ? 'rgba(217,119,6,0.18)' : 'rgba(99,102,241,0.18)';
     el('profileRole').style.color = 
-      user.type === 'admin' ? '#1e40af' : 
-      user.type === 'semiadmin' ? '#92400e' : '#4338ca';
+      user.type === 'admin' ? '#67b8db' : 
+      user.type === 'semiadmin' ? '#fbbf24' : '#a5b4fc';
   }
   if (el('profileUsername')) el('profileUsername').textContent = '@' + (user.username || 'unknown');
   
@@ -1404,14 +1404,14 @@ async function checkEmailConfiguration() {
     statusIcon.textContent = '⚙️';
     statusTitle.textContent = 'Email System Ready';
     statusMessage.textContent = 'Use the test button to verify SMTP configuration';
-    configStatus.style.background = '#eff6ff';
-    configStatus.style.border = '1px solid #2563eb';
+    configStatus.style.background = 'rgba(45,106,138,0.12)';
+    configStatus.style.border = '1px solid rgba(45,106,138,0.25)';
   } catch (error) {
     statusIcon.textContent = '⚠️';
     statusTitle.textContent = 'System Status Unknown';
     statusMessage.textContent = 'Could not connect to server';
-    configStatus.style.background = '#fef3c7';
-    configStatus.style.border = '1px solid #f59e0b';
+    configStatus.style.background = 'rgba(217,119,6,0.12)';
+    configStatus.style.border = '1px solid rgba(217,119,6,0.25)';
   }
 }
 
@@ -1419,8 +1419,8 @@ function showEmailResult(success, message, details = null) {
   const resultsDiv = el('emailTestResults');
   if (!resultsDiv) return;
   
-  const bgColor = success ? '#ecfdf5' : '#fef2f2';
-  const borderColor = success ? '#10b981' : '#ef4444';
+  const bgColor = success ? 'rgba(22,163,74,0.12)' : 'rgba(220,38,38,0.12)';
+  const borderColor = success ? 'rgba(22,163,74,0.25)' : 'rgba(220,38,38,0.25)';
   const icon = success ? '✅' : '❌';
   
   let detailsHtml = '';
@@ -1429,8 +1429,8 @@ function showEmailResult(success, message, details = null) {
       // Special formatting for setup instructions
       detailsHtml = `
         <div style="margin-top: 12px; padding: 12px; background: rgba(14,27,48,0.95); border-radius: 6px; border-left: 3px solid #f59e0b;">
-          <strong style="color: #92400e;">💡 ${details.issue || 'Setup Required'}</strong>
-          <p style="margin: 8px 0; color: #78350f; font-size: 0.9rem;">${details.solution || ''}</p>
+          <strong style="color: #fbbf24;">💡 ${details.issue || 'Setup Required'}</strong>
+          <p style="margin: 8px 0; color: #b8922e; font-size: 0.9rem;">${details.solution || ''}</p>
           <div style="margin-top: 8px; font-size: 0.85rem; color: #8da0be;">
             ${details.steps.map(step => `<div style="margin: 4px 0;">${step}</div>`).join('')}
           </div>
@@ -1447,7 +1447,7 @@ function showEmailResult(success, message, details = null) {
       <div style="display: flex; align-items: start; gap: 12px;">
         <span style="font-size: 24px;">${icon}</span>
         <div style="flex: 1;">
-          <strong style="color: ${success ? '#065f46' : '#991b1b'};">${message}</strong>
+          <strong style="color: ${success ? '#4ade80' : '#f87171'};">${message}</strong>
           ${detailsHtml}
         </div>
       </div>
@@ -1517,8 +1517,8 @@ async function sendTestEmail() {
       if (statusTitle) statusTitle.textContent = 'Email Configured & Working';
       if (statusMessage) statusMessage.textContent = 'SMTP connection verified successfully';
       if (configStatus) {
-        configStatus.style.background = '#ecfdf5';
-        configStatus.style.border = '1px solid #10b981';
+        configStatus.style.background = 'rgba(22,163,74,0.12)';
+        configStatus.style.border = '1px solid rgba(22,163,74,0.25)';
       }
     } else {
       const errorMsg = data.error || 'Failed to send test email';
@@ -1546,8 +1546,8 @@ async function sendTestEmail() {
         if (statusTitle) statusTitle.textContent = 'SMTP Configuration Required';
         if (statusMessage) statusMessage.textContent = 'Set SMTP_USER and SMTP_PASSWORD environment variables';
         if (configStatus) {
-          configStatus.style.background = '#fef3c7';
-          configStatus.style.border = '1px solid #f59e0b';
+          configStatus.style.background = 'rgba(217,119,6,0.12)';
+          configStatus.style.border = '1px solid rgba(217,119,6,0.25)';
         }
       }
       
@@ -1661,8 +1661,8 @@ async function viewReminderStats() {
     const resultsDiv = el('emailTestResults');
     if (resultsDiv) {
       resultsDiv.style.display = 'block';
-      resultsDiv.innerHTML = `<div style="padding:16px;background:#ecfdf5;border:1px solid #10b981;border-radius:12px;">
-        <h4 style="margin:0 0 12px;color:#065f46;">📊 Email Reminder Statistics</h4>
+      resultsDiv.innerHTML = `<div style="padding:16px;background:rgba(22,163,74,0.12);border:1px solid rgba(22,163,74,0.25);border-radius:12px;">
+        <h4 style="margin:0 0 12px;color:#4ade80;">📊 Email Reminder Statistics</h4>
         ${summaryHtml}
         <div style="font-size:11px;color:#9ca3af;">Last updated: ${new Date().toLocaleString()}</div>
       </div>`;

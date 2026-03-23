@@ -2376,7 +2376,7 @@ function openViewItem(entity, id) {
   if (!item) { toast.error('Data tidak ditemukan'); return; }
   const rows = Object.entries(item)
     .filter(([k]) => !['password'].includes(k))
-    .map(([k,v]) => `<tr><th style=\"text-align:left;padding:6px 10px;background:#f3f4f6;width:160px;font-weight:600;text-transform:capitalize\">${esc(k.replace(/_/g,' '))}</th><td style=\"padding:6px 10px\">${esc(v) || '-'}</td></tr>`)
+    .map(([k,v]) => `<tr><th style=\"text-align:left;padding:6px 10px;background:rgba(212,168,67,0.10);width:160px;font-weight:600;text-transform:capitalize;color:#d4a843\">${esc(k.replace(/_/g,' '))}</th><td style=\"padding:6px 10px;color:#e8ecf2\">${esc(v) || '-'}</td></tr>`)
     .join('');
   openModal({
     title: `Detail ${entity} #${id}`,

@@ -208,9 +208,9 @@ class TourCalendar {
         justify-content: center;
         font-size: 20px;
       }
-      .tour-detail-icon.urgent { background: #fee2e2; }
-      .tour-detail-icon.soon { background: #fef3c7; }
-      .tour-detail-icon.ready { background: #d1fae5; }
+      .tour-detail-icon.urgent { background: rgba(220,38,38,0.18); }
+      .tour-detail-icon.soon { background: rgba(217,119,6,0.18); }
+      .tour-detail-icon.ready { background: rgba(22,163,74,0.18); }
       .tour-detail-content {
         flex: 1;
       }
@@ -228,9 +228,9 @@ class TourCalendar {
         font-size: 12px;
         font-weight: 500;
       }
-      .tour-detail-badge.urgent { background: #fee2e2; color: #dc2626; }
-      .tour-detail-badge.soon { background: #fef3c7; color: #d97706; }
-      .tour-detail-badge.ready { background: #d1fae5; color: #059669; }
+      .tour-detail-badge.urgent { background: rgba(220,38,38,0.18); color: #f87171; }
+      .tour-detail-badge.soon { background: rgba(217,119,6,0.18); color: #fbbf24; }
+      .tour-detail-badge.ready { background: rgba(22,163,74,0.18); color: #4ade80; }
       
       .tour-checklist {
         margin-top: 8px;
@@ -246,8 +246,8 @@ class TourCalendar {
         align-items: center;
         gap: 4px;
       }
-      .checklist-item.done { background: #d1fae5; color: #059669; }
-      .checklist-item.pending { background: #fee2e2; color: #dc2626; }
+      .checklist-item.done { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .checklist-item.pending { background: rgba(220,38,38,0.18); color: #f87171; }
     `;
     document.head.appendChild(style);
   }

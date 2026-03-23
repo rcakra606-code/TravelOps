@@ -501,7 +501,7 @@ async function renderDashboard() {
         tableBody.innerHTML = pendingDocs.map(doc => {
           const receiveDate = new Date(doc.receive_date);
           const daysPending = Math.ceil((now - receiveDate) / (24 * 60 * 60 * 1000));
-          const urgency = daysPending > 14 ? 'background-color: #fef2f2; color: #dc2626;' : daysPending > 7 ? 'background-color: #fef9c3; color: #ca8a04;' : '';
+          const urgency = daysPending > 14 ? 'background-color: rgba(220,38,38,0.12); color: #f87171;' : daysPending > 7 ? 'background-color: rgba(217,119,6,0.12); color: #fbbf24;' : '';
           
           return `
             <tr style="${urgency}">

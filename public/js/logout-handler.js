@@ -50,17 +50,18 @@ async function handleLogout() {
   
   const message = document.createElement('div');
   message.style.cssText = `
-    background: white;
+    background: rgba(14,27,48,0.96);
     padding: 40px;
     border-radius: 12px;
     text-align: center;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.50);
+    border: 1px solid rgba(255,255,255,0.10);
     animation: slideUp 0.3s ease;
   `;
   message.innerHTML = `
     <div style="font-size: 48px; margin-bottom: 16px;">👋</div>
-    <h2 style="margin: 0 0 8px 0; color: #111827;">See You Soon, ${userName}!</h2>
-    <p style="margin: 0; color: #6b7280;">Thank you for using TravelOps</p>
+    <h2 style="margin: 0 0 8px 0; color: #e8ecf2;">See You Soon, ${userName}!</h2>
+    <p style="margin: 0; color: #8da0be;">Thank you for using TravelOps</p>
   `;
   
   overlay.appendChild(message);

@@ -561,11 +561,11 @@ class AuditTrail {
         justify-content: center;
         font-size: 18px;
       }
-      .audit-icon.create { background: #d1fae5; }
-      .audit-icon.update { background: #dbeafe; }
-      .audit-icon.delete { background: #fee2e2; }
-      .audit-icon.view { background: #f3f4f6; }
-      .audit-icon.export { background: #e0e7ff; }
+      .audit-icon.create { background: rgba(22,163,74,0.18); }
+      .audit-icon.update { background: rgba(45,106,138,0.18); }
+      .audit-icon.delete { background: rgba(220,38,38,0.18); }
+      .audit-icon.view { background: rgba(255,255,255,0.06); }
+      .audit-icon.export { background: rgba(99,102,241,0.18); }
       .audit-content { flex: 1; }
       .audit-title { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; }
       .audit-user { font-weight: 600; font-size: 14px; }
@@ -575,10 +575,10 @@ class AuditTrail {
         font-size: 11px;
         font-weight: 500;
       }
-      .audit-action-badge.create { background: #d1fae5; color: #059669; }
-      .audit-action-badge.update { background: #dbeafe; color: #2563eb; }
-      .audit-action-badge.delete { background: #fee2e2; color: #dc2626; }
-      .audit-action-badge.view { background: #f3f4f6; color: #6b7280; }
+      .audit-action-badge.create { background: rgba(22,163,74,0.18); color: #4ade80; }
+      .audit-action-badge.update { background: rgba(45,106,138,0.18); color: #67b8db; }
+      .audit-action-badge.delete { background: rgba(220,38,38,0.18); color: #f87171; }
+      .audit-action-badge.view { background: rgba(255,255,255,0.06); color: #8da0be; }
       .audit-module { color: var(--text-secondary); font-size: 13px; }
       .audit-record { color: var(--primary, #3b82f6); font-size: 13px; }
       .audit-changes { font-size: 12px; color: var(--text-secondary); }

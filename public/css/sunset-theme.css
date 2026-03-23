@@ -685,7 +685,460 @@ input:checked + .toggle-slider { background: linear-gradient(135deg, #d4a843, #b
   body { padding-top: 2px !important; }
 }
 
-/* === PRINT OVERRIDE === */
+/* ==============================================================
+   COMPREHENSIVE DARK THEME READABILITY OVERRIDES
+   Covers all remaining light-mode styles across the app.
+   ============================================================== */
+
+/* --- Form Labels --- */
+.form-row label,
+.form-group label,
+.modal-form .form-group label,
+.modal-form label,
+label,
+legend,
+fieldset legend {
+  color: #c5d0df !important;
+}
+
+/* --- Action Buttons (edit/delete/reset/unlock/lock) --- */
+.btn-action.edit    { background: rgba(45,106,138,0.18) !important; color: #67b8db !important; }
+.btn-action.delete  { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.btn-action.reset   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.btn-action.unlock  { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.btn-action.lock    { background: rgba(156,39,176,0.18) !important; color: #ce93d8 !important; }
+.btn-action:hover { filter: brightness(1.2) !important; }
+
+/* --- Pagination --- */
+.pagination-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #c5d0df !important;
+}
+.pagination-btn:hover:not(:disabled):not(.active) {
+  background: rgba(212,168,67,0.15) !important;
+  border-color: rgba(212,168,67,0.30) !important;
+  color: #d4a843 !important;
+}
+.pagination-btn.active {
+  background: linear-gradient(135deg, #d4a843 0%, #b8922e 100%) !important;
+  color: #fff !important;
+  border-color: #d4a843 !important;
+}
+.pagination-btn:disabled {
+  background: rgba(255,255,255,0.03) !important;
+  color: #4a5f7a !important;
+  border-color: rgba(255,255,255,0.06) !important;
+}
+.pagination-ellipsis {
+  color: #6b83a5 !important;
+}
+.pagination-info {
+  color: #8da0be !important;
+}
+.pagination-controls {
+  background: rgba(255,255,255,0.04) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+.pagination-controls button {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #c5d0df !important;
+}
+.pagination-controls button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #d4a843 0%, #b8922e 100%) !important;
+  color: #fff !important;
+  border-color: #d4a843 !important;
+}
+.pagination-controls .page-info {
+  color: #8da0be !important;
+}
+
+/* --- Dropdown Menu --- */
+.dropdown-menu {
+  background: rgba(14,27,48,0.96) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.50) !important;
+  backdrop-filter: blur(20px) !important;
+}
+.dropdown-menu li,
+.dropdown-menu a,
+.dropdown-menu button {
+  color: #e8ecf2 !important;
+}
+.dropdown-menu li:hover,
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background: rgba(212,168,67,0.10) !important;
+  color: #d4a843 !important;
+}
+
+/* --- Loading Overlay --- */
+.loading-overlay {
+  background: rgba(6,16,31,0.85) !important;
+}
+
+/* --- Filter Chips / Presets / Summary --- */
+.filter-chip {
+  background: rgba(212,168,67,0.15) !important;
+  border: 1px solid rgba(212,168,67,0.30) !important;
+  color: #d4a843 !important;
+}
+.filter-chip:hover {
+  background: rgba(212,168,67,0.22) !important;
+}
+.filter-chip .chip-remove {
+  color: #d4a843 !important;
+}
+.filter-preset-btn {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #c5d0df !important;
+}
+.filter-preset-btn:hover {
+  background: rgba(255,255,255,0.10) !important;
+  border-color: rgba(255,255,255,0.18) !important;
+}
+.filter-preset-btn.active {
+  background: linear-gradient(135deg, #d4a843 0%, #b8922e 100%) !important;
+  border-color: #d4a843 !important;
+  color: #fff !important;
+}
+.search-highlight {
+  background: rgba(212,168,67,0.30) !important;
+  color: #f5deb3 !important;
+}
+.filter-summary {
+  background: rgba(22,163,74,0.12) !important;
+  border: 1px solid rgba(22,163,74,0.25) !important;
+  color: #4ade80 !important;
+}
+
+/* --- Status Badges (extras not in original theme) --- */
+.status-inactive {
+  background: rgba(255,255,255,0.06) !important;
+  color: #8da0be !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+}
+.status-inactive .status-dot { background: #6b83a5 !important; }
+.status-processing {
+  background: rgba(99,102,241,0.18) !important;
+  color: #a5b4fc !important;
+  border: 1px solid rgba(99,102,241,0.25) !important;
+}
+.status-processing .status-dot { background: #818cf8 !important; }
+.status-invoice.not-invoiced {
+  background: rgba(255,255,255,0.06) !important;
+  color: #8da0be !important;
+}
+.status-badge.invoiced {
+  background: rgba(99,102,241,0.18) !important;
+  color: #a5b4fc !important;
+}
+.status-badge.cancelled {
+  background: rgba(220,38,38,0.18) !important;
+  color: #f87171 !important;
+}
+.doc-status-badge.expired {
+  background: rgba(220,38,38,0.18) !important;
+  color: #f87171 !important;
+}
+.doc-status-badge.none {
+  background: rgba(255,255,255,0.06) !important;
+  color: #8da0be !important;
+}
+
+/* --- Trend & Icon Badges --- */
+.trend-down    { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.trend-neutral { background: rgba(255,255,255,0.06) !important; color: #8da0be !important; }
+.trend-up      { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.icon-badge.success { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.icon-badge.warning { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.icon-badge.danger  { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.icon-badge.info    { background: rgba(45,106,138,0.18) !important; color: #67b8db !important; }
+
+/* --- Profit Margin Badges (override dashboard-shared !important) --- */
+.profit-margin.high {
+  background: rgba(22,163,74,0.18) !important;
+  color: #4ade80 !important;
+}
+.profit-margin.medium {
+  background: rgba(217,119,6,0.18) !important;
+  color: #fbbf24 !important;
+}
+.profit-margin.low {
+  background: rgba(220,38,38,0.18) !important;
+  color: #f87171 !important;
+}
+
+/* --- Dashboard Customization --- */
+.edit-mode-save {
+  background: rgba(212,168,67,0.15) !important;
+  color: #d4a843 !important;
+  border: 1px solid rgba(212,168,67,0.25) !important;
+}
+.edit-mode-save:hover {
+  background: rgba(212,168,67,0.25) !important;
+}
+.layout-preset-selector {
+  background: rgba(255,255,255,0.04) !important;
+}
+.layout-preset {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e8ecf2 !important;
+}
+.layout-preset:hover {
+  background: rgba(212,168,67,0.10) !important;
+  border-color: rgba(212,168,67,0.20) !important;
+}
+
+/* --- Checkboxes / Radios / Switches --- */
+input[type="checkbox"],
+input[type="radio"] {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(255,255,255,0.20) !important;
+}
+input[type="checkbox"]:checked,
+input[type="radio"]:checked {
+  background: #d4a843 !important;
+  border-color: #d4a843 !important;
+}
+input[type="checkbox"]:hover,
+input[type="radio"]:hover {
+  border-color: rgba(212,168,67,0.50) !important;
+}
+
+/* --- Table Editing & Row Details --- */
+.table tbody tr.editing td {
+  background: rgba(212,168,67,0.12) !important;
+  border-color: rgba(212,168,67,0.25) !important;
+}
+.row-details {
+  background: rgba(255,255,255,0.04) !important;
+  border-left: 4px solid #d4a843 !important;
+  color: #e8ecf2 !important;
+}
+.column-toggle-item:hover {
+  background: rgba(255,255,255,0.06) !important;
+}
+th.sortable:hover {
+  background: rgba(212,168,67,0.12) !important;
+}
+
+/* --- Skeleton Loading --- */
+.skeleton,
+.skeleton-line,
+.skeleton-row {
+  background: rgba(255,255,255,0.06) !important;
+}
+
+/* --- Filter Modal --- */
+.filter-group input:focus,
+.filter-group select:focus {
+  background: rgba(255,255,255,0.10) !important;
+}
+.filter-modal .modal-card,
+.filter-modal-content {
+  background: rgba(14,27,48,0.96) !important;
+  color: #e8ecf2 !important;
+}
+
+/* --- Audit Trail Badges (JS injected) --- */
+.audit-icon.create  { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.audit-icon.update  { background: rgba(45,106,138,0.18) !important; color: #67b8db !important; }
+.audit-icon.delete  { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.audit-icon.login   { background: rgba(99,102,241,0.18) !important; color: #a5b4fc !important; }
+.audit-action-badge.view   { background: rgba(255,255,255,0.06) !important; color: #8da0be !important; }
+.audit-action-badge.create { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.audit-action-badge.update { background: rgba(45,106,138,0.18) !important; color: #67b8db !important; }
+.audit-action-badge.delete { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+
+/* --- Countdown Badges (dashboard-widgets.js) --- */
+.countdown-badge.urgent { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.countdown-badge.soon   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.countdown-badge.normal { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+
+/* --- Staff Status Badges (staff-management.js) --- */
+.staff-status-badge.active   { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.staff-status-badge.inactive { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.staff-status-badge.pending  { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+
+/* --- Bulk Importer Status --- */
+.import-status.error   { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.import-status.warning { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.import-status.skipped { background: rgba(255,255,255,0.06) !important; color: #8da0be !important; }
+.import-status.success { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.row-error   { background: rgba(220,38,38,0.08) !important; }
+.row-warning { background: rgba(217,119,6,0.08) !important; }
+.stat.error   { background: rgba(220,38,38,0.15) !important; }
+.stat.warning { background: rgba(217,119,6,0.15) !important; }
+
+/* --- Customer DB Status Badges --- */
+.status-badge.active-customer { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.status-badge.inactive-customer { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+
+/* --- Tour Calendar --- */
+.tour-detail-icon.urgent { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.tour-detail-icon.soon   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.tour-detail-icon.normal { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.checklist-item.done    { background: rgba(22,163,74,0.12) !important; color: #4ade80 !important; }
+.checklist-item.pending { background: rgba(220,38,38,0.12) !important; color: #f87171 !important; }
+
+/* --- Session / Auth Dialogs (JS injected — override via classes on body) --- */
+.token-warning-overlay,
+.session-overlay {
+  backdrop-filter: blur(4px) !important;
+}
+.token-warning-card,
+.session-card,
+.idle-timeout-card {
+  background: rgba(14,27,48,0.96) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.50) !important;
+  color: #e8ecf2 !important;
+}
+.token-warning-card h3,
+.session-card h3,
+.idle-timeout-card h3 {
+  color: #e8ecf2 !important;
+}
+.token-warning-card p,
+.session-card p,
+.idle-timeout-card p {
+  color: #8da0be !important;
+}
+
+/* --- Lazy Loader Placeholder --- */
+.lazy-placeholder {
+  background: rgba(255,255,255,0.04) !important;
+}
+
+/* --- Activity Status (auth-common.js) --- */
+.activity-active { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.activity-idle   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+
+/* --- Tour Wizard --- */
+.wizard-overlay { background: rgba(6,16,31,0.70) !important; }
+.wizard-container {
+  background: rgba(14,27,48,0.97) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  color: #e8ecf2 !important;
+}
+.wizard-step-indicator .step.active { background: #d4a843 !important; color: #fff !important; }
+.wizard-step-indicator .step.completed { background: rgba(22,163,74,0.25) !important; color: #4ade80 !important; }
+.wizard-step-indicator .step { background: rgba(255,255,255,0.08) !important; color: #8da0be !important; }
+.wizard-content label { color: #c5d0df !important; }
+.wizard-content input,
+.wizard-content select,
+.wizard-content textarea {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: #e8ecf2 !important;
+}
+.wizard-footer .btn { background: rgba(255,255,255,0.06) !important; color: #e8ecf2 !important; }
+.wizard-footer .btn.primary { background: linear-gradient(135deg, #d4a843, #b8922e) !important; color: #fff !important; }
+
+/* --- Generic Catch-All for JS-injected Light Backgrounds --- */
+[style*="background: #f9fafb"],
+[style*="background: #f3f4f6"],
+[style*="background: #eff6ff"],
+[style*="background: #ecfdf5"],
+[style*="background: #fef3c7"],
+[style*="background: #fee2e2"],
+[style*="background: #fffbeb"],
+[style*="background-color: #f9fafb"],
+[style*="background-color: #f3f4f6"],
+[style*="background-color: #fef2f2"],
+[style*="background-color: #fef9c3"],
+[style*="background: white"],
+[style*="background-color: white"],
+[style*="background: #f0f9ff"],
+[style*="background: #dbeafe"],
+[style*="background: #d1fae5"] {
+  background: rgba(255,255,255,0.05) !important;
+  color: #e8ecf2 !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+
+/* --- Staff Management (JS-injected <style>) --- */
+.staff-status-badge.moderate { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.workload-alert { background: rgba(217,119,6,0.12) !important; color: #fbbf24 !important; border-color: rgba(217,119,6,0.25) !important; }
+.legend-dot.normal   { background: #a78bfa !important; }
+.legend-dot.warning   { background: #f59e0b !important; }
+.legend-dot.overloaded { background: #ef4444 !important; }
+.achieved-count { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.staff-card.active  { border-left-color: #4ade80 !important; }
+.staff-card.inactive { border-left-color: #f87171 !important; }
+
+/* --- Dashboard Widgets (JS-injected <style>) --- */
+.widget-error { color: #f87171 !important; }
+.widget-option.active { background: rgba(22,163,74,0.18) !important; border-color: rgba(22,163,74,0.30) !important; }
+.widget-option.active .option-status { color: #4ade80 !important; }
+.status-badge.pending { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+
+/* --- Dashboard Analytics (JS-injected <style>) --- */
+.refresh-indicator { color: #4ade80 !important; }
+.mini-metric.positive { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.mini-metric.negative { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.alert-metric.warning { background: rgba(217,119,6,0.12) !important; color: #fbbf24 !important; }
+.alert-metric.info    { background: rgba(45,106,138,0.12) !important; color: #67b8db !important; }
+
+/* --- Tour Calendar (JS-injected <style>) --- */
+.tour-detail-icon.ready  { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.tour-detail-badge.urgent { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.tour-detail-badge.soon   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
+.tour-detail-badge.ready  { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+
+/* --- Advanced Reporting (JS-injected <style>) --- */
+.change-indicator.positive { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
+.change-indicator.negative { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.summary-section.profit.positive .summary-total { color: #4ade80 !important; }
+.summary-section.profit.negative .summary-total { color: #f87171 !important; }
+
+/* --- Enhanced Search Filter (JS-injected <style>) --- */
+.esf-clear-btn:hover    { background: rgba(255,255,255,0.08) !important; }
+.esf-action-btn:hover   { background: rgba(255,255,255,0.08) !important; }
+.esf-action-btn.esf-clear-all { color: #f87171 !important; }
+.esf-filter-badge        { background: #ef4444 !important; color: #fff !important; }
+.esf-preset-delete       { color: #f87171 !important; }
+.search-highlight        { background: rgba(212,168,67,0.30) !important; color: #f5deb3 !important; }
+
+/* --- Form Validator (JS-injected <style>) --- */
+.strength-bar-container { background: rgba(255,255,255,0.08) !important; }
+
+/* --- Lazy Loader (JS-injected <style>) --- */
+.lazy-error,
+img.lazy-error { background: rgba(255,255,255,0.04) !important; }
+
+/* --- Keyboard Help / Saved Filters hover --- */
+.shortcuts-close-btn:hover { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+.delete-filter-btn:hover   { background: rgba(220,38,38,0.18) !important; color: #f87171 !important; }
+
+/* --- Error Recovery (JS-injected <style>) --- */
+.btn-dismiss:hover { background: rgba(255,255,255,0.08) !important; }
+
+/* --- Batch Status (JS-injected <style>) --- */
+.batch-selection-count { background: #ef4444 !important; color: #fff !important; }
+.selection-count       { color: #a78bfa !important; }
+
+/* --- YoY Analytics (JS-injected <style>) --- */
+.yoy-metric-change.positive { color: #4ade80 !important; }
+.yoy-metric-change.negative { color: #f87171 !important; }
+
+/* --- Commission Calculator (JS-injected <style>) --- */
+.history-commission { color: #4ade80 !important; }
+
+/* --- App Enhancements (JS-injected <style>) --- */
+.notification-badge { background: #ef4444 !important; color: #fff !important; }
+
+/* --- Documents Dashboard urgency row overrides --- */
+tr[style*="background-color: #fef2f2"] td,
+tr[style*="background-color: #fef9c3"] td {
+  color: #e8ecf2 !important;
+}
+
+
 @media print {
   body::before, body::after { display: none !important; }
   body { background: #fff !important; color: #000 !important; }

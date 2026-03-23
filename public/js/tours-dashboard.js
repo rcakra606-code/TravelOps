@@ -897,36 +897,142 @@ async function renderDashboard(preloadedTours) {
 /* === ANALYTICS TAB RENDERING === */
 const analyticsCharts = {};
 
-// Map region names to continent keys (kept for future use)
-const REGION_CONTINENT_MAP = {
-  'domestik': ['Southeast Asia'],
-  'china': ['Asia'],
-  'apj': ['Asia', 'Southeast Asia', 'Oceania'],
-  'eamea': ['Europe', 'Africa'],
-  'japan': ['Asia'],
-  'korea': ['Asia'],
-  'australia': ['Oceania'],
-  'europe': ['Europe'],
-  'americas': ['North America', 'South America'],
-  'middle east': ['Asia'],
-  'africa': ['Africa'],
-  'india': ['Asia']
-};
+// === ENHANCED WORLD MAP WITH ACCURATE GEO-COORDINATES ===
 
-// Marker positions on 1280x712 equirectangular PNG map
+// Equirectangular projection: convert lat/lng to SVG x,y on 1280×712 PNG
+// Image is 1280×712; standard equirectangular at this width = 640 tall,
+// so there's 36px vertical padding top & bottom.
+const MAP_W = 1280, MAP_H = 712;
+const MAP_EQUIRECT_H = MAP_W / 2; // 640 — true projection height
+const MAP_Y_PAD = (MAP_H - MAP_EQUIRECT_H) / 2; // 36px
+
+function latLngToXY(lat, lng) {
+  const x = (lng + 180) / 360 * MAP_W;
+  const y = MAP_Y_PAD + (90 - lat) / 180 * MAP_EQUIRECT_H;
+  return { x: Math.round(x), y: Math.round(y) };
+}
+
+// Jakarta — home base for all tour connections
+const JAKARTA = { lat: -6.2, lng: 106.85, label: 'Jakarta (HQ)' };
+
+// Region marker definitions with accurate lat/lng coordinates
+// Each region has a primary marker + notable destination cities
 const REGION_MARKERS = {
-  'domestik':    { x: 855, y: 402, label: 'Indonesia' },
-  'china':       { x: 828, y: 248, label: 'China' },
-  'apj':         { x: 895, y: 415, label: 'APJ' },
-  'eamea':       { x: 620, y: 225, label: 'EAMEA' },
-  'japan':       { x: 908, y: 240, label: 'Japan' },
-  'korea':       { x: 882, y: 252, label: 'Korea' },
-  'australia':   { x: 912, y: 480, label: 'Australia' },
-  'europe':      { x: 580, y: 198, label: 'Europe' },
-  'americas':    { x: 268, y: 248, label: 'Americas' },
-  'middle east': { x: 688, y: 282, label: 'Middle East' },
-  'africa':      { x: 618, y: 378, label: 'Africa' },
-  'india':       { x: 758, y: 318, label: 'India' }
+  'domestik': {
+    lat: -6.2, lng: 106.85, label: 'Indonesia', color: '#4ade80',
+    cities: [
+      { lat: -8.34, lng: 115.17, label: 'Bali' },
+      { lat: -8.65, lng: 116.35, label: 'Lombok' },
+      { lat: 3.59, lng: 98.67, label: 'Medan' },
+      { lat: -7.80, lng: 110.36, label: 'Yogyakarta' },
+      { lat: -7.25, lng: 112.75, label: 'Surabaya' },
+      { lat: 1.47, lng: 124.84, label: 'Manado' },
+      { lat: -2.97, lng: 104.75, label: 'Palembang' }
+    ]
+  },
+  'china': {
+    lat: 39.90, lng: 116.40, label: 'China', color: '#f87171',
+    cities: [
+      { lat: 31.23, lng: 121.47, label: 'Shanghai' },
+      { lat: 22.55, lng: 114.06, label: 'Shenzhen' },
+      { lat: 23.13, lng: 113.26, label: 'Guangzhou' },
+      { lat: 30.57, lng: 104.07, label: 'Chengdu' },
+      { lat: 34.26, lng: 108.94, label: "Xi'an" }
+    ]
+  },
+  'japan': {
+    lat: 35.68, lng: 139.69, label: 'Japan', color: '#fb923c',
+    cities: [
+      { lat: 34.69, lng: 135.50, label: 'Osaka' },
+      { lat: 35.01, lng: 135.77, label: 'Kyoto' },
+      { lat: 43.06, lng: 141.35, label: 'Sapporo' },
+      { lat: 26.33, lng: 127.80, label: 'Okinawa' }
+    ]
+  },
+  'korea': {
+    lat: 37.57, lng: 126.98, label: 'Korea', color: '#a78bfa',
+    cities: [
+      { lat: 35.18, lng: 129.08, label: 'Busan' },
+      { lat: 33.50, lng: 126.53, label: 'Jeju' }
+    ]
+  },
+  'apj': {
+    lat: 1.35, lng: 103.82, label: 'APJ', color: '#38bdf8',
+    cities: [
+      { lat: 13.76, lng: 100.50, label: 'Bangkok' },
+      { lat: 21.03, lng: 105.85, label: 'Hanoi' },
+      { lat: 3.14, lng: 101.69, label: 'K. Lumpur' },
+      { lat: 14.60, lng: 120.98, label: 'Manila' },
+      { lat: 10.82, lng: 106.63, label: 'Ho Chi Minh' }
+    ]
+  },
+  'india': {
+    lat: 28.61, lng: 77.21, label: 'India', color: '#facc15',
+    cities: [
+      { lat: 19.08, lng: 72.88, label: 'Mumbai' },
+      { lat: 27.17, lng: 78.04, label: 'Agra' },
+      { lat: 12.97, lng: 77.59, label: 'Bangalore' },
+      { lat: 26.92, lng: 75.79, label: 'Jaipur' }
+    ]
+  },
+  'middle east': {
+    lat: 25.20, lng: 55.27, label: 'Middle East', color: '#fbbf24',
+    cities: [
+      { lat: 21.42, lng: 39.83, label: 'Makkah' },
+      { lat: 24.71, lng: 46.68, label: 'Riyadh' },
+      { lat: 41.01, lng: 28.98, label: 'Istanbul' },
+      { lat: 25.29, lng: 51.53, label: 'Doha' },
+      { lat: 24.45, lng: 54.65, label: 'Abu Dhabi' }
+    ]
+  },
+  'europe': {
+    lat: 48.86, lng: 2.35, label: 'Europe', color: '#60a5fa',
+    cities: [
+      { lat: 51.51, lng: -0.13, label: 'London' },
+      { lat: 41.39, lng: 2.17, label: 'Barcelona' },
+      { lat: 41.90, lng: 12.50, label: 'Rome' },
+      { lat: 52.52, lng: 13.41, label: 'Berlin' },
+      { lat: 47.37, lng: 8.54, label: 'Zurich' },
+      { lat: 48.21, lng: 16.37, label: 'Vienna' }
+    ]
+  },
+  'eamea': {
+    lat: 41.01, lng: 28.98, label: 'EAMEA', color: '#c084fc',
+    cities: [
+      { lat: 55.76, lng: 37.62, label: 'Moscow' },
+      { lat: 30.04, lng: 31.24, label: 'Cairo' },
+      { lat: 36.81, lng: 10.18, label: 'Tunis' },
+      { lat: 33.87, lng: 35.51, label: 'Beirut' }
+    ]
+  },
+  'australia': {
+    lat: -33.87, lng: 151.21, label: 'Australia', color: '#2dd4bf',
+    cities: [
+      { lat: -37.81, lng: 144.96, label: 'Melbourne' },
+      { lat: -36.85, lng: 174.76, label: 'Auckland' },
+      { lat: -27.47, lng: 153.03, label: 'Brisbane' },
+      { lat: -41.29, lng: 174.78, label: 'Wellington' }
+    ]
+  },
+  'americas': {
+    lat: 40.71, lng: -74.01, label: 'Americas', color: '#f472b6',
+    cities: [
+      { lat: 34.05, lng: -118.24, label: 'Los Angeles' },
+      { lat: 25.76, lng: -80.19, label: 'Miami' },
+      { lat: 43.65, lng: -79.38, label: 'Toronto' },
+      { lat: -22.91, lng: -43.17, label: 'Rio de Janeiro' },
+      { lat: 19.43, lng: -99.13, label: 'Mexico City' }
+    ]
+  },
+  'africa': {
+    lat: -1.29, lng: 36.82, label: 'Africa', color: '#34d399',
+    cities: [
+      { lat: -33.92, lng: 18.42, label: 'Cape Town' },
+      { lat: 30.04, lng: 31.24, label: 'Cairo' },
+      { lat: -3.37, lng: 36.69, label: 'Kilimanjaro' },
+      { lat: 14.69, lng: -17.44, label: 'Dakar' }
+    ]
+  }
 };
 
 function renderSvgMap(regionData) {
@@ -935,21 +1041,32 @@ function renderSvgMap(regionData) {
 
   const vals = Object.values(regionData);
   const maxVal = Math.max(...vals, 1);
+  const totalPax = vals.reduce((s, v) => s + v, 0);
+  const regionCount = vals.length;
   const activeMarkers = [];
 
+  // Match region data keys to REGION_MARKERS (fuzzy match)
   Object.entries(regionData).forEach(([name, val]) => {
     const key = name.toLowerCase().trim();
     for (const [rk, marker] of Object.entries(REGION_MARKERS)) {
       if (key === rk || key.includes(rk) || rk.includes(key)) {
-        activeMarkers.push({ ...marker, val, name, intensity: val / maxVal });
+        const pos = latLngToXY(marker.lat, marker.lng);
+        activeMarkers.push({
+          ...pos, val, name, label: marker.label, color: marker.color,
+          intensity: val / maxVal, cities: marker.cities || [],
+          regionKey: rk
+        });
+        break;
       }
     }
   });
 
-  const W = 1280, H = 712;
+  const W = MAP_W, H = MAP_H;
+  const jakartaXY = latLngToXY(JAKARTA.lat, JAKARTA.lng);
+
   let svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" class="world-map">`;
 
-  // Defs: ocean gradient, land tint filter, marker glow
+  // Defs: ocean gradient, land tint filter, marker glow, flight path gradient
   svg += `<defs>
     <linearGradient id="oceanGrad" x1="0" y1="0" x2="0.3" y2="1">
       <stop offset="0%" stop-color="#071829"/>
@@ -966,74 +1083,165 @@ function renderSvgMap(regionData) {
       <feGaussianBlur stdDeviation="8" result="blur"/>
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
-    <filter id="labelShadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.7"/>
+    <filter id="labelShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="1" stdDeviation="2" flood-color="#000" flood-opacity="0.8"/>
     </filter>
+    <filter id="cityGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrowHead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#d4a843" opacity="0.6"/>
+    </marker>
   </defs>`;
 
   // Ocean background
   svg += `<rect width="${W}" height="${H}" fill="url(#oceanGrad)" rx="8"/>`;
 
-  // Graticule grid (geographical reference lines)
-  svg += `<g class="graticule" opacity="0.07" stroke="#6889aa" fill="none" stroke-width="0.5">`;
-  // Horizontal lines (latitude)
-  for (let i = 1; i < 6; i++) {
-    const y = Math.round(H * i / 6);
-    svg += `<line x1="0" y1="${y}" x2="${W}" y2="${y}"/>`;
-  }
-  // Vertical lines (longitude)
-  for (let i = 1; i < 12; i++) {
-    const x = Math.round(W * i / 12);
-    svg += `<line x1="${x}" y1="0" x2="${x}" y2="${H}"/>`;
+  // Graticule grid — proper geographic lines
+  svg += `<g class="graticule" opacity="0.06" stroke="#6889aa" fill="none" stroke-width="0.5">`;
+  // Latitude lines every 30°
+  [-60, -30, 0, 30, 60].forEach(lat => {
+    const pos = latLngToXY(lat, 0);
+    svg += `<line x1="0" y1="${pos.y}" x2="${W}" y2="${pos.y}"/>`;
+  });
+  // Longitude lines every 30°
+  for (let lng = -150; lng <= 150; lng += 30) {
+    const pos = latLngToXY(0, lng);
+    svg += `<line x1="${pos.x}" y1="0" x2="${pos.x}" y2="${H}"/>`;
   }
   // Equator (brighter)
-  svg += `<line x1="0" y1="${Math.round(H * 0.5)}" x2="${W}" y2="${Math.round(H * 0.5)}" opacity="0.14" stroke-width="0.8"/>`;
+  const eqY = latLngToXY(0, 0).y;
+  svg += `<line x1="0" y1="${eqY}" x2="${W}" y2="${eqY}" opacity="0.14" stroke-width="0.8" stroke="#6889aa"/>`;
+  // Prime Meridian
+  const pmX = latLngToXY(0, 0).x;
+  svg += `<line x1="${pmX}" y1="0" x2="${pmX}" y2="${H}" opacity="0.08" stroke-width="0.6" stroke="#6889aa"/>`;
+  // Tropics of Cancer & Capricorn (subtle)
+  [23.44, -23.44].forEach(lat => {
+    const pos = latLngToXY(lat, 0);
+    svg += `<line x1="0" y1="${pos.y}" x2="${W}" y2="${pos.y}" opacity="0.05" stroke-width="0.4" stroke-dasharray="6,4"/>`;
+  });
   svg += `</g>`;
 
   // Real world map PNG — filter tints black landmasses to dark teal-blue
   svg += `<image href="/images/world-map.png" x="0" y="0" width="${W}" height="${H}" filter="url(#landTint)" preserveAspectRatio="xMidYMid meet"/>`;
 
-  // Connection lines between active markers
-  if (activeMarkers.length > 1) {
-    svg += `<g class="connections" opacity="0.15" stroke="#d4a843" stroke-width="0.8" fill="none">`;
-    for (let i = 0; i < activeMarkers.length; i++) {
-      for (let j = i + 1; j < activeMarkers.length; j++) {
-        const a = activeMarkers[i], b = activeMarkers[j];
-        const cx = (a.x + b.x) / 2, cy = Math.min(a.y, b.y) - 30;
-        svg += `<path d="M${a.x},${a.y} Q${cx},${cy} ${b.x},${b.y}" stroke-dasharray="4,4">
-          <animate attributeName="stroke-dashoffset" values="8;0" dur="3s" repeatCount="indefinite"/>
-        </path>`;
-      }
-    }
+  // Flight path connections from Jakarta (home base) to each active region
+  if (activeMarkers.length > 0) {
+    svg += `<g class="flight-paths" fill="none">`;
+    activeMarkers.forEach((m, i) => {
+      // Skip self-connection if marker IS Jakarta (domestik)
+      if (m.regionKey === 'domestik') return;
+      const jx = jakartaXY.x, jy = jakartaXY.y;
+      // Great-circle-approximation control point: arc high above midpoint
+      const midX = (jx + m.x) / 2;
+      const dist = Math.sqrt((m.x - jx) ** 2 + (m.y - jy) ** 2);
+      const arcHeight = Math.min(dist * 0.3, 120);
+      const midY = Math.min(jy, m.y) - arcHeight;
+      const pathOpacity = (0.10 + m.intensity * 0.15).toFixed(2);
+      const pathWidth = (0.6 + m.intensity * 0.8).toFixed(1);
+      svg += `<path d="M${jx},${jy} Q${midX},${midY} ${m.x},${m.y}" 
+        stroke="${m.color}" stroke-width="${pathWidth}" opacity="${pathOpacity}"
+        stroke-dasharray="6,4" marker-end="url(#arrowHead)">
+        <animate attributeName="stroke-dashoffset" values="10;0" dur="2s" repeatCount="indefinite"/>
+      </path>`;
+    });
     svg += `</g>`;
   }
 
-  // Animated region markers with labels
+  // Destination city sub-markers (small dots for popular cities within active regions)
+  if (activeMarkers.length > 0) {
+    svg += `<g class="city-markers">`;
+    activeMarkers.forEach(m => {
+      (m.cities || []).forEach(city => {
+        const cPos = latLngToXY(city.lat, city.lng);
+        const cityOpacity = (0.3 + m.intensity * 0.4).toFixed(2);
+        svg += `<circle cx="${cPos.x}" cy="${cPos.y}" r="3" fill="${m.color}" opacity="${cityOpacity}" filter="url(#cityGlow)">
+          <title>${city.label} (${m.name})</title>
+        </circle>`;
+        // City name label (small, subtle)
+        svg += `<text x="${cPos.x + 6}" y="${cPos.y + 3}" fill="${m.color}" opacity="${cityOpacity}" font-size="8" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${city.label}</text>`;
+      });
+    });
+    svg += `</g>`;
+  }
+
+  // Jakarta home base marker (always visible, distinctive style)
+  svg += `<g class="home-base">`;
+  // Radar pulse
+  svg += `<circle cx="${jakartaXY.x}" cy="${jakartaXY.y}" r="20" fill="none" stroke="#4ade80" stroke-width="1.5" opacity="0">
+    <animate attributeName="r" values="8;28;28" dur="3s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.5;0;0" dur="3s" repeatCount="indefinite"/>
+  </circle>`;
+  svg += `<circle cx="${jakartaXY.x}" cy="${jakartaXY.y}" r="20" fill="none" stroke="#4ade80" stroke-width="1" opacity="0">
+    <animate attributeName="r" values="8;28;28" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.3;0;0" dur="3s" begin="1.5s" repeatCount="indefinite"/>
+  </circle>`;
+  // Glow
+  svg += `<circle cx="${jakartaXY.x}" cy="${jakartaXY.y}" r="10" fill="#4ade80" opacity="0.12" filter="url(#markerGlow)"/>`;
+  // Main dot with border
+  svg += `<circle cx="${jakartaXY.x}" cy="${jakartaXY.y}" r="6" fill="#0c223c" stroke="#4ade80" stroke-width="2.5"/>`;
+  // Center dot
+  svg += `<circle cx="${jakartaXY.x}" cy="${jakartaXY.y}" r="2" fill="#4ade80"/>`;
+  // Label
+  svg += `<text x="${jakartaXY.x}" y="${jakartaXY.y - 14}" text-anchor="middle" fill="#4ade80" font-size="10" font-weight="700" font-family="system-ui,sans-serif" filter="url(#labelShadow)">\u2708 Jakarta (HQ)</text>`;
+  svg += `</g>`;
+
+  // Animated region markers with labels (main destination dots)
   if (activeMarkers.length > 0) {
     svg += `<g class="markers">`;
     activeMarkers.forEach((m, i) => {
-      const r = 8 + m.intensity * 10;
+      const r = 7 + m.intensity * 10;
       const opacity = 0.6 + m.intensity * 0.4;
       const delay = (i * 0.4).toFixed(1);
+      const markerColor = m.color || '#d4a843';
 
       // Outer pulse ring
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 2.5}" fill="#d4a843" opacity="0">
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 2.5}" fill="${markerColor}" opacity="0">
         <animate attributeName="r" values="${r};${r * 2.5};${r * 2.5}" dur="2.5s" begin="${delay}s" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="0.3;0;0" dur="2.5s" begin="${delay}s" repeatCount="indefinite"/>
       </circle>`;
       // Glow halo
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 1.5}" fill="#d4a843" opacity="${opacity * 0.15}" filter="url(#markerGlow)"/>`;
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r * 1.5}" fill="${markerColor}" opacity="${(opacity * 0.15).toFixed(2)}" filter="url(#markerGlow)"/>`;
       // Main dot
-      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r}" fill="#d4a843" opacity="${opacity}" class="marker-dot">
+      svg += `<circle cx="${m.x}" cy="${m.y}" r="${r}" fill="${markerColor}" opacity="${opacity.toFixed(2)}" class="marker-dot">
         <title>${m.name}: ${m.val.toLocaleString()} pax</title>
       </circle>`;
       // Center white dot
       svg += `<circle cx="${m.x}" cy="${m.y}" r="3" fill="#fff" opacity="0.9"/>`;
-      // Label
-      svg += `<text x="${m.x}" y="${m.y - r - 8}" text-anchor="middle" fill="#e8ecf2" font-size="13" font-weight="600" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.label || m.name}</text>`;
-      // Value label
-      svg += `<text x="${m.x}" y="${m.y - r - 22}" text-anchor="middle" fill="#d4a843" font-size="11" font-weight="700" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.val.toLocaleString()}</text>`;
+
+      // Smart label placement — avoid overlap with nearby elements
+      const labelY = m.y - r - 8;
+      const valueY = m.y - r - 22;
+      // Region label
+      svg += `<text x="${m.x}" y="${labelY}" text-anchor="middle" fill="#e8ecf2" font-size="12" font-weight="600" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.label || m.name}</text>`;
+      // Value label with pax unit
+      svg += `<text x="${m.x}" y="${valueY}" text-anchor="middle" fill="${markerColor}" font-size="11" font-weight="700" font-family="system-ui,sans-serif" filter="url(#labelShadow)">${m.val.toLocaleString()} pax</text>`;
     });
+    svg += `</g>`;
+  }
+
+  // Map legend (bottom-left)
+  svg += `<g class="map-legend" transform="translate(12, ${H - 80})">`;
+  svg += `<rect x="0" y="0" width="160" height="72" rx="8" fill="rgba(7,24,41,0.85)" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>`;
+  svg += `<text x="10" y="16" fill="#8da0be" font-size="9" font-weight="600" font-family="system-ui,sans-serif">MAP LEGEND</text>`;
+  // Home base icon
+  svg += `<circle cx="18" cy="30" r="4" fill="#0c223c" stroke="#4ade80" stroke-width="1.5"/>`;
+  svg += `<text x="28" y="33" fill="#8da0be" font-size="8.5" font-family="system-ui,sans-serif">Home Base (Jakarta)</text>`;
+  // Region marker icon
+  svg += `<circle cx="18" cy="44" r="4" fill="#d4a843" opacity="0.8"/>`;
+  svg += `<text x="28" y="47" fill="#8da0be" font-size="8.5" font-family="system-ui,sans-serif">Tour Region (size = pax)</text>`;
+  // City dot
+  svg += `<circle cx="18" cy="58" r="2.5" fill="#60a5fa" opacity="0.6"/>`;
+  svg += `<text x="28" y="61" fill="#8da0be" font-size="8.5" font-family="system-ui,sans-serif">Destination Cities</text>`;
+  svg += `</g>`;
+
+  // Summary badge (top-right)
+  if (regionCount > 0) {
+    svg += `<g class="map-summary" transform="translate(${W - 172}, 10)">`;
+    svg += `<rect x="0" y="0" width="160" height="44" rx="8" fill="rgba(7,24,41,0.85)" stroke="rgba(255,255,255,0.08)" stroke-width="0.5"/>`;
+    svg += `<text x="80" y="17" text-anchor="middle" fill="#d4a843" font-size="10" font-weight="700" font-family="system-ui,sans-serif">${totalPax.toLocaleString()} Total Pax</text>`;
+    svg += `<text x="80" y="33" text-anchor="middle" fill="#8da0be" font-size="9" font-family="system-ui,sans-serif">${regionCount} Active Region${regionCount > 1 ? 's' : ''}</text>`;
     svg += `</g>`;
   }
 

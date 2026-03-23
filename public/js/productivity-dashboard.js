@@ -1729,19 +1729,19 @@ dropZone?.addEventListener('click', () => importFile?.click());
 dropZone?.addEventListener('dragover', (e) => {
   e.preventDefault();
   dropZone.style.borderColor = '#d4a843';
-  dropZone.style.background = '#eff6ff';
+  dropZone.style.background = 'rgba(45,106,138,0.12)';
 });
 
 dropZone?.addEventListener('dragleave', (e) => {
   e.preventDefault();
-  dropZone.style.borderColor = '#d1d5db';
-  dropZone.style.background = '#f9fafb';
+  dropZone.style.borderColor = 'rgba(255,255,255,0.15)';
+  dropZone.style.background = 'rgba(255,255,255,0.04)';
 });
 
 dropZone?.addEventListener('drop', (e) => {
   e.preventDefault();
-  dropZone.style.borderColor = '#d1d5db';
-  dropZone.style.background = '#f9fafb';
+  dropZone.style.borderColor = 'rgba(255,255,255,0.15)';
+  dropZone.style.background = 'rgba(255,255,255,0.04)';
   
   const file = e.dataTransfer.files[0];
   if (file && file.name.endsWith('.csv')) {

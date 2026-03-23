@@ -391,16 +391,16 @@ const validationUtils = {
 
     container.style.display = 'block';
     container.style.cssText = `
-      background: #fee2e2;
-      border: 1px solid #fecaca;
+      background: rgba(220,38,38,0.15);
+      border: 1px solid rgba(220,38,38,0.30);
       border-radius: 8px;
       padding: 12px 16px;
       margin-bottom: 16px;
     `;
     
     container.innerHTML = `
-      <strong style="color: #991b1b;">⚠️ Validation Errors:</strong>
-      <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #dc2626;">
+      <strong style="color: #f87171;">⚠️ Validation Errors:</strong>
+      <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #f87171;">
         ${errors.map(err => `<li>${err}</li>`).join('')}
       </ul>
     `;

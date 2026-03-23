@@ -286,11 +286,11 @@ class DashboardAnalytics {
       }
 
       .mini-metric.positive {
-        background: #dcfce7;
+        background: rgba(22,163,74,0.18);
       }
 
       .mini-metric.negative {
-        background: #fee2e2;
+        background: rgba(220,38,38,0.18);
       }
 
       .metric-icon {
@@ -333,13 +333,13 @@ class DashboardAnalytics {
       }
 
       .alert-metric.warning {
-        background: #fef3c7;
-        color: #92400e;
+        background: rgba(217,119,6,0.12);
+        color: #fbbf24;
       }
 
       .alert-metric.info {
-        background: #dbeafe;
-        color: #1e40af;
+        background: rgba(45,106,138,0.12);
+        color: #67b8db;
       }
 
       .analytics-timestamp {
