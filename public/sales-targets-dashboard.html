@@ -105,6 +105,8 @@
       font-weight: 700;
     }
     .percentage-cell {
+      font-weight: 700;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
       font-weight: 600;
     }
     .percentage-low { background: rgba(220,38,38,0.25) !important; color: #f87171; }
@@ -505,12 +507,7 @@
     return 'percentage-low';
   }
   
-  // Get achievement status icon
-  function getAchievementIcon(value) {
-    if (value >= 100) return '\u2705';  // ✅ achieved
-    if (value >= 70) return '\u26A0\uFE0F';   // ⚠️ close
-    return '\u274C';                    // ❌ below
-  }
+  // Achievement icon removed — color-only scheme preferred
   
   // Get margin class
   function getMarginClass(value) {
@@ -672,8 +669,8 @@
           <td>${formatCurrency(targetProfit)}</td>
           <td>${formatCurrency(achievementSales)}</td>
           <td>${formatCurrency(achievementProfit)}</td>
-          <td class="percentage-cell ${getPercentageClass(percentSales)}">${getAchievementIcon(percentSales)} ${percentSales.toFixed(2)}%</td>
-          <td class="percentage-cell ${getPercentageClass(percentProfit)}">${getAchievementIcon(percentProfit)} ${percentProfit.toFixed(2)}%</td>
+          <td class="percentage-cell ${getPercentageClass(percentSales)}">${percentSales.toFixed(2)}%</td>
+          <td class="percentage-cell ${getPercentageClass(percentProfit)}">${percentProfit.toFixed(2)}%</td>
           <td class="margin-cell ${getMarginClass(margin)}">${margin.toFixed(2)}%</td>
           ${actionsCell}
         </tr>
@@ -694,8 +691,8 @@
         <td>${formatCurrency(totalTargetProfit)}</td>
         <td>${formatCurrency(totalAchievementSales)}</td>
         <td>${formatCurrency(totalAchievementProfit)}</td>
-        <td class="percentage-cell ${getPercentageClass(totalPercentSales)}">${getAchievementIcon(totalPercentSales)} ${totalPercentSales.toFixed(2)}%</td>
-        <td class="percentage-cell ${getPercentageClass(totalPercentProfit)}">${getAchievementIcon(totalPercentProfit)} ${totalPercentProfit.toFixed(2)}%</td>
+        <td class="percentage-cell ${getPercentageClass(totalPercentSales)}">${totalPercentSales.toFixed(2)}%</td>
+        <td class="percentage-cell ${getPercentageClass(totalPercentProfit)}">${totalPercentProfit.toFixed(2)}%</td>
         <td class="margin-cell ${getMarginClass(totalMargin)}">${totalMargin.toFixed(2)}%</td>
         ${totalActionsCell}
       </tr>

@@ -1018,26 +1018,213 @@ th.sortable:hover {
 .activity-active { background: rgba(22,163,74,0.18) !important; color: #4ade80 !important; }
 .activity-idle   { background: rgba(217,119,6,0.18) !important; color: #fbbf24 !important; }
 
-/* --- Tour Wizard --- */
-.wizard-overlay { background: rgba(6,16,31,0.70) !important; }
-.wizard-container {
-  background: rgba(14,27,48,0.97) !important;
-  border: 1px solid rgba(255,255,255,0.10) !important;
-  color: #e8ecf2 !important;
-}
-.wizard-step-indicator .step.active { background: #d4a843 !important; color: #fff !important; }
-.wizard-step-indicator .step.completed { background: rgba(22,163,74,0.25) !important; color: #4ade80 !important; }
-.wizard-step-indicator .step { background: rgba(255,255,255,0.08) !important; color: #8da0be !important; }
-.wizard-content label { color: #c5d0df !important; }
-.wizard-content input,
-.wizard-content select,
-.wizard-content textarea {
-  background: rgba(255,255,255,0.06) !important;
+/* --- Tour Wizard (actual class names) --- */
+.wizard-modal-overlay { background: rgba(6,16,31,0.80) !important; }
+.wizard-modal {
+  background: #0e1b30 !important;
   border: 1px solid rgba(255,255,255,0.12) !important;
   color: #e8ecf2 !important;
 }
-.wizard-footer .btn { background: rgba(255,255,255,0.06) !important; color: #e8ecf2 !important; }
-.wizard-footer .btn.primary { background: linear-gradient(135deg, #d4a843, #b8922e) !important; color: #fff !important; }
+
+/* Header */
+.wizard-header {
+  background: #0b1e3d !important;
+  border-bottom: 1px solid rgba(255,255,255,0.12) !important;
+}
+.wizard-title { color: #d4a843 !important; }
+.wizard-close { color: #8da0be !important; }
+.wizard-close:hover { background: rgba(255,255,255,0.08) !important; color: #e8ecf2 !important; }
+
+/* Progress bar */
+.wizard-progress {
+  background: #0b1e3d !important;
+  border-bottom: 1px solid rgba(255,255,255,0.10) !important;
+}
+.wizard-steps::before { background: rgba(255,255,255,0.10) !important; }
+.step-icon {
+  background: rgba(255,255,255,0.06) !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  color: #8da0be !important;
+}
+.wizard-step.active .step-icon {
+  background: #d4a843 !important;
+  border-color: #d4a843 !important;
+  color: #fff !important;
+}
+.wizard-step.completed .step-icon {
+  background: rgba(22,163,74,0.3) !important;
+  border-color: #4ade80 !important;
+  color: #4ade80 !important;
+}
+.step-label { color: #6b83a5 !important; }
+.wizard-step.active .step-label,
+.wizard-step.completed .step-label { color: #e8ecf2 !important; }
+
+/* Body / form area */
+.wizard-body {
+  background: #0e1b30 !important;
+  color: #e8ecf2 !important;
+}
+.wizard-step-content h3 { color: #d4a843 !important; }
+.wizard-hint { color: #8da0be !important; }
+
+/* Form labels & inputs */
+.wizard-form-grid label,
+.passenger-form label { color: #c5d0df !important; }
+.wizard-form-grid input,
+.wizard-form-grid select,
+.wizard-form-grid textarea,
+.passenger-form input,
+.passenger-form select {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e8ecf2 !important;
+}
+.wizard-form-grid input:focus,
+.wizard-form-grid select:focus,
+.wizard-form-grid textarea:focus,
+.passenger-form input:focus {
+  border-color: #d4a843 !important;
+  box-shadow: 0 0 0 3px rgba(212,168,67,0.25) !important;
+  background: rgba(255,255,255,0.08) !important;
+}
+.wizard-form-grid input::placeholder,
+.wizard-form-grid select option[value=''],
+.wizard-form-grid textarea::placeholder {
+  color: #6b83a5 !important;
+}
+.wizard-form-grid input:disabled,
+.wizard-form-grid select:disabled {
+  background: rgba(255,255,255,0.03) !important;
+  color: #6b83a5 !important;
+}
+
+/* Passenger cards */
+.passenger-card {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+.passenger-card.lead-passenger {
+  border-color: #d4a843 !important;
+  box-shadow: 0 0 0 2px rgba(212,168,67,0.15) !important;
+}
+.passenger-header {
+  background: rgba(255,255,255,0.04) !important;
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+.passenger-number { color: #e8ecf2 !important; }
+.passenger-card.lead-passenger .passenger-header {
+  background: rgba(212,168,67,0.10) !important;
+}
+.passenger-subtotal { border-top-color: rgba(255,255,255,0.10) !important; color: #8da0be !important; }
+.passenger-subtotal strong { color: #e8ecf2 !important; }
+
+/* Financial summary */
+.financial-summary-card {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+.summary-row { border-bottom-color: rgba(255,255,255,0.06) !important; }
+.summary-row span { color: #8da0be !important; }
+.summary-row strong { color: #e8ecf2 !important; }
+.summary-row.highlight {
+  background: rgba(212,168,67,0.10) !important;
+}
+
+/* Confirmation sections */
+.confirm-section {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.10) !important;
+}
+.confirm-section h4 { color: #d4a843 !important; }
+.confirm-item .label { color: #6b83a5 !important; }
+.confirm-item .value { color: #e8ecf2 !important; }
+.confirm-passenger {
+  background: rgba(255,255,255,0.04) !important;
+}
+.confirm-passenger strong { color: #e8ecf2 !important; }
+.confirm-passenger .contact { color: #8da0be !important; }
+.confirm-fin-row { color: #8da0be !important; }
+.confirm-fin-row.total { border-top-color: rgba(255,255,255,0.12) !important; color: #e8ecf2 !important; }
+.confirm-fin-row.profit {
+  background: rgba(212,168,67,0.12) !important;
+}
+
+/* Footer */
+.wizard-footer {
+  background: #0b1e3d !important;
+  border-top: 1px solid rgba(255,255,255,0.12) !important;
+}
+.wizard-buttons .btn-secondary {
+  background: rgba(255,255,255,0.06) !important;
+  border: 1px solid rgba(255,255,255,0.14) !important;
+  color: #e8ecf2 !important;
+}
+.wizard-buttons .btn-secondary:hover {
+  background: rgba(255,255,255,0.10) !important;
+}
+.wizard-buttons .btn-primary {
+  background: linear-gradient(135deg, #d4a843, #b8922e) !important;
+  color: #fff !important;
+  border: none !important;
+}
+.wizard-buttons .btn-primary:hover {
+  background: linear-gradient(135deg, #b8922e, #a07e28) !important;
+}
+
+/* Live Preview Sidebar */
+.wizard-preview-sidebar {
+  background: #0b1e3d !important;
+  border-left: 1px solid rgba(255,255,255,0.10) !important;
+}
+.preview-sidebar-header {
+  background: rgba(255,255,255,0.04) !important;
+  border-bottom-color: rgba(255,255,255,0.10) !important;
+  color: #e8ecf2 !important;
+}
+.preview-toggle-btn {
+  border-color: rgba(255,255,255,0.14) !important;
+  color: #8da0be !important;
+}
+.preview-toggle-btn:hover {
+  background: rgba(255,255,255,0.08) !important;
+  color: #e8ecf2 !important;
+}
+.preview-section {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+}
+.preview-section-title {
+  color: #d4a843 !important;
+  border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+.preview-label { color: #6b83a5 !important; }
+.preview-value { color: #e8ecf2 !important; }
+.preview-value.empty { color: #6b83a5 !important; }
+.preview-total { border-top-color: rgba(255,255,255,0.12) !important; }
+.preview-passenger {
+  background: rgba(255,255,255,0.04) !important;
+}
+.preview-passenger-name { color: #e8ecf2 !important; }
+.preview-passenger-contact { color: #8da0be !important; }
+.preview-passenger-price { color: #e8ecf2 !important; }
+.preview-profit {
+  background: rgba(212,168,67,0.10) !important;
+}
+
+/* Duplicate warning in wizard */
+.duplicate-warning {
+  background: rgba(239,68,68,0.15) !important;
+  border-color: rgba(239,68,68,0.3) !important;
+  color: #f87171 !important;
+}
+
+/* Select dropdown options */
+.wizard-form-grid select option,
+.passenger-form select option {
+  background: #0e1b30 !important;
+  color: #e8ecf2 !important;
+}
 
 /* --- Generic Catch-All for JS-injected Light Backgrounds --- */
 [style*="background: #f9fafb"],
