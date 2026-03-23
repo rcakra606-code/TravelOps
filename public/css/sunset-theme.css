@@ -516,9 +516,16 @@ input:read-only, input[readonly] {
 .sales-table td:first-child { background: rgba(212,168,67,0.06) !important; }
 .sales-table tr:last-child td,
 .total-row td { background: rgba(212,168,67,0.15) !important; color: #d4a843 !important; font-weight: 700 !important; }
-.percentage-low { background: rgba(220,38,38,0.25) !important; color: #f87171 !important; }
-.percentage-medium { background: rgba(217,119,6,0.25) !important; color: #fbbf24 !important; }
-.percentage-high { background: rgba(22,163,74,0.25) !important; color: #4ade80 !important; }
+/* Percentage color cells — must beat .sales-table td and .total-row td specificity */
+.sales-table td.percentage-low,
+td.percentage-low { background: rgba(220,38,38,0.30) !important; color: #f87171 !important; }
+.sales-table td.percentage-medium,
+td.percentage-medium { background: rgba(217,119,6,0.30) !important; color: #fbbf24 !important; }
+.sales-table td.percentage-high,
+td.percentage-high { background: rgba(22,163,74,0.30) !important; color: #4ade80 !important; }
+.total-row td.percentage-low { background: rgba(220,38,38,0.35) !important; color: #f87171 !important; }
+.total-row td.percentage-medium { background: rgba(217,119,6,0.35) !important; color: #fbbf24 !important; }
+.total-row td.percentage-high { background: rgba(22,163,74,0.35) !important; color: #4ade80 !important; }
 .report-header { color: #e8ecf2 !important; }
 .period-selector { background: rgba(255,255,255,0.04) !important; border: 1px solid rgba(255,255,255,0.08) !important; }
 .chart-card { background: rgba(255,255,255,0.05) !important; border: 1px solid rgba(255,255,255,0.08) !important; }
